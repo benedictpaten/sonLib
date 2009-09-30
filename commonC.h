@@ -220,7 +220,15 @@ void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree, struct BinaryTr
 
 float linOriginRegression(struct List *pointsX, struct List *pointsY);
 
+/*
+ * Copies a string, returning a string which must be cleaned up.
+ */
 char *stringCopy(const char *str);
+
+/*
+ * Joins two paths together, somewhat intelligently, to give one concatenated path.
+ */
+char *pathJoin(const char *pathPrefix, const char *pathSuffix);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////

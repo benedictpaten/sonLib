@@ -753,6 +753,19 @@ char *stringCopy(const char *str) {
 	return strcpy(mallocLocal(sizeof(char)*(1+strlen(str))), str);
 }
 
+char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
+	char *fullPath;
+
+	fullPath = malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
+	if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
+		sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
+	}
+	else {
+		sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
+	}
+	return fullPath;
+}
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
