@@ -26,6 +26,8 @@ void uglyf(const char *string, ...);
 
 int32_t systemLocal(const char *string, ...);
 
+void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);
+
 //memory
 struct Chunks {
     struct List *chunkList;

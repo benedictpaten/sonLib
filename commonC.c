@@ -58,6 +58,17 @@ void setLogLevel(int32_t level) {
     LOG_LEVEL = level;
 }
 
+void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
+	if(exitValue != 0) {
+		va_list ap;
+		va_start(ap, failureMessage);
+		vfprintf(stderr, failureMessage, ap);
+		//vfprintf(stdout, string, ap);
+		va_end(ap);
+		exit(exitValue);
+	}
+}
+
 inline void *mallocLocal(int32_t i) {
     void *j;
     j = malloc(i);
