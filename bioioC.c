@@ -348,7 +348,7 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
         temp1 = NULL;
         newickTreeString = eatWhiteSpace(++newickTreeString);
         assert(*newickTreeString != ')');
-        do {
+        while(1) {
             newickTreeString = newickTreeParser_fn2(newickTreeString, defaultDistance, &temp2, strings);
             if(temp1 != NULL) {
                 //merge node
@@ -357,18 +357,29 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
             else {
                 temp1 = temp2;
             }
-        } while (*newickTreeString != ')');
+            if(*newickTreeString == ',') {
+                newickTreeString = eatWhiteSpace(++newickTreeString);
+            }
+            else {
+            	assert(*newickTreeString == ')');
+            	break;
+            }
+        }
         newickTreeString = eatWhiteSpace(++newickTreeString);
     }
     else {
-        listAppend(strings, NULL);
-        newickTreeString = eatString(newickTreeString, (char **)&(strings->list[strings->length-1]));
-        temp1 = constructBinaryTree(0.0f, FALSE, NULL, NULL);
+    	temp1 = constructBinaryTree(0.0f, FALSE, NULL, NULL);
+    }
+    listAppend(strings, NULL);
+    if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
+    	newickTreeString = eatString(newickTreeString, (char **)&(strings->list[strings->length-1]));
     }
     f = defaultDistance;
     newickTreeString = newickTreeParser_fn(newickTreeString, &f);
     temp1->distance += f;
     (*binaryTree) = temp1;
+    assert(*newickTreeString == ',' || *newickTreeString == ';' || *newickTreeString == ')' || *newickTreeString == '\0');
+
     return newickTreeString;
 }
 
@@ -380,8 +391,8 @@ struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistanc
     newickTreeString = replaceString(newickTreeString, '(', " ( ", 3);
     newickTreeString = replaceAndFreeString(newickTreeString, ')', " ) ", 3);
     newickTreeString = replaceAndFreeString(newickTreeString, ':', " : ", 3);
-    newickTreeString = replaceAndFreeString(newickTreeString, ',', " ", 1);
-    newickTreeString = replaceAndFreeString(newickTreeString, ';', "", 0);
+    newickTreeString = replaceAndFreeString(newickTreeString, ',', " , ", 3);
+    newickTreeString = replaceAndFreeString(newickTreeString, ';', " ; ", 3);
     i = newickTreeString;
     newickTreeString = eatWhiteSpace(newickTreeString);
     newickTreeParser_fn2(newickTreeString, defaultDistance, &binaryTree, *strings);
