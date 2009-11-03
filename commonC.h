@@ -175,6 +175,8 @@ int longComparator_Int(int64_t *i, int64_t *j);
 
 int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length);
 
+int floatComparator(float **f, float **f2);
+
 struct TraversalID {
     //tree traversal numbers, used as nodeIDs for identifying
     //orders in the tree

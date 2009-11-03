@@ -604,6 +604,10 @@ int longComparator_Int(int64_t *i, int64_t *j) {
     return *i < *j ? -1 : *i > *j ? 1 : 0;
 }
 
+int floatComparator(float **f, float **f2) {
+	return **f > **f2 ? 1 : (**f < **f2 ? -1 : 0);
+}
+
 int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
     int32_t i;
     int32_t j;
