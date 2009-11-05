@@ -269,4 +269,25 @@ void destructTempFileTree(struct TempFileTree *tempFileTree);
 
 char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree);
 
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//graph viz functions
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
+		double width, double height, const char *shape, const char *colour,
+		int32_t fontsize);
+
+void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
+		const char *label, const char *colour, double length, double weight, const char *direction);
+
+void graphViz_setupGraphFile(FILE *graphFileHandle);
+
+void graphViz_finishGraphFile(FILE *graphFileHandle);
+
+const char *graphViz_getColour();
+
 #endif /*COMMONC_H_*/

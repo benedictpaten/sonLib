@@ -988,3 +988,50 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
 	return cA4;
 }
 
+/*
+ * Graphviz functions.
+ */
+
+void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
+		double width, double height, const char *shape, const char *colour,
+		int32_t fontsize) {
+    /*
+     * Adds a node to the graph.
+     */
+    fprintf(graphFileHandle, "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%i];\n", width, height, shape, colour, fontsize);
+    fprintf(graphFileHandle, "n%sn [label=\"%s\"];\n", nodeName, label);
+}
+
+void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
+		const char *label, const char *colour, double length, double weight, const char *direction) {
+    /*
+     * Links two nodes in the graph together.
+     */
+	fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n", colour, length, weight, direction);
+	fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName, childNodeName, label);
+}
+
+void graphViz_setupGraphFile(FILE *graphFileHandle) {
+    /*
+     * Sets up the dot file.
+     */
+    fprintf(graphFileHandle, "graph G {\n");
+    fprintf(graphFileHandle, "overlap=false\n");
+}
+
+void graphViz_finishGraphFile(FILE *graphFileHandle) {
+    /*
+     * Finishes up the dot file.
+     */
+    fprintf(graphFileHandle, "}\n");
+}
+
+static int32_t getColour_Index = 0;
+const char *graphViz_getColour() {
+    /*
+     * Returns a valid colour.
+     */
+	getColour_Index++;
+    static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey80" };
+    return colours[getColour_Index % 11];
+}
