@@ -1032,6 +1032,6 @@ const char *graphViz_getColour() {
      * Returns a valid colour.
      */
 	getColour_Index++;
-    static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey80" };
+    static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey" };
     return colours[getColour_Index % 11];
 }
