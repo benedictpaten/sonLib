@@ -197,6 +197,7 @@ void destructTraversalID(struct TraversalID *traversalID);
 struct BinaryTree {
     float distance;
     int32_t internal;
+    char *label;
     struct TraversalID *traversalID;
     struct BinaryTree *left;
     struct BinaryTree *right;
@@ -209,10 +210,16 @@ int32_t rightMostLeafNo(struct TraversalID *traversalID);
 int32_t leafNoInSubtree(struct TraversalID *traversalID);
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+										const char *label,
                                               struct BinaryTree *left,
                                               struct BinaryTree *right);
 
 void destructBinaryTree(struct BinaryTree *binaryTree);
+
+/*
+ * Gets all the leaf sequences, in depth first, left to right traversal order.
+ */
+struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree);
 
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree);
 

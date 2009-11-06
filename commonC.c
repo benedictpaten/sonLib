@@ -647,6 +647,7 @@ void destructTraversalID(struct TraversalID *traversalID) {
 }
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+									   const char *label,
                                        struct BinaryTree *left,
                                        struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
@@ -654,6 +655,7 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
     binaryTree = mallocLocal(sizeof(struct BinaryTree));
     binaryTree->distance = distance;
     binaryTree->internal = internal;
+    binaryTree->label = stringCopy(label);
     binaryTree->left = left;
     binaryTree->right = right;
     return binaryTree;
@@ -667,6 +669,7 @@ void destructBinaryTree(struct BinaryTree *binaryTree) {
     if(binaryTree->right) {
         destructBinaryTree(binaryTree->right);
     }
+    free(binaryTree->label);
     free(binaryTree);
 }
 
@@ -699,6 +702,22 @@ static void binaryTree_depthFirstNumbers_Traverse(struct BinaryTree *binaryTree,
         i = (*mid)++;
         binaryTree->traversalID = constructTraversalID(i, i, *mid, (*leafNo)++);
     }
+}
+
+void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct List *leafStrings) {
+	if(binaryTree->internal) {
+		binaryTree_getOrderedLeafStringsP(binaryTree->left, leafStrings);
+		binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
+	}
+	else {
+		listAppend(leafStrings, stringCopy(binaryTree->label));
+	}
+}
+
+struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree) {
+	struct List *leafStrings = constructEmptyList(0, free);
+	binaryTree_getOrderedLeafStringsP(binaryTree, leafStrings);
+	return leafStrings;
 }
 
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
