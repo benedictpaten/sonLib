@@ -193,7 +193,7 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 #########################################################
 
 def getBasicOptionParser(usage, version):
-    usage = "usage: %prog [options] contigFilexN"
+    usage = "usage: %prog [options]"
     version = "%prog 0.1"
     parser = OptionParser(usage=usage, version=version)
     
