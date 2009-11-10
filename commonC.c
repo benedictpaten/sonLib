@@ -800,6 +800,10 @@ char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
 	return fullPath;
 }
 
+int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
+	return (valueOne - valueTwo <= precision) || (valueTwo - valueOne <= precision);
+}
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////

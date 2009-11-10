@@ -241,6 +241,12 @@ char *stringCopy(const char *str);
  */
 char *pathJoin(const char *pathPrefix, const char *pathSuffix);
 
+/*
+ * Returns non zero if the difference of the two values is within the given precision,
+ * else returns zero.
+ */
+int32_t floatValuesClose(double valueOne, double valueTwo, double precision);
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
