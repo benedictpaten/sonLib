@@ -118,7 +118,7 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
     int32_t l;
 
     k=0;
-    while((j = getc(fastaFile)) != EOF) { //initial termininating characters
+    while((j = getc(fastaFile)) != EOF) { //initial terminating characters
         if(j == '>') { //fasta start
             fastaStart:
             cA[0] = '\0';
@@ -473,4 +473,43 @@ char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignm
 void destructCharColumnAlignment(struct CharColumnAlignment *charColumnAlignment) {
     free(charColumnAlignment->columnAlignment);
     free(charColumnAlignment);
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//Get line function, while getline is not in unix.
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+int32_t benLine(char **s, int32_t *n, FILE *f) {
+	register int32_t nMinus1= ((*n)-1), i= 0;
+
+	char *s2 = *s;
+	while(TRUE) {
+		register int32_t ch= (char)getc(f);
+
+		if(ch == '\r') {
+			ch= getc(f);
+		}
+
+		if(i == nMinus1) {
+			*n = 2*(*n) + 1;
+			*s = realloc(*s, (*n + 1)*sizeof(char));
+			assert(*s != NULL);
+			s2 = *s + i;
+			nMinus1 = ((*n)-1);
+		}
+
+		if((ch == '\n') || (ch == EOF)) {
+			*s2 = '\0';
+			return(feof(f) ? -1 : i);
+		}
+		else {
+			*s2 = ch;
+			s2++;
+		}
+		++i;
+	}
 }
