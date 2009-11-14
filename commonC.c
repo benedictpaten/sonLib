@@ -658,15 +658,18 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
     binaryTree->label = stringCopy(label);
     binaryTree->left = left;
     binaryTree->right = right;
+    binaryTree->traversalID = NULL;
     return binaryTree;
 }
 
 void destructBinaryTree(struct BinaryTree *binaryTree) {
-    destructTraversalID(binaryTree->traversalID);
-    if(binaryTree->left) {
+    if(binaryTree->traversalID != NULL) {
+    	destructTraversalID(binaryTree->traversalID);
+    }
+    if(binaryTree->left != NULL) {
         destructBinaryTree(binaryTree->left);
     }
-    if(binaryTree->right) {
+    if(binaryTree->right != NULL) {
         destructBinaryTree(binaryTree->right);
     }
     free(binaryTree->label);
