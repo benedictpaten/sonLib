@@ -223,7 +223,7 @@ struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree);
 
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree);
 
-void printBinaryTree(FILE *file, struct BinaryTree *binaryTree, char **nodeNames);
+void printBinaryTree(FILE *file, struct BinaryTree *binaryTree);
 
 void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list);
 

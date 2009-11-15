@@ -731,15 +731,24 @@ void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
     binaryTree_depthFirstNumbers_Traverse(binaryTree, &mid, &leafNo);
 }
 
-void printBinaryTree(FILE *file, struct BinaryTree *binaryTree, char **nodeNames) {
+void printBinaryTreeP(FILE *file, struct BinaryTree *binaryTree) {
     if(binaryTree->internal) {
-        printBinaryTree(file, binaryTree->left, nodeNames);
-        fprintf(file, "Internal node\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t\t%f\t%s\n", binaryTree->traversalID->midStart, binaryTree->traversalID->mid, binaryTree->traversalID->midEnd, binaryTree->traversalID->leafNo, binaryTree->distance, nodeNames[binaryTree->traversalID->mid]);
-        printBinaryTree(file, binaryTree->right, nodeNames);
+    	fprintf(file, "(");
+        printBinaryTreeP(file, binaryTree->left);
+        if(binaryTree->right != NULL) {
+        	fprintf(file, ",");
+        	printBinaryTreeP(file, binaryTree->right);
+        }
+        fprintf(file, ")%s:%f", binaryTree->label, binaryTree->distance);
     }
     else {
-        fprintf(file, "Leaf node\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t\t%f\t%s\n", binaryTree->traversalID->midStart, binaryTree->traversalID->mid, binaryTree->traversalID->midEnd, binaryTree->traversalID->leafNo, binaryTree->distance, nodeNames[binaryTree->traversalID->mid]);
+        fprintf(file, "%s:%f", binaryTree->label, binaryTree->distance);
     }
+}
+
+void printBinaryTree(FILE *file, struct BinaryTree *binaryTree) {
+	printBinaryTreeP(file, binaryTree);
+	fprintf(file, ";\n");
 }
 
 void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list) {
