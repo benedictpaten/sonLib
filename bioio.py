@@ -298,6 +298,7 @@ def getTempFile(suffix="", rootDir=None):
     else:
         tmpFile = os.path.join(rootDir, getRandomAlphaNumericString() + suffix)
         open(tmpFile, 'w').close()
+        os.chmod(tmpFile, 0777) #Ensure everyone has access to the file.
         return tmpFile
 
 def getTempDirectory(rootDir=None):
@@ -309,6 +310,7 @@ def getTempDirectory(rootDir=None):
     else:
         rootDir = os.path.join(rootDir, getRandomAlphaNumericString())
         os.mkdir(rootDir)
+        os.chmod(rootDir, 0777) #Ensure everyone has access to the file.
         return rootDir
     
 class TempFileTree:
