@@ -548,6 +548,7 @@ void destructLong(int64_t *i) {
     free(i);
 }
 
+
 uint32_t hashtable_stringHashKey( void *k ) {
 	int32_t i, j;
 	char *cA;
@@ -558,7 +559,22 @@ uint32_t hashtable_stringHashKey( void *k ) {
 		j += cA[i];
 	}
 	return j;
+    }
+/**
+uint32_t hashtable_stringHashKey( void *k )
+{
+// djb2
+// This algorithm was first reported by Dan Bernstein
+// many years ago in comp.lang.c
+//
+   uint32_t hash = 5381;
+   int c; 
+   char *cA;
+   cA = k;
+   while (c = *cA++) hash = ((hash << 5) + hash) + c; // hash*33 + c
+   return hash;
 }
+**/
 
 int32_t hashtable_stringEqualKey( void *key1, void *key2 ) {
 	return strcmp(key1, key2) == 0;
