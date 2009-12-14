@@ -550,7 +550,7 @@ void destructLong(int64_t *i) {
 
 
 uint32_t hashtable_stringHashKey( void *k ) {
-	int32_t i, j;
+	uint32_t i, j;
 	char *cA;
 
 	cA = k;
