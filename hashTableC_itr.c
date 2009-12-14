@@ -1,8 +1,8 @@
 /* Copyright (C) 2002, 2004 Christopher Clark  <firstname.lastname@cl.cam.ac.uk> */
 
-#include "hashTable.h"
-#include "hashTable_private.h"
-#include "hashTable_itr.h"
+#include "hashTableC.h"
+#include "hashTablePrivateC.h"
+#include "hashTableC_itr.h"
 #include <stdlib.h> /* defines NULL */
 
 /*****************************************************************************/
