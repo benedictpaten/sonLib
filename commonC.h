@@ -24,6 +24,10 @@ void logDebug(const char *string, ...);
 
 void uglyf(const char *string, ...);
 
+char *stringPrint(const char *string, ...);
+
+char *stringsJoin(const char *pad, const char **cA, int32_t length);
+
 int32_t systemLocal(const char *string, ...);
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);

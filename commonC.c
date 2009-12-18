@@ -38,6 +38,49 @@ void uglyf(const char *string, ...) {
     va_end(ap);
 }
 
+char *stringPrint(const char *string, ...) {
+	int32_t arraySize = 0;
+	static char *cA = NULL;
+	//return;
+	va_list ap;
+	va_start(ap, string);
+	int32_t i = snprintf(cA, arraySize, string, ap);
+	assert(i >= 0);
+	if(i >= arraySize) {
+		arraySize = i+1;
+		free(cA);
+		cA = malloc(sizeof(char) * arraySize);
+		i = snprintf(cA, arraySize, string, ap);
+		assert(i+1 == arraySize);
+	}
+	//vfprintf(stdout, string, ap);
+	va_end(ap);
+	return stringCopy(cA);
+}
+
+char *stringsJoin(const char *pad, const char **strings, int32_t length) {
+	int32_t i, j, k;
+	assert(length >= 0);
+	j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
+	for(i=0; i<length; i++) {
+		j += strlen(strings[i]);
+	}
+	char *cA = malloc(sizeof(char) * j);
+	j = 0;
+	for(i=0; i<length; i++) {
+		const char *cA2 = strings[i];
+		for(k=0; k<(int32_t)strlen(cA2); k++) {
+			cA[j++] = cA2[k];
+		}
+		if(i+1 < length) {
+			for(k=0; k<(int32_t)strlen(pad); k++) {
+				cA[j++] = cA2[k];
+			}
+		}
+	}
+	cA[j] = '\0';
+	return cA;
+}
 
 int32_t systemLocal(const char *string, ...) {
 	//return 0;
@@ -568,7 +611,7 @@ uint32_t hashtable_stringHashKey( void *k )
 // many years ago in comp.lang.c
 //
    uint32_t hash = 5381;
-   int c; 
+   int c;
    char *cA;
    cA = k;
    while (c = *cA++) hash = ((hash << 5) + hash) + c; // hash*33 + c
@@ -1086,3 +1129,4 @@ const char *graphViz_getColour() {
     static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey" };
     return colours[getColour_Index % 11];
 }
+
