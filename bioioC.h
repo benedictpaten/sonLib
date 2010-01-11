@@ -36,6 +36,10 @@ void readDoubles(const char *string, int32_t intNumber, double *dA);
 
 char *fastaNormaliseHeader(const char *fastaHeader);
 
+struct List *fastaDecodeHeader(const char *fastaHeader);
+
+char *fastaEncodeHeader(struct List *attributes);
+
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames);
 
 void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int32_t));

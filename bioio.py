@@ -769,8 +769,12 @@ def pWMWrite(fileHandle, pWM, alphabetSize=4):
 
 def _checkSegment(start, end, strand):
     assert start >= 0
-    assert start <= end
-    assert strand == '+' or strand == '-'
+    assert end >= 0
+    if strand:
+        assert start <= end
+    else:
+        assert end <= start
+    assert strand == True or strand == False
     
 class AlignmentOperation:
     def __init__(self, opType, length, score):
@@ -796,27 +800,28 @@ class PairwiseAlignment:
     PAIRWISE_PLUS = '+'
     PAIRWISE_MINUS = '-'
     
-    def __init__(self, queryID, queryStart, queryEnd, queryStrand, 
-                 targetID, targetStart, targetEnd, targetStrand, score, oL):
-        _checkSegment(queryStart, queryEnd, queryStrand)
-        _checkSegment(targetStart, targetEnd, targetStrand)
+    def __init__(self, contig1, start1, end1, strand1,
+                 contig2, start2, end2, strand2, 
+                 score, operationList):
+        _checkSegment(start1, end1, strand1)
+        _checkSegment(start2, end2, strand2)
         
-        self.contig1 = queryID
-        self.start1 = queryStart
-        self.end1 = queryEnd
-        self.strand1 = queryStrand
-        self.contig2 = targetID
-        self.start2 = targetStart
-        self.end2 = targetEnd
-        self.strand2 = targetStrand
+        self.contig1 = contig1
+        self.start1 = start1
+        self.end1 = end1
+        self.strand1 = strand1
+        self.contig2 = contig2
+        self.start2 = start2
+        self.end2 = end2
+        self.strand2 = strand2
         self.score = score
-        self.operationList = oL
+        self.operationList = operationList
         
-        i = sum([ oP.length for oP in oL if oP.type != PairwiseAlignment.PAIRWISE_INDEL_Y ])
-        assert i == queryEnd - queryStart #Check alignment is of right length with respect to the query
+        i = sum([ oP.length for oP in operationList if oP.type != PairwiseAlignment.PAIRWISE_INDEL_Y ])
+        assert i == abs(end1 - start1) #Check alignment is of right length with respect to the query
         
-        i = sum([ oP.length for oP in oL if oP.type != PairwiseAlignment.PAIRWISE_INDEL_X ])
-        assert i == targetEnd - targetStart #Check alignment is of right length with respect to the target
+        i = sum([ oP.length for oP in operationList if oP.type != PairwiseAlignment.PAIRWISE_INDEL_X ])
+        assert i == abs(end2 - start2) #Check alignment is of right length with respect to the target
         
     def __eq__(self, pairwiseAlignment):
         if pairwiseAlignment == None:
@@ -871,16 +876,16 @@ def cigarRead(fileHandle):
                             j += 3
             else:
                 ops = []
-            strand1 = m[3]
-            strand2 = m[7]
-            if strand1 == '+':
-                start1, end1 = int(m[1]), int(m[2])
-            else:
-                end1, start1 = int(m[1]), int(m[2])
-            if strand2 == '+':
-                start2, end2 = int(m[5]), int(m[6])
-            else:
-                end2, start2 = int(m[5]), int(m[6])
+            
+            assert m[3] == '+' or m[3] == '-'
+            strand1 = m[3] == '+'
+            
+            assert m[7] == '+' or m[7] == '-'
+            strand2 = m[7] == '+'
+            
+            start1, end1 = int(m[1]), int(m[2])
+            start2, end2 = int(m[5]), int(m[6])
+            
             yield PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
         line = fileHandle.readline()
 
@@ -892,22 +897,16 @@ def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
     if len(pairwiseAlignment.operationList) == 0:
         logger.info("Writing zero length pairwiseAlignment to file!")
         
-    if pairwiseAlignment.strand1 == '+':
-        start1 = pairwiseAlignment.start1
-        end1 = pairwiseAlignment.end1
-    else:
-        start1 = pairwiseAlignment.end1
-        end1 = pairwiseAlignment.start1
+    strand1 = "+"
+    if not pairwiseAlignment.strand1:
+        strand1 = "-"
     
-    if pairwiseAlignment.strand2 == '+':
-        start2 = pairwiseAlignment.start2
-        end2 = pairwiseAlignment.end2
-    else:
-        start2 = pairwiseAlignment.end2
-        end2 = pairwiseAlignment.start2
+    strand2 = "+"
+    if not pairwiseAlignment.strand2:
+        strand2 = "-"
         
-    fileHandle.write("cigar: %s %i %i %s %s %i %i %s %f" % (pairwiseAlignment.contig2, start2, end2, pairwiseAlignment.strand2,\
-                                                            pairwiseAlignment.contig1, start1, end1, pairwiseAlignment.strand1,\
+    fileHandle.write("cigar: %s %i %i %s %s %i %i %s %f" % (pairwiseAlignment.contig2, pairwiseAlignment.start2, pairwiseAlignment.end2, strand2,\
+                                                            pairwiseAlignment.contig1, pairwiseAlignment.start1, pairwiseAlignment.end1, strand1,\
                                                             pairwiseAlignment.score))
     if withProbs == True:
         hashMap = { PairwiseAlignment.PAIRWISE_INDEL_Y:'Z',PairwiseAlignment.PAIRWISE_INDEL_X:'Y', PairwiseAlignment.PAIRWISE_MATCH:'X' }
@@ -923,7 +922,9 @@ def _getRandomSegment():
     contig = random.choice([ "one", "two", "three", "four" ])
     start = random.choice(xrange(0, 10000))
     end = start + random.choice(xrange(0, 1000))
-    strand = random.choice([ '+', '-' ])
+    strand = random.choice([ True, False ])
+    if not strand:
+        start, end = end, start
     return contig, start, end, strand
 
 def getRandomOperationList(xLength, yLength, operationMaxLength=100):
@@ -953,7 +954,7 @@ def getRandomPairwiseAlignment():
     i, j, k, l = _getRandomSegment()
     m, n, o, p = _getRandomSegment()
     score = random.choice(xrange(-1000, 1000))
-    return PairwiseAlignment(i, j, k, l, m, n, o, p, score, getRandomOperationList(k - j, o - n))
+    return PairwiseAlignment(i, j, k, l, m, n, o, p, score, getRandomOperationList(abs(k - j), abs(o - n)))
 
 #########################################################
 #########################################################

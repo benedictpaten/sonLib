@@ -44,6 +44,12 @@ class TestCase(unittest.TestCase):
                 cigarWrite(fileHandle, pairwiseAlignment, keepProbs)
             fileHandle.close()
             
+            #fileHandle = open(tempFile, 'r')
+            #l.reverse()
+            #print "This is the list of alignments", l
+            #for line in fileHandle.readlines():
+            #    print "Got line2", line
+            
             #Now call sonLib_chainsTest and read and write chains
             command = "sonLib_cigarsTest %s %s" % (tempFile, keepProbs)
             print "Running command: %s" % command
@@ -53,7 +59,12 @@ class TestCase(unittest.TestCase):
             #Now check the chain is okay
             fileHandle = open(tempFile, 'r')
             l.reverse()
+            #print "This is the list of alignments", l
+            #for line in fileHandle.readlines():
+            #    print "Got line", line
+            
             for pairwiseAlignment in cigarRead(fileHandle):
+                print "Got alignment"
                 pairwiseAlignment2 = l.pop()
                 cigarWrite(sys.stdout, pairwiseAlignment, keepProbs)
                 cigarWrite(sys.stdout, pairwiseAlignment2, keepProbs)

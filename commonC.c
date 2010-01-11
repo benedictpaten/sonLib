@@ -44,17 +44,21 @@ char *stringPrint(const char *string, ...) {
 	//return;
 	va_list ap;
 	va_start(ap, string);
-	int32_t i = snprintf(cA, arraySize, string, ap);
+	int32_t i = vsnprintf(cA, arraySize, string, ap);
+	va_end(ap);
 	assert(i >= 0);
 	if(i >= arraySize) {
 		arraySize = i+1;
-		free(cA);
+		if(cA != NULL) {
+			free(cA);
+		}
 		cA = malloc(sizeof(char) * arraySize);
-		i = snprintf(cA, arraySize, string, ap);
+		va_start(ap, string);
+		i = vsnprintf(cA, arraySize, string, ap);
 		assert(i+1 == arraySize);
+		va_end(ap);
 	}
 	//vfprintf(stdout, string, ap);
-	va_end(ap);
 	return stringCopy(cA);
 }
 
@@ -74,7 +78,7 @@ char *stringsJoin(const char *pad, const char **strings, int32_t length) {
 		}
 		if(i+1 < length) {
 			for(k=0; k<(int32_t)strlen(pad); k++) {
-				cA[j++] = cA2[k];
+				cA[j++] = pad[k];
 			}
 		}
 	}
@@ -108,7 +112,7 @@ void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
 		vfprintf(stderr, failureMessage, ap);
 		//vfprintf(stdout, string, ap);
 		va_end(ap);
-		exit(exitValue);
+		exit(1);
 	}
 }
 
