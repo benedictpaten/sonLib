@@ -539,6 +539,20 @@ def _getMultiFastaOffsets(fasta):
     f.close()
     return l
 
+def fastaReadHeaders(fasta):
+    """Returns a list of fasta header lines, excluding 
+    """
+    headers = []
+    fileHandle = open(fasta, 'r')
+    line = fileHandle.readline()
+    while line != '':
+        assert line[-1] == '\n'
+        if line[0] == '>':
+            headers.append(line[1:-1])
+        line = fileHandle.readline()
+    fileHandle.close()
+    return headers
+
 def fastaAlignmentRead(fasta, mapFn=(lambda x : x), l=None):
     """
     reads in columns of multiple alignment and returns them iteratively
