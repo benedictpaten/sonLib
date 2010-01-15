@@ -1134,3 +1134,19 @@ const char *graphViz_getColour() {
     return colours[getColour_Index % 11];
 }
 
+void arrayShuffle(void **array, int32_t n) {
+	/* Arrange the N elements of ARRAY in random order.
+	   Only effective if N is much smaller than RAND_MAX;
+	   if this may not be the case, use a better random
+	   number generator. */
+    if (n > 1) {
+        int32_t i;
+		for (i = 0; i < n - 1; i++) {
+		  int32_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+		  void *t = array[j];
+		  array[j] = array[i];
+		  array[i] = t;
+		}
+    }
+}
+

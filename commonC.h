@@ -88,6 +88,8 @@ void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize, int3
 
 void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t currentLength, int32_t base);
 
+void arrayShuffle(void **array, int32_t n);
+
 void listCopyResize(struct List *list, int32_t newMaxSize);
 
 struct List *listCopy(struct List *list);
