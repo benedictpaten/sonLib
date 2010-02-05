@@ -509,6 +509,16 @@ void destructIntList(struct IntList *intList) {
 	free(intList);
 }
 
+struct IntList *intListCopy(struct IntList *intList) {
+	int32_t i;
+	struct IntList *intList2 = constructEmptyIntList(intList->length);
+	assert(intList->length == intList2->length);
+	for(i=0; i<intList->length; i++) {
+		intList2->list[i] = intList->list[i];
+	}
+	return intList2;
+}
+
 void intListAppend(struct IntList *list, int32_t item) {
 	if(list->length >= list->maxLength) {
 	    list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength*2 + TINY_CHUNK_SIZE, sizeof(int32_t));

@@ -124,6 +124,8 @@ struct IntList *constructEmptyIntList(int32_t length);
 
 void destructIntList(struct IntList *intList);
 
+struct IntList *intListCopy(struct IntList *intList);
+
 void intListAppend(struct IntList *intList, int32_t);
 
 //ints
