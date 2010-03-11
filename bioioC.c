@@ -339,7 +339,7 @@ char *_parseFloat(char *string, float *f) {
     float f2;
 
     f2 = FLT_MIN;
-    assert(sscanf(string, "%f", &f2) == 1);
+    assert(sscanf(string, "%g", &f2) == 1);
     assert(f2 != FLT_MIN);
     *f = f2;
     while(*string != '\0' && !isspace(*string)) {
