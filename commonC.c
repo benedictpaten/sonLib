@@ -812,10 +812,10 @@ void printBinaryTreeP(FILE *file, struct BinaryTree *binaryTree) {
         	fprintf(file, ",");
         	printBinaryTreeP(file, binaryTree->right);
         }
-        fprintf(file, ")%s:%f", binaryTree->label, binaryTree->distance);
+        fprintf(file, ")%s:%g", binaryTree->label, binaryTree->distance);
     }
     else {
-        fprintf(file, "%s:%f", binaryTree->label, binaryTree->distance);
+        fprintf(file, "%s:%g", binaryTree->label, binaryTree->distance);
     }
 }
 
