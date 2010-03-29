@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <ctype.h>
-
+#include <time.h>
 #include "histogram.h"
 
 /* Function: HMMERBanner()
