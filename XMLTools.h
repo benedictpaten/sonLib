@@ -17,6 +17,4 @@ XMLNode readXMLFile(const char *file);
 
 void writeXMLFile(const char *file, XMLNode xMainNode);
 
-XMLNode parseXMLString(const char *modelParams);
-
 #endif

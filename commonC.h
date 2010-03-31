@@ -24,13 +24,7 @@ void logDebug(const char *string, ...);
 
 void uglyf(const char *string, ...);
 
-char *stringPrint(const char *string, ...);
-
-char *stringsJoin(const char *pad, const char **cA, int32_t length);
-
 int32_t systemLocal(const char *string, ...);
-
-void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);
 
 //memory
 struct Chunks {
@@ -88,8 +82,6 @@ void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize, int3
 
 void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t currentLength, int32_t base);
 
-void arrayShuffle(void **array, int32_t n);
-
 void listCopyResize(struct List *list, int32_t newMaxSize);
 
 struct List *listCopy(struct List *list);
@@ -123,8 +115,6 @@ struct IntList {
 struct IntList *constructEmptyIntList(int32_t length);
 
 void destructIntList(struct IntList *intList);
-
-struct IntList *intListCopy(struct IntList *intList);
 
 void intListAppend(struct IntList *intList, int32_t);
 
@@ -183,8 +173,6 @@ int longComparator_Int(int64_t *i, int64_t *j);
 
 int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length);
 
-int floatComparator(float **f, float **f2);
-
 struct TraversalID {
     //tree traversal numbers, used as nodeIDs for identifying
     //orders in the tree
@@ -205,7 +193,6 @@ void destructTraversalID(struct TraversalID *traversalID);
 struct BinaryTree {
     float distance;
     int32_t internal;
-    char *label;
     struct TraversalID *traversalID;
     struct BinaryTree *left;
     struct BinaryTree *right;
@@ -218,20 +205,14 @@ int32_t rightMostLeafNo(struct TraversalID *traversalID);
 int32_t leafNoInSubtree(struct TraversalID *traversalID);
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
-										const char *label,
                                               struct BinaryTree *left,
                                               struct BinaryTree *right);
 
 void destructBinaryTree(struct BinaryTree *binaryTree);
 
-/*
- * Gets all the leaf sequences, in depth first, left to right traversal order.
- */
-struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree);
-
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree);
 
-void printBinaryTree(FILE *file, struct BinaryTree *binaryTree);
+void printBinaryTree(FILE *file, struct BinaryTree *binaryTree, char **nodeNames);
 
 void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list);
 
@@ -239,21 +220,7 @@ void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree, struct BinaryTr
 
 float linOriginRegression(struct List *pointsX, struct List *pointsY);
 
-/*
- * Copies a string, returning a string which must be cleaned up.
- */
 char *stringCopy(const char *str);
-
-/*
- * Joins two paths together, somewhat intelligently, to give one concatenated path.
- */
-char *pathJoin(const char *pathPrefix, const char *pathSuffix);
-
-/*
- * Returns non zero if the difference of the two values is within the given precision,
- * else returns zero.
- */
-int32_t floatValuesClose(double valueOne, double valueTwo, double precision);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -289,26 +256,5 @@ struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, i
 void destructTempFileTree(struct TempFileTree *tempFileTree);
 
 char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree);
-
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-//graph viz functions
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-
-void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
-		double width, double height, const char *shape, const char *colour,
-		int32_t fontsize);
-
-void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
-		const char *label, const char *colour, double length, double weight, const char *direction);
-
-void graphViz_setupGraphFile(FILE *graphFileHandle);
-
-void graphViz_finishGraphFile(FILE *graphFileHandle);
-
-const char *graphViz_getColour();
 
 #endif /*COMMONC_H_*/

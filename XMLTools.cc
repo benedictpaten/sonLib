@@ -28,10 +28,6 @@ XMLNode readXMLFile(const char *file) {
 	return xNode;
 }
 
-XMLNode parseXMLString(const char *xmlString) {
-	return XMLNode::parseString(xmlString);
-}
-
 void writeXMLFile(const char *file, XMLNode xMainNode) {
 	char *cA2;
 	FILE *fileHandle;

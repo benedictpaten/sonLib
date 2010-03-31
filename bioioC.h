@@ -36,10 +36,6 @@ void readDoubles(const char *string, int32_t intNumber, double *dA);
 
 char *fastaNormaliseHeader(const char *fastaHeader);
 
-struct List *fastaDecodeHeader(const char *fastaHeader);
-
-char *fastaEncodeHeader(struct List *attributes);
-
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames);
 
 void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int32_t));
@@ -74,7 +70,7 @@ struct CharColumnAlignment *multiFastaRead(char *fastaFile);
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int32_t unaryNodes);
+struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, struct List **strings);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -91,16 +87,6 @@ int32_t parseInt(char **string, int32_t *j);
 int32_t parseFloat(char **string, float *j);
 
 int32_t parseString(char **string, char *cA) ;
-
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-//Get line function, while getline is not in unix.
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-
-int32_t benLine(char **s, int32_t *n, FILE *f);
 
 #endif /*BIOIOC_H_*/
 

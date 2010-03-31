@@ -50,7 +50,7 @@ indexFor(UNSIGNED_INT_32 tablelength, UNSIGNED_INT_32 hashvalue)
 */
 
 /*****************************************************************************/
-#define freekey(X) free(X) /* this is used by hashTableC_itr */
+/*#define freekey(X) free(X)*/
 /*define freekey(X) ; */
 
 
