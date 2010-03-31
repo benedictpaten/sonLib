@@ -87,6 +87,28 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
 	return c2;
 }
 
+struct List *fastaDecodeHeader(const char *fastaHeader) {
+    /*
+     * Decodes the fasta header
+     */
+	struct List *attributes = constructEmptyList(0, free);
+	char *cA = stringCopy(fastaHeader);
+	char *cA2 = strtok(cA, "|");
+	while(cA2 != NULL) {
+		listAppend(attributes, stringCopy(cA2));
+		cA2 = strtok(NULL, "|");
+	}
+	free(cA);
+	return attributes;
+}
+
+char *fastaEncodeHeader(struct List *attributes) {
+    /*
+     * Decodes the fasta header
+     */
+	return stringsJoin("|", (const char **)attributes->list, attributes->length);
+}
+
 void fastaWrite(char *sequence, char *header, FILE *file) {
 	int32_t i, k;
 	char j;
@@ -118,7 +140,7 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
     int32_t l;
 
     k=0;
-    while((j = getc(fastaFile)) != EOF) { //initial termininating characters
+    while((j = getc(fastaFile)) != EOF) { //initial terminating characters
         if(j == '>') { //fasta start
             fastaStart:
             cA[0] = '\0';
@@ -317,7 +339,7 @@ char *_parseFloat(char *string, float *f) {
     float f2;
 
     f2 = FLT_MIN;
-    assert(sscanf(string, "%f", &f2) == 1);
+    assert(sscanf(string, "%g", &f2) == 1);
     assert(f2 != FLT_MIN);
     *f = f2;
     while(*string != '\0' && !isspace(*string)) {
@@ -336,10 +358,19 @@ char *newickTreeParser_fn(char *newickTreeString, float *distance) {
     return newickTreeString;
 }
 
-char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct BinaryTree **binaryTree, struct List *strings) {
+static char *newickTreeParser_getLabel(char *newickTreeString, char **label) {
+	if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
+	    return eatString(newickTreeString, label);
+	}
+	*label = stringCopy("");
+	return newickTreeString;
+}
+
+char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct BinaryTree **binaryTree, int32_t unaryNodes) {
     struct BinaryTree *temp1;
     struct BinaryTree *temp2;
     float f;
+    int32_t leaves;
 
     temp1 = NULL;
     temp2 = NULL;
@@ -348,43 +379,61 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
         temp1 = NULL;
         newickTreeString = eatWhiteSpace(++newickTreeString);
         assert(*newickTreeString != ')');
-        do {
-            newickTreeString = newickTreeParser_fn2(newickTreeString, defaultDistance, &temp2, strings);
+        leaves = 0;
+        while(1) {
+        	leaves++;
+            newickTreeString = newickTreeParser_fn2(newickTreeString, defaultDistance, &temp2, unaryNodes);
             if(temp1 != NULL) {
                 //merge node
-                temp1 = constructBinaryTree(0.0f, TRUE, temp1, temp2); //default to zero distance for nodes of
+                temp1 = constructBinaryTree(0.0f, TRUE, "", temp1, temp2); //default to zero distance for nodes of
             }
             else {
                 temp1 = temp2;
             }
-        } while (*newickTreeString != ')');
+            if(*newickTreeString == ',') {
+                newickTreeString = eatWhiteSpace(++newickTreeString);
+            }
+            else {
+            	assert(*newickTreeString == ')');
+            	break;
+            }
+        }
+        if(unaryNodes && leaves == 1) { //make a unary node
+        	temp1 = constructBinaryTree(0.0f, TRUE, "", temp1, NULL);
+        }
+        else { //eat any label
+        	char *cA;
+        	newickTreeString = newickTreeParser_getLabel(newickTreeString, &cA);
+        	free(cA);
+        }
         newickTreeString = eatWhiteSpace(++newickTreeString);
     }
     else {
-        listAppend(strings, NULL);
-        newickTreeString = eatString(newickTreeString, (char **)&(strings->list[strings->length-1]));
-        temp1 = constructBinaryTree(0.0f, FALSE, NULL, NULL);
+    	temp1 = constructBinaryTree(0.0f, FALSE, "", NULL, NULL);
     }
+    free(temp1->label);
+    newickTreeString = newickTreeParser_getLabel(newickTreeString, &temp1->label);
     f = defaultDistance;
     newickTreeString = newickTreeParser_fn(newickTreeString, &f);
     temp1->distance += f;
     (*binaryTree) = temp1;
+    assert(*newickTreeString == ',' || *newickTreeString == ';' || *newickTreeString == ')' || *newickTreeString == '\0');
+
     return newickTreeString;
 }
 
-struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, struct List **strings) {
+struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int32_t unaryNodes) {
     struct BinaryTree *binaryTree;
     char *i;
-    *strings = constructEmptyList(0, free);
     //lax newick tree parser
     newickTreeString = replaceString(newickTreeString, '(', " ( ", 3);
     newickTreeString = replaceAndFreeString(newickTreeString, ')', " ) ", 3);
     newickTreeString = replaceAndFreeString(newickTreeString, ':', " : ", 3);
-    newickTreeString = replaceAndFreeString(newickTreeString, ',', " ", 1);
-    newickTreeString = replaceAndFreeString(newickTreeString, ';', "", 0);
+    newickTreeString = replaceAndFreeString(newickTreeString, ',', " , ", 3);
+    newickTreeString = replaceAndFreeString(newickTreeString, ';', " ; ", 3);
     i = newickTreeString;
     newickTreeString = eatWhiteSpace(newickTreeString);
-    newickTreeParser_fn2(newickTreeString, defaultDistance, &binaryTree, *strings);
+    newickTreeParser_fn2(newickTreeString, defaultDistance, &binaryTree, unaryNodes);
     free(i);
 
     return binaryTree;
@@ -446,4 +495,43 @@ char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignm
 void destructCharColumnAlignment(struct CharColumnAlignment *charColumnAlignment) {
     free(charColumnAlignment->columnAlignment);
     free(charColumnAlignment);
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//Get line function, while getline is not in unix.
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+int32_t benLine(char **s, int32_t *n, FILE *f) {
+	register int32_t nMinus1= ((*n)-1), i= 0;
+
+	char *s2 = *s;
+	while(TRUE) {
+		register int32_t ch= (char)getc(f);
+
+		if(ch == '\r') {
+			ch= getc(f);
+		}
+
+		if(i == nMinus1) {
+			*n = 2*(*n) + 1;
+			*s = realloc(*s, (*n + 1)*sizeof(char));
+			assert(*s != NULL);
+			s2 = *s + i;
+			nMinus1 = ((*n)-1);
+		}
+
+		if((ch == '\n') || (ch == EOF)) {
+			*s2 = '\0';
+			return(feof(f) ? -1 : i);
+		}
+		else {
+			*s2 = ch;
+			s2++;
+		}
+		++i;
+	}
 }

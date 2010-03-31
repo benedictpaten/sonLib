@@ -22,19 +22,19 @@ struct PairwiseAlignment {
 	char *contig1;
 	int32_t start1;
 	int32_t end1;
-	char strand1;
+	int32_t strand1;
 
 	char *contig2;
 	int32_t start2;
 	int32_t end2;
-	char strand2;
+	int32_t strand2;
 
 	float score;
 	struct List *operationList;
 };
 
-struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int32_t start1, int32_t end1, char strand1,
-												     char *contig2, int32_t start2, int32_t end2, char strand2,
+struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int32_t start1, int32_t end1, int32_t strand1,
+												     char *contig2, int32_t start2, int32_t end2, int32_t strand2,
 													 float score, struct List *operationList);
 
 void destructPairwiseAlignment(struct PairwiseAlignment *pairwiseAlignment);

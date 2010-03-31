@@ -38,6 +38,53 @@ void uglyf(const char *string, ...) {
     va_end(ap);
 }
 
+char *stringPrint(const char *string, ...) {
+	int32_t arraySize = 0;
+	static char *cA = NULL;
+	//return;
+	va_list ap;
+	va_start(ap, string);
+	int32_t i = vsnprintf(cA, arraySize, string, ap);
+	va_end(ap);
+	assert(i >= 0);
+	if(i >= arraySize) {
+		arraySize = i+1;
+		if(cA != NULL) {
+			free(cA);
+		}
+		cA = malloc(sizeof(char) * arraySize);
+		va_start(ap, string);
+		i = vsnprintf(cA, arraySize, string, ap);
+		assert(i+1 == arraySize);
+		va_end(ap);
+	}
+	//vfprintf(stdout, string, ap);
+	return stringCopy(cA);
+}
+
+char *stringsJoin(const char *pad, const char **strings, int32_t length) {
+	int32_t i, j, k;
+	assert(length >= 0);
+	j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
+	for(i=0; i<length; i++) {
+		j += strlen(strings[i]);
+	}
+	char *cA = malloc(sizeof(char) * j);
+	j = 0;
+	for(i=0; i<length; i++) {
+		const char *cA2 = strings[i];
+		for(k=0; k<(int32_t)strlen(cA2); k++) {
+			cA[j++] = cA2[k];
+		}
+		if(i+1 < length) {
+			for(k=0; k<(int32_t)strlen(pad); k++) {
+				cA[j++] = pad[k];
+			}
+		}
+	}
+	cA[j] = '\0';
+	return cA;
+}
 
 int32_t systemLocal(const char *string, ...) {
 	//return 0;
@@ -56,6 +103,17 @@ int32_t systemLocal(const char *string, ...) {
 
 void setLogLevel(int32_t level) {
     LOG_LEVEL = level;
+}
+
+void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
+	if(exitValue != 0) {
+		va_list ap;
+		va_start(ap, failureMessage);
+		vfprintf(stderr, failureMessage, ap);
+		//vfprintf(stdout, string, ap);
+		va_end(ap);
+		exit(1);
+	}
 }
 
 inline void *mallocLocal(int32_t i) {
@@ -451,6 +509,16 @@ void destructIntList(struct IntList *intList) {
 	free(intList);
 }
 
+struct IntList *intListCopy(struct IntList *intList) {
+	int32_t i;
+	struct IntList *intList2 = constructEmptyIntList(intList->length);
+	assert(intList->length == intList2->length);
+	for(i=0; i<intList->length; i++) {
+		intList2->list[i] = intList->list[i];
+	}
+	return intList2;
+}
+
 void intListAppend(struct IntList *list, int32_t item) {
 	if(list->length >= list->maxLength) {
 	    list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength*2 + TINY_CHUNK_SIZE, sizeof(int32_t));
@@ -537,8 +605,9 @@ void destructLong(int64_t *i) {
     free(i);
 }
 
+
 uint32_t hashtable_stringHashKey( void *k ) {
-	int32_t i, j;
+	uint32_t i, j;
 	char *cA;
 
 	cA = k;
@@ -547,7 +616,22 @@ uint32_t hashtable_stringHashKey( void *k ) {
 		j += cA[i];
 	}
 	return j;
+    }
+/**
+uint32_t hashtable_stringHashKey( void *k )
+{
+// djb2
+// This algorithm was first reported by Dan Bernstein
+// many years ago in comp.lang.c
+//
+   uint32_t hash = 5381;
+   int c;
+   char *cA;
+   cA = k;
+   while (c = *cA++) hash = ((hash << 5) + hash) + c; // hash*33 + c
+   return hash;
 }
+**/
 
 int32_t hashtable_stringEqualKey( void *key1, void *key2 ) {
 	return strcmp(key1, key2) == 0;
@@ -593,6 +677,10 @@ int longComparator_Int(int64_t *i, int64_t *j) {
     return *i < *j ? -1 : *i > *j ? 1 : 0;
 }
 
+int floatComparator(float **f, float **f2) {
+	return **f > **f2 ? 1 : (**f < **f2 ? -1 : 0);
+}
+
 int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
     int32_t i;
     int32_t j;
@@ -632,6 +720,7 @@ void destructTraversalID(struct TraversalID *traversalID) {
 }
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+									   const char *label,
                                        struct BinaryTree *left,
                                        struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
@@ -639,19 +728,24 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
     binaryTree = mallocLocal(sizeof(struct BinaryTree));
     binaryTree->distance = distance;
     binaryTree->internal = internal;
+    binaryTree->label = stringCopy(label);
     binaryTree->left = left;
     binaryTree->right = right;
+    binaryTree->traversalID = NULL;
     return binaryTree;
 }
 
 void destructBinaryTree(struct BinaryTree *binaryTree) {
-    destructTraversalID(binaryTree->traversalID);
-    if(binaryTree->left) {
+    if(binaryTree->traversalID != NULL) {
+    	destructTraversalID(binaryTree->traversalID);
+    }
+    if(binaryTree->left != NULL) {
         destructBinaryTree(binaryTree->left);
     }
-    if(binaryTree->right) {
+    if(binaryTree->right != NULL) {
         destructBinaryTree(binaryTree->right);
     }
+    free(binaryTree->label);
     free(binaryTree);
 }
 
@@ -686,6 +780,22 @@ static void binaryTree_depthFirstNumbers_Traverse(struct BinaryTree *binaryTree,
     }
 }
 
+void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct List *leafStrings) {
+	if(binaryTree->internal) {
+		binaryTree_getOrderedLeafStringsP(binaryTree->left, leafStrings);
+		binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
+	}
+	else {
+		listAppend(leafStrings, stringCopy(binaryTree->label));
+	}
+}
+
+struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree) {
+	struct List *leafStrings = constructEmptyList(0, free);
+	binaryTree_getOrderedLeafStringsP(binaryTree, leafStrings);
+	return leafStrings;
+}
+
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
     //get pre-order, post-order and mid-order depth first tree numbers
     int32_t mid = 0;
@@ -694,15 +804,24 @@ void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
     binaryTree_depthFirstNumbers_Traverse(binaryTree, &mid, &leafNo);
 }
 
-void printBinaryTree(FILE *file, struct BinaryTree *binaryTree, char **nodeNames) {
+void printBinaryTreeP(FILE *file, struct BinaryTree *binaryTree) {
     if(binaryTree->internal) {
-        printBinaryTree(file, binaryTree->left, nodeNames);
-        fprintf(file, "Internal node\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t\t%f\t%s\n", binaryTree->traversalID->midStart, binaryTree->traversalID->mid, binaryTree->traversalID->midEnd, binaryTree->traversalID->leafNo, binaryTree->distance, nodeNames[binaryTree->traversalID->mid]);
-        printBinaryTree(file, binaryTree->right, nodeNames);
+    	fprintf(file, "(");
+        printBinaryTreeP(file, binaryTree->left);
+        if(binaryTree->right != NULL) {
+        	fprintf(file, ",");
+        	printBinaryTreeP(file, binaryTree->right);
+        }
+        fprintf(file, ")%s:%g", binaryTree->label, binaryTree->distance);
     }
     else {
-        fprintf(file, "Leaf node\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t" INT_STRING "\t\t%f\t%s\n", binaryTree->traversalID->midStart, binaryTree->traversalID->mid, binaryTree->traversalID->midEnd, binaryTree->traversalID->leafNo, binaryTree->distance, nodeNames[binaryTree->traversalID->mid]);
+        fprintf(file, "%s:%g", binaryTree->label, binaryTree->distance);
     }
+}
+
+void printBinaryTree(FILE *file, struct BinaryTree *binaryTree) {
+	printBinaryTreeP(file, binaryTree);
+	fprintf(file, ";\n");
 }
 
 void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list) {
@@ -751,6 +870,23 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
 
 char *stringCopy(const char *str) {
 	return strcpy(mallocLocal(sizeof(char)*(1+strlen(str))), str);
+}
+
+char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
+	char *fullPath;
+
+	fullPath = malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
+	if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
+		sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
+	}
+	else {
+		sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
+	}
+	return fullPath;
+}
+
+int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
+	return (valueOne - valueTwo <= precision) || (valueTwo - valueOne <= precision);
 }
 
 /////////////////////////////////////////////////////////
@@ -958,5 +1094,69 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
 	free(cA2);
 	tempFileTree->tempFilesCreated++;
 	return cA4;
+}
+
+/*
+ * Graphviz functions.
+ */
+
+void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
+		double width, double height, const char *shape, const char *colour,
+		int32_t fontsize) {
+    /*
+     * Adds a node to the graph.
+     */
+    fprintf(graphFileHandle, "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%i];\n", width, height, shape, colour, fontsize);
+    fprintf(graphFileHandle, "n%sn [label=\"%s\"];\n", nodeName, label);
+}
+
+void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
+		const char *label, const char *colour, double length, double weight, const char *direction) {
+    /*
+     * Links two nodes in the graph together.
+     */
+	fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n", colour, length, weight, direction);
+	fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName, childNodeName, label);
+}
+
+void graphViz_setupGraphFile(FILE *graphFileHandle) {
+    /*
+     * Sets up the dot file.
+     */
+    fprintf(graphFileHandle, "graph G {\n");
+    fprintf(graphFileHandle, "overlap=false\n");
+}
+
+void graphViz_finishGraphFile(FILE *graphFileHandle) {
+    /*
+     * Finishes up the dot file.
+     */
+    fprintf(graphFileHandle, "}\n");
+}
+
+static int32_t getColour_Index = 0;
+const char *graphViz_getColour() {
+    /*
+     * Returns a valid colour.
+     */
+	getColour_Index++;
+    static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey" };
+    return colours[getColour_Index % 11];
+}
+
+void arrayShuffle(void **array, int32_t n) {
+	/* Arrange the N elements of ARRAY in random order.
+	   Only effective if N is much smaller than RAND_MAX;
+	   if this may not be the case, use a better random
+	   number generator. */
+    if (n > 1) {
+        int32_t i;
+		for (i = 0; i < n - 1; i++) {
+		  int32_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+		  void *t = array[j];
+		  array[j] = array[i];
+		  array[i] = t;
+		}
+    }
 }
 

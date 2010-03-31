@@ -1,65 +1,85 @@
 /* Copyright (C) 2002, 2004 Christopher Clark <firstname.lastname@cl.cam.ac.uk> */
 
-#ifndef __HASHTABLE_PRIVATE_CWC22_H__
-#define __HASHTABLE_PRIVATE_CWC22_H__
- 
+#ifndef __HASHTABLE_ITR_CWC22__
+#define __HASHTABLE_ITR_CWC22__
 #include "hashTableC.h"
-
-#include "fastCMaths.h"
-#include "commonC.h"  
+#include "hashTablePrivateC.h" /* needed to enable inlining */
 
 /*****************************************************************************/
-
-struct entry
+/* This struct is only concrete here to allow the inlining of two of the
+ * accessor functions. */
+struct hashtable_itr
 {
-    void *k, *v;
-    uint32_t h;
-    struct entry *next;
+    struct hashtable *h;
+    struct entry *e;
+    struct entry *parent;
+    unsigned int index;
 };
 
-struct hashtable {
-    uint32_t tablelength;
-    struct entry **table;
-    uint32_t entrycount;
-    uint32_t loadlimit;
-    uint32_t primeindex;
-    uint32_t (*hashfn) (void *k);
-    int32_t (*eqfn) (void *k1, void *k2);
-    void (*keyFree)(void *);
-    void (*valueFree)(void *);
-    struct Chunks *entryChunks;
-};
 
 /*****************************************************************************/
-uint32_t
-hash(struct hashtable *h, void *k);
+/* hashtable_iterator
+ */
+
+struct hashtable_itr *
+hashtable_iterator(struct hashtable *h);
 
 /*****************************************************************************/
-/* indexFor */
-static uint32_t
-indexFor(uint32_t tablelength, uint32_t hashvalue) {
-    return (hashvalue % tablelength);
-}
+/* hashtable_iterator_key
+ * - return the value of the (key,value) pair at the current position */
 
-/* Only works if tablelength == 2^N */
-/*static UNSIGNED_INT_32
-indexFor(UNSIGNED_INT_32 tablelength, UNSIGNED_INT_32 hashvalue)
+extern inline void *
+hashtable_iterator_key(struct hashtable_itr *i)
 {
-    return (hashvalue & (tablelength - 1u));
+    return i->e->k;
 }
-*/
 
 /*****************************************************************************/
-#define freekey(X) free(X) /* this is used by hashTableC_itr */
-/*define freekey(X) ; */
+/* value - return the value of the (key,value) pair at the current position */
 
+extern inline void *
+hashtable_iterator_value(struct hashtable_itr *i)
+{
+    return i->e->v;
+}
 
 /*****************************************************************************/
+/* advance - advance the iterator to the next element
+ *           returns zero if advanced to end of table */
 
-#endif /* __HASHTABLE_PRIVATE_CWC22_H__*/
+int
+hashtable_iterator_advance(struct hashtable_itr *itr);
+
+/*****************************************************************************/
+/* remove - remove current element and advance the iterator to the next element
+ *          NB: if you need the value to free it, read it before
+ *          removing. ie: beware memory leaks!
+ *          returns zero if advanced to end of table */
+
+int
+hashtable_iterator_remove(struct hashtable_itr *itr);
+
+/*****************************************************************************/
+/* search - overwrite the supplied iterator, to point to the entry
+ *          matching the supplied key.
+            h points to the hashtable to be searched.
+ *          returns zero if not found. */
+int
+hashtable_iterator_search(struct hashtable_itr *itr,
+                          struct hashtable *h, void *k);
+
+#define DEFINE_HASHTABLE_ITERATOR_SEARCH(fnname, keytype) \
+int fnname (struct hashtable_itr *i, struct hashtable *h, keytype *k) \
+{ \
+    return (hashtable_iterator_search(i,h,k)); \
+}
+
+
+
+#endif /* __HASHTABLE_ITR_CWC22__*/
 
 /*
- * Copyright (c) 2002, Christopher Clark
+ * Copyright (c) 2002, 2004, Christopher Clark
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
