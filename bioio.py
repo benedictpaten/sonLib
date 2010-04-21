@@ -145,7 +145,7 @@ class TestStatus:
         TestStatus.SAVE_ERROR_LOCATION = dir
     setSaveErrorLocation = staticmethod(setSaveErrorLocation)
     
-    def getTestSetup(shortTestNo=5, mediumTestNo=20, longTestNo=200, veryLongTestNo=0):
+    def getTestSetup(shortTestNo=2, mediumTestNo=10, longTestNo=100, veryLongTestNo=0):
         if TestStatus.TEST_STATUS == TestStatus.TEST_SHORT:
             return shortTestNo
         elif TestStatus.TEST_STATUS == TestStatus.TEST_MEDIUM:

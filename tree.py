@@ -125,9 +125,9 @@ def makeRandomBinaryTree(leafNodeNumber=None):
             nodeNo[0] += 1
             if random.random() > 0.6:
                 i = str(nodeNo[0])
-                return BinaryTree(random.random()*0.8, True, fn(), fn(), i)
+                return BinaryTree(0.00001 + random.random()*0.8, True, fn(), fn(), i)
             else:
-                return BinaryTree(random.random()*0.8, False, None, None, str(nodeNo[0]))
+                return BinaryTree(0.00001 + random.random()*0.8, False, None, None, str(nodeNo[0]))
         tree = fn()
         def fn2(tree):
             if tree.internal:
