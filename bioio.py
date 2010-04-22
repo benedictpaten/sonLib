@@ -308,7 +308,10 @@ def getTempDirectory(rootDir=None):
     if rootDir == None:
         return tempfile.mkdtemp()
     else:
-        rootDir = os.path.join(rootDir, getRandomAlphaNumericString())
+        while True:
+            rootDir = os.path.join(rootDir, getRandomAlphaNumericString())
+            if not os.path.exists(rootDir):
+                break
         os.mkdir(rootDir)
         os.chmod(rootDir, 0777) #Ensure everyone has access to the file.
         return rootDir
