@@ -89,6 +89,7 @@ def system(command):
     if i != 0:
         print >>sys.stderr, "Something went wrong: %i" % i
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
+    return i
 
 def popen(command, tempFile):
     """Runs a command and captures standard out in the given temp file.
@@ -102,6 +103,7 @@ def popen(command, tempFile):
     if i != 0:
         print >>sys.stderr, "Something went wrong: %i" % i
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
+    return i
  
 #########################################################
 #########################################################
@@ -274,7 +276,17 @@ def parseSuiteTestOptions():
         
     return options, args
     
-   
+def nameValue(name, value, valueType=str):
+    """Little function to make it easier to make name value strings for commands.
+    """
+    if valueType == bool:
+        if value:
+            return "--%s" % name
+        return ""
+    if value == None:
+        return ""
+    return "--%s %s" % (name, valueType(value))    
+
 #########################################################
 #########################################################
 #########################################################
