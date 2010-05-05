@@ -4,12 +4,11 @@ import random
 
 from sonLib.bioio import getTempFile
 from sonLib.bioio import system
-from sonLib.bioio import cigarRead
 
 from sonLib.bioio import TestStatus
-from sonLib.bioio import fastaRead
-from sonLib.bioio import fastaWrite
-from sonLib.misc import getPositiveCoordinateRangeOverlap
+
+#from sonLib.misc import sonTraceRootPath
+import xml.etree.ElementTree as ET
 
 class TestCase(unittest.TestCase):
     
@@ -43,6 +42,7 @@ class TestCase(unittest.TestCase):
             
             system("sonLib_eVDScript --scoresFile %s --outputFile %s --logLevel DEBUG" % (tempScoresFile, tempOutputFile))
             system("cat %s" % tempOutputFile)
-        
+            eVDNode = ET.parse(tempOutputFile).getroot().find("evd")
+            
 if __name__ == '__main__':
     unittest.main()
