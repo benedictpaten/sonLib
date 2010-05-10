@@ -32,14 +32,14 @@ struct hashtable {
 
 /*****************************************************************************/
 uint32_t
-hash(struct hashtable *h, void *k);
+hashP(struct hashtable *h, void *k);
 
 /*****************************************************************************/
-/* indexFor */
+/* indexFor
 static uint32_t
 indexFor(uint32_t tablelength, uint32_t hashvalue) {
     return (hashvalue % tablelength);
-}
+}*/
 
 /* Only works if tablelength == 2^N */
 /*static UNSIGNED_INT_32

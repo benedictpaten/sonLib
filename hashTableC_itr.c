@@ -5,6 +5,13 @@
 #include "hashTableC_itr.h"
 #include <stdlib.h> /* defines NULL */
 
+
+/* indexFor */
+static uint32_t
+indexFor(uint32_t tablelength, uint32_t hashvalue) {
+    return (hashvalue % tablelength);
+}
+
 /*****************************************************************************/
 /* hashtable_iterator    - iterator constructor */
 
@@ -119,7 +126,7 @@ hashtable_iterator_search(struct hashtable_itr *itr,
     struct entry *e, *parent;
     unsigned int hashvalue, index;
 
-    hashvalue = hash(h,k);
+    hashvalue = hashP(h,k);
     index = indexFor(h->tablelength,hashvalue);
 
     e = h->table[index];
