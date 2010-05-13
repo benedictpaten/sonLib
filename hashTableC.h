@@ -4,6 +4,7 @@
 #define __HASHTABLE_CWC22_H__
   
 #include "fastCMaths.h"
+#include "commonC.h"
  
 struct hashtable;
 

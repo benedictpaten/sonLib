@@ -51,7 +51,7 @@ create_hashtable(uint32_t minsize,
     }
     h = (struct hashtable *)mallocLocal(sizeof(struct hashtable));
     if (NULL == h) return NULL; /*oom*/
-    h->table = (struct entry **)malloc(sizeof(struct entry*) * size);
+    h->table = (struct entry **)mallocLocal(sizeof(struct entry*) * size);
     if (NULL == h->table) { free(h); return NULL; } /*oom*/
     memset(h->table, 0, size * sizeof(struct entry *));
     h->tablelength  = size;
@@ -165,7 +165,7 @@ hashtable_insert(struct hashtable *h, void *k, void *v)
             exit(1);
         }
     }
-    e = (struct entry *)mallocChunk(h->entryChunks); //malloc(sizeof(struct entry));
+    e = (struct entry *)mallocChunk(h->entryChunks); //mallocLocal(sizeof(struct entry));
     if (NULL == e) { --(h->entrycount); return 0; } /*oom*/
     e->h = hashP(h,k);
     index = indexFor(h->tablelength,e->h);

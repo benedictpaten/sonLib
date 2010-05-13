@@ -26,7 +26,7 @@ extern "C" {
 struct EVDParameters *readEVDParameters(XMLNode xMainNode) {
 	struct EVDParameters *eVDParameters;
 
-	eVDParameters = (struct EVDParameters *)malloc(sizeof(struct EVDParameters));
+	eVDParameters = (struct EVDParameters *)mallocLocal(sizeof(struct EVDParameters));
 
 	XMLNode xNode = xMainNode.getChildNode("evd");
 
@@ -36,7 +36,7 @@ struct EVDParameters *readEVDParameters(XMLNode xMainNode) {
 	assert(sscanf(xNode.getChildNode("chisq").getAttribute("value"), "%lf", &eVDParameters->chisq) == 1);
 	assert(sscanf(xNode.getChildNode("pChiSq").getAttribute("value"), "%lf", &eVDParameters->pChiSq) == 1);
 	assert(sscanf(xNode.getChildNode("scoreNo").getAttribute("value"), "%i", &eVDParameters->scoreNo) == 1);
-	eVDParameters->scores = (double *)malloc(sizeof(double)*(eVDParameters->scoreNo + 1));
+	eVDParameters->scores = (double *)mallocLocal(sizeof(double)*(eVDParameters->scoreNo + 1));
 	if(eVDParameters->scoreNo > 0) {
 		readDoubles(xNode.getText(), eVDParameters->scoreNo, eVDParameters->scores);
 	}

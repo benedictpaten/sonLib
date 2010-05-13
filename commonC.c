@@ -52,7 +52,7 @@ char *stringPrint(const char *string, ...) {
 		if(cA != NULL) {
 			free(cA);
 		}
-		cA = malloc(sizeof(char) * arraySize);
+		cA = mallocLocal(sizeof(char) * arraySize);
 		va_start(ap, string);
 		i = vsnprintf(cA, arraySize, string, ap);
 		assert(i+1 == arraySize);
@@ -69,7 +69,7 @@ char *stringsJoin(const char *pad, const char **strings, int32_t length) {
 	for(i=0; i<length; i++) {
 		j += strlen(strings[i]);
 	}
-	char *cA = malloc(sizeof(char) * j);
+	char *cA = mallocLocal(sizeof(char) * j);
 	j = 0;
 	for(i=0; i<length; i++) {
 		const char *cA2 = strings[i];
@@ -875,7 +875,7 @@ char *stringCopy(const char *str) {
 char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
 	char *fullPath;
 
-	fullPath = malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
+	fullPath = mallocLocal(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
 	if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
 		sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
 	}
