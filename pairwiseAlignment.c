@@ -51,6 +51,7 @@ void checkPairwiseAlignment(struct PairwiseAlignment *pA) {
 	k = pA->start2;
 	for(i=0; i<pA->operationList->length; i++) {
 		op = pA->operationList->list[i];
+		assert(op->length >= 0);
 		if(op->opType != PAIRWISE_INDEL_Y) {
 			j += pA->strand1 ? op->length : -op->length;
 		}
