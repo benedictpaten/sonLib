@@ -143,7 +143,7 @@ class TestStatus:
         """Set location in which to write inputs which created test error.
         """
         logger.info("Location to save error files in: %s" % dir)
-	assert os.path.isdir(dir)
+        assert os.path.isdir(dir)
         TestStatus.SAVE_ERROR_LOCATION = dir
     setSaveErrorLocation = staticmethod(setSaveErrorLocation)
     
@@ -167,7 +167,6 @@ class TestStatus:
         return os.environ["SON_TRACE_DATASETS"]
     getPathToDataSets = staticmethod(getPathToDataSets)
     
-
 def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
     """Copies the list of files to a directory created in the save inputs dir,
     and returns the name of this directory.
@@ -785,8 +784,6 @@ def pWMWrite(fileHandle, pWM, alphabetSize=4):
     """
     for i in xrange(0, alphabetSize):
         fileHandle.write("%s\n" % ' '.join([ str(pWM[j][i]) for j in xrange(0, len(pWM)) ]))
-    
-
 
 #########################################################
 #########################################################
