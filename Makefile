@@ -2,8 +2,8 @@ include ../../include.mk
 binPath = ../../bin
 libPath = ../../lib
 
-libSources = avl.c bioioC.c commonC.c disjointset.c fastCMaths.c hashTableC.c hashTableC_itr.c heapC.c substitutionC.c pairwiseAlignment.c
-libHeaders = avl.h bioioC.h commonC.h disjointset.h fastCMaths.h hashTableC.h hashTableC_itr.h heapC.h substitutionC.h pairwiseAlignment.h hashTablePrivateC.h
+libSources = avl.c bioioC.c commonC.c cstring.c disjointset.c fastCMaths.c hashTableC.c hashTableC_itr.c heapC.c substitutionC.c pairwiseAlignment.c
+libHeaders = avl.h bioioC.h commonC.h cstring.h disjointset.h fastCMaths.h hashTableC.h hashTableC_itr.h heapC.h substitutionC.h pairwiseAlignment.h hashTablePrivateC.h
 
 libPlusSources = Argument_helper.cc XMLTools.cc substitutionIO.cc
 libPlusHeaders = Argument_helper.h XMLTools.h substitutionIO.h
