@@ -8,7 +8,7 @@
 #ifndef ETREE_H_
 #define ETREE_H_
 
-typedef struct _eTRee ETree;
+#include "sonLibGlobals.h"
 
 /*
  * Construct unattached eTree node.
@@ -33,7 +33,7 @@ void eTree_setParent(ETree *eTree, ETree *parent);
 /*
  * Get the number of children.
  */
-ETree *eTree_getChildNumber(ETree *eTree);
+int32_t eTree_getChildNumber(ETree *eTree);
 
 /*
  * Get a given child.
@@ -41,7 +41,7 @@ ETree *eTree_getChildNumber(ETree *eTree);
 ETree *eTree_getChild(ETree *eTree, int32_t i);
 
 /*
- * Get the length of the branch.
+ * Get the length of the branch. If not set will return INFINITY
  */
 double eTree_getBranchLength(ETree *eTree);
 
