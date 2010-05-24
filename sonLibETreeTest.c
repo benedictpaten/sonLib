@@ -84,9 +84,9 @@ void testETree_getChild(CuTest* testCase) {
 void testETree_getSetBranchLength(CuTest* testCase) {
 	setup();
 	CuAssertTrue(testCase, eTree_getBranchLength(child1) == 1.1);
-	CuAssertTrue(testCase, eTree_getBranchLength(child2) == 1.0);
+	CuAssertTrue(testCase, eTree_getBranchLength(child2) == INFINITY);
 	CuAssertTrue(testCase, eTree_getBranchLength(internal) == 0.5);
-	CuAssertTrue(testCase, eTree_getBranchLength(root) == 1.0);
+	CuAssertTrue(testCase, eTree_getBranchLength(root) == INFINITY);
 	eTree_setBranchLength(child1, 1.3);
 	CuAssertTrue(testCase, eTree_getBranchLength(child1) == 1.3);
 	teardown();
@@ -107,7 +107,7 @@ void testETree_label(CuTest* testCase) {
 
 void testETree_newickTreeParser(CuTest *testCase) {
 	setup();
-	char *testNewickStrings[4] =  { "(((a, b, (c, ))d), e)f;",  ";", "f;", "();" };
+	char *testNewickStrings[4] =  { "(((a,b,(c,))d),e)f;",  ";", "f;", "();" };
 	int32_t i;
 	for(i=0; i<4; i++) {
 		ETree *eTree2 = eTree_parseNewickString(testNewickStrings[i]);
@@ -127,7 +127,7 @@ CuSuite* eTreeTestSuite(void) {
 	SUITE_ADD_TEST(suite, testETree_getChildNumber);
 	SUITE_ADD_TEST(suite, testETree_getChild);
 	SUITE_ADD_TEST(suite, testETree_getSetBranchLength);
-	SUITE_ADD_TEST(suite, testETree_label);
 	SUITE_ADD_TEST(suite, testETree_newickTreeParser);
+	SUITE_ADD_TEST(suite, testETree_label);
 	return suite;
 }

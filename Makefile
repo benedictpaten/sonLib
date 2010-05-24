@@ -2,17 +2,14 @@ include ../../include.mk
 binPath = ../../bin
 libPath = ../../lib
 
-libSources = avl.c bioioC.c commonC.c fastCMaths.c hashTableC.c hashTableC_itr.c heapC.c substitutionC.c pairwiseAlignment.c 
-#sonLib*.c
-libHeaders = avl.h bioioC.h commonC.h fastCMaths.h hashTableC.h hashTableC_itr.h heapC.h substitutionC.h pairwiseAlignment.h hashTablePrivateC.h 
-#sonLib*.h
+libSources = avl.c bioioC.c commonC.c fastCMaths.c hashTableC.c hashTableC_itr.c heapC.c substitutionC.c pairwiseAlignment.c allTests.c sonLib*.c
+libHeaders = avl.h bioioC.h commonC.h fastCMaths.h hashTableC.h hashTableC_itr.h heapC.h substitutionC.h pairwiseAlignment.h hashTablePrivateC.h sonLib*.h
 cflags += ${tokyoCabinetIncl}
 
 libPlusSources = Argument_helper.cc XMLTools.cc substitutionIO.cc
 libPlusHeaders = Argument_helper.h XMLTools.h substitutionIO.h
 
-all : ${libPath}/sonLib.a ${libPath}/sonLibPlus.a ${binPath}/sonLib_binTest ${binPath}/sonLib_cigarsTest ${binPath}/sonLib_fastaCTest eVDM 
-#${binPath}/sonLibTests
+all : ${libPath}/sonLib.a ${libPath}/sonLibPlus.a ${binPath}/sonLib_binTest ${binPath}/sonLib_cigarsTest ${binPath}/sonLib_fastaCTest eVDM ${binPath}/sonLibTests
 
 clean : 
 #Removing test binaries
@@ -30,8 +27,8 @@ ${binPath}/sonLib_cigarsTest : ${libPath}/sonLib.a cigarsTest.c
 ${binPath}/sonLib_fastaCTest : ${libPath}/sonLib.a fastaCTest.c
 	${cxx} ${cflags} -I ../sonLib -o ${binPath}/sonLib_fastaCTest fastaCTest.c ${libPath}/sonLib.a
 	
-#${binPath}/sonLibTests : ${libSources} ${libHeaders} allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a
-#	${cxx} ${cflags} -I ${libPath} -o ${binPath}/sonLibTests allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${tokyoCabinetLib}
+${binPath}/sonLibTests : ${libSources} ${libHeaders} allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a
+	${cxx} ${cflags} -I ${libPath} -o ${binPath}/sonLibTests allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${tokyoCabinetLib}
 
 
 eVDM : ${libPath}/sonLib.a ${libPath}/sonLibPlus.a

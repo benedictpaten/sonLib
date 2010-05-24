@@ -9,5 +9,6 @@
 #define SONLIB_H_
 
 #include "sonLibETree.h"
+#include "sonLibString.h"
 
 #endif /* SONLIB_H_ */

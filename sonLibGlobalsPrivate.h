@@ -27,6 +27,7 @@
 
 #include "sonLibETree.h"
 #include "sonLibETreePrivate.h"
+#include "sonLibString.h"
 #include "commonC.h"
 
 #endif /* SONLIBPRIVATE_H_ */
