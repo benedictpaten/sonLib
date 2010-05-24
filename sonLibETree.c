@@ -67,9 +67,69 @@ void eTree_setLabel(ETree *eTree, const char *label) {
 	eTree->label = label == NULL ? NULL : stringCopy(label);
 }
 
-ETree *eTree_parseNewickString(const char *string) {
+/////////////////////////////
+//Newick tree parser
+/////////////////////////////
 
+static void eTree_parseNewickString_getLabel(char **newickTreeString, ETree *eTree) {
+	if(**newickTreeString != ':' && **newickTreeString != ',' && **newickTreeString != ';' && **newickTreeString != ')' && **newickTreeString != '\0') {
+	    char *cA;
+		eatString(*newickTreeString, &cA);
+		eTree_setLabel(eTree, cA);
+		free(cA);
+	}
 }
+
+static void eTree_parseNewickString_getBranchLength(char **newickTreeString, ETree *eTree) {
+    if(**newickTreeString != '\0') {
+        if (**newickTreeString == ':') {
+            (*newickTreeString)++;
+            float distance;
+            _parseFloat(eatWhiteSpace(newickTreeString), &distance);
+            eTree_setBranchLength(eTree, distance);
+        }
+    }
+}
+
+static ETree *eTree_parseNewickStringP(char **newickTreeString) {
+    ETree *eTree = eTree_construct();
+    if(**newickTreeString == '(') {
+        eatWhiteSpace(++(*newickTreeString));
+        while(1) {
+        	eTree_setParent(eTree_parseNewickStringP(newickTreeString), eTree);
+            if(**newickTreeString == ',') {
+                newickTreeString = eatWhiteSpace(++(*newickTreeString));
+            }
+            else {
+            	assert(**newickTreeString == ')');
+            	break;
+            }
+        }
+        newickTreeString = eatWhiteSpace(++(*newickTreeString));
+    }
+    eTree_parseNewickString_getLabel(newickTreeString, eTree);
+    eTree_parseNewickString_getBranchLength(newickTreeString, eTree);
+    assert(**newickTreeString == ',' || **newickTreeString == ';' || **newickTreeString == ')' || **newickTreeString == '\0');
+    return eTree;
+}
+
+ETree *eTree_parseNewickString(const char *string) {
+	//lax newick tree parser
+	char *newickTreeString = replaceString(string, '(', " ( ", 3);
+	newickTreeString = replaceAndFreeString(newickTreeString, ')', " ) ", 3);
+	newickTreeString = replaceAndFreeString(newickTreeString, ':', " : ", 3);
+	newickTreeString = replaceAndFreeString(newickTreeString, ',', " , ", 3);
+	newickTreeString = replaceAndFreeString(newickTreeString, ';', " ; ", 3);
+	char *cA = newickTreeString;
+	newickTreeString = eatWhiteSpace(newickTreeString);
+	ETree *eTree = newickTreeParser_fn2(&newickTreeString);
+	free(cA);
+	return eTree;
+}
+
+/////////////////////////////
+//Newick tree writer
+/////////////////////////////
 
 static char *eTree_getNewickTreeStringP(ETree *eTree) {
 	char *cA, *cA2;
