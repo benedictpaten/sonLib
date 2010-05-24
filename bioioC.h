@@ -90,7 +90,20 @@ int32_t parseInt(char **string, int32_t *j);
 
 int32_t parseFloat(char **string, float *j);
 
-int32_t parseString(char **string, char *cA) ;
+int32_t parseString(char **string, char *cA);
+
+/* 
+ * Substitute the string "replacement" for every instance of the character "old" in string "oldString"
+ *   Note: Using the variable replacement instead of new to avoid C++ conflicts
+ */
+char *replaceString(char *oldString, char old, char *replacement, int32_t newLength);
+
+/* 
+ * Substitute the string "replacement" for every instance of the character "old" in string "oldString" 
+ *   and free oldString.
+ *   Note: Using the variable replacement instead of new to avoid C++ conflicts
+ */
+char *replaceAndFreeString(char *oldString, char old, char *replacement, int32_t newLength);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -103,4 +116,3 @@ int32_t parseString(char **string, char *cA) ;
 int32_t benLine(char **s, int32_t *n, FILE *f);
 
 #endif /*BIOIOC_H_*/
-
