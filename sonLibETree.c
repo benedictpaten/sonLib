@@ -141,6 +141,7 @@ ETree *eTree_parseNewickString(const char *string) {
 	free(cA);
 	cA = cA2;
 	cA2 = string_replace(cA, ";", " ; ");
+	free(cA);
 	cA = cA2;
 	char *token = string_getNextWord(&cA);
 	assert(token != NULL);
