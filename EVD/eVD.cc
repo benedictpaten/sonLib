@@ -104,7 +104,7 @@ double calculateEVDProbFromScore(struct EVDParameters *eP, double score, double 
 	return pXN;
 }
 
-int readScores(XMLNode xMainNode, char *childName, char *attributeName, double **scores) {
+int readScores(XMLNode xMainNode, const char *childName, const char *attributeName, double **scores) {
 	/*
 	 * Reads scores from an XML file.
 	 */

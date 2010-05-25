@@ -38,6 +38,6 @@ double calculateEVDProbFromScore(struct EVDParameters *eP, double score, double 
 /*
  * Method for extracting scores from an input XML file.
  */
-int readScores(XMLNode xMainNode, char *childName, char *attributeName, double **scores);
+int readScores(XMLNode xMainNode, const char *childName, const char *attributeName, double **scores);
 
 #endif

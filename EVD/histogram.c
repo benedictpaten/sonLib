@@ -262,7 +262,7 @@ sre_srandom(int seed)
  */
 
 void *
-sre_malloc(char *file, int line, size_t size)
+sre_malloc(const char *file, int line, size_t size)
 {
   void *ptr;
 
@@ -273,7 +273,7 @@ sre_malloc(char *file, int line, size_t size)
 }
 
 void *
-sre_realloc(char *file, int line, void *p, size_t size)
+sre_realloc(const char *file, int line, void *p, size_t size)
 {
   void *ptr;
 
@@ -295,7 +295,7 @@ sre_realloc(char *file, int line, void *p, size_t size)
  */
 /* VARARGS0 */
 void
-Die(char *format, ...)
+Die(const char *format, ...)
 {
   va_list  argp;
 				/* format the error mesg */

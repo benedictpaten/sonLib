@@ -72,13 +72,13 @@ extern void   Lawless422(float *x, int *y, int n, int z, float c,
 
 /* from sre_string.c
  */
-extern void *sre_malloc(char *file, int line, size_t size);
-extern void *sre_realloc(char *file, int line, void *p, size_t size);
+extern void *sre_malloc(const char *file, int line, size_t size);
+extern void *sre_realloc(const char *file, int line, void *p, size_t size);
 
 /*
  * from sqerror.c
  */
-extern void Die(char *format, ...);
+extern void Die(const char *format, ...);
 
 /* from sre_math.c
  */
