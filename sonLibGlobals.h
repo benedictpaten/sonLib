@@ -39,7 +39,7 @@ typedef struct _sonLibHash Hash;
 typedef struct hashtable_itr Hash_Iterator;
 typedef struct avl_table SortedSet;
 typedef struct avl_traverser SortedSet_Iterator;
-typedef struct _list List;
+//typedef struct _list List;
 typedef struct _listIterator ListIterator;
 
 #endif /* SONLIBGLOBALS_H_ */
