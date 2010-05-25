@@ -10,5 +10,7 @@
 
 #include "sonLibETree.h"
 #include "sonLibString.h"
+#include "sonLibHash.h"
+#include "sonLibSortedSet.h"
 
 #endif /* SONLIB_H_ */

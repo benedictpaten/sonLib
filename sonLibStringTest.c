@@ -66,7 +66,7 @@ void testString_join(CuTest* testCase) {
 	free(cA2);
 }
 
-CuSuite* stringTestSuite(void) {
+CuSuite* sonLibStringTestSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, testString_copy);
 	SUITE_ADD_TEST(suite, testString_print);

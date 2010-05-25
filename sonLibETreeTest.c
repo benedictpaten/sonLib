@@ -120,7 +120,7 @@ void testETree_newickTreeParser(CuTest *testCase) {
 	teardown();
 }
 
-CuSuite* eTreeTestSuite(void) {
+CuSuite* sonLibETreeTestSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, testETree_construct);
 	SUITE_ADD_TEST(suite, testETree_getSetParent);

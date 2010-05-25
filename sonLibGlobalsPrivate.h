@@ -25,6 +25,10 @@
 #include <tcbdb.h>
 #include "CuTest.h"
 
+#include "sonLibGlobals.h"
+#include "sonLibHash.h"
+#include "sonLibHashPrivate.h"
+#include "sonLibSortedSet.h"
 #include "sonLibETree.h"
 #include "sonLibETreePrivate.h"
 #include "sonLibString.h"
