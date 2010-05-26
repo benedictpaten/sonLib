@@ -10,15 +10,15 @@
 
 #include "sonLibGlobals.h"
 
-struct _stList {
+struct _st_List {
 	void **list;
 	int32_t length;
 	int32_t maxLength;
 	void (*destructElement)(void *);
 };
 
-struct _stListIterator {
-	stList *list;
+struct _st_ListIterator {
+	st_List *list;
 	int32_t index;
 };
 

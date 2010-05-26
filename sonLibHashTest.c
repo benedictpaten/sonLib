@@ -1,7 +1,7 @@
 #include "sonLibGlobalsPrivate.h"
 
-static stHash *hash;
-static stHash *hash2;
+static st_Hash *hash;
+static st_Hash *hash2;
 static int32_t *one, *two, *three, *four, *five, *six;
 
 static uint32_t hashKey(void *o) {
@@ -119,7 +119,7 @@ static void testHash_size(CuTest *testCase) {
 
 	CuAssertTrue(testCase, st_hash_size(hash) == 3);
 	CuAssertTrue(testCase, st_hash_size(hash2) == 3);
-	stHash *hash3 = st_hash_construct();
+	st_Hash *hash3 = st_hash_construct();
 	CuAssertTrue(testCase, st_hash_size(hash3) == 0);
 	st_hash_destruct(hash3);
 
@@ -129,10 +129,10 @@ static void testHash_size(CuTest *testCase) {
 static void testHash_testIterator(CuTest *testCase) {
 	testSetup();
 
-	stHash_Iterator *iterator = st_hash_getIterator(hash);
-	stHash_Iterator *iteratorCopy = st_hash_copyIterator(iterator);
+	st_HashIterator *iterator = st_hash_getIterator(hash);
+	st_HashIterator *iteratorCopy = st_hash_copyIterator(iterator);
 	int32_t i=0;
-	stHash *seen = st_hash_construct();
+	st_Hash *seen = st_hash_construct();
 	for(i=0; i<3; i++) {
 		void *o = st_hash_getNext(iterator);
 		CuAssertTrue(testCase, o != NULL);

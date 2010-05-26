@@ -7,7 +7,7 @@
 
 #include "sonLibGlobalsPrivate.h"
 
-static stList *list = NULL;
+static st_List *list = NULL;
 static int32_t stringNumber = 5;
 static char *strings[5] = { "one", "two", "three", "four", "five" };
 
@@ -29,7 +29,7 @@ static void setup() {
 
 void test_st_list_construct(CuTest *testCase) {
 	setup();
-	stList *list2 = st_list_construct2(stringNumber);
+	st_List *list2 = st_list_construct2(stringNumber);
 	CuAssertTrue(testCase, st_list_length(list2) == stringNumber);
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
@@ -74,7 +74,7 @@ void test_st_list_append(CuTest *testCase) {
 
 void test_st_list_appendAll(CuTest *testCase) {
 	setup();
-	stList *list2 = st_list_copy(list, NULL);
+	st_List *list2 = st_list_copy(list, NULL);
 	st_list_appendAll(list, list2);
 	CuAssertTrue(testCase, st_list_length(list) == stringNumber * 2);
 	int32_t i;
@@ -143,7 +143,7 @@ void test_st_list_contains(CuTest *testCase) {
 
 void test_st_list_copy(CuTest *testCase) {
 	setup();
-	stList *list2 = st_list_copy(list, NULL);
+	st_List *list2 = st_list_copy(list, NULL);
 	CuAssertTrue(testCase, st_list_length(list) == st_list_length(list2));
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
@@ -165,14 +165,14 @@ void test_st_list_reverse(CuTest *testCase) {
 
 void test_st_list_iterator(CuTest *testCase) {
 	setup();
-	stListIterator *it = st_list_getIterator(list);
+	st_ListIterator *it = st_list_getIterator(list);
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
 		CuAssertTrue(testCase, st_list_getNext(it) == strings[i]);
 	}
 	CuAssertTrue(testCase, st_list_getNext(it) == NULL);
 	CuAssertTrue(testCase, st_list_getNext(it) == NULL);
-	stListIterator *it2 = st_list_copyIterator(it);
+	st_ListIterator *it2 = st_list_copyIterator(it);
 	for(i=0; i<stringNumber; i++) {
 		CuAssertTrue(testCase, st_list_getPrevious(it) == strings[stringNumber-1-i]);
 		CuAssertTrue(testCase, st_list_getPrevious(it2) == strings[stringNumber-1-i]);
@@ -198,9 +198,9 @@ void test_st_list_sort(CuTest *testCase) {
 
 void test_st_list_getSortedSet(CuTest *testCase) {
 	setup();
-	stSortedSet *sortedSet = st_list_getSortedSet(list, (int (*)(const void *, const void *))strcmp);
+	st_SortedSet *sortedSet = st_list_getSortedSet(list, (int (*)(const void *, const void *))strcmp);
 	CuAssertTrue(testCase, st_sortedSet_getLength(sortedSet) == stringNumber);
-	stSortedSet_Iterator *iterator = st_sortedSet_getIterator(sortedSet);
+	st_SortedSetIterator *iterator = st_sortedSet_getIterator(sortedSet);
 	CuAssertStrEquals(testCase, "five", st_sortedSet_getNext(iterator));
 	CuAssertStrEquals(testCase, "four", st_sortedSet_getNext(iterator));
 	CuAssertStrEquals(testCase, "one", st_sortedSet_getNext(iterator));

@@ -10,7 +10,7 @@
 
 #include "sonLibGlobals.h"
 
-struct _sonLibHash {
+struct _st_Hash {
 	struct hashtable *hash;
 	bool destructKeys, destructValues;
 };
