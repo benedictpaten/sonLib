@@ -46,6 +46,20 @@ ETree *eTree_getChild(ETree *eTree, int32_t i) {
 	return st_list_get(eTree->nodes, i);
 }
 
+ETree *eTree_findChild(ETree *eTree, const char *label) {
+        for (int i = 0; i < eTree->nodes->length; i++) {
+                ETree *node = (ETree *)eTree->nodes->list[i];
+                if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
+                        return node;
+                }
+                ETree *hit = eTree_findChild(node, label);
+                if (hit != NULL) {
+                        return hit;
+                }
+        }
+        return NULL;
+}
+
 double eTree_getBranchLength(ETree *eTree) {
 	return eTree->branchLength;
 }
@@ -192,3 +206,31 @@ char *eTree_getNewickTreeString(ETree *eTree) {
 	free(cA);
 	return cA2;
 }
+
+#if 0 // not yet need, hence no tests, so function is disabled
+/* Compare two tree for equality.  Trees must have same structure and distances,
+ * however order of children does not have to match. */
+bool eTree_equals(ETree *eTree1, ETree *eTree2) {
+        if (eTree_getBranchLength(eTree1) != eTree_getBranchLength(eTree2)) {
+                return FALSE;
+        }
+        if (strcmp(eTree_getLabel(eTree1), eTree_getLabel(eTree2)) != 0) {
+                return FALSE;
+        }
+        int numChildren = eTree_getChildNumber(eTree1);
+        if (eTree_getChildNumber(eTree2) != numChildren) {
+                return FALSE;
+        }
+        for (int i = 0; i < numChildren; i++) {
+                ETree *child1 = eTree_getChild(eTree1, i);
+                ETree *child2 = eTree_findChild(eTree2, eTree_getLabel(child1));
+                if (child2 == NULL) {
+                        return FALSE;
+                }
+                if (!eTree_equals(child1, child2)) {
+                        return FALSE;
+                }
+        }
+        return TRUE;
+}
+#endif

@@ -40,6 +40,11 @@ int32_t eTree_getChildNumber(ETree *eTree);
  */
 ETree *eTree_getChild(ETree *eTree, int32_t i);
 
+/* 
+ * find a child by label, returning NULL if not found.
+ */
+ETree *eTree_findChild(ETree *eTree, const char *label);
+
 /*
  * Get the length of the branch. If not set will return INFINITY
  */

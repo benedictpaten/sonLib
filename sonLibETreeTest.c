@@ -98,6 +98,8 @@ static void testETree_label(CuTest* testCase) {
 	CuAssertTrue(testCase, eTree_getLabel(child2) == NULL);
 	CuAssertTrue(testCase, eTree_getLabel(internal) == NULL);
 	CuAssertStrEquals(testCase, "ROOT", eTree_getLabel(root));
+	CuAssertTrue(testCase, eTree_findChild(root, "CHILD1") == child1);
+	CuAssertTrue(testCase, eTree_findChild(root, "CHILD100") == NULL);
 	eTree_setLabel(child1, "BOO");
 	CuAssertStrEquals(testCase, "BOO", eTree_getLabel(child1));
 	eTree_setLabel(child1, NULL);
