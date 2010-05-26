@@ -3,7 +3,7 @@ binPath = ../../bin
 libPath = ../../lib
 
 libSources = avl.c bioioC.c commonC.c fastCMaths.c hashTableC.c hashTableC_itr.c pairwiseAlignment.c allTests.c sonLib*.c
-libHeaders = avl.h bioioC.h commonC.h fastCMaths.h hashTableC.h hashTableC_itr.h pairwiseAlignment.h hashTablePrivateC.h sonLib*.h
+libHeaders = inc/*.h
 
 all : ${libPath}/sonLib.a ${binPath}/sonLibTests
 
@@ -14,9 +14,9 @@ ${binPath}/sonLibTests : ${libSources} ${libHeaders} allTests.c ${libPath}/sonLi
 	${cxx} ${cflags} -I ${libPath} -o ${binPath}/sonLibTests allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${tokyoCabinetLib}
 
 ${libPath}/sonLib.a : ${libSources} ${libHeaders}
+	cp ${libHeaders} ${libPath}/
 	${cxx} ${cflags} -I ${libPath}/ -c ${libSources}
 	ar rc sonLib.a *.o
 	ranlib sonLib.a 
 	rm *.o
 	mv sonLib.a ${libPath}/
-	cp ${libHeaders} ${libPath}/

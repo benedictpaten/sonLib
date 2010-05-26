@@ -6,7 +6,7 @@
 #include "hashTableC.h"
 
 #include "fastCMaths.h"
-#include "commonC.h"  
+#include "commonC.h"
 
 /*****************************************************************************/
 

@@ -1,6 +1,5 @@
 import unittest
 
-import EVD.allTests
 import bioioTest
 import cigarsTest
 import treeTest
@@ -16,13 +15,12 @@ class TestCase(unittest.TestCase):
         system("sonLibAPITests")
 
 def allSuites():
-    eVDSuite = EVD.allTests.allSuites()
     bioioSuite = unittest.makeSuite(bioioTest.TestCase, 'test')
     cigarsSuite = unittest.makeSuite(cigarsTest.TestCase, 'test')
     treeSuite = unittest.makeSuite(treeTest.TestCase, 'test')
     cuTestsSuite = unittest.makeSuite(TestCase, 'test')
     
-    allTests = unittest.TestSuite((eVDSuite, bioioSuite, cigarsSuite, treeSuite, cuTestsSuite))
+    allTests = unittest.TestSuite((bioioSuite, cigarsSuite, treeSuite, cuTestsSuite))
     return allTests
         
 def main():
