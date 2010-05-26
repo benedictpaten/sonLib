@@ -9,102 +9,6 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
-int32_t LOG_LEVEL;
-
-void logInfo(const char *string, ...) {
-   if(LOG_LEVEL >= LOGGING_INFO) {
-       va_list ap;
-       va_start(ap, string);
-       vfprintf(stderr, string, ap);
-       va_end(ap);
-   }
-}
-
-void logDebug(const char *string, ...) {
-   if(LOG_LEVEL >= LOGGING_DEBUG) {
-       va_list ap;
-       va_start(ap, string);
-       vfprintf(stderr, string, ap);
-       va_end(ap);
-   }
-}
-
-void uglyf(const char *string, ...) {
-	//return;
-    va_list ap;
-    va_start(ap, string);
-    vfprintf(stderr, string, ap);
-    //vfprintf(stdout, string, ap);
-    va_end(ap);
-}
-
-char *stringPrint(const char *string, ...) {
-	int32_t arraySize = 0;
-	static char *cA = NULL;
-	//return;
-	va_list ap;
-	va_start(ap, string);
-	int32_t i = vsnprintf(cA, arraySize, string, ap);
-	va_end(ap);
-	assert(i >= 0);
-	if(i >= arraySize) {
-		arraySize = i+1;
-		if(cA != NULL) {
-			free(cA);
-		}
-		cA = mallocLocal(sizeof(char) * arraySize);
-		va_start(ap, string);
-		i = vsnprintf(cA, arraySize, string, ap);
-		assert(i+1 == arraySize);
-		va_end(ap);
-	}
-	//vfprintf(stdout, string, ap);
-	return stringCopy(cA);
-}
-
-char *stringsJoin(const char *pad, const char **strings, int32_t length) {
-	int32_t i, j, k;
-	assert(length >= 0);
-	j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
-	for(i=0; i<length; i++) {
-		j += strlen(strings[i]);
-	}
-	char *cA = mallocLocal(sizeof(char) * j);
-	j = 0;
-	for(i=0; i<length; i++) {
-		const char *cA2 = strings[i];
-		for(k=0; k<(int32_t)strlen(cA2); k++) {
-			cA[j++] = cA2[k];
-		}
-		if(i+1 < length) {
-			for(k=0; k<(int32_t)strlen(pad); k++) {
-				cA[j++] = pad[k];
-			}
-		}
-	}
-	cA[j] = '\0';
-	return cA;
-}
-
-int32_t systemLocal(const char *string, ...) {
-	//return 0;
-	static char cA[100000];
-	int32_t i;
-    va_list ap;
-    va_start(ap, string);
-    vsprintf(cA, string, ap);
-    va_end(ap);
-    assert(strlen(cA) < 100000);
-    logDebug("Running command %s\n", cA);
-    i = system(cA);
-    //vfprintf(stdout, string, ap);
-    return i;
-}
-
-void setLogLevel(int32_t level) {
-    LOG_LEVEL = level;
-}
-
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
 	if(exitValue != 0) {
 		va_list ap;
@@ -116,20 +20,10 @@ void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
 	}
 }
 
-inline void *mallocLocal(int32_t i) {
-    void *j;
-    j = malloc(i);
-    if(j == 0) {
-        fprintf(stderr, "Malloc failed\n");
-        exit(1);
-    }
-    return j;
-}
-
 struct Chunks *constructChunks(int32_t chunkSize, int32_t elementSize) {
     struct Chunks *chunks;
 
-    chunks = mallocLocal(sizeof(struct Chunks));
+    chunks = st_malloc(sizeof(struct Chunks));
     chunks->chunkList = constructEmptyList(0, free);
     chunks->remaining = 0;
     chunks->chunkSize = chunkSize;
@@ -147,21 +41,11 @@ void *mallocChunk(struct Chunks *chunk) {
         return (chunk->chunk += chunk->elementSize);
     }
     else {
-        chunk->chunk = mallocLocal(chunk->elementSize*chunk->chunkSize);
+        chunk->chunk = st_malloc(chunk->elementSize*chunk->chunkSize);
         listAppend(chunk->chunkList, chunk->chunk);
         chunk->remaining = chunk->chunkSize-1;
         return chunk->chunk;
     }
-}
-
-void *callocLocal(int32_t i, int32_t j) {
-    void *k;
-    k = calloc(i, j);
-    if(k == 0) {
-        fprintf(stderr, "Calloc failed");
-        exit(1);
-    }
-    return k;
 }
 
 void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
@@ -170,7 +54,7 @@ void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, 
         free(current);
     }
     *currentSize = newSize;
-    return mallocLocal(base*newSize);
+    return st_malloc(base*newSize);
 }
 
 void *arrayResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
@@ -187,7 +71,7 @@ void listResize(struct List *list, int32_t newMaxSize) {
 void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
     assert(*currentSize <= newSize);
     void *new;
-    new = memcpy(mallocLocal(base*newSize), current, base*(*currentSize));
+    new = memcpy(st_malloc(base*newSize), current, base*(*currentSize));
     if(current != NULL) {
         free(current);
     }
@@ -434,11 +318,11 @@ struct List *copyConstructList(void **list, int32_t length, void (*destructEleme
     struct List *i;
     int32_t j;
 
-    i = mallocLocal(sizeof(struct List));
+    i = st_malloc(sizeof(struct List));
     i->length = length;
     i->maxLength = length;
     j = sizeof(void *)*length;
-    i->list = mallocLocal(j);
+    i->list = st_malloc(j);
     memcpy(i->list, list, j);
     i->destructElement = destructElement;
     return i;
@@ -454,10 +338,10 @@ struct List *constructZeroLengthList(int32_t length, void (*destructElement)(voi
 struct List *constructEmptyList(int32_t length, void (*destructElement)(void *)) {
     struct List *i;
 
-    i = mallocLocal(sizeof(struct List));
+    i = st_malloc(sizeof(struct List));
     i->length = length;
     i->maxLength = length;
-    i->list = mallocLocal(sizeof(void *)*length);
+    i->list = st_malloc(sizeof(void *)*length);
     i->destructElement = destructElement;
     return i;
 }
@@ -495,10 +379,10 @@ int64_t *constructChunkLong(int64_t longValue, struct Chunks *chunks) {
 struct IntList *constructEmptyIntList(int32_t length) {
 	struct IntList *intList;
 
-	intList = mallocLocal(sizeof(struct IntList));
+	intList = st_malloc(sizeof(struct IntList));
 	intList->length = length;
 	intList->maxLength = length;
-	intList->list = mallocLocal(sizeof(int32_t)*length);
+	intList->list = st_malloc(sizeof(int32_t)*length);
 
 	return intList;
 }
@@ -529,7 +413,7 @@ void intListAppend(struct IntList *list, int32_t item) {
 float *constructFloat(float i) {
     float *j;
 
-    j = mallocLocal(sizeof(float));
+    j = st_malloc(sizeof(float));
     *j = i;
     return j;
 }
@@ -541,7 +425,7 @@ void destructFloat(float *i) {
 int32_t *constructInt(int32_t i) {
     int32_t *j;
 
-    j = mallocLocal(sizeof(int32_t));
+    j = st_malloc(sizeof(int32_t));
     *j = i;
     return j;
 }
@@ -581,7 +465,7 @@ int32_t hashtable_orderedIntPairEqualKey( void *key1, void *key2 ) {
 int32_t *constructIntPair(int32_t i, int32_t j) {
     int32_t *k;
 
-    k = mallocLocal(sizeof(int32_t)*2);
+    k = st_malloc(sizeof(int32_t)*2);
     k[0] = i;
     k[1] = j;
     return k;
@@ -595,7 +479,7 @@ void destructIntPair(int32_t *i) {
 int64_t *constructLong(int64_t i) {
     int64_t *j;
 
-    j = mallocLocal(sizeof(int64_t));
+    j = st_malloc(sizeof(int64_t));
     *j = i;
     return j;
 }
@@ -706,7 +590,7 @@ int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
 struct TraversalID *constructTraversalID(int32_t midStart, int32_t mid, int32_t midEnd, int32_t leafNo) {
     struct TraversalID *traversalID;
 
-    traversalID = mallocLocal(sizeof(struct TraversalID));
+    traversalID = st_malloc(sizeof(struct TraversalID));
     traversalID->midStart = midStart;
     traversalID->mid = mid;
     traversalID->midEnd = midEnd;
@@ -724,10 +608,10 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
                                        struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
 
-    binaryTree = mallocLocal(sizeof(struct BinaryTree));
+    binaryTree = st_malloc(sizeof(struct BinaryTree));
     binaryTree->distance = distance;
     binaryTree->internal = internal;
-    binaryTree->label = stringCopy(label);
+    binaryTree->label = st_string_copy(label);
     binaryTree->left = left;
     binaryTree->right = right;
     binaryTree->traversalID = NULL;
@@ -785,7 +669,7 @@ void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct Lis
 		binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
 	}
 	else {
-		listAppend(leafStrings, stringCopy(binaryTree->label));
+		listAppend(leafStrings, st_string_copy(binaryTree->label));
 	}
 }
 
@@ -867,14 +751,10 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
     return 1.0;
 }
 
-char *stringCopy(const char *str) {
-	return strcpy(mallocLocal(sizeof(char)*(1+strlen(str))), str);
-}
-
 char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
 	char *fullPath;
 
-	fullPath = mallocLocal(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
+	fullPath = st_malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
 	if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
 		sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
 	}
@@ -905,7 +785,7 @@ int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
 	char *cA;
 	int32_t i;
 
-	cA = mallocLocal(sizeof(char)*(strlen(tempFilePath)+50));
+	cA = st_malloc(sizeof(char)*(strlen(tempFilePath)+50));
 	sprintf(cA, "%s/", tempFilePath);
 
 	for(i=strlen(tempFilePath)+1; i<(int32_t)strlen(tempFilePath) + 11; i++) {
@@ -916,7 +796,7 @@ int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
 	i = mkdir(cA, S_IRWXU);
 	if(i != 0) {
 		free(cA);
-		logDebug("Something went wrong making temp dir in constructRandomDir\n");
+		st_logDebug("Something went wrong making temp dir in constructRandomDir\n");
 		return i;
 	}
 	*tempDir = cA;
@@ -931,7 +811,7 @@ int32_t destructRandomDir(char *tempDir) {
 	char *cA;
 	int32_t i;
 
-	cA = mallocLocal(sizeof(char)*(strlen(tempDir)+50));
+	cA = st_malloc(sizeof(char)*(strlen(tempDir)+50));
 	sprintf(cA, "rm -rf %s", tempDir);
 	i = system(cA);
 	if(i != 0) {
@@ -957,7 +837,7 @@ char *getTempFile() {
 	}
 
 	char *fileName;
-	fileName = mallocLocal(sizeof(char)*(1+L_tmpnam));
+	fileName = st_malloc(sizeof(char)*(1+L_tmpnam));
 	tmpnam(fileName);
 	return fileName;
 }
@@ -988,18 +868,18 @@ struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, i
 	char *cA3;
 
 	i = sizeof(char)*(strlen(rootDir)+30*levelNumber+1);
-	cA = mallocLocal(i); //generous safety space.
-	cA2 = mallocLocal(i);
+	cA = st_malloc(i); //generous safety space.
+	cA2 = st_malloc(i);
 
-	tempFileTree = mallocLocal(sizeof(struct TempFileTree));
+	tempFileTree = st_malloc(sizeof(struct TempFileTree));
 	sprintf(cA, "%s/tempC", rootDir);
-	tempFileTree->rootDir = mallocLocal(sizeof(char)*(strlen(cA)+1));
+	tempFileTree->rootDir = st_malloc(sizeof(char)*(strlen(cA)+1));
 	strcpy(tempFileTree->rootDir, cA);
 	mkdir(tempFileTree->rootDir, S_IRWXU);
 
 	tempFileTree->filesPerDir = filesPerDir;
 	tempFileTree->levelNumber = levelNumber;
-	tempFileTree->levelsArray = mallocLocal(sizeof(int32_t)*levelNumber);
+	tempFileTree->levelsArray = st_malloc(sizeof(int32_t)*levelNumber);
 	for(i=0; i<levelNumber; i++) {
 		tempFileTree->levelsArray[i] = 0;
 	}
@@ -1027,7 +907,7 @@ void destructTempFileTree(struct TempFileTree *tempFileTree) {
 	char cA[1000];
 	int32_t i;
 
-	logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
+	st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
 			 tempFileTree->tempFilesCreated, tempFileTree->tempFilesDestroyed);
 
 	sprintf(cA, "rm -rf %s", tempFileTree->rootDir);
@@ -1049,8 +929,8 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
 	FILE *fileHandle;
 
 	i = sizeof(char)*(strlen(tempFileTree->rootDir)+30*tempFileTree->levelNumber+1);
-	cA = mallocLocal(i); //generous safety space.
-	cA2 = mallocLocal(i);
+	cA = st_malloc(i); //generous safety space.
+	cA2 = st_malloc(i);
 	cA4 = NULL;
 	for(i=tempFileTree->levelNumber-1; i>=0; i--) {
 		if(tempFileTree->levelsArray[i] == tempFileTree->filesPerDir) {
@@ -1081,7 +961,7 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
 				cA = cA2;
 				cA2 = cA3;
 			}
-			cA4 = mallocLocal(sizeof(char)*(strlen(cA)+1));
+			cA4 = st_malloc(sizeof(char)*(strlen(cA)+1));
 			strcpy(cA4,cA);
 			break;
 		}

@@ -4,31 +4,12 @@
 #include <stdio.h>
 #include "fastCMaths.h"
 #include "hashTableC.h"
+#include "sonLib.h"
 
 //utils functions
 
 //logging and debugging
 #define DEBUG TRUE
-
-#define LOGGING_OFF 0
-#define LOGGING_INFO 1
-#define LOGGING_DEBUG 2
-
-extern int32_t LOG_LEVEL;
-
-void setLogLevel(int32_t);
-
-void logInfo(const char *string, ...);
-
-void logDebug(const char *string, ...);
-
-void uglyf(const char *string, ...);
-
-char *stringPrint(const char *string, ...);
-
-char *stringsJoin(const char *pad, const char **cA, int32_t length);
-
-int32_t systemLocal(const char *string, ...);
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);
 
@@ -47,9 +28,6 @@ void destructChunks(struct Chunks *);
 
 void *mallocChunk(struct Chunks *chunk);
 
-void *mallocLocal(int32_t i);
-
-void *callocLocal(int32_t i, int32_t j);
 
 //general data structures you always need
 //lists
@@ -238,11 +216,6 @@ void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), stru
 void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree, struct BinaryTree **labels);
 
 float linOriginRegression(struct List *pointsX, struct List *pointsY);
-
-/*
- * Copies a string, returning a string which must be cleaned up.
- */
-char *stringCopy(const char *str);
 
 /*
  * Joins two paths together, somewhat intelligently, to give one concatenated path.

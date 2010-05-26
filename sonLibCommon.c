@@ -7,7 +7,7 @@
 
 #include "sonLibGlobalsPrivate.h"
 
-static int32_t ST_LOG_LEVEL = ST_LOGGING_OFF;
+static int32_t LOG_LEVEL = ST_LOGGING_OFF;
 
 void *st_malloc(int32_t i) {
 	void *j;
@@ -31,15 +31,15 @@ void *st_calloc(int32_t elementNumber, int32_t elementSize) {
 
 void st_setLogLevel(int32_t level) {
 	assert(level == ST_LOGGING_OFF || level == ST_LOGGING_INFO || level == ST_LOGGING_DEBUG);
-	ST_LOG_LEVEL = level;
+	LOG_LEVEL = level;
 }
 
 int32_t st_getLogLevel() {
-	return ST_LOG_LEVEL;
+	return LOG_LEVEL;
 }
 
 void st_logInfo(const char *string, ...) {
-	if(LOG_LEVEL >= LOGGING_INFO) {
+	if(st_getLogLevel() >= ST_LOGGING_INFO) {
 		va_list ap;
 		va_start(ap, string);
 		vfprintf(stderr, string, ap);
@@ -48,7 +48,7 @@ void st_logInfo(const char *string, ...) {
 }
 
 void st_logDebug(const char *string, ...) {
-	if(LOG_LEVEL >= LOGGING_INFO) {
+	if(st_getLogLevel() >= ST_LOGGING_INFO) {
 		va_list ap;
 		va_start(ap, string);
 		vfprintf(stderr, string, ap);
@@ -71,7 +71,7 @@ int32_t st_system(const char *string, ...) {
 	vsprintf(cA, string, ap);
 	va_end(ap);
 	assert(strlen(cA) < 100000);
-	logDebug("Running command %s\n", cA);
+	st_logDebug("Running command %s\n", cA);
 	i = system(cA);
 	//vfprintf(stdout, string, ap);
 	return i;

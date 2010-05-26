@@ -46,7 +46,7 @@ void *st_sortedSet_getLast(st_SortedSet *items) {
 
 st_SortedSetIterator *st_sortedSet_getIterator(st_SortedSet *items) {
 	st_SortedSetIterator *iterator;
-	iterator = mallocLocal(sizeof(st_SortedSetIterator));
+	iterator = st_malloc(sizeof(st_SortedSetIterator));
 	avl_t_init(iterator, items);
 	return iterator;
 }
@@ -61,7 +61,7 @@ void *st_sortedSet_getNext(st_SortedSetIterator *iterator) {
 
 st_SortedSetIterator *st_sortedSet_copyIterator(st_SortedSetIterator *iterator) {
 	st_SortedSetIterator *copyIterator;
-	copyIterator = mallocLocal(sizeof(st_SortedSetIterator));
+	copyIterator = st_malloc(sizeof(st_SortedSetIterator));
 	avl_t_copy(copyIterator, iterator);
 	return copyIterator;
 }

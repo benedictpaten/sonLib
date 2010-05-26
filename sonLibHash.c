@@ -6,17 +6,25 @@
  */
 #include "sonLibGlobalsPrivate.h"
 
+static uint32_t st_hash_key( void *k ) {
+	return (uint32_t)k;
+}
+
+static int32_t st_hash_equalKey( void *key1, void *key2 ) {
+	return key1 == key2;
+}
+
 st_Hash *st_hash_construct() {
-	return st_hash_construct3(hashtable_key, hashtable_equalKey, NULL, NULL);
+	return st_hash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
 }
 
 st_Hash *st_hash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
-	return st_hash_construct3(hashtable_key, hashtable_equalKey, destructKeys, destructValues);
+	return st_hash_construct3(st_hash_key, st_hash_equalKey, destructKeys, destructValues);
 }
 
 st_Hash *st_hash_construct3(uint32_t (*hashKey)(void *), int32_t (*hashEqualsKey)(void *, void *),
 		void (*destructKeys)(void *), void (*destructValues)(void *)) {
-	st_Hash *hash = mallocLocal(sizeof(st_Hash));
+	st_Hash *hash = st_malloc(sizeof(st_Hash));
 	hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
 	hash->destructKeys = destructKeys != NULL;
 	hash->destructValues = destructValues != NULL;
@@ -58,7 +66,7 @@ void *st_hash_getNext(st_HashIterator *iterator) {
 }
 
 st_HashIterator *st_hash_copyIterator(st_HashIterator *iterator) {
-	st_HashIterator *iterator2 = mallocLocal(sizeof(st_HashIterator));
+	st_HashIterator *iterator2 = st_malloc(sizeof(st_HashIterator));
 	iterator2->h = iterator->h;
 	iterator2->e = iterator->e;
 	iterator2->parent = iterator->parent;

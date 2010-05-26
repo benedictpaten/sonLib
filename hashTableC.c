@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "fastCMaths.h"
+#include "sonLibGlobalsPrivate.h"
 
 /*
 Credit for primes table: Aaron Krowne
@@ -49,9 +49,9 @@ create_hashtable(uint32_t minsize,
     for (pindex=0; pindex < prime_table_length; pindex++) {
         if (primes[pindex] > minsize) { size = primes[pindex]; break; }
     }
-    h = (struct hashtable *)mallocLocal(sizeof(struct hashtable));
+    h = (struct hashtable *)st_malloc(sizeof(struct hashtable));
     if (NULL == h) return NULL; /*oom*/
-    h->table = (struct entry **)mallocLocal(sizeof(struct entry*) * size);
+    h->table = (struct entry **)st_malloc(sizeof(struct entry*) * size);
     if (NULL == h->table) { free(h); return NULL; } /*oom*/
     memset(h->table, 0, size * sizeof(struct entry *));
     h->tablelength  = size;
@@ -63,7 +63,6 @@ create_hashtable(uint32_t minsize,
     //my additions
     h->keyFree = keyFree;
     h->valueFree = valueFree;
-    h->entryChunks = constructChunks(minsize + 1, sizeof(struct entry));
     return h;
 }
 
@@ -93,7 +92,7 @@ hashtable_expand(struct hashtable *h)
     /* Check we're not hitting max capacity */
     if (h->primeindex == (prime_table_length - 1)) return 0;
     newsize = primes[++(h->primeindex)];
-    newtable = (struct entry **)mallocLocal(sizeof(struct entry*) * newsize);
+    newtable = (struct entry **)st_malloc(sizeof(struct entry*) * newsize);
     if (NULL != newtable)
     {
         memset(newtable, 0, newsize * sizeof(struct entry *));
@@ -165,7 +164,7 @@ hashtable_insert(struct hashtable *h, void *k, void *v)
             exit(1);
         }
     }
-    e = (struct entry *)mallocChunk(h->entryChunks); //mallocLocal(sizeof(struct entry));
+    e = (struct entry *)st_malloc(sizeof(struct entry));
     if (NULL == e) { --(h->entrycount); return 0; } /*oom*/
     e->h = hashP(h,k);
     index = indexFor(h->tablelength,e->h);
@@ -270,7 +269,6 @@ hashtable_destroy(struct hashtable *h, int32_t free_values, int32_t free_keys)
         }
     }
     free(h->table);
-    destructChunks(h->entryChunks);
     free(h);
 }
 

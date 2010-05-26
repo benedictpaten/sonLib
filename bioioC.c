@@ -79,7 +79,7 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
 		c++;
 		i++;
 	}
-	c2 = mallocLocal(sizeof(char)*(i+1));
+	c2 = st_malloc(sizeof(char)*(i+1));
 	for(j=0; j<i; j++) {
 		c2[j] = fastaHeader[j];
 	}
@@ -92,10 +92,10 @@ struct List *fastaDecodeHeader(const char *fastaHeader) {
      * Decodes the fasta header
      */
 	struct List *attributes = constructEmptyList(0, free);
-	char *cA = stringCopy(fastaHeader);
+	char *cA = st_string_copy(fastaHeader);
 	char *cA2 = strtok(cA, "|");
 	while(cA2 != NULL) {
-		listAppend(attributes, stringCopy(cA2));
+		listAppend(attributes, st_string_copy(cA2));
 		cA2 = strtok(NULL, "|");
 	}
 	free(cA);
@@ -106,7 +106,7 @@ char *fastaEncodeHeader(struct List *attributes) {
     /*
      * Decodes the fasta header
      */
-	return stringsJoin("|", (const char **)attributes->list, attributes->length);
+	return st_string_join("|", (const char **)attributes->list, attributes->length);
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
@@ -186,8 +186,8 @@ struct List *fastaRead_seqs;
 struct List *fastaRead_seqLengths;
 
 void fastaRead_function(const char *fastaHeader, const char *sequence, int32_t length) {
-	listAppend(fastaRead_fastaNames, stringCopy(fastaHeader));
-	listAppend(fastaRead_seqs, stringCopy(sequence));
+	listAppend(fastaRead_fastaNames, st_string_copy(fastaHeader));
+	listAppend(fastaRead_seqs, st_string_copy(sequence));
 	listAppend(fastaRead_seqLengths, constructInt(length));
 }
 
@@ -293,7 +293,7 @@ char* eatString(char *string, char **newString) {
     while(*string != '\0' && !isspace(*string)) {
            string++;
     }
-    (*newString) = memcpy(mallocLocal((string-i + 1)*sizeof(char)), i, (string-i)*sizeof(char));
+    (*newString) = memcpy(st_malloc((string-i + 1)*sizeof(char)), i, (string-i)*sizeof(char));
     (*newString)[string - i] = '\0';
     return eatWhiteSpace(string);
 }
@@ -310,7 +310,7 @@ char *replaceString(char *oldString, char old, char *new, int32_t newLength) {
             j++;
         }
     }
-    newString = mallocLocal(sizeof(char)*(j*(newLength-1) + (i-k) + 1));
+    newString = st_malloc(sizeof(char)*(j*(newLength-1) + (i-k) + 1));
     k=newString;
     for(i=oldString; *i != '\0'; i++) {
         if(*i == old) {
@@ -362,7 +362,7 @@ static char *newickTreeParser_getLabel(char *newickTreeString, char **label) {
 	if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
 	    return eatString(newickTreeString, label);
 	}
-	*label = stringCopy("");
+	*label = st_string_copy("");
 	return newickTreeString;
 }
 
@@ -472,10 +472,10 @@ struct CharColumnAlignment *multiFastaRead(char *fastaFile) {
     for(i=0; i<seqLengths->length; i++) {
         assert(alignmentLength == listGetInt(seqLengths, 0));
     }
-    charColumnAlignment = mallocLocal(sizeof(struct CharColumnAlignment));
+    charColumnAlignment = st_malloc(sizeof(struct CharColumnAlignment));
     charColumnAlignment->columnNo = alignmentLength;
     charColumnAlignment->seqNo = seqLengths->length;
-    charColumnAlignment->columnAlignment = mallocLocal(sizeof(char)*(charColumnAlignment->columnNo)*(charColumnAlignment->seqNo));
+    charColumnAlignment->columnAlignment = st_malloc(sizeof(char)*(charColumnAlignment->columnNo)*(charColumnAlignment->seqNo));
     k=0;
     for(i=0; i<alignmentLength; i++) {
         for(j=0; j<seqLengths->length; j++) {

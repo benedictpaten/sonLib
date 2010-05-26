@@ -12,7 +12,7 @@
 
 struct _eTree {
 	double branchLength;
-	struct List *nodes;
+	st_List *nodes;
 	char *label;
 	ETree *parent;
 };

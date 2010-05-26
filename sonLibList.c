@@ -7,6 +7,8 @@
 
 #include "sonLibGlobalsPrivate.h"
 
+#define MINIMUM_ARRAY_EXPAND_SIZE 5 //The minimum amount to expand the array backing a list by when it is rescaled.
+
 st_List *st_list_construct() {
 	return st_list_construct3(0, NULL);
 }
@@ -69,7 +71,7 @@ static void *st_list_appendP(void *current, int32_t *currentSize, int32_t newSiz
 
 void st_list_append(st_List *list, void *item) {
 	if(st_list_length(list) >= list->maxLength) {
-		list->list = st_list_appendP(list->list, &list->maxLength, list->maxLength*2 + TINY_CHUNK_SIZE, sizeof(void *));
+		list->list = st_list_appendP(list->list, &list->maxLength, list->maxLength*2 + MINIMUM_ARRAY_EXPAND_SIZE, sizeof(void *));
 	}
 	list->list[list->length++] = item;
 }

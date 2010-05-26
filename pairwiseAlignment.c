@@ -9,7 +9,7 @@
 struct AlignmentOperation *constructAlignmentOperation(int32_t type, int32_t length, float score) {
 	struct AlignmentOperation *oP;
 
-	oP = mallocLocal(sizeof(struct AlignmentOperation));
+	oP = st_malloc(sizeof(struct AlignmentOperation));
 
 	oP->opType = type;
 	oP->length = length;
@@ -69,16 +69,16 @@ struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int32_t star
 												     char *contig2, int32_t start2, int32_t end2, int32_t strand2,
 													 float score, struct List *operationList) {
 	struct PairwiseAlignment *pA;
-	pA = mallocLocal(sizeof(struct PairwiseAlignment));
+	pA = st_malloc(sizeof(struct PairwiseAlignment));
 
 	pA->operationList = operationList;
 
-	pA->contig1 = strcpy((char *)mallocLocal(sizeof(char)*(1+strlen(contig1))), contig1);
+	pA->contig1 = strcpy((char *)st_malloc(sizeof(char)*(1+strlen(contig1))), contig1);
 	pA->start1 = start1;
 	pA->end1 = end1;
 	pA->strand1 = strand1;
 
-	pA->contig2 = strcpy((char *)mallocLocal(sizeof(char)*(1+strlen(contig2))), contig2);
+	pA->contig2 = strcpy((char *)st_malloc(sizeof(char)*(1+strlen(contig2))), contig2);
 	pA->start2 = start2;
 	pA->end2 = end2;
 	pA->strand2 = strand2;
@@ -97,8 +97,8 @@ void destructPairwiseAlignment(struct PairwiseAlignment *pA) {
 }
 
 void logPairwiseAlignment(struct PairwiseAlignment *pA) {
-	logDebug("Pairwise alignment:");
-	if(LOG_LEVEL == LOGGING_DEBUG) {
+	st_logDebug("Pairwise alignment:");
+	if(st_getLogLevel() == ST_LOGGING_DEBUG) {
 		cigarWrite(stderr, pA, TRUE);
 	}
 	//logDebug("\n");
@@ -135,7 +135,7 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
 	int32_t i;
 	char strand1, strand2;
 
-	pA = mallocLocal(sizeof(struct PairwiseAlignment));
+	pA = st_malloc(sizeof(struct PairwiseAlignment));
 	pA->operationList = constructEmptyList(0, (void (*)(void *))destructAlignmentOperation);
 	if(fscanf(fileHandle, "cigar: %s %i %i %c %s %i %i %c %f",\
 				cA2, &pA->start2, &pA->end2, &strand2,\
@@ -143,8 +143,8 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
 	            &pA->score) == 9) {
 	    assert(strlen(cA2) <= STRING_ARRAY_SIZE);
 	    assert(strlen(cA3) <= STRING_ARRAY_SIZE);
-	    pA->contig2 = strcpy((char *)mallocLocal(sizeof(char)*(1+strlen(cA2))), cA2);
-	    pA->contig1 = strcpy((char *)mallocLocal(sizeof(char)*(1+strlen(cA3))), cA3);
+	    pA->contig2 = strcpy((char *)st_malloc(sizeof(char)*(1+strlen(cA2))), cA2);
+	    pA->contig1 = strcpy((char *)st_malloc(sizeof(char)*(1+strlen(cA3))), cA3);
 
 	    assert(strand1 == '+' || strand1 == '-');
 	    assert(strand2 == '+' || strand2 == '-');

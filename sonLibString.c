@@ -8,7 +8,7 @@
 #include "sonLibGlobalsPrivate.h"
 
 char *st_string_copy(const char *string) {
-	return strcpy(mallocLocal(sizeof(char)*(1+strlen(string))), string);
+	return strcpy(st_malloc(sizeof(char)*(1+strlen(string))), string);
 }
 
 char *st_string_print(const char *string, ...) {
@@ -25,14 +25,14 @@ char *st_string_print(const char *string, ...) {
 		if(cA != NULL) {
 			free(cA);
 		}
-		cA = mallocLocal(sizeof(char) * arraySize);
+		cA = st_malloc(sizeof(char) * arraySize);
 		va_start(ap, string);
 		i = vsnprintf(cA, arraySize, string, ap);
 		assert(i+1 == arraySize);
 		va_end(ap);
 	}
 	//vfprintf(stdout, string, ap);
-	return stringCopy(cA);
+	return st_string_copy(cA);
 }
 
 char *st_string_getNextWord(char **string) {
@@ -44,7 +44,7 @@ char *st_string_getNextWord(char **string) {
 		(*string)++;
 	}
 	if((*string) - i > 0) {
-		char *cA = memcpy(mallocLocal(((*string)-i + 1)*sizeof(char)), i, ((*string)-i)*sizeof(char));
+		char *cA = memcpy(st_malloc(((*string)-i + 1)*sizeof(char)), i, ((*string)-i)*sizeof(char));
 		cA[(*string) - i] = '\0';
 		return cA;
 	}
@@ -79,7 +79,7 @@ char *st_string_replace(const char *originalString, const char *toReplace, const
 			i++;
 		}
 	}
-	newString = mallocLocal(sizeof(char)*(strlen(originalString) + j*strlen(replacement) - j*strlen(toReplace) + 1));
+	newString = st_malloc(sizeof(char)*(strlen(originalString) + j*strlen(replacement) - j*strlen(toReplace) + 1));
 	k=newString;
 	i=(char *)originalString;
 	while(*i != '\0') {
@@ -104,7 +104,7 @@ char *st_string_join(const char *pad, const char **strings, int32_t length) {
 	for(i=0; i<length; i++) {
 		j += strlen(strings[i]);
 	}
-	char *cA = mallocLocal(sizeof(char) * j);
+	char *cA = st_malloc(sizeof(char) * j);
 	j = 0;
 	for(i=0; i<length; i++) {
 		const char *cA2 = strings[i];

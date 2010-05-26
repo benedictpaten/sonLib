@@ -27,7 +27,7 @@
 #define AVL_H 1
 
 #include <stddef.h>
-#include "fastCMaths.h"
+#include <inttypes.h>
 
 /* Function types. */
 typedef int32_t avl_comparison_func (const void *avl_a, const void *avl_b,
