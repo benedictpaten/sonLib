@@ -14,7 +14,7 @@ struct _eTree {
 	double branchLength;
 	struct List *nodes;
 	char *label;
-	stETree *parent;
+	ETree *parent;
 };
 
 #endif /* ETREEPRIVATE_H_ */

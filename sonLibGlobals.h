@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-typedef struct _eTree stETree;
+typedef struct _eTree ETree;
 typedef struct _sonLibHash stHash;
 typedef struct hashtable_itr stHash_Iterator;
 typedef struct avl_table stSortedSet;
