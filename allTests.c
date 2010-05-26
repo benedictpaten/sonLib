@@ -4,6 +4,8 @@ CuSuite *sonLibETreeTestSuite();
 CuSuite *sonLibStringTestSuite();
 CuSuite *sonLibHashTestSuite();
 CuSuite *sonLibSortedSetTestSuite();
+CuSuite *sonLib_stListTestSuite();
+CuSuite *sonLib_stCommonTestSuite();
 
 int sonLibRunAllTests(void) {
 	CuString *output = CuStringNew();
@@ -12,6 +14,8 @@ int sonLibRunAllTests(void) {
 	CuSuiteAddSuite(suite, sonLibStringTestSuite());
 	CuSuiteAddSuite(suite, sonLibHashTestSuite());
 	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
+	CuSuiteAddSuite(suite, sonLib_stListTestSuite());
+	CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
 	CuSuiteRun(suite);
 	CuSuiteSummary(suite, output);
 	CuSuiteDetails(suite, output);

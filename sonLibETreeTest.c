@@ -7,10 +7,10 @@
 
 #include "sonLibGlobalsPrivate.h"
 
-static ETree *root = NULL;
-static ETree *internal;
-static ETree *child1;
-static ETree *child2;
+static stETree *root = NULL;
+static stETree *internal;
+static stETree *child1;
+static stETree *child2;
 
 static void teardown() {
 	if(root != NULL) {
@@ -33,14 +33,14 @@ static void setup() {
 	eTree_setBranchLength(internal, 0.5);
 }
 
-void testETree_construct(CuTest* testCase) {
+static void testETree_construct(CuTest* testCase) {
 	setup();
 	//tested by setup and teardown.
 	CuAssertTrue(testCase, root != NULL);
 	teardown();
 }
 
-void testETree_getSetParent(CuTest* testCase) {
+static void testETree_getSetParent(CuTest* testCase) {
 	setup();
 	CuAssertTrue(testCase, eTree_getParent(child1) == internal);
 	CuAssertTrue(testCase, eTree_getParent(child1) == internal);
@@ -52,7 +52,7 @@ void testETree_getSetParent(CuTest* testCase) {
 	teardown();
 }
 
-void testETree_getChildNumber(CuTest* testCase) {
+static void testETree_getChildNumber(CuTest* testCase) {
 	setup();
 	CuAssertTrue(testCase, eTree_getChildNumber(child1) == 0);
 	CuAssertTrue(testCase, eTree_getChildNumber(child1) == 0);
@@ -64,7 +64,7 @@ void testETree_getChildNumber(CuTest* testCase) {
 	teardown();
 }
 
-void testETree_getChild(CuTest* testCase) {
+static void testETree_getChild(CuTest* testCase) {
 	setup();
 	CuAssertTrue(testCase, eTree_getChild(internal, 0) == child1);
 	CuAssertTrue(testCase, eTree_getChild(internal, 1) == child2);
@@ -81,7 +81,7 @@ void testETree_getChild(CuTest* testCase) {
 	teardown();
 }
 
-void testETree_getSetBranchLength(CuTest* testCase) {
+static void testETree_getSetBranchLength(CuTest* testCase) {
 	setup();
 	CuAssertTrue(testCase, eTree_getBranchLength(child1) == 1.1);
 	CuAssertTrue(testCase, eTree_getBranchLength(child2) == INFINITY);
@@ -92,7 +92,7 @@ void testETree_getSetBranchLength(CuTest* testCase) {
 	teardown();
 }
 
-void testETree_label(CuTest* testCase) {
+static void testETree_label(CuTest* testCase) {
 	setup();
 	CuAssertStrEquals(testCase, "CHILD1", eTree_getLabel(child1));
 	CuAssertTrue(testCase, eTree_getLabel(child2) == NULL);
@@ -105,12 +105,12 @@ void testETree_label(CuTest* testCase) {
 	teardown();
 }
 
-void testETree_newickTreeParser(CuTest *testCase) {
+static void testETree_newickTreeParser(CuTest *testCase) {
 	setup();
 	char *testNewickStrings[4] =  { "(((a,b,(c,))d),e)f;",  ";", "f;", "();" };
 	int32_t i;
 	for(i=0; i<4; i++) {
-		ETree *eTree2 = eTree_parseNewickString(testNewickStrings[i]);
+		stETree *eTree2 = eTree_parseNewickString(testNewickStrings[i]);
 		CuAssertTrue(testCase, eTree2 != NULL);
 		char *newString = eTree_getNewickTreeString(eTree2);
 		CuAssertStrEquals(testCase, testNewickStrings[i], newString);

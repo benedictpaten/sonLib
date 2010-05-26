@@ -1,5 +1,5 @@
 /*
- * sonLibList.h
+ * sonLibstList.h
  *
  *  Created on: 24 May 2010
  *      Author: benedictpaten
@@ -11,120 +11,130 @@
 #include "sonLibGlobals.h"
 
 /*
- * Construct a list with zero length.
- * The destructor will not clean up the elements in the list.
+ * Construct a stList with zero length.
+ * The destructor will not clean up the elements in the stList.
  */
-List *list_construct();
+stList *st_list_construct();
 
 /*
- * Construct a list with size length.
- * The destructor will not clean up the elements in the list.
+ * Construct a stList with size length.
+ * The destructor will not clean up the elements in the stList.
  */
-List *list_construct2(int32_t size);
+stList *st_list_construct2(int32_t size);
 
 /*
- * Construct a list with size length.
+ * Construct a stList with size length.
  * The destructor will call the given destructElement function
- * for each non-null entry in the list.
+ * for each non-null entry in the stList.
  */
-List *list_construct3(int32_t size, void (*destructElement)(void *));
+stList *st_list_construct3(int32_t size, void (*destructElement)(void *));
 
 /*
- * Destructs the list and, if a destructElement function was given to the constructor,
- * calls the destruct element function for each non-null element in the list.
+ * Destructs the stList and, if a destructElement function was given to the constructor,
+ * calls the destruct element function for each non-null element in the stList.
  */
-void list_destruct(List *list);
+void st_list_destruct(stList *list);
 
 /*
- * Adds the item to the end of the list, resizing if needed.
+ * Returns the number of elements in the stList.
  */
-void list_append(List *list, void *item);
+int32_t st_list_length(stList *list);
 
 /*
- * Adds all the elements in the second list to the end of the first.
+ * Gets item 0 <= index < stList_length(list) from the stList.
  */
-void list_appendAll(List *list, List *listToAdd);
+void *st_list_get(stList *list, int32_t index);
 
 /*
- * Returns the number of elements in the list.
+ * Sets the item at that position in the stList.
  */
-int32_t list_length(List *list);
+void st_list_set(stList *list, int32_t index, void *item);
 
 /*
- * Gets item 0 <= index < list_length(list) from the list.
+ * Adds the item to the end of the st_list, resizing if needed.
  */
-void *list_get(List *list, int32_t index);
+void st_list_append(stList *list, void *item);
 
 /*
- * Returns the last element in the list. Error if list is empty.
+ * Adds all the elements in the second st_list to the end of the first, in order.
  */
-void *list_peek(List *list);
+void st_list_appendAll(stList *stListToAddTo, stList *stListToAdd);
 
 /*
- * Removes the last element in the list and returns it.
- * Error if the list is empty.
+ * Returns the last element in the stList. Error if stList is empty.
  */
-void *list_pop(List *list);
+void *st_list_peek(stList *list);
 
 /*
- * Removes the first instance of this item from the given list.
- * Returns non-zero if an item is removed, zero if it is not found in the list.
+ * Removes the last element in the stList and returns it.
+ * Error if the stList is empty.
  */
-int32_t list_remove(List *list, void *item);
+void *st_list_pop(stList *list);
 
 /*
- * Removes the first element in the list.
+ * Removes and returns the item at the given index, returning the given item.
  */
-void *list_removeFirst(List *list);
+void *st_list_remove(stList *list, int32_t index);
 
 /*
- * Returns non-zero iff the list contain one or more copies of references to the given item.
+ * Removes any the first instance of this item from the given stList.
  */
-int32_t list_contains(List *list, void *item);
+void st_list_removeItem(stList *list, void *item);
 
 /*
- * Copies the list.
+ * Removes the first element in the stList and returns it. Creates an error if empty.
  */
-List *list_copy(List *list);
+void *st_list_removeFirst(stList *list);
 
 /*
- * Reverses the list in place.
+ * Returns non-zero iff the stList contain one or more copies of references to the given item.
  */
-void list_reverse(List *list);
+int32_t st_list_contains(stList *list, void *item);
 
 /*
- * Gets an iterator for the list.
+ * Copies the stList. Sets the given destruct item function to the new stList.. can
+ * be null if you want no destruction of the items in that stList.
  */
-ListIterator *list_getIterator(List *list);
+stList *st_list_copy(stList *list, void (*destructItem)(void *));
 
 /*
- * Destruct the list iterator.
+ * Reverses the stList in place.
  */
-void list_destructIterator(ListIterator *iterator);
+void st_list_reverse(stList *list);
+
+/*
+ * Gets an iterator for the stList.
+ */
+stListIterator *st_list_getIterator(stList *list);
+
+/*
+ * Destruct the stList iterator.
+ */
+void st_list_destructIterator(stListIterator *iterator);
 
 /*
  * Gets the next item from the iterator.
  */
-void *list_getNext(ListIterator *iterator);
+void *st_list_getNext(stListIterator *iterator);
 
 /*
  * Gets the previous item from the iterator.
  */
-void *list_getPrevious(ListIterator *iterator);
+void *st_list_getPrevious(stListIterator *iterator);
 
 /*
  * Copies the iterator.
  */
-ListIterator *list_copyIterator(ListIterator *iterator);
+stListIterator *st_list_copyIterator(stListIterator *iterator);
 
 /*
- * Gets a sorted set representation of the list.
+ * Sorts the stList with the given cmpFn.
  */
-SortedSet *list_getSortedSet(List *list);
+void st_list_sort(stList *list, int cmpFn(const void *a, const void *b));
 
 /*
- * Sorts the list with the given cmpFn.
+ * Gets a sorted set representation of the stList, using the given cmpFn as backing.
  */
-void list_sort(List *list, int32_t cmpFn(void *a, void *b));
+stSortedSet *st_list_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b));
 
 #endif /* SONLIBLIST_H_ */

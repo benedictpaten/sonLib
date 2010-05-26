@@ -12,5 +12,7 @@
 #include "sonLibString.h"
 #include "sonLibHash.h"
 #include "sonLibSortedSet.h"
+#include "sonLibList.h"
+#include "sonLibCommon.h"
 
 #endif /* SONLIB_H_ */

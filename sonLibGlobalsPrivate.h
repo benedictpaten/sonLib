@@ -32,6 +32,8 @@
 #include "sonLibETree.h"
 #include "sonLibETreePrivate.h"
 #include "sonLibString.h"
-#include "commonC.h"
+#include "sonLibList.h"
+#include "sonLibListPrivate.h"
+#include "sonLibCommon.h"
 
 #endif /* SONLIBPRIVATE_H_ */

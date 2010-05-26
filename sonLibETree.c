@@ -7,8 +7,8 @@
 
 #include "sonLibGlobalsPrivate.h"
 
-ETree *eTree_construct() {
-	ETree *eTree = mallocLocal(sizeof(ETree));
+stETree *eTree_construct() {
+	stETree *eTree = mallocLocal(sizeof(stETree));
 	eTree->branchLength = INFINITY;
 	eTree->nodes = constructEmptyList(0, (void (*)(void *))eTree_destruct);
 	eTree->label = NULL;
@@ -16,7 +16,7 @@ ETree *eTree_construct() {
 	return eTree;
 }
 
-void eTree_destruct(ETree *eTree) {
+void eTree_destruct(stETree *eTree) {
 	destructList(eTree->nodes);
 	if(eTree->label != NULL) {
 		free(eTree->label);
@@ -24,11 +24,11 @@ void eTree_destruct(ETree *eTree) {
 	free(eTree);
 }
 
-ETree *eTree_getParent(ETree *eTree) {
+stETree *eTree_getParent(stETree *eTree) {
 	return eTree->parent;
 }
 
-void eTree_setParent(ETree *eTree, ETree *parent) {
+void eTree_setParent(stETree *eTree, stETree *parent) {
 	if(eTree_getParent(eTree) != NULL) {
 		listRemove(eTree_getParent(eTree)->nodes, eTree);
 	}
@@ -38,29 +38,29 @@ void eTree_setParent(ETree *eTree, ETree *parent) {
 	}
 }
 
-int32_t eTree_getChildNumber(ETree *eTree) {
+int32_t eTree_getChildNumber(stETree *eTree) {
 	return eTree->nodes->length;
 }
 
-ETree *eTree_getChild(ETree *eTree, int32_t i) {
+stETree *eTree_getChild(stETree *eTree, int32_t i) {
 	assert(i >= 0);
 	assert(i < eTree_getChildNumber(eTree));
 	return eTree->nodes->list[i];
 }
 
-double eTree_getBranchLength(ETree *eTree) {
+double eTree_getBranchLength(stETree *eTree) {
 	return eTree->branchLength;
 }
 
-void eTree_setBranchLength(ETree *eTree, double distance) {
+void eTree_setBranchLength(stETree *eTree, double distance) {
 	eTree->branchLength = distance;
 }
 
-const char *eTree_getLabel(ETree *eTree) {
+const char *eTree_getLabel(stETree *eTree) {
 	return eTree->label;
 }
 
-void eTree_setLabel(ETree *eTree, const char *label) {
+void eTree_setLabel(stETree *eTree, const char *label) {
 	if(eTree->label != NULL) {
 		free(eTree->label);
 	}
@@ -77,14 +77,14 @@ void eTree_setLabel(ETree *eTree, const char *label) {
 static void eTree_parseNewickTreeString_getNextToken(char **token, char **newickTreeString) {
 	assert(*token != NULL);
 	free(*token);
-	*token = string_getNextWord(newickTreeString);
+	*token = st_string_getNextWord(newickTreeString);
 	assert(*token != NULL); //Newick string must terminate with ';'
 }
 
 /*
  * Sets the label, if the token is a label and updates the token.
  */
-static void eTree_parseNewickString_getLabel(char **token, char **newickTreeString, ETree *eTree) {
+static void eTree_parseNewickString_getLabel(char **token, char **newickTreeString, stETree *eTree) {
 	if(**token != ':' && **token != ',' && **token != ';' && **token != ')') {
 		eTree_setLabel(eTree, *token);
 		eTree_parseNewickTreeString_getNextToken(token, newickTreeString);
@@ -94,7 +94,7 @@ static void eTree_parseNewickString_getLabel(char **token, char **newickTreeStri
 /*
  * Parses any available branch length and updates the token.
  */
-static void eTree_parseNewickString_getBranchLength(char **token, char **newickTreeString, ETree *eTree) {
+static void eTree_parseNewickString_getBranchLength(char **token, char **newickTreeString, stETree *eTree) {
 	if (**token == ':') {
 		eTree_parseNewickTreeString_getNextToken(token, newickTreeString);
 		double distance;
@@ -104,8 +104,8 @@ static void eTree_parseNewickString_getBranchLength(char **token, char **newickT
 	}
 }
 
-static ETree *eTree_parseNewickStringP(char **token, char **newickTreeString) {
-    ETree *eTree = eTree_construct();
+static stETree *eTree_parseNewickStringP(char **token, char **newickTreeString) {
+    stETree *eTree = eTree_construct();
     if((*token)[0] == '(') {
     	assert(strlen(*token) == 1);
         eTree_parseNewickTreeString_getNextToken(token, newickTreeString);
@@ -128,24 +128,24 @@ static ETree *eTree_parseNewickStringP(char **token, char **newickTreeString) {
     return eTree;
 }
 
-ETree *eTree_parseNewickString(const char *string) {
+stETree *eTree_parseNewickString(const char *string) {
 	//lax newick tree parser
-	char *cA = string_replace(string, "(", " ( ");
-	char *cA2 = string_replace(cA, ")", " ) ");
+	char *cA = st_string_replace(string, "(", " ( ");
+	char *cA2 = st_string_replace(cA, ")", " ) ");
 	free(cA);
 	cA = cA2;
-	cA2 = string_replace(cA, ":", " : ");
+	cA2 = st_string_replace(cA, ":", " : ");
 	free(cA);
 	cA = cA2;
-	cA2 = string_replace(cA, ",", " , ");
+	cA2 = st_string_replace(cA, ",", " , ");
 	free(cA);
 	cA = cA2;
-	cA2 = string_replace(cA, ";", " ; ");
+	cA2 = st_string_replace(cA, ";", " ; ");
 	free(cA);
 	cA = cA2;
-	char *token = string_getNextWord(&cA);
+	char *token = st_string_getNextWord(&cA);
 	assert(token != NULL);
-	ETree *eTree = eTree_parseNewickStringP(&token, &cA);
+	stETree *eTree = eTree_parseNewickStringP(&token, &cA);
 	assert(*token == ';');
 	free(cA2);
 	free(token);
@@ -156,7 +156,7 @@ ETree *eTree_parseNewickString(const char *string) {
 //Newick tree writer
 /////////////////////////////
 
-static char *eTree_getNewickTreeStringP(ETree *eTree) {
+static char *eTree_getNewickTreeStringP(stETree *eTree) {
 	char *cA, *cA2;
 	if(eTree_getChildNumber(eTree) > 0) {
 		int32_t i;
@@ -188,7 +188,7 @@ static char *eTree_getNewickTreeStringP(ETree *eTree) {
 	return cA;
 }
 
-char *eTree_getNewickTreeString(ETree *eTree) {
+char *eTree_getNewickTreeString(stETree *eTree) {
 	char *cA = eTree_getNewickTreeStringP(eTree), *cA2;
 	cA2 = stringPrint("%s;", cA);
 	free(cA);

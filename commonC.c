@@ -377,7 +377,6 @@ float listGetFloat(struct List *list, int32_t index) {
     return *((float *)list->list[index]);
 }
 
-
 void listRemove(struct List *list, void *k) {
 	int32_t i, j;
 	for(i=0; i<list->length; i++) {

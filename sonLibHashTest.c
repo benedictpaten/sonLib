@@ -1,7 +1,7 @@
 #include "sonLibGlobalsPrivate.h"
 
-static Hash *hash;
-static Hash *hash2;
+static stHash *hash;
+static stHash *hash2;
 static int32_t *one, *two, *three, *four, *five, *six;
 
 static uint32_t hashKey(void *o) {
@@ -22,9 +22,9 @@ static void destructValue(void *o) {
 
 static void testSetup() {
 	//compare by value of memory address
-	hash = hash_construct();
+	hash = st_hash_construct();
 	//compare by value of ints.
-	hash2 = hash_construct3(hashKey, hashEqualsKey, destructKey, destructValue);
+	hash2 = st_hash_construct3(hashKey, hashEqualsKey, destructKey, destructValue);
 	one = constructInt(0);
 	two = constructInt(1);
 	three = constructInt(2);
@@ -32,121 +32,121 @@ static void testSetup() {
 	five = constructInt(4);
 	six = constructInt(5);
 
-	hash_insert(hash, one, two);
-	hash_insert(hash, three, four);
-	hash_insert(hash, five, six);
+	st_hash_insert(hash, one, two);
+	st_hash_insert(hash, three, four);
+	st_hash_insert(hash, five, six);
 
-	hash_insert(hash2, one, two);
-	hash_insert(hash2, three, four);
-	hash_insert(hash2, five, six);
+	st_hash_insert(hash2, one, two);
+	st_hash_insert(hash2, three, four);
+	st_hash_insert(hash2, five, six);
 }
 
 static void testTeardown() {
-	hash_destruct(hash);
-	hash_destruct(hash2);
+	st_hash_destruct(hash);
+	st_hash_destruct(hash2);
 }
 
-void testHash_construct(CuTest* testCase) {
+static void testHash_construct(CuTest* testCase) {
 	testSetup();
 	/* Do nothing */
 	testTeardown();
 }
 
-void testHash_search(CuTest* testCase) {
+static void testHash_search(CuTest* testCase) {
 	testSetup();
 
 	int32_t *i = constructInt(0);
 
 	//Check search by memory address
-	CuAssertTrue(testCase, hash_search(hash, one) == two);
-	CuAssertTrue(testCase, hash_search(hash, three) == four);
-	CuAssertTrue(testCase, hash_search(hash, five) == six);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
+	CuAssertTrue(testCase, st_hash_search(hash, three) == four);
+	CuAssertTrue(testCase, st_hash_search(hash, five) == six);
 	//Check not present
-	CuAssertTrue(testCase, hash_search(hash, six) == NULL);
-	CuAssertTrue(testCase, hash_search(hash, i) == NULL);
+	CuAssertTrue(testCase, st_hash_search(hash, six) == NULL);
+	CuAssertTrue(testCase, st_hash_search(hash, i) == NULL);
 
 	//Check search by memory address
-	CuAssertTrue(testCase, hash_search(hash2, one) == two);
-	CuAssertTrue(testCase, hash_search(hash2, three) == four);
-	CuAssertTrue(testCase, hash_search(hash2, five) == six);
+	CuAssertTrue(testCase, st_hash_search(hash2, one) == two);
+	CuAssertTrue(testCase, st_hash_search(hash2, three) == four);
+	CuAssertTrue(testCase, st_hash_search(hash2, five) == six);
 	//Check not present
-	CuAssertTrue(testCase, hash_search(hash2, six) == NULL);
+	CuAssertTrue(testCase, st_hash_search(hash2, six) == NULL);
 	//Check is searching by memory.
-	CuAssertTrue(testCase, hash_search(hash2, i) == two);
+	CuAssertTrue(testCase, st_hash_search(hash2, i) == two);
 
 	destructInt(i);
 
 	testTeardown();
 }
 
-void testHash_remove(CuTest* testCase) {
+static void testHash_remove(CuTest* testCase) {
 	testSetup();
 
-	CuAssertTrue(testCase, hash_remove(hash, one) == two);
-	CuAssertTrue(testCase, hash_search(hash, one) == NULL);
+	CuAssertTrue(testCase, st_hash_remove(hash, one) == two);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == NULL);
 
-	CuAssertTrue(testCase, hash_remove(hash2, one) == two);
-	CuAssertTrue(testCase, hash_search(hash2, one) == NULL);
+	CuAssertTrue(testCase, st_hash_remove(hash2, one) == two);
+	CuAssertTrue(testCase, st_hash_search(hash2, one) == NULL);
 
-	hash_insert(hash2, one, two);
-	CuAssertTrue(testCase, hash_search(hash2, one) == two);
+	st_hash_insert(hash2, one, two);
+	CuAssertTrue(testCase, st_hash_search(hash2, one) == two);
 
 	testTeardown();
 }
 
-void testHash_insert(CuTest* testCase) {
+static void testHash_insert(CuTest* testCase) {
 	/*
 	 * Tests inserting already present keys.
 	 */
 	testSetup();
 
-	CuAssertTrue(testCase, hash_search(hash, one) == two);
-	hash_insert(hash, one, two);
-	CuAssertTrue(testCase, hash_search(hash, one) == two);
-	hash_insert(hash, one, three);
-	CuAssertTrue(testCase, hash_search(hash, one) == three);
-	hash_insert(hash, one, two);
-	CuAssertTrue(testCase, hash_search(hash, one) == two);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
+	st_hash_insert(hash, one, two);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
+	st_hash_insert(hash, one, three);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == three);
+	st_hash_insert(hash, one, two);
+	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
 
 	testTeardown();
 }
 
-void testHash_size(CuTest *testCase) {
+static void testHash_size(CuTest *testCase) {
 	/*
 	 * Tests the size function of the hash.
 	 */
 	testSetup();
 
-	CuAssertTrue(testCase, hash_size(hash) == 3);
-	CuAssertTrue(testCase, hash_size(hash2) == 3);
-	Hash *hash3 = hash_construct();
-	CuAssertTrue(testCase, hash_size(hash3) == 0);
-	hash_destruct(hash3);
+	CuAssertTrue(testCase, st_hash_size(hash) == 3);
+	CuAssertTrue(testCase, st_hash_size(hash2) == 3);
+	stHash *hash3 = st_hash_construct();
+	CuAssertTrue(testCase, st_hash_size(hash3) == 0);
+	st_hash_destruct(hash3);
 
 	testTeardown();
 }
 
-void testHash_testIterator(CuTest *testCase) {
+static void testHash_testIterator(CuTest *testCase) {
 	testSetup();
 
-	Hash_Iterator *iterator = hash_getIterator(hash);
-	Hash_Iterator *iteratorCopy = hash_copyIterator(iterator);
+	stHash_Iterator *iterator = st_hash_getIterator(hash);
+	stHash_Iterator *iteratorCopy = st_hash_copyIterator(iterator);
 	int32_t i=0;
-	Hash *seen = hash_construct();
+	stHash *seen = st_hash_construct();
 	for(i=0; i<3; i++) {
-		void *o = hash_getNext(iterator);
+		void *o = st_hash_getNext(iterator);
 		CuAssertTrue(testCase, o != NULL);
-		CuAssertTrue(testCase, hash_search(hash, o) != NULL);
-		CuAssertTrue(testCase, hash_search(seen, o) == NULL);
-		CuAssertTrue(testCase, hash_getNext(iteratorCopy) == o);
-		hash_insert(seen, o, o);
+		CuAssertTrue(testCase, st_hash_search(hash, o) != NULL);
+		CuAssertTrue(testCase, st_hash_search(seen, o) == NULL);
+		CuAssertTrue(testCase, st_hash_getNext(iteratorCopy) == o);
+		st_hash_insert(seen, o, o);
 	}
-	CuAssertTrue(testCase, hash_getNext(iterator) == NULL);
-	CuAssertTrue(testCase, hash_getNext(iterator) == NULL);
-	CuAssertTrue(testCase, hash_getNext(iteratorCopy) == NULL);
-	hash_destruct(seen);
-	hash_destructIterator(iterator);
-	hash_destructIterator(iteratorCopy);
+	CuAssertTrue(testCase, st_hash_getNext(iterator) == NULL);
+	CuAssertTrue(testCase, st_hash_getNext(iterator) == NULL);
+	CuAssertTrue(testCase, st_hash_getNext(iteratorCopy) == NULL);
+	st_hash_destruct(seen);
+	st_hash_destructIterator(iterator);
+	st_hash_destructIterator(iteratorCopy);
 
 	testTeardown();
 }

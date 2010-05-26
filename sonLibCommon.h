@@ -8,7 +8,77 @@
 #ifndef SONLIBCOMMON_H_
 #define SONLIBCOMMON_H_
 
+#include "sonLibGlobals.h"
 
+//////////////////
+//Memory allocation functions
+//////////////////
 
+/*
+ * Safe malloc.
+ */
+void *st_malloc(int32_t i);
+
+/*
+ * Safe calloc.
+ */
+void *st_calloc(int32_t elementNumber, int32_t elementSize);
+
+//////////////////
+//Logging / std error printing
+//////////////////
+
+#define ST_LOGGING_OFF 0
+#define ST_LOGGING_INFO 1
+#define ST_LOGGING_DEBUG 2
+
+/*
+ * Set the log level. Either ST_LOGGING_OFF/INFO/DEBUG.
+ * OFF (no logging), info (middle level), debug (copious logging)
+ */
+void st_setLogLevel(int32_t level);
+
+/*
+ * Get the log level. Either ST_LOGGING_OFF/INFO/DEBUG.
+ */
+int32_t st_getLogLevel();
+
+/*
+ * Print a log string with level info.
+ */
+void st_logInfo(const char *string, ...);
+
+/*
+ * Print a log string with level debug.
+ */
+void st_logDebug(const char *string, ...);
+
+/*
+ * Print a message to stderr.
+ */
+void st_uglyf(const char *string, ...);
+
+//////////////////////
+//System wrapper
+//////////////////////
+
+/*
+ * Run a system command, return value is exit value of command.
+ */
+int32_t st_system(const char *string, ...);
+
+//////////////////////
+//Error functions..
+//////////////////////
+
+/*
+ * Print the given error message and exit the program.
+ */
+void st_errAbort(char *format, ...);
+
+/*
+ * Print the error message, but don't exit.
+ */
+void st_errnoAbort(char *format, ...);
 
 #endif /* SONLIBCOMMON_H_ */

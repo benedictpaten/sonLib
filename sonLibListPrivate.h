@@ -10,12 +10,16 @@
 
 #include "sonLibGlobals.h"
 
-struct _list {
-
+struct _stList {
+	void **list;
+	int32_t length;
+	int32_t maxLength;
+	void (*destructElement)(void *);
 };
 
-struct _listIterator {
-
+struct _stListIterator {
+	stList *list;
+	int32_t index;
 };
 
 #endif /* SONLIBLISTPRIVATE_H_ */

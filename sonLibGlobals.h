@@ -21,11 +21,6 @@
  */
 #include "avl.h"
 
-/*
- * For lists
- */
-#include "commonC.h"
-
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -34,12 +29,12 @@
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-typedef struct _eTree ETree;
-typedef struct _sonLibHash Hash;
-typedef struct hashtable_itr Hash_Iterator;
-typedef struct avl_table SortedSet;
-typedef struct avl_traverser SortedSet_Iterator;
-//typedef struct _list List;
-typedef struct _listIterator ListIterator;
+typedef struct _eTree stETree;
+typedef struct _sonLibHash stHash;
+typedef struct hashtable_itr stHash_Iterator;
+typedef struct avl_table stSortedSet;
+typedef struct avl_traverser stSortedSet_Iterator;
+typedef struct _stList stList;
+typedef struct _stListIterator stListIterator;
 
 #endif /* SONLIBGLOBALS_H_ */

@@ -7,11 +7,11 @@
 
 #include "sonLibGlobalsPrivate.h"
 
-char *string_copy(const char *string) {
+char *st_string_copy(const char *string) {
 	return strcpy(mallocLocal(sizeof(char)*(1+strlen(string))), string);
 }
 
-char *string_print(const char *string, ...) {
+char *st_string_print(const char *string, ...) {
 	int32_t arraySize = 0;
 	static char *cA = NULL;
 	//return;
@@ -35,7 +35,7 @@ char *string_print(const char *string, ...) {
 	return stringCopy(cA);
 }
 
-char *string_getNextWord(char **string) {
+char *st_string_getNextWord(char **string) {
 	while(**string != '\0' && isspace(**string)) {
 		(*string)++;
 	}
@@ -61,7 +61,7 @@ static int32_t string_replaceP(char *start, const char *pattern) {
 	return 1;
 }
 
-char *string_replace(const char *originalString, const char *toReplace, const char *replacement) {
+char *st_string_replace(const char *originalString, const char *toReplace, const char *replacement) {
 	char *i, *k;
 	int32_t j;
 	char *newString;
@@ -97,7 +97,7 @@ char *string_replace(const char *originalString, const char *toReplace, const ch
 	return newString;
 }
 
-char *string_join(const char *pad, const char **strings, int32_t length) {
+char *st_string_join(const char *pad, const char **strings, int32_t length) {
 	int32_t i, j, k;
 	assert(length >= 0);
 	j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
