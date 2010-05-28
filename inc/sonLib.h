@@ -14,5 +14,6 @@
 #include "sonLibSortedSet.h"
 #include "sonLibList.h"
 #include "sonLibCommon.h"
+#include "sonLibContainers.h"
 
 #endif /* SONLIB_H_ */

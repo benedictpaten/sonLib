@@ -35,5 +35,6 @@
 #include "sonLibList.h"
 #include "sonLibListPrivate.h"
 #include "sonLibCommon.h"
+#include "sonLibContainers.h"
 
 #endif /* SONLIBPRIVATE_H_ */

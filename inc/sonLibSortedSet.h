@@ -12,14 +12,28 @@
 ////////////////////////////////////////////////
 
 /*
- * Constructs a sorted set, using the given comparison function.
+ * Constructs a sorted set, using pointer based comparison function.
  */
-st_SortedSet *st_sortedSet_construct(int32_t (*compareFn)(const void *, const void *, void *));
+st_SortedSet *st_sortedSet_construct();
 
 /*
- * Destructs the sorted set, applying the destruct function to each element.
+ * Constructs a sorted set, using pointer based comparison function,
+ * and the given destruct element function, which will be run on each element when
+ * the set is destructed.
  */
-void st_sortedSet_destruct(st_SortedSet *sortedSet, void (*destructElementFn)(void *, void *));
+st_SortedSet *st_sortedSet_construct2(void (*destructElementFn)(void *));
+
+/*
+ * Constructs a sorted set, using the given comparison function and destruct element function.
+ * If destruct element function is null then it is ignored.
+ */
+st_SortedSet *st_sortedSet_construct3(int (*compareFn)(const void *, const void *),
+									  void (*destructElementFn)(void *));
+
+/*
+ * Destructs the sorted set.
+ */
+void st_sortedSet_destruct(st_SortedSet *sortedSet);
 
 /*
  * Inserts the object into the sorted set.
@@ -75,5 +89,12 @@ void *st_sortedSet_getPrevious(st_SortedSetIterator *iterator);
  * Copies the iterator.
  */
 st_SortedSetIterator *st_sortedSet_copyIterator(st_SortedSetIterator *iterator);
+
+/*
+ * Gets a stList version of the sorted set, sorted in the order of the sorted set.
+ * No destructor is defined for the list, so destroying the list will not destroy
+ * the elements in it or the sorted set.
+ */
+st_List *stSortedSet_getList(st_SortedSet *sortedSet);
 
 #endif

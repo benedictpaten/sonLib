@@ -123,33 +123,33 @@ float *constructFloat(float i);
 
 void destructFloat(float *i);
 
-uint32_t hashtable_stringHashKey( void *k );
+uint32_t hashtable_stringHashKey( const void *k );
 
-int32_t hashtable_stringEqualKey( void *key1, void *key2 );
+int hashtable_stringEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_intHashKey( void *k );
+uint32_t hashtable_intHashKey( const void *k );
 
-int32_t hashtable_intEqualKey( void *key1, void *key2 );
+int hashtable_intEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_key( void *k );
+uint32_t hashtable_key( const void *k );
 
-int32_t hashtable_equalKey( void *key1, void *key2 );
+int hashtable_equalKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_intPairHashKey( void *k );
+uint32_t hashtable_intPairHashKey( const void *k );
 
-int32_t hashtable_intPairEqualKey( void *key1, void *key2 );
+int hashtable_intPairEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_orderedIntPairHashKey( void *k );
+uint32_t hashtable_orderedIntPairHashKey( const void *k );
 
-int32_t hashtable_orderedIntPairEqualKey( void *key1, void *key2 );
+int hashtable_orderedIntPairEqualKey(const  void *key1, const void *key2 );
 
 int32_t *constructIntPair(int32_t i, int32_t j);
 
 void destructIntPair(int32_t *i);
 
-uint32_t hashtable_longHashKey( void *k );
+uint32_t hashtable_longHashKey( const void *k );
 
-int32_t hashtable_longEqualKey( void *key1, void *key2 );
+int hashtable_longEqualKey( const void *key1, const void *key2 );
 
 int32_t intComparator(int32_t *i, int32_t *j);
 

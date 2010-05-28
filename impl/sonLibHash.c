@@ -6,23 +6,23 @@
  */
 #include "sonLibGlobalsPrivate.h"
 
-static uint32_t st_hash_key( void *k ) {
+static uint32_t st_hash_key( const void *k ) {
 	return (uint32_t)k;
 }
 
-static int32_t st_hash_equalKey( void *key1, void *key2 ) {
+static int st_hash_equalKey( const void *key1, const void *key2 ) {
 	return key1 == key2;
 }
 
-st_Hash *st_hash_construct() {
-	return st_hash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
+st_Hash *stHash_construct() {
+	return stHash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
 }
 
-st_Hash *st_hash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
-	return st_hash_construct3(st_hash_key, st_hash_equalKey, destructKeys, destructValues);
+st_Hash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
+	return stHash_construct3(st_hash_key, st_hash_equalKey, destructKeys, destructValues);
 }
 
-st_Hash *st_hash_construct3(uint32_t (*hashKey)(void *), int32_t (*hashEqualsKey)(void *, void *),
+st_Hash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
 		void (*destructKeys)(void *), void (*destructValues)(void *)) {
 	st_Hash *hash = st_malloc(sizeof(st_Hash));
 	hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
@@ -76,4 +76,26 @@ st_HashIterator *st_hash_copyIterator(st_HashIterator *iterator) {
 
 void st_hash_destructIterator(st_HashIterator *iterator) {
 	free(iterator);
+}
+
+st_List *st_hash_getKeys(st_Hash *hash) {
+	st_List *list = st_list_construct();
+	st_HashIterator *iterator = st_hash_getIterator(hash);
+	void *item;
+	while((item = st_hash_getNext(iterator)) != NULL) {
+		st_list_append(list, item);
+	}
+	st_hash_destructIterator(iterator);
+	return list;
+}
+
+st_List *st_hash_getValues(st_Hash *hash) {
+	st_List *list = st_list_construct();
+	st_HashIterator *iterator = st_hash_getIterator(hash);
+	void *item;
+	while((item = st_hash_getNext(iterator)) != NULL) {
+		st_list_append(list, st_hash_search(hash, item));
+	}
+	st_hash_destructIterator(iterator);
+	return list;
 }

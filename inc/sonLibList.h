@@ -133,7 +133,9 @@ st_ListIterator *st_list_copyIterator(st_ListIterator *iterator);
 void st_list_sort(st_List *list, int cmpFn(const void *a, const void *b));
 
 /*
- * Gets a sorted set representation of the stList, using the given cmpFn as backing.
+ * Gets a sorted set representation of the stList, using the given cmpFn as backing. The sorted set
+ * has no defined destruct element function, so when the sorted set is destructed the elements in it and
+ * in this list will not be destructed.
  */
 st_SortedSet *st_list_getSortedSet(st_List *list, int (*cmpFn)(const void *a, const void *b));
 

@@ -6,16 +6,20 @@ CuSuite *sonLibHashTestSuite();
 CuSuite *sonLibSortedSetTestSuite();
 CuSuite *sonLib_stListTestSuite();
 CuSuite *sonLib_stCommonTestSuite();
+CuSuite* sonLib_stContainersTestSuite();
 
 int sonLibRunAllTests(void) {
 	CuString *output = CuStringNew();
 	CuSuite* suite = CuSuiteNew();
+	CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
 	CuSuiteAddSuite(suite, sonLibETreeTestSuite());
 	CuSuiteAddSuite(suite, sonLibStringTestSuite());
+	CuSuiteAddSuite(suite, sonLib_stContainersTestSuite());
 	CuSuiteAddSuite(suite, sonLibHashTestSuite());
-	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
 	CuSuiteAddSuite(suite, sonLib_stListTestSuite());
-	CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
+	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
+
+
 	CuSuiteRun(suite);
 	CuSuiteSummary(suite, output);
 	CuSuiteDetails(suite, output);

@@ -2,35 +2,22 @@
 
 static st_Hash *hash;
 static st_Hash *hash2;
-static int32_t *one, *two, *three, *four, *five, *six;
-
-static uint32_t hashKey(void *o) {
-	return *((int32_t *)o);
-}
-
-static int32_t hashEqualsKey(void *o, void *o2) {
-	return *((int32_t *)o) == *((int32_t *)o2);
-}
-
-static void destructKey(void *o) {
-	destructInt(o);
-}
-
-static void destructValue(void *o) {
-	destructInt(o);
-}
+static stIntTuple *one, *two, *three, *four, *five, *six;
 
 static void testSetup() {
 	//compare by value of memory address
-	hash = st_hash_construct();
+	hash = stHash_construct();
 	//compare by value of ints.
-	hash2 = st_hash_construct3(hashKey, hashEqualsKey, destructKey, destructValue);
-	one = constructInt(0);
-	two = constructInt(1);
-	three = constructInt(2);
-	four = constructInt(3);
-	five = constructInt(4);
-	six = constructInt(5);
+	hash2 = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey,
+			(int (*)(const void *, const void *))stIntTuple_equalsFn,
+			(void (*)(void *))stIntTuple_destruct,
+			(void (*)(void *))stIntTuple_destruct);
+	one = stIntTuple_construct(1, 0);
+	two = stIntTuple_construct(1, 1);
+	three = stIntTuple_construct(1, 2);
+	four = stIntTuple_construct(1, 3);
+	five = stIntTuple_construct(1, 4);
+	six = stIntTuple_construct(1, 5);
 
 	st_hash_insert(hash, one, two);
 	st_hash_insert(hash, three, four);
@@ -55,7 +42,7 @@ static void testHash_construct(CuTest* testCase) {
 static void testHash_search(CuTest* testCase) {
 	testSetup();
 
-	int32_t *i = constructInt(0);
+	stIntTuple *i = stIntTuple_construct(1, 0);
 
 	//Check search by memory address
 	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
@@ -74,7 +61,7 @@ static void testHash_search(CuTest* testCase) {
 	//Check is searching by memory.
 	CuAssertTrue(testCase, st_hash_search(hash2, i) == two);
 
-	destructInt(i);
+	stIntTuple_destruct(i);
 
 	testTeardown();
 }
@@ -119,7 +106,7 @@ static void testHash_size(CuTest *testCase) {
 
 	CuAssertTrue(testCase, st_hash_size(hash) == 3);
 	CuAssertTrue(testCase, st_hash_size(hash2) == 3);
-	st_Hash *hash3 = st_hash_construct();
+	st_Hash *hash3 = stHash_construct();
 	CuAssertTrue(testCase, st_hash_size(hash3) == 0);
 	st_hash_destruct(hash3);
 
@@ -132,7 +119,7 @@ static void testHash_testIterator(CuTest *testCase) {
 	st_HashIterator *iterator = st_hash_getIterator(hash);
 	st_HashIterator *iteratorCopy = st_hash_copyIterator(iterator);
 	int32_t i=0;
-	st_Hash *seen = st_hash_construct();
+	st_Hash *seen = stHash_construct();
 	for(i=0; i<3; i++) {
 		void *o = st_hash_getNext(iterator);
 		CuAssertTrue(testCase, o != NULL);
@@ -151,6 +138,27 @@ static void testHash_testIterator(CuTest *testCase) {
 	testTeardown();
 }
 
+static void testHash_testGetKeys(CuTest *testCase) {
+	testSetup();
+	st_List *list = st_hash_getKeys(hash2);
+	CuAssertTrue(testCase, st_list_length(list) == 3);
+	CuAssertTrue(testCase, st_list_contains(list, one));
+	CuAssertTrue(testCase, st_list_contains(list, three));
+	CuAssertTrue(testCase, st_list_contains(list, five));
+	st_list_destruct(list);
+	testTeardown();
+}
+
+static void testHash_testGetValues(CuTest *testCase) {
+	testSetup();
+	st_List *list = st_hash_getValues(hash2);
+	CuAssertTrue(testCase, st_list_length(list) == 3);
+	CuAssertTrue(testCase, st_list_contains(list, two));
+	CuAssertTrue(testCase, st_list_contains(list, four));
+	CuAssertTrue(testCase, st_list_contains(list, six));
+	st_list_destruct(list);
+	testTeardown();
+}
 
 CuSuite* sonLibHashTestSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -160,5 +168,7 @@ CuSuite* sonLibHashTestSuite(void) {
 	SUITE_ADD_TEST(suite, testHash_size);
 	SUITE_ADD_TEST(suite, testHash_testIterator);
 	SUITE_ADD_TEST(suite, testHash_construct);
+	SUITE_ADD_TEST(suite, testHash_testGetKeys);
+	SUITE_ADD_TEST(suite, testHash_testGetValues);
 	return suite;
 }

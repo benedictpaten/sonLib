@@ -179,14 +179,8 @@ void st_list_sort(st_List *list, int cmpFn(const void *a, const void *b)) {
 	qsort(list->list, st_list_length(list), sizeof(void *), st_list_sortP);
 }
 
-static int (*st_list_getSortedSet_cmpFn)(const void *a, const void *b);
-static int32_t st_list_getSortedSetP(const void *a, const void *b, void *ex) {
-	return st_list_getSortedSet_cmpFn(a, b);
-}
-
 st_SortedSet *st_list_getSortedSet(st_List *list, int (*cmpFn)(const void *a, const void *b)) {
-	st_list_getSortedSet_cmpFn = cmpFn;
-	st_SortedSet *sortedSet = st_sortedSet_construct(st_list_getSortedSetP);
+	st_SortedSet *sortedSet = st_sortedSet_construct3(cmpFn, NULL);
 	int32_t i;
 	for(i=0; i<st_list_length(list); i++) {
 		st_sortedSet_insert(sortedSet, st_list_get(list, i));

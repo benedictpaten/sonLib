@@ -13,17 +13,17 @@
 /*
  * Constructs hash, with no destructors for keys or values.
  */
-st_Hash *st_hash_construct();
+st_Hash *stHash_construct();
 
 /*
  * Constructs a hash with given destructors, if null then destructors are ignored
  */
-st_Hash *st_hash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *));
+st_Hash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *));
 
 /*
  * Constructs a hash using the given comparison functions.
  */
-st_Hash *st_hash_construct3(uint32_t (*hashKey)(void *), int32_t (*hashEqualsKey)(void *, void *),
+st_Hash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
 		void (*destructKeys)(void *), void (*destructValues)(void *));
 
 /*
@@ -70,5 +70,15 @@ st_HashIterator *st_hash_copyIterator(st_HashIterator *iterator);
  * Destructs the iterator.
  */
 void st_hash_destructIterator(st_HashIterator *iterator);
+
+/*
+ * Gets the keys in the hash as list.
+ */
+st_List *st_hash_getKeys(st_Hash *hash);
+
+/*
+ * Gets the values in the hash as a list.
+ */
+st_List *st_hash_getValues(st_Hash *hash);
 
 #endif

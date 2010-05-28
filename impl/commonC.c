@@ -434,29 +434,29 @@ void destructInt(int32_t *i) {
     free(i);
 }
 
-uint32_t hashtable_intPairHashKey( void *k ) {
-	int32_t *iA;
+uint32_t hashtable_intPairHashKey( const void *k ) {
+	const int32_t *iA;
 	iA = k;
     return iA[0] + iA[1];
 }
 
-int32_t hashtable_intPairEqualKey( void *key1, void *key2 ) {
-	int32_t *iA;
-	int32_t *iA2;
+int hashtable_intPairEqualKey( const void *key1, const void *key2 ) {
+	const int32_t *iA;
+	const int32_t *iA2;
 	iA = key1;
 	iA2 = key2;
     return  (iA[0] == iA2[0] && iA[1] == iA2[1]) || (iA[0] == iA2[1] && iA[1] == iA2[0]);
 }
 
-uint32_t hashtable_orderedIntPairHashKey( void *k ) {
-	int32_t *iA;
+uint32_t hashtable_orderedIntPairHashKey( const void *k ) {
+	const int32_t *iA;
 	iA = k;
     return iA[0];
 }
 
-int32_t hashtable_orderedIntPairEqualKey( void *key1, void *key2 ) {
-	int32_t *iA;
-	int32_t *iA2;
+int hashtable_orderedIntPairEqualKey( const void *key1, const void *key2 ) {
+	const int32_t *iA;
+	const int32_t *iA2;
 	iA = key1;
 	iA2 = key2;
     return  iA[0] == iA2[0] && iA[1] == iA2[1];
@@ -489,9 +489,9 @@ void destructLong(int64_t *i) {
 }
 
 
-uint32_t hashtable_stringHashKey( void *k ) {
+uint32_t hashtable_stringHashKey( const void *k ) {
 	uint32_t i, j;
-	char *cA;
+	const char *cA;
 
 	cA = k;
 	j = 0;
@@ -516,31 +516,31 @@ uint32_t hashtable_stringHashKey( void *k )
 }
 **/
 
-int32_t hashtable_stringEqualKey( void *key1, void *key2 ) {
+int hashtable_stringEqualKey( const void *key1, const  void *key2 ) {
 	return strcmp(key1, key2) == 0;
 }
 
-uint32_t hashtable_intHashKey( void *k ) {
+uint32_t hashtable_intHashKey( const void *k ) {
     return *((int32_t *)k);
 }
 
-int32_t hashtable_intEqualKey( void *key1, void *key2 ) {
+int hashtable_intEqualKey( const void *key1, const void *key2 ) {
      return *((int32_t *)key1) == *((int32_t *)key2);
 }
 
-uint32_t hashtable_longHashKey( void *k ) {
+uint32_t hashtable_longHashKey( const void *k ) {
     return *((int64_t *)k);
 }
 
-int32_t hashtable_longEqualKey( void *key1, void *key2 ) {
+int hashtable_longEqualKey( const void *key1, const void *key2 ) {
      return *((int64_t *)key1) == *((int64_t *)key2);
 }
 
-uint32_t hashtable_key( void *k ) {
+uint32_t hashtable_key( const void *k ) {
 	return (uint32_t)k;
 }
 
-int32_t hashtable_equalKey( void *key1, void *key2 ) {
+int hashtable_equalKey( const void *key1, const void *key2 ) {
 	return key1 == key2;
 }
 

@@ -36,8 +36,8 @@ indexFor(uint32_t tablelength, uint32_t hashvalue) {
 /*****************************************************************************/
 struct hashtable *
 create_hashtable(uint32_t minsize,
-                 uint32_t (*hashf) (void*),
-                 int32_t (*eqf) (void*,void*),
+                 uint32_t (*hashf) (const void*),
+                 int (*eqf) (const void*, const void*),
                  void (*keyFree)(void *),
                  void (*valueFree)(void *))
 {

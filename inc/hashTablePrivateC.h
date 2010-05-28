@@ -20,8 +20,8 @@ struct hashtable {
     uint32_t entrycount;
     uint32_t loadlimit;
     uint32_t primeindex;
-    uint32_t (*hashfn) (void *k);
-    int32_t (*eqfn) (void *k1, void *k2);
+    uint32_t (*hashfn) (const void *k);
+    int (*eqfn) (const void *k1, const void *k2);
     void (*keyFree)(void *);
     void (*valueFree)(void *);
 };

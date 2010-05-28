@@ -75,8 +75,8 @@ struct hashtable;
 
 struct hashtable *
 create_hashtable(uint32_t minsize,
-                 uint32_t (*hashfunction) (void*),
-                 int32_t (*key_eq_fn) (void*,void*),
+                 uint32_t (*hashfunction) (const void *),
+                 int (*key_eq_fn) (const void*, const void*),
                  void (*keyFree)(void *),
                  void (*valueFree)(void *));
 

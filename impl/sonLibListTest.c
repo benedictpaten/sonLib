@@ -207,7 +207,7 @@ void test_st_list_getSortedSet(CuTest *testCase) {
 	CuAssertStrEquals(testCase, "three", st_sortedSet_getNext(iterator));
 	CuAssertStrEquals(testCase, "two", st_sortedSet_getNext(iterator));
 	st_sortedSet_destructIterator(iterator);
-	st_sortedSet_destruct(sortedSet, NULL);
+	st_sortedSet_destruct(sortedSet);
 	teardown();
 }
 
@@ -228,6 +228,6 @@ CuSuite* sonLib_stListTestSuite(void) {
 	SUITE_ADD_TEST(suite, test_st_list_reverse);
 	SUITE_ADD_TEST(suite, test_st_list_iterator);
 	SUITE_ADD_TEST(suite, test_st_list_sort);
-	//SUITE_ADD_TEST(suite, test_st_list_getSortedSet);
+	SUITE_ADD_TEST(suite, test_st_list_getSortedSet);
 	return suite;
 }

@@ -33,7 +33,7 @@ void *st_calloc(int32_t elementNumber, int32_t elementSize);
 #define ST_LOGGING_DEBUG 2
 
 /*
- * Set the log level. Either ST_LOGGING_OFF/INFO/DEBUG.
+ * Set the log level. Either ST_LOGGING_OFF, ST_LOGGING_INFO or ST_LOGGING_DEBUG.
  * OFF (no logging), info (middle level), debug (copious logging)
  */
 void st_setLogLevel(int32_t level);
