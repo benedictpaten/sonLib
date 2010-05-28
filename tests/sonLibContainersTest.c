@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static stIntTuple *intTuple1 = NULL;
 static stIntTuple *intTuple2, *intTuple3, *intTuple4, *intTuple5;

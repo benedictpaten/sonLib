@@ -4,7 +4,7 @@
  *  Created on: 24 May 2010
  *      Author: benedictpaten
  */
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static void test_st_logging(CuTest *testCase) {
 	/*

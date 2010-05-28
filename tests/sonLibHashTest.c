@@ -1,4 +1,4 @@
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static stHash *hash;
 static stHash *hash2;

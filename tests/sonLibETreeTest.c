@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static ETree *root = NULL;
 static ETree *internal;

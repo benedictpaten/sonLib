@@ -1,4 +1,4 @@
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 CuSuite *sonLibETreeTestSuite();
 CuSuite *sonLibStringTestSuite();

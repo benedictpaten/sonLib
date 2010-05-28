@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static void testString_copy(CuTest* testCase) {
 	const char *test[3] = { "hello this is a test", "", "BOO\nTOO\n" };

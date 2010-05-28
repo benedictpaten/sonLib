@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static stList *list = NULL;
 static int32_t stringNumber = 5;

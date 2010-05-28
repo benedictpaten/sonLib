@@ -1,4 +1,4 @@
-#include "sonLibGlobalsInternal.h"
+#include "sonLibGlobalsTest.h"
 
 static stSortedSet *sortedSet = NULL;
 static int32_t size = 9;
