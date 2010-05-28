@@ -132,7 +132,6 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
 	static char cA2[STRING_ARRAY_SIZE];
 	static char cA3[STRING_ARRAY_SIZE];
 	char *cA4;
-	int32_t i;
 	char strand1, strand2;
 
 	pA = st_malloc(sizeof(struct PairwiseAlignment));

@@ -11,11 +11,11 @@ clean :
 	rm -f  ${binPath}/sonLibTests ${libPath}/sonLib*.h ${libPath}/sonLib.a ${libPath}/avl.h ${libPath}/bioioC.h ${libPath}/commonC.h ${libPath}/fastCMaths.h ${libPath}/hashTableC.h ${libPath}/pairwiseAlignment.h
 
 ${binPath}/sonLibTests : ${libSources} ${libHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a
-	${cxx} ${cflags} -I ${libPath} -o ${binPath}/sonLibTests impl/allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${tokyoCabinetLib}
+	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLibTests impl/allTests.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${tokyoCabinetLib}
 
 ${libPath}/sonLib.a : ${libSources} ${libHeaders}
 	cp ${libHeaders} ${libPath}/
-	${cxx} ${cflags} -I ${libPath}/ -c ${libSources}
+	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
 	ar rc sonLib.a *.o
 	ranlib sonLib.a 
 	rm *.o

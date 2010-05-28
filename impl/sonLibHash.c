@@ -7,7 +7,7 @@
 #include "sonLibGlobalsPrivate.h"
 
 static uint32_t st_hash_key( const void *k ) {
-	return (uint32_t)k;
+	return (uint32_t)(size_t)k;
 }
 
 static int st_hash_equalKey( const void *key1, const void *key2 ) {

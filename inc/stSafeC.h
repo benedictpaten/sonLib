@@ -1,74 +1,70 @@
 /**
  * Wrappers for C library functions that exit on errors.
- * @defgroup safec Robust C library functions
+ * @defgroup stSafeC Robust C library functions
  */
-#ifndef safec_h
-#define safec_h
-#include "kobol/src/c/reconStd.h"
+#ifndef stSafeC_h
+#define stSafeC_h
 #include <stdlib.h>
 #include <stdarg.h>
-inclBegin;
 //@{
 /**
  * Abort function that doesn't allocate any memory
  * @ingroup safec
  */
-void safeErr(const char *msg, ...);
+void stSafeCErr(const char *msg, ...);
 
 /**
  * Allocate uninitialized memory, exiting with using minimal resources if it
- * can't be allocated. Use safeCalloc for cleared memory.
- * @ingroup safec
+ * can't be allocated. Use stSafeCCalloc for cleared memory.
+ * @ingroup stSafeC
  */
-void *safeMalloc(size_t size);
+void *stSafeCMalloc(size_t size);
 
 /**
  * Allocate zeroed memory, exiting with using minimal resources if it can't be
  * allocated.  Should be used for small objects
- * @ingroup safec
+ * @ingroup stSafeC
  */
-void *safeCalloc(size_t size);
+void *stSafeCCalloc(size_t size);
 
 /**
  * Reallocated memory, exiting with using minimal resources if it can't be
  * allocated.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-void *safeRealloc(void *mem, size_t size);
+void *stSafeCRealloc(void *mem, size_t size);
 
 /**
  * wrapper around free, to be consistent with other alloc functions.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-static inline void safeFree(void *mem) {
+static inline void stSafeCFree(void *mem) {
     free(mem);
 }
 
 /**
  * sprintf format with buffer overflow checking.  The resulting string is
  * always terminated with zero byte.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-int safeFmtv(char *buffer, int bufSize, const char *format, va_list args);
+int stSafeCFmtv(char *buffer, int bufSize, const char *format, va_list args);
 
 /**
  * sprintf format with buffer overflow checking.  The resulting string is
  * always terminated with zero byte.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-int safeFmt(char* buffer, int bufSize, const char *format, ...);
+int stSafeCFmt(char* buffer, int bufSize, const char *format, ...);
 
 /**
  * sprintf formatting, returning a dynamically allocated string.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-char *safeDynFmtv(const char *format, va_list args);
+char *stSafeCDynFmtv(const char *format, va_list args);
 
 /**
  * sprintf formatting, returning a dynamically allocated string.
- * @ingroup safec
+ * @ingroup stSafeC
  */
-char *safeDynFmt(const char *format, ...);
-//@}
-inclEnd;
+char *stSafeCDynFmt(const char *format, ...);
 #endif

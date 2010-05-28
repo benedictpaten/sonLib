@@ -537,7 +537,7 @@ int hashtable_longEqualKey( const void *key1, const void *key2 ) {
 }
 
 uint32_t hashtable_key( const void *k ) {
-	return (uint32_t)k;
+	return (uint32_t)(size_t)k;
 }
 
 int hashtable_equalKey( const void *key1, const void *key2 ) {

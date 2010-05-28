@@ -1,8 +1,8 @@
 /*
  * test throwing with no try.
  */
-#include "kobol/src/c/CExcept.h"
-#include "kobol/src/c/safec.h"
+#include "stCExcept.h"
+#include "stSafeC.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -10,20 +10,20 @@
 static const char *const ERR1 = "err1";
 static const char *const ERR2 = "err2";
 static void thrower2() {
-    ceThrowNew(ERR2, "error in %s", "thrower2");
+    stThrowNew(ERR2, "error in %s", "thrower2");
 }
 
 static void thrower1() {
-    ceTry {
+    stTry {
         thrower2();
-    } ceCatch(except) {
-        ceThrow(CExcept_newCause(except, ERR1, "error in %s", "thrower1"));
-    } ceEnd;
+    } stCatch(except) {
+        stThrow(stCExcept_newCause(except, ERR1, "error in %s", "thrower1"));
+    } stTryEnd;
 }
 
 static void testThrow() {
     thrower1();
-    safeErr("testThrow, should not make it here");
+    stSafeCErr("testThrow, should not make it here");
 }
 
 int main(int argc, char **argv) {

@@ -1,5 +1,5 @@
 /**
- * CExcept - a C exception mechanism used by Kobol.
+ * stCExcept - a C exception mechanism used by SonTrace.
  *
  * This provides a simple setjmp based exception mechanism for C.  All errors
  * in the Kobol C API are reported via exceptions.  An exception object,
@@ -8,15 +8,15 @@
  *
  * The usage idiom for catching errors is:
  * \code
- *  ceTry {
+ *  stTry {
  *      // user code here
- *  } ceCatch(except) {
+ *  } stCatch(except) {
  *      // user exception handling here
- *      CExcept_free(except);
- *  } ceEnd;
+ *      stCExcept_free(except);
+ *  } stTryEnd;
  * \endcode
  *
- * To return within the try block, \code ceTryReturn(value) \endcode must
+ * To return within the try block, \code stTryReturn(value) \endcode must
  * be used.  There is no macro to return within the try block without
  * returning a value, as this is considered tacky. A standard
  * \code return \endcode can be used in the catch block.
@@ -27,15 +27,15 @@
  * \code
  *  volatile int cnt = 0;
  *  ...
- *  ceTry {
+ *  stTry {
  *      cnt++;
  *      if (cnt > 10) {
- *         ceTryReturn(cnt);
+ *         stTryReturn(cnt);
  *      }
- *  } ceCatch(except) {
- *      CExcept_free(except);
+ *  } stCatch(except) {
+ *      stCExcept_free(except);
  *      return -cnt;
- *  } ceEnd;
+ *  } stTryEnd;
  *  return cnt;
  * \endcode
  * @defgroup CExceptions Exceptions for C
@@ -43,101 +43,98 @@
 
 #ifndef CExcept_h
 #define CExcept_h
-#include "kobol/src/c/reconStd.h"
 #include <assert.h>
 #include <setjmp.h>
 #include <stdarg.h>
-inclBegin;
 //@{
-
 /// @defgroup CExcept class CExcept
 /// @ingroup CExceptions
 //@{
 
 /**
  * Exception object that is thrown.
- * @ingroup  CExcept
+ * @ingroup stCExcept
  */
-struct CExcept {
-    const char *id;         /**< symbolic exception id */
-    const char *msg;        /**< natural-language error message */
-    struct CExcept *cause;  /**< error stack, NULL if no causing errors */
+struct stCExcept {
+    const char *id;           /**< symbolic exception id */
+    const char *msg;          /**< natural-language error message */
+    struct stCExcept *cause;  /**< error stack, NULL if no causing errors */
 };
 
 /**
- * Construct a new CExcept object.
+ * Construct a new stCExcept object.
  * 
  * @param id symbolic exception id.  This should be a constant, static string.
  * @param msg print style format used to generate errMsg
  * @param args arguments to format into errMsg
- * @ingroup  CExcept
+ * @ingroup stCExcept
  */
-struct CExcept *CExcept_newv(const char *id, const char *msg, va_list args);
+struct stCExcept *stCExcept_newv(const char *id, const char *msg, va_list args);
 
 /**
- * Construct a new CExcept object.
+ * Construct a new stCExcept object.
  * 
  * @param id symbolic exception id.  This should be a constant, static string.
  * @param msg print style format used to generate errMsg
  * @param ... arguments to format into errMsg
- * @ingroup  CExcept
+ * @ingroup  stCExcept
  */
-struct CExcept *CExcept_new(const char *id, const char *msg, ...);
+struct stCExcept *stCExcept_new(const char *id, const char *msg, ...);
 
 /**
- * Construct a new CExcept object, setting cause.
+ * Construct a new stCExcept object, setting cause.
  * 
  * @param cause causing error cause, ownership passed to the new object.
  * @param id symbolic exception id.  This should be a constant, static string.
  * @param msg print style format used to generate errMsg
  * @param args arguments to format into errMsg
- * @ingroup  CExcept
+ * @ingroup  stCExcept
  */
-struct CExcept *CExcept_newCausev(struct CExcept *cause, const char *id, const char *msg, va_list args);
+struct stCExcept *stCExcept_newCausev(struct stCExcept *cause, const char *id, const char *msg, va_list args);
 
 /**
- * Construct a new CExcept object, setting cause.
+ * Construct a new stCExcept object, setting cause.
  * 
  * @param cause causing error cause, ownership passed to the new object.
  * @param id symbolic exception id.  This should be a constant, static string.
  * @param msg print style format used to generate errMsg
  * @param ... arguments to format into errMsg
- * @ingroup  CExcept
+ * @ingroup  stCExcept
  */
-struct CExcept *CExcept_newCause(struct CExcept *cause, const char *id, const char *msg, ...);
+struct stCExcept *stCExcept_newCause(struct stCExcept *cause, const char *id, const char *msg, ...);
 
 /**
- * Free an CExcept object.  Frees assocated causes as well.
- * @ingroup  CExcept
+ * Free an stCExcept object.  Frees assocated causes as well.
+ * @ingroup  stCExcept
  */
-void CExcept_free(struct CExcept *except);
+void stCExcept_free(struct stCExcept *except);
 //@}
 
 /*
  * Context allocated on the stack for an exception.
  * (Internal structure, don't use directly)
  */
-struct _CExceptContext {
+struct _stCExceptContext {
     jmp_buf env;                   // setjmp environment 
-    struct _CExceptContext *prev;  // previous context on the stack.
-    struct CExcept *except;        // exception thrown into this context
+    struct _stCExceptContext *prev;  // previous context on the stack.
+    struct stCExcept *except;        // exception thrown into this context
 };
 
 /* 
  * Exception content Top Of Stack.
  * (Internal structure, don't use directly)
  */
-extern struct _CExceptContext *_cexceptTOS;
+extern struct _stCExceptContext *_cexceptTOS;
 
 /// @defgroup CMacros C try/catch macros
-/// @ingroup CExceptions
+/// @ingroup stCExceptions
 //@{
 
 /**
  * Begin a try block.
  */
-#define ceTry {\
-    struct _CExceptContext _cexceptContext;\
+#define stTry {\
+    struct _stCExceptContext _cexceptContext;\
     _cexceptContext.prev = _cexceptTOS;\
     _cexceptTOS = &_cexceptContext;\
     _cexceptContext.except = NULL;\
@@ -146,15 +143,15 @@ extern struct _CExceptContext *_cexceptTOS;
 /**
  * Catch following a try block.
  */
-#define ceCatch(exceptVar) \
+#define stCatch(exceptVar) \
     if (_cexceptTOS->except != NULL) {\
-        struct CExcept *exceptVar = _cexceptTOS->except;\
+        struct stCExcept *exceptVar = _cexceptTOS->except;\
         _cexceptTOS = _cexceptTOS->prev;
 
 /**
  * End of try/cache block
  */
-#define ceEnd \
+#define stTryEnd \
     } else {\
         _cexceptTOS = _cexceptTOS->prev;\
     }}
@@ -162,7 +159,7 @@ extern struct _CExceptContext *_cexceptTOS;
 /**
  * Return a value inside of a ceTry.
  */
-#define ceTryReturn(val) {\
+#define stTryReturn(val) {\
     _cexceptTOS = _cexceptTOS->prev;\
     return val;\
     }
@@ -173,7 +170,7 @@ extern struct _CExceptContext *_cexceptTOS;
  * @param except object describing the exception.  Ownership of object
  *  is passed to exception mechanism.
  */
-void ceThrow(struct CExcept *except);
+void stThrow(struct stCExcept *except);
 
 /**
  * Construct and raise an exception.
@@ -181,12 +178,12 @@ void ceThrow(struct CExcept *except);
  * @param msg print style format used to generate errMsg
  * @param ... arguments to format into errMsg
  */
-static inline void ceThrowNew(const char *id, const char *msg, ...) {
+static inline void stThrowNew(const char *id, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    struct CExcept *except = CExcept_newv(id, msg, args);
+    struct stCExcept *except = stCExcept_newv(id, msg, args);
     va_end(args);
-    ceThrow(except);
+    stThrow(except);
 }
 
 /**
@@ -196,14 +193,13 @@ static inline void ceThrowNew(const char *id, const char *msg, ...) {
  * @param msg print style format used to generate errMsg
  * @param ... arguments to format into errMsg
  */
-static inline void ceThrowNewCause(struct CExcept *cause, const char *id, const char *msg, ...) {
+static inline void stThrowNewCause(struct stCExcept *cause, const char *id, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    struct CExcept *except = CExcept_newCausev(cause, id, msg, args);
+    struct stCExcept *except = stCExcept_newCausev(cause, id, msg, args);
     va_end(args);
-    ceThrow(except);
+    stThrow(except);
 }
 //@}
 //@}
-inclEnd;
 #endif
