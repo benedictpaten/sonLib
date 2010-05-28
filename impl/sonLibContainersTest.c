@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 static stIntTuple *intTuple1 = NULL;
 static stIntTuple *intTuple2, *intTuple3, *intTuple4, *intTuple5;
@@ -37,14 +37,14 @@ static void testStIntTuple_construct(CuTest *testCase) {
 
 static void testStIntTuple_hashKey(CuTest *testCase) {
 	setup();
-	st_Hash *hash = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey, (int (*)(const void *, const void *))stIntTuple_equalsFn, NULL, NULL);
-	st_hash_insert(hash, intTuple1, intTuple1);
-	st_hash_insert(hash, intTuple2, intTuple2);
-	CuAssertTrue(testCase, st_hash_search(hash, intTuple1) != NULL);
-	CuAssertTrue(testCase, st_hash_search(hash, intTuple2) != NULL);
-	CuAssertTrue(testCase, st_hash_search(hash, intTuple3) == NULL);
-	CuAssertTrue(testCase, st_hash_search(hash, intTuple4) != NULL);
-	st_hash_destruct(hash);
+	stHash *hash = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey, (int (*)(const void *, const void *))stIntTuple_equalsFn, NULL, NULL);
+	stHash_insert(hash, intTuple1, intTuple1);
+	stHash_insert(hash, intTuple2, intTuple2);
+	CuAssertTrue(testCase, stHash_search(hash, intTuple1) != NULL);
+	CuAssertTrue(testCase, stHash_search(hash, intTuple2) != NULL);
+	CuAssertTrue(testCase, stHash_search(hash, intTuple3) == NULL);
+	CuAssertTrue(testCase, stHash_search(hash, intTuple4) != NULL);
+	stHash_destruct(hash);
 	teardown();
 }
 

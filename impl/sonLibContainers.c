@@ -5,7 +5,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 stIntTuple *stIntTuple_construct(int32_t length, ...) {
 	assert(length >= 0);

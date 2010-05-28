@@ -92,10 +92,10 @@ struct List *fastaDecodeHeader(const char *fastaHeader) {
      * Decodes the fasta header
      */
 	struct List *attributes = constructEmptyList(0, free);
-	char *cA = st_string_copy(fastaHeader);
+	char *cA = stString_copy(fastaHeader);
 	char *cA2 = strtok(cA, "|");
 	while(cA2 != NULL) {
-		listAppend(attributes, st_string_copy(cA2));
+		listAppend(attributes, stString_copy(cA2));
 		cA2 = strtok(NULL, "|");
 	}
 	free(cA);
@@ -106,7 +106,7 @@ char *fastaEncodeHeader(struct List *attributes) {
     /*
      * Decodes the fasta header
      */
-	return st_string_join("|", (const char **)attributes->list, attributes->length);
+	return stString_join("|", (const char **)attributes->list, attributes->length);
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
@@ -186,8 +186,8 @@ struct List *fastaRead_seqs;
 struct List *fastaRead_seqLengths;
 
 void fastaRead_function(const char *fastaHeader, const char *sequence, int32_t length) {
-	listAppend(fastaRead_fastaNames, st_string_copy(fastaHeader));
-	listAppend(fastaRead_seqs, st_string_copy(sequence));
+	listAppend(fastaRead_fastaNames, stString_copy(fastaHeader));
+	listAppend(fastaRead_seqs, stString_copy(sequence));
 	listAppend(fastaRead_seqLengths, constructInt(length));
 }
 
@@ -362,7 +362,7 @@ static char *newickTreeParser_getLabel(char *newickTreeString, char **label) {
 	if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
 	    return eatString(newickTreeString, label);
 	}
-	*label = st_string_copy("");
+	*label = stString_copy("");
 	return newickTreeString;
 }
 

@@ -5,21 +5,41 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 #define MINIMUM_ARRAY_EXPAND_SIZE 5 //The minimum amount to expand the array backing a list by when it is rescaled.
 
-st_List *st_list_construct() {
-	return st_list_construct3(0, NULL);
+/*
+ * The actual datastructures backing the list
+ */
+
+struct _stList {
+	void **list;
+	int32_t length;
+	int32_t maxLength;
+	void (*destructElement)(void *);
+};
+
+struct _stListIterator {
+	stList *list;
+	int32_t index;
+};
+
+/*
+ * The functions..
+ */
+
+stList *stList_construct() {
+	return stList_construct3(0, NULL);
 }
 
-st_List *st_list_construct2(int32_t size) {
-	return st_list_construct3(size, NULL);
+stList *stList_construct2(int32_t size) {
+	return stList_construct3(size, NULL);
 }
 
-st_List *st_list_construct3(int32_t length, void (*destructElement)(void *)) {
+stList *stList_construct3(int32_t length, void (*destructElement)(void *)) {
 	assert(length >= 0);
-	st_List *list = st_malloc(sizeof(st_List));
+	stList *list = st_malloc(sizeof(stList));
 	list->length = length;
 	list->maxLength = length;
     list->list = st_calloc(length, sizeof(void *));
@@ -27,12 +47,12 @@ st_List *st_list_construct3(int32_t length, void (*destructElement)(void *)) {
 	return list;
 }
 
-void st_list_destruct(st_List *list) {
+void stList_destruct(stList *list) {
 	int32_t i;
 	if (list->destructElement != NULL) {
-		for(i=0; i<st_list_length(list); i++) { //only free up to known area of list
-			if(st_list_get(list, i) != NULL) {
-				list->destructElement(st_list_get(list, i));
+		for(i=0; i<stList_length(list); i++) { //only free up to known area of list
+			if(stList_get(list, i) != NULL) {
+				list->destructElement(stList_get(list, i));
 			}
 		}
 	}
@@ -42,19 +62,19 @@ void st_list_destruct(st_List *list) {
 	free(list);
 }
 
-int32_t st_list_length(st_List *list) {
+int32_t stList_length(stList *list) {
 	return list->length;
 }
 
-void *st_list_get(st_List *list, int32_t index) {
+void *stList_get(stList *list, int32_t index) {
 	assert(index >= 0);
-	assert(index < st_list_length(list));
+	assert(index < stList_length(list));
 	return list->list[index];
 }
 
-void st_list_set(st_List *list, int32_t index, void *item) {
+void stList_set(stList *list, int32_t index, void *item) {
 	assert(index >= 0);
-	assert(index < st_list_length(list));
+	assert(index < stList_length(list));
 	list->list[index] = item;
 }
 
@@ -69,102 +89,102 @@ static void *st_list_appendP(void *current, int32_t *currentSize, int32_t newSiz
     return new;
 }
 
-void st_list_append(st_List *list, void *item) {
-	if(st_list_length(list) >= list->maxLength) {
+void stList_append(stList *list, void *item) {
+	if(stList_length(list) >= list->maxLength) {
 		list->list = st_list_appendP(list->list, &list->maxLength, list->maxLength*2 + MINIMUM_ARRAY_EXPAND_SIZE, sizeof(void *));
 	}
 	list->list[list->length++] = item;
 }
 
-void st_list_appendAll(st_List *stListToAddTo, st_List *stListToAdd) {
+void stList_appendAll(stList *stListToAddTo, stList *stListToAdd) {
 	int32_t i;
 	assert(stListToAdd != stListToAddTo);
-	for(i=0; i<st_list_length(stListToAdd); i++) {
-		st_list_append(stListToAddTo, st_list_get(stListToAdd, i));
+	for(i=0; i<stList_length(stListToAdd); i++) {
+		stList_append(stListToAddTo, stList_get(stListToAdd, i));
 	}
 }
 
-void *st_list_peek(st_List *list) {
-	assert(st_list_length(list) > 0);
-	return st_list_get(list, st_list_length(list)-1);
+void *stList_peek(stList *list) {
+	assert(stList_length(list) > 0);
+	return stList_get(list, stList_length(list)-1);
 }
 
-void *st_list_pop(st_List *list) {
-	return st_list_remove(list, st_list_length(list)-1);
+void *stList_pop(stList *list) {
+	return stList_remove(list, stList_length(list)-1);
 }
 
-void *st_list_remove(st_List *list, int32_t index) {
+void *stList_remove(stList *list, int32_t index) {
 	assert(index >= 0);
-	assert(index < st_list_length(list));
-	void *o = st_list_get(list, index);
+	assert(index < stList_length(list));
+	void *o = stList_get(list, index);
 	int32_t i;
-	for(i=index+1; i<st_list_length(list); i++) {
-		st_list_set(list, i-1, st_list_get(list, i));
+	for(i=index+1; i<stList_length(list); i++) {
+		stList_set(list, i-1, stList_get(list, i));
 	}
 	list->length--;
 	return o;
 }
 
-void st_list_removeItem(st_List *list, void *item)  {
+void stList_removeItem(stList *list, void *item)  {
 	int32_t i;
-	for(i=0; i<st_list_length(list); i++) {
-		if(st_list_get(list, i) == item) {
-			st_list_remove(list, i);
+	for(i=0; i<stList_length(list); i++) {
+		if(stList_get(list, i) == item) {
+			stList_remove(list, i);
 			return;
 		}
 	}
 }
 
-void *st_list_removeFirst(st_List *list) {
-	return st_list_remove(list, 0);
+void *stList_removeFirst(stList *list) {
+	return stList_remove(list, 0);
 }
 
-int32_t st_list_contains(st_List *list, void *item) {
+int32_t stList_contains(stList *list, void *item) {
 	int32_t i;
-	for(i=0; i<st_list_length(list); i++) {
-		if(st_list_get(list, i) == item) {
+	for(i=0; i<stList_length(list); i++) {
+		if(stList_get(list, i) == item) {
 			return 1;
 		}
 	}
 	return 0;
 }
 
-st_List *st_list_copy(st_List *list, void (*destructItem)(void *)) {
-	st_List *list2 = st_list_construct3(0, destructItem);
-	st_list_appendAll(list2, list);
+stList *stList_copy(stList *list, void (*destructItem)(void *)) {
+	stList *list2 = stList_construct3(0, destructItem);
+	stList_appendAll(list2, list);
 	return list2;
 }
 
-void st_list_reverse(st_List *list) {
-	int32_t i, j = st_list_length(list);
+void stList_reverse(stList *list) {
+	int32_t i, j = stList_length(list);
 	for(i=0; i<j/2; i++) {
-		void *o = st_list_get(list, j - 1 - i);
-		st_list_set(list, j - 1 - i, st_list_get(list, i));
-		st_list_set(list, i, o);
+		void *o = stList_get(list, j - 1 - i);
+		stList_set(list, j - 1 - i, stList_get(list, i));
+		stList_set(list, i, o);
 	}
 }
 
-st_ListIterator *st_list_getIterator(st_List *list) {
-	st_ListIterator *it = st_malloc(sizeof(st_ListIterator));
+stListIterator *stList_getIterator(stList *list) {
+	stListIterator *it = st_malloc(sizeof(stListIterator));
 	it->list = list;
 	it->index = 0;
 	return it;
 }
 
-void st_list_destructIterator(st_ListIterator *iterator) {
+void stList_destructIterator(stListIterator *iterator) {
 	free(iterator);
 }
 
-void *st_list_getNext(st_ListIterator *iterator) {
-	return iterator->index < st_list_length(iterator->list) ? st_list_get(iterator->list, iterator->index++) : NULL;
+void *stList_getNext(stListIterator *iterator) {
+	return iterator->index < stList_length(iterator->list) ? stList_get(iterator->list, iterator->index++) : NULL;
 }
 
-void *st_list_getPrevious(st_ListIterator *iterator) {
-	return iterator->index > 0 ? st_list_get(iterator->list, --iterator->index) : NULL;
+void *stList_getPrevious(stListIterator *iterator) {
+	return iterator->index > 0 ? stList_get(iterator->list, --iterator->index) : NULL;
 }
 
-st_ListIterator *st_list_copyIterator(st_ListIterator *iterator) {
-	st_ListIterator *it = st_list_getIterator(iterator->list);
+stListIterator *stList_copyIterator(stListIterator *iterator) {
+	stListIterator *it = stList_getIterator(iterator->list);
 	it->index = iterator->index;
 	return it;
 }
@@ -174,16 +194,16 @@ static int st_list_sortP(const void *a, const void *b) {
 	return st_list_sort_cmpFn(*((char **)a), *((char **)b));
 }
 
-void st_list_sort(st_List *list, int cmpFn(const void *a, const void *b)) {
+void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
 	st_list_sort_cmpFn = cmpFn;
-	qsort(list->list, st_list_length(list), sizeof(void *), st_list_sortP);
+	qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
 }
 
-st_SortedSet *st_list_getSortedSet(st_List *list, int (*cmpFn)(const void *a, const void *b)) {
-	st_SortedSet *sortedSet = st_sortedSet_construct3(cmpFn, NULL);
+stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b)) {
+	stSortedSet *sortedSet = stSortedSet_construct3(cmpFn, NULL);
 	int32_t i;
-	for(i=0; i<st_list_length(list); i++) {
-		st_sortedSet_insert(sortedSet, st_list_get(list, i));
+	for(i=0; i<stList_length(list); i++) {
+		stSortedSet_insert(sortedSet, stList_get(list, i));
 	}
 	return sortedSet;
 }

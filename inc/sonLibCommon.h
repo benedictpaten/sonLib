@@ -5,8 +5,8 @@
  *      Author: benedictpaten
  */
 
-#ifndef SONLIBCOMMON_H_
-#define SONLIBCOMMON_H_
+#ifndef SONLIB_COMMON_H_
+#define SONLIB_COMMON_H_
 
 #include "sonLibGlobals.h"
 

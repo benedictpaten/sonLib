@@ -5,13 +5,13 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
-char *st_string_copy(const char *string) {
+char *stString_copy(const char *string) {
 	return strcpy(st_malloc(sizeof(char)*(1+strlen(string))), string);
 }
 
-char *st_string_print(const char *string, ...) {
+char *stString_print(const char *string, ...) {
 	int32_t arraySize = 0;
 	static char *cA = NULL;
 	//return;
@@ -32,10 +32,10 @@ char *st_string_print(const char *string, ...) {
 		va_end(ap);
 	}
 	//vfprintf(stdout, string, ap);
-	return st_string_copy(cA);
+	return stString_copy(cA);
 }
 
-char *st_string_getNextWord(char **string) {
+char *stString_getNextWord(char **string) {
 	while(**string != '\0' && isspace(**string)) {
 		(*string)++;
 	}
@@ -61,7 +61,7 @@ static int32_t string_replaceP(char *start, const char *pattern) {
 	return 1;
 }
 
-char *st_string_replace(const char *originalString, const char *toReplace, const char *replacement) {
+char *stString_replace(const char *originalString, const char *toReplace, const char *replacement) {
 	char *i, *k;
 	int32_t j;
 	char *newString;
@@ -97,7 +97,7 @@ char *st_string_replace(const char *originalString, const char *toReplace, const
 	return newString;
 }
 
-char *st_string_join(const char *pad, const char **strings, int32_t length) {
+char *stString_join(const char *pad, const char **strings, int32_t length) {
 	int32_t i, j, k;
 	assert(length >= 0);
 	j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;

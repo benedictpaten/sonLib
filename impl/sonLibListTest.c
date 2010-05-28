@@ -5,229 +5,229 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
-static st_List *list = NULL;
+static stList *list = NULL;
 static int32_t stringNumber = 5;
 static char *strings[5] = { "one", "two", "three", "four", "five" };
 
 static void teardown() {
 	if(list != NULL) {
-		st_list_destruct(list);
+		stList_destruct(list);
 		list = NULL;
 	}
 }
 
 static void setup() {
 	teardown();
-	list = st_list_construct();
+	list = stList_construct();
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		st_list_append(list, strings[i]);
+		stList_append(list, strings[i]);
 	}
 }
 
-void test_st_list_construct(CuTest *testCase) {
+void test_stList_construct(CuTest *testCase) {
 	setup();
-	st_List *list2 = st_list_construct2(stringNumber);
-	CuAssertTrue(testCase, st_list_length(list2) == stringNumber);
+	stList *list2 = stList_construct2(stringNumber);
+	CuAssertTrue(testCase, stList_length(list2) == stringNumber);
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_get(list2, i) == NULL);
+		CuAssertTrue(testCase, stList_get(list2, i) == NULL);
 	}
-	st_list_destruct(list2);
+	stList_destruct(list2);
 	teardown();
 }
 
-void test_st_list_length(CuTest *testCase) {
+void test_stList_length(CuTest *testCase) {
 	setup();
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber);
 	teardown();
 }
 
-void test_st_list_get(CuTest *testCase) {
-	setup();
-	int32_t i;
-	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_get(list, i) == strings[i]);
-	}
-	teardown();
-}
-
-void test_st_list_set(CuTest *testCase) {
+void test_stList_get(CuTest *testCase) {
 	setup();
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		st_list_set(list, i, NULL);
-		CuAssertTrue(testCase, st_list_get(list, i) == NULL);
+		CuAssertTrue(testCase, stList_get(list, i) == strings[i]);
 	}
 	teardown();
 }
 
-void test_st_list_append(CuTest *testCase) {
+void test_stList_set(CuTest *testCase) {
 	setup();
-	st_list_append(list, NULL);
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber+1);
-	CuAssertTrue(testCase, st_list_get(list, stringNumber) == NULL);
+	int32_t i;
+	for(i=0; i<stringNumber; i++) {
+		stList_set(list, i, NULL);
+		CuAssertTrue(testCase, stList_get(list, i) == NULL);
+	}
 	teardown();
 }
 
-void test_st_list_appendAll(CuTest *testCase) {
+void test_stList_append(CuTest *testCase) {
 	setup();
-	st_List *list2 = st_list_copy(list, NULL);
-	st_list_appendAll(list, list2);
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber * 2);
+	stList_append(list, NULL);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber+1);
+	CuAssertTrue(testCase, stList_get(list, stringNumber) == NULL);
+	teardown();
+}
+
+void test_stList_appendAll(CuTest *testCase) {
+	setup();
+	stList *list2 = stList_copy(list, NULL);
+	stList_appendAll(list, list2);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber * 2);
 	int32_t i;
 	for(i=0; i<stringNumber*2; i++) {
-		CuAssertTrue(testCase, st_list_get(list, i) == strings[i % stringNumber]);
+		CuAssertTrue(testCase, stList_get(list, i) == strings[i % stringNumber]);
 	}
-	st_list_destruct(list2);
+	stList_destruct(list2);
 	teardown();
 }
 
-void test_st_list_peek(CuTest *testCase) {
+void test_stList_peek(CuTest *testCase) {
 	setup();
-	CuAssertTrue(testCase, st_list_peek(list) == strings[stringNumber-1]);
+	CuAssertTrue(testCase, stList_peek(list) == strings[stringNumber-1]);
 	teardown();
 }
 
-void test_st_list_pop(CuTest *testCase) {
+void test_stList_pop(CuTest *testCase) {
 	setup();
 	int32_t i;
 	for(i=stringNumber-1; i>=0; i--) {
-		CuAssertTrue(testCase, st_list_pop(list) == strings[i]);
-		CuAssertTrue(testCase, st_list_length(list) == i);
+		CuAssertTrue(testCase, stList_pop(list) == strings[i]);
+		CuAssertTrue(testCase, stList_length(list) == i);
 	}
 	teardown();
 }
 
-void test_st_list_remove(CuTest *testCase) {
+void test_stList_remove(CuTest *testCase) {
 	setup();
-	CuAssertTrue(testCase, st_list_remove(list, 0) == strings[0]);
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber-1);
-	CuAssertTrue(testCase, st_list_remove(list, 1) == strings[2]);
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber-2);
+	CuAssertTrue(testCase, stList_remove(list, 0) == strings[0]);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber-1);
+	CuAssertTrue(testCase, stList_remove(list, 1) == strings[2]);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber-2);
 	teardown();
 }
 
-void test_st_list_removeItem(CuTest *testCase) {
+void test_stList_removeItem(CuTest *testCase) {
 	setup();
-	CuAssertTrue(testCase, st_list_contains(list, strings[2]));
-	st_list_removeItem(list, strings[2]);
-	CuAssertTrue(testCase, !st_list_contains(list, strings[2]));
-	st_list_removeItem(list, strings[2]);
-	CuAssertTrue(testCase, !st_list_contains(list, strings[2]));
+	CuAssertTrue(testCase, stList_contains(list, strings[2]));
+	stList_removeItem(list, strings[2]);
+	CuAssertTrue(testCase, !stList_contains(list, strings[2]));
+	stList_removeItem(list, strings[2]);
+	CuAssertTrue(testCase, !stList_contains(list, strings[2]));
 	teardown();
 }
 
-void test_st_list_removeFirst(CuTest *testCase) {
+void test_stList_removeFirst(CuTest *testCase) {
 	setup();
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_removeFirst(list) == strings[i]);
-		CuAssertTrue(testCase, st_list_length(list) == stringNumber-1-i);
+		CuAssertTrue(testCase, stList_removeFirst(list) == strings[i]);
+		CuAssertTrue(testCase, stList_length(list) == stringNumber-1-i);
 	}
 	teardown();
 }
 
-void test_st_list_contains(CuTest *testCase) {
+void test_stList_contains(CuTest *testCase) {
 	setup();
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_contains(list, strings[i]));
+		CuAssertTrue(testCase, stList_contains(list, strings[i]));
 	}
-	CuAssertTrue(testCase, !st_list_contains(list, "something"));
-	CuAssertTrue(testCase, !st_list_contains(list, NULL));
+	CuAssertTrue(testCase, !stList_contains(list, "something"));
+	CuAssertTrue(testCase, !stList_contains(list, NULL));
 	teardown();
 }
 
-void test_st_list_copy(CuTest *testCase) {
+void test_stList_copy(CuTest *testCase) {
 	setup();
-	st_List *list2 = st_list_copy(list, NULL);
-	CuAssertTrue(testCase, st_list_length(list) == st_list_length(list2));
+	stList *list2 = stList_copy(list, NULL);
+	CuAssertTrue(testCase, stList_length(list) == stList_length(list2));
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_get(list2, i) == strings[i]);
+		CuAssertTrue(testCase, stList_get(list2, i) == strings[i]);
 	}
-	st_list_destruct(list2);
+	stList_destruct(list2);
 	teardown();
 }
 
-void test_st_list_reverse(CuTest *testCase) {
+void test_stList_reverse(CuTest *testCase) {
 	setup();
-	st_list_reverse(list);
+	stList_reverse(list);
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_get(list, i) == strings[stringNumber-1-i]);
+		CuAssertTrue(testCase, stList_get(list, i) == strings[stringNumber-1-i]);
 	}
 	teardown();
 }
 
-void test_st_list_iterator(CuTest *testCase) {
+void test_stList_iterator(CuTest *testCase) {
 	setup();
-	st_ListIterator *it = st_list_getIterator(list);
+	stListIterator *it = stList_getIterator(list);
 	int32_t i;
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_getNext(it) == strings[i]);
+		CuAssertTrue(testCase, stList_getNext(it) == strings[i]);
 	}
-	CuAssertTrue(testCase, st_list_getNext(it) == NULL);
-	CuAssertTrue(testCase, st_list_getNext(it) == NULL);
-	st_ListIterator *it2 = st_list_copyIterator(it);
+	CuAssertTrue(testCase, stList_getNext(it) == NULL);
+	CuAssertTrue(testCase, stList_getNext(it) == NULL);
+	stListIterator *it2 = stList_copyIterator(it);
 	for(i=0; i<stringNumber; i++) {
-		CuAssertTrue(testCase, st_list_getPrevious(it) == strings[stringNumber-1-i]);
-		CuAssertTrue(testCase, st_list_getPrevious(it2) == strings[stringNumber-1-i]);
+		CuAssertTrue(testCase, stList_getPrevious(it) == strings[stringNumber-1-i]);
+		CuAssertTrue(testCase, stList_getPrevious(it2) == strings[stringNumber-1-i]);
 	}
-	CuAssertTrue(testCase, st_list_getPrevious(it) == NULL);
-	CuAssertTrue(testCase, st_list_getPrevious(it) == NULL);
-	CuAssertTrue(testCase, st_list_getPrevious(it2) == NULL);
-	st_list_destructIterator(it);
+	CuAssertTrue(testCase, stList_getPrevious(it) == NULL);
+	CuAssertTrue(testCase, stList_getPrevious(it) == NULL);
+	CuAssertTrue(testCase, stList_getPrevious(it2) == NULL);
+	stList_destructIterator(it);
 	teardown();
 }
 
-void test_st_list_sort(CuTest *testCase) {
+void test_stList_sort(CuTest *testCase) {
 	setup();
-	st_list_sort(list, (int (*)(const void *, const void *))strcmp);
-	CuAssertTrue(testCase, st_list_length(list) == stringNumber);
-	CuAssertStrEquals(testCase, "five", st_list_get(list, 0));
-	CuAssertStrEquals(testCase, "four", st_list_get(list, 1));
-	CuAssertStrEquals(testCase, "one", st_list_get(list, 2));
-	CuAssertStrEquals(testCase, "three", st_list_get(list, 3));
-	CuAssertStrEquals(testCase, "two", st_list_get(list, 4));
+	stList_sort(list, (int (*)(const void *, const void *))strcmp);
+	CuAssertTrue(testCase, stList_length(list) == stringNumber);
+	CuAssertStrEquals(testCase, "five", stList_get(list, 0));
+	CuAssertStrEquals(testCase, "four", stList_get(list, 1));
+	CuAssertStrEquals(testCase, "one", stList_get(list, 2));
+	CuAssertStrEquals(testCase, "three", stList_get(list, 3));
+	CuAssertStrEquals(testCase, "two", stList_get(list, 4));
 	teardown();
 }
 
-void test_st_list_getSortedSet(CuTest *testCase) {
+void test_stList_getSortedSet(CuTest *testCase) {
 	setup();
-	st_SortedSet *sortedSet = st_list_getSortedSet(list, (int (*)(const void *, const void *))strcmp);
-	CuAssertTrue(testCase, st_sortedSet_getLength(sortedSet) == stringNumber);
-	st_SortedSetIterator *iterator = st_sortedSet_getIterator(sortedSet);
-	CuAssertStrEquals(testCase, "five", st_sortedSet_getNext(iterator));
-	CuAssertStrEquals(testCase, "four", st_sortedSet_getNext(iterator));
-	CuAssertStrEquals(testCase, "one", st_sortedSet_getNext(iterator));
-	CuAssertStrEquals(testCase, "three", st_sortedSet_getNext(iterator));
-	CuAssertStrEquals(testCase, "two", st_sortedSet_getNext(iterator));
-	st_sortedSet_destructIterator(iterator);
-	st_sortedSet_destruct(sortedSet);
+	stSortedSet *sortedSet = stList_getSortedSet(list, (int (*)(const void *, const void *))strcmp);
+	CuAssertTrue(testCase, stSortedSet_size(sortedSet) == stringNumber);
+	stSortedSetIterator *iterator = stSortedSet_getIterator(sortedSet);
+	CuAssertStrEquals(testCase, "five", stSortedSet_getNext(iterator));
+	CuAssertStrEquals(testCase, "four", stSortedSet_getNext(iterator));
+	CuAssertStrEquals(testCase, "one", stSortedSet_getNext(iterator));
+	CuAssertStrEquals(testCase, "three", stSortedSet_getNext(iterator));
+	CuAssertStrEquals(testCase, "two", stSortedSet_getNext(iterator));
+	stSortedSet_destructIterator(iterator);
+	stSortedSet_destruct(sortedSet);
 	teardown();
 }
 
 CuSuite* sonLib_stListTestSuite(void) {
 	CuSuite* suite = CuSuiteNew();
-	SUITE_ADD_TEST(suite, test_st_list_construct);
-	SUITE_ADD_TEST(suite, test_st_list_append);
-	SUITE_ADD_TEST(suite, test_st_list_appendAll);
-	SUITE_ADD_TEST(suite, test_st_list_length);
-	SUITE_ADD_TEST(suite, test_st_list_get);
-	SUITE_ADD_TEST(suite, test_st_list_set);
-	SUITE_ADD_TEST(suite, test_st_list_peek);
-	SUITE_ADD_TEST(suite, test_st_list_pop);
-	SUITE_ADD_TEST(suite, test_st_list_remove);
-	SUITE_ADD_TEST(suite, test_st_list_removeFirst);
-	SUITE_ADD_TEST(suite, test_st_list_contains);
-	SUITE_ADD_TEST(suite, test_st_list_copy);
-	SUITE_ADD_TEST(suite, test_st_list_reverse);
-	SUITE_ADD_TEST(suite, test_st_list_iterator);
-	SUITE_ADD_TEST(suite, test_st_list_sort);
-	SUITE_ADD_TEST(suite, test_st_list_getSortedSet);
+	SUITE_ADD_TEST(suite, test_stList_construct);
+	SUITE_ADD_TEST(suite, test_stList_append);
+	SUITE_ADD_TEST(suite, test_stList_appendAll);
+	SUITE_ADD_TEST(suite, test_stList_length);
+	SUITE_ADD_TEST(suite, test_stList_get);
+	SUITE_ADD_TEST(suite, test_stList_set);
+	SUITE_ADD_TEST(suite, test_stList_peek);
+	SUITE_ADD_TEST(suite, test_stList_pop);
+	SUITE_ADD_TEST(suite, test_stList_remove);
+	SUITE_ADD_TEST(suite, test_stList_removeFirst);
+	SUITE_ADD_TEST(suite, test_stList_contains);
+	SUITE_ADD_TEST(suite, test_stList_copy);
+	SUITE_ADD_TEST(suite, test_stList_reverse);
+	SUITE_ADD_TEST(suite, test_stList_iterator);
+	SUITE_ADD_TEST(suite, test_stList_sort);
+	SUITE_ADD_TEST(suite, test_stList_getSortedSet);
 	return suite;
 }

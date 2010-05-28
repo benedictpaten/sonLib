@@ -611,7 +611,7 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
     binaryTree = st_malloc(sizeof(struct BinaryTree));
     binaryTree->distance = distance;
     binaryTree->internal = internal;
-    binaryTree->label = st_string_copy(label);
+    binaryTree->label = stString_copy(label);
     binaryTree->left = left;
     binaryTree->right = right;
     binaryTree->traversalID = NULL;
@@ -669,7 +669,7 @@ void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct Lis
 		binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
 	}
 	else {
-		listAppend(leafStrings, st_string_copy(binaryTree->label));
+		listAppend(leafStrings, stString_copy(binaryTree->label));
 	}
 }
 

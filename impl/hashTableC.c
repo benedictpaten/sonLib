@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 /*
 Credit for primes table: Aaron Krowne

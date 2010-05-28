@@ -1,7 +1,7 @@
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
-static st_Hash *hash;
-static st_Hash *hash2;
+static stHash *hash;
+static stHash *hash2;
 static stIntTuple *one, *two, *three, *four, *five, *six;
 
 static void testSetup() {
@@ -19,18 +19,18 @@ static void testSetup() {
 	five = stIntTuple_construct(1, 4);
 	six = stIntTuple_construct(1, 5);
 
-	st_hash_insert(hash, one, two);
-	st_hash_insert(hash, three, four);
-	st_hash_insert(hash, five, six);
+	stHash_insert(hash, one, two);
+	stHash_insert(hash, three, four);
+	stHash_insert(hash, five, six);
 
-	st_hash_insert(hash2, one, two);
-	st_hash_insert(hash2, three, four);
-	st_hash_insert(hash2, five, six);
+	stHash_insert(hash2, one, two);
+	stHash_insert(hash2, three, four);
+	stHash_insert(hash2, five, six);
 }
 
 static void testTeardown() {
-	st_hash_destruct(hash);
-	st_hash_destruct(hash2);
+	stHash_destruct(hash);
+	stHash_destruct(hash2);
 }
 
 static void testHash_construct(CuTest* testCase) {
@@ -45,21 +45,21 @@ static void testHash_search(CuTest* testCase) {
 	stIntTuple *i = stIntTuple_construct(1, 0);
 
 	//Check search by memory address
-	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
-	CuAssertTrue(testCase, st_hash_search(hash, three) == four);
-	CuAssertTrue(testCase, st_hash_search(hash, five) == six);
+	CuAssertTrue(testCase, stHash_search(hash, one) == two);
+	CuAssertTrue(testCase, stHash_search(hash, three) == four);
+	CuAssertTrue(testCase, stHash_search(hash, five) == six);
 	//Check not present
-	CuAssertTrue(testCase, st_hash_search(hash, six) == NULL);
-	CuAssertTrue(testCase, st_hash_search(hash, i) == NULL);
+	CuAssertTrue(testCase, stHash_search(hash, six) == NULL);
+	CuAssertTrue(testCase, stHash_search(hash, i) == NULL);
 
 	//Check search by memory address
-	CuAssertTrue(testCase, st_hash_search(hash2, one) == two);
-	CuAssertTrue(testCase, st_hash_search(hash2, three) == four);
-	CuAssertTrue(testCase, st_hash_search(hash2, five) == six);
+	CuAssertTrue(testCase, stHash_search(hash2, one) == two);
+	CuAssertTrue(testCase, stHash_search(hash2, three) == four);
+	CuAssertTrue(testCase, stHash_search(hash2, five) == six);
 	//Check not present
-	CuAssertTrue(testCase, st_hash_search(hash2, six) == NULL);
+	CuAssertTrue(testCase, stHash_search(hash2, six) == NULL);
 	//Check is searching by memory.
-	CuAssertTrue(testCase, st_hash_search(hash2, i) == two);
+	CuAssertTrue(testCase, stHash_search(hash2, i) == two);
 
 	stIntTuple_destruct(i);
 
@@ -69,14 +69,14 @@ static void testHash_search(CuTest* testCase) {
 static void testHash_remove(CuTest* testCase) {
 	testSetup();
 
-	CuAssertTrue(testCase, st_hash_remove(hash, one) == two);
-	CuAssertTrue(testCase, st_hash_search(hash, one) == NULL);
+	CuAssertTrue(testCase, stHash_remove(hash, one) == two);
+	CuAssertTrue(testCase, stHash_search(hash, one) == NULL);
 
-	CuAssertTrue(testCase, st_hash_remove(hash2, one) == two);
-	CuAssertTrue(testCase, st_hash_search(hash2, one) == NULL);
+	CuAssertTrue(testCase, stHash_remove(hash2, one) == two);
+	CuAssertTrue(testCase, stHash_search(hash2, one) == NULL);
 
-	st_hash_insert(hash2, one, two);
-	CuAssertTrue(testCase, st_hash_search(hash2, one) == two);
+	stHash_insert(hash2, one, two);
+	CuAssertTrue(testCase, stHash_search(hash2, one) == two);
 
 	testTeardown();
 }
@@ -87,13 +87,13 @@ static void testHash_insert(CuTest* testCase) {
 	 */
 	testSetup();
 
-	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
-	st_hash_insert(hash, one, two);
-	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
-	st_hash_insert(hash, one, three);
-	CuAssertTrue(testCase, st_hash_search(hash, one) == three);
-	st_hash_insert(hash, one, two);
-	CuAssertTrue(testCase, st_hash_search(hash, one) == two);
+	CuAssertTrue(testCase, stHash_search(hash, one) == two);
+	stHash_insert(hash, one, two);
+	CuAssertTrue(testCase, stHash_search(hash, one) == two);
+	stHash_insert(hash, one, three);
+	CuAssertTrue(testCase, stHash_search(hash, one) == three);
+	stHash_insert(hash, one, two);
+	CuAssertTrue(testCase, stHash_search(hash, one) == two);
 
 	testTeardown();
 }
@@ -104,11 +104,11 @@ static void testHash_size(CuTest *testCase) {
 	 */
 	testSetup();
 
-	CuAssertTrue(testCase, st_hash_size(hash) == 3);
-	CuAssertTrue(testCase, st_hash_size(hash2) == 3);
-	st_Hash *hash3 = stHash_construct();
-	CuAssertTrue(testCase, st_hash_size(hash3) == 0);
-	st_hash_destruct(hash3);
+	CuAssertTrue(testCase, stHash_size(hash) == 3);
+	CuAssertTrue(testCase, stHash_size(hash2) == 3);
+	stHash *hash3 = stHash_construct();
+	CuAssertTrue(testCase, stHash_size(hash3) == 0);
+	stHash_destruct(hash3);
 
 	testTeardown();
 }
@@ -116,47 +116,47 @@ static void testHash_size(CuTest *testCase) {
 static void testHash_testIterator(CuTest *testCase) {
 	testSetup();
 
-	st_HashIterator *iterator = st_hash_getIterator(hash);
-	st_HashIterator *iteratorCopy = st_hash_copyIterator(iterator);
+	stHashIterator *iterator = stHash_getIterator(hash);
+	stHashIterator *iteratorCopy = stHash_copyIterator(iterator);
 	int32_t i=0;
-	st_Hash *seen = stHash_construct();
+	stHash *seen = stHash_construct();
 	for(i=0; i<3; i++) {
-		void *o = st_hash_getNext(iterator);
+		void *o = stHash_getNext(iterator);
 		CuAssertTrue(testCase, o != NULL);
-		CuAssertTrue(testCase, st_hash_search(hash, o) != NULL);
-		CuAssertTrue(testCase, st_hash_search(seen, o) == NULL);
-		CuAssertTrue(testCase, st_hash_getNext(iteratorCopy) == o);
-		st_hash_insert(seen, o, o);
+		CuAssertTrue(testCase, stHash_search(hash, o) != NULL);
+		CuAssertTrue(testCase, stHash_search(seen, o) == NULL);
+		CuAssertTrue(testCase, stHash_getNext(iteratorCopy) == o);
+		stHash_insert(seen, o, o);
 	}
-	CuAssertTrue(testCase, st_hash_getNext(iterator) == NULL);
-	CuAssertTrue(testCase, st_hash_getNext(iterator) == NULL);
-	CuAssertTrue(testCase, st_hash_getNext(iteratorCopy) == NULL);
-	st_hash_destruct(seen);
-	st_hash_destructIterator(iterator);
-	st_hash_destructIterator(iteratorCopy);
+	CuAssertTrue(testCase, stHash_getNext(iterator) == NULL);
+	CuAssertTrue(testCase, stHash_getNext(iterator) == NULL);
+	CuAssertTrue(testCase, stHash_getNext(iteratorCopy) == NULL);
+	stHash_destruct(seen);
+	stHash_destructIterator(iterator);
+	stHash_destructIterator(iteratorCopy);
 
 	testTeardown();
 }
 
 static void testHash_testGetKeys(CuTest *testCase) {
 	testSetup();
-	st_List *list = st_hash_getKeys(hash2);
-	CuAssertTrue(testCase, st_list_length(list) == 3);
-	CuAssertTrue(testCase, st_list_contains(list, one));
-	CuAssertTrue(testCase, st_list_contains(list, three));
-	CuAssertTrue(testCase, st_list_contains(list, five));
-	st_list_destruct(list);
+	stList *list = stHash_getKeys(hash2);
+	CuAssertTrue(testCase, stList_length(list) == 3);
+	CuAssertTrue(testCase, stList_contains(list, one));
+	CuAssertTrue(testCase, stList_contains(list, three));
+	CuAssertTrue(testCase, stList_contains(list, five));
+	stList_destruct(list);
 	testTeardown();
 }
 
 static void testHash_testGetValues(CuTest *testCase) {
 	testSetup();
-	st_List *list = st_hash_getValues(hash2);
-	CuAssertTrue(testCase, st_list_length(list) == 3);
-	CuAssertTrue(testCase, st_list_contains(list, two));
-	CuAssertTrue(testCase, st_list_contains(list, four));
-	CuAssertTrue(testCase, st_list_contains(list, six));
-	st_list_destruct(list);
+	stList *list = stHash_getValues(hash2);
+	CuAssertTrue(testCase, stList_length(list) == 3);
+	CuAssertTrue(testCase, stList_contains(list, two));
+	CuAssertTrue(testCase, stList_contains(list, four));
+	CuAssertTrue(testCase, stList_contains(list, six));
+	stList_destruct(list);
 	testTeardown();
 }
 

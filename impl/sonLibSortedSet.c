@@ -1,4 +1,4 @@
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -17,21 +17,21 @@ static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
 	return key1 - key2;
 }
 
-st_SortedSet *st_sortedSet_construct() {
-	return st_sortedSet_construct3(st_sortedSet_cmpFn, NULL);
+stSortedSet *stSortedSet_construct() {
+	return stSortedSet_construct3(st_sortedSet_cmpFn, NULL);
 }
 
-st_SortedSet *st_sortedSet_construct2(void (*destructElementFn)(void *)) {
-	return st_sortedSet_construct3(st_sortedSet_cmpFn, destructElementFn);
+stSortedSet *stSortedSet_construct2(void (*destructElementFn)(void *)) {
+	return stSortedSet_construct3(st_sortedSet_cmpFn, destructElementFn);
 }
 
 static int st_sortedSet_construct3P(const void *a, const void *b, int (*cmpFn)(const void *, const void *)) {
 	return cmpFn(a, b);
 }
 
-st_SortedSet *st_sortedSet_construct3(int (*compareFn)(const void *, const void *),
+stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *),
 									  void (*destructElementFn)(void *)) {
-	st_SortedSet *sortedSet = st_malloc(sizeof(st_SortedSet));
+	stSortedSet *sortedSet = st_malloc(sizeof(stSortedSet));
 	sortedSet->sortedSet = avl_create((int (*)(const void *, const void *, void *))st_sortedSet_construct3P, compareFn, NULL);
 	sortedSet->destructElementFn = destructElementFn;
 	return sortedSet;
@@ -43,7 +43,7 @@ static void st_sortedSet_destructP(void *a, void *b) {
 	st_sortedSet_destruct_destructElementFn(a);
 }
 
-void st_sortedSet_destruct(st_SortedSet *sortedSet) {
+void stSortedSet_destruct(stSortedSet *sortedSet) {
 	if(sortedSet->destructElementFn != NULL) {
 		st_sortedSet_destruct_destructElementFn = sortedSet->destructElementFn;
 		avl_destroy(sortedSet->sortedSet, (void (*)(void *, void *))st_sortedSet_destructP);
@@ -53,56 +53,56 @@ void st_sortedSet_destruct(st_SortedSet *sortedSet) {
 	}
 }
 
-void st_sortedSet_insert(st_SortedSet *sortedSet, void *object) {
+void stSortedSet_insert(stSortedSet *sortedSet, void *object) {
 	avl_insert(sortedSet->sortedSet, object);
 }
 
-void *st_sortedSet_find(st_SortedSet *sortedSet, void *object) {
+void *stSortedSet_search(stSortedSet *sortedSet, void *object) {
 	return avl_find(sortedSet->sortedSet, object);
 }
 
-void st_sortedSet_delete(st_SortedSet *sortedSet, void *object) {
+void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
 	avl_delete(sortedSet->sortedSet, object);
 }
 
-int32_t st_sortedSet_getLength(st_SortedSet *sortedSet) {
+int32_t stSortedSet_size(stSortedSet *sortedSet) {
 	return avl_count(sortedSet->sortedSet);
 }
 
-void *st_sortedSet_getFirst(st_SortedSet *items) {
-	static st_SortedSetIterator iterator;
+void *stSortedSet_getFirst(stSortedSet *items) {
+	static stSortedSetIterator iterator;
 	avl_t_init(&iterator, items->sortedSet);
 	return avl_t_first(&iterator, items->sortedSet);
 }
 
-void *st_sortedSet_getLast(st_SortedSet *items) {
-	static st_SortedSetIterator iterator;
+void *stSortedSet_getLast(stSortedSet *items) {
+	static stSortedSetIterator iterator;
 	avl_t_init(&iterator, items->sortedSet);
 	return avl_t_last(&iterator, items->sortedSet);
 }
 
-st_SortedSetIterator *st_sortedSet_getIterator(st_SortedSet *items) {
-	st_SortedSetIterator *iterator;
-	iterator = st_malloc(sizeof(st_SortedSetIterator));
+stSortedSetIterator *stSortedSet_getIterator(stSortedSet *items) {
+	stSortedSetIterator *iterator;
+	iterator = st_malloc(sizeof(stSortedSetIterator));
 	avl_t_init(iterator, items->sortedSet);
 	return iterator;
 }
 
-void st_sortedSet_destructIterator(st_SortedSetIterator *iterator) {
+void stSortedSet_destructIterator(stSortedSetIterator *iterator) {
 	free(iterator);
 }
 
-void *st_sortedSet_getNext(st_SortedSetIterator *iterator) {
+void *stSortedSet_getNext(stSortedSetIterator *iterator) {
 	return avl_t_next(iterator);
 }
 
-st_SortedSetIterator *st_sortedSet_copyIterator(st_SortedSetIterator *iterator) {
-	st_SortedSetIterator *copyIterator;
-	copyIterator = st_malloc(sizeof(st_SortedSetIterator));
+stSortedSetIterator *stSortedSet_copyIterator(stSortedSetIterator *iterator) {
+	stSortedSetIterator *copyIterator;
+	copyIterator = st_malloc(sizeof(stSortedSetIterator));
 	avl_t_copy(copyIterator, iterator);
 	return copyIterator;
 }
 
-void *st_sortedSet_getPrevious(st_SortedSetIterator *iterator) {
+void *stSortedSet_getPrevious(stSortedSetIterator *iterator) {
 	return avl_t_prev(iterator);
 }

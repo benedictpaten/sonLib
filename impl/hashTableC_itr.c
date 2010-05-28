@@ -4,7 +4,7 @@
 #include "hashTablePrivateC.h"
 #include "hashTableC_itr.h"
 #include <stdlib.h> /* defines NULL */
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 
 /* indexFor */

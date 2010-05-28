@@ -5,19 +5,34 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
+
+/*
+ * The actual datastructure.
+ */
+
+struct _eTree {
+	double branchLength;
+	stList *nodes;
+	char *label;
+	ETree *parent;
+};
+
+/*
+ * The functions..
+ */
 
 ETree *eTree_construct() {
 	ETree *eTree = st_malloc(sizeof(ETree));
 	eTree->branchLength = INFINITY;
-	eTree->nodes = st_list_construct3(0, (void (*)(void *))eTree_destruct);
+	eTree->nodes = stList_construct3(0, (void (*)(void *))eTree_destruct);
 	eTree->label = NULL;
 	eTree->parent = NULL;
 	return eTree;
 }
 
 void eTree_destruct(ETree *eTree) {
-	st_list_destruct(eTree->nodes);
+	stList_destruct(eTree->nodes);
 	if(eTree->label != NULL) {
 		free(eTree->label);
 	}
@@ -30,25 +45,25 @@ ETree *eTree_getParent(ETree *eTree) {
 
 void eTree_setParent(ETree *eTree, ETree *parent) {
 	if(eTree_getParent(eTree) != NULL) {
-		st_list_removeItem(eTree_getParent(eTree)->nodes, eTree);
+		stList_removeItem(eTree_getParent(eTree)->nodes, eTree);
 	}
 	eTree->parent = parent;
 	if(parent != NULL) {
-		st_list_append(parent->nodes, eTree);
+		stList_append(parent->nodes, eTree);
 	}
 }
 
 int32_t eTree_getChildNumber(ETree *eTree) {
-	return st_list_length(eTree->nodes);
+	return stList_length(eTree->nodes);
 }
 
 ETree *eTree_getChild(ETree *eTree, int32_t i) {
-	return st_list_get(eTree->nodes, i);
+	return stList_get(eTree->nodes, i);
 }
 
 ETree *eTree_findChild(ETree *eTree, const char *label) {
-        for (int i = 0; i < eTree->nodes->length; i++) {
-                ETree *node = (ETree *)eTree->nodes->list[i];
+        for (int i = 0; i < stList_length(eTree->nodes); i++) {
+                ETree *node = (ETree *)stList_get(eTree->nodes, i);
                 if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
                         return node;
                 }
@@ -76,7 +91,7 @@ void eTree_setLabel(ETree *eTree, const char *label) {
 	if(eTree->label != NULL) {
 		free(eTree->label);
 	}
-	eTree->label = label == NULL ? NULL : st_string_copy(label);
+	eTree->label = label == NULL ? NULL : stString_copy(label);
 }
 
 /////////////////////////////
@@ -89,7 +104,7 @@ void eTree_setLabel(ETree *eTree, const char *label) {
 static void eTree_parseNewickTreeString_getNextToken(char **token, char **newickTreeString) {
 	assert(*token != NULL);
 	free(*token);
-	*token = st_string_getNextWord(newickTreeString);
+	*token = stString_getNextWord(newickTreeString);
 	assert(*token != NULL); //Newick string must terminate with ';'
 }
 
@@ -142,20 +157,20 @@ static ETree *eTree_parseNewickStringP(char **token, char **newickTreeString) {
 
 ETree *eTree_parseNewickString(const char *string) {
 	//lax newick tree parser
-	char *cA = st_string_replace(string, "(", " ( ");
-	char *cA2 = st_string_replace(cA, ")", " ) ");
+	char *cA = stString_replace(string, "(", " ( ");
+	char *cA2 = stString_replace(cA, ")", " ) ");
 	free(cA);
 	cA = cA2;
-	cA2 = st_string_replace(cA, ":", " : ");
+	cA2 = stString_replace(cA, ":", " : ");
 	free(cA);
 	cA = cA2;
-	cA2 = st_string_replace(cA, ",", " , ");
+	cA2 = stString_replace(cA, ",", " , ");
 	free(cA);
 	cA = cA2;
-	cA2 = st_string_replace(cA, ";", " ; ");
+	cA2 = stString_replace(cA, ";", " ; ");
 	free(cA);
 	cA = cA2;
-	char *token = st_string_getNextWord(&cA);
+	char *token = stString_getNextWord(&cA);
 	assert(token != NULL);
 	ETree *eTree = eTree_parseNewickStringP(&token, &cA);
 	assert(*token == ';');
@@ -172,28 +187,28 @@ static char *eTree_getNewickTreeStringP(ETree *eTree) {
 	char *cA, *cA2;
 	if(eTree_getChildNumber(eTree) > 0) {
 		int32_t i;
-		cA = st_string_copy("(");
+		cA = stString_copy("(");
 		for(i=0; i<eTree_getChildNumber(eTree); i++) {
 			cA2 = eTree_getNewickTreeStringP(eTree_getChild(eTree, i));
-			char *cA3 = st_string_print((i+1 < eTree_getChildNumber(eTree) ? "%s%s," : "%s%s"), cA, cA2);
+			char *cA3 = stString_print((i+1 < eTree_getChildNumber(eTree) ? "%s%s," : "%s%s"), cA, cA2);
 			free(cA);
 			free(cA2);
 			cA = cA3;
 		}
-		cA2 = st_string_print("%s)", cA);
+		cA2 = stString_print("%s)", cA);
 		free(cA);
 		cA = cA2;
 	}
 	else {
-		cA = st_string_copy("");
+		cA = stString_copy("");
 	}
 	if(eTree_getLabel(eTree) != NULL) {
-		cA2 = st_string_print("%s%s", cA, eTree_getLabel(eTree));
+		cA2 = stString_print("%s%s", cA, eTree_getLabel(eTree));
 		free(cA);
 		cA = cA2;
 	}
 	if(eTree_getBranchLength(eTree) != INFINITY) {
-		char *cA2 = st_string_print("%s:%f", cA, eTree_getBranchLength(eTree));
+		char *cA2 = stString_print("%s:%f", cA, eTree_getBranchLength(eTree));
 		free(cA);
 		cA = cA2;
 	}
@@ -202,7 +217,7 @@ static char *eTree_getNewickTreeStringP(ETree *eTree) {
 
 char *eTree_getNewickTreeString(ETree *eTree) {
 	char *cA = eTree_getNewickTreeStringP(eTree), *cA2;
-	cA2 = st_string_print("%s;", cA);
+	cA2 = stString_print("%s;", cA);
 	free(cA);
 	return cA2;
 }

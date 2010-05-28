@@ -5,13 +5,13 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
 
 static void testString_copy(CuTest* testCase) {
 	const char *test[3] = { "hello this is a test", "", "BOO\nTOO\n" };
 	int32_t i;
 	for(i=0; i<3; i++) {
-		char *testCopy = st_string_copy(test[i]);
+		char *testCopy = stString_copy(test[i]);
 		CuAssertTrue(testCase, testCopy != test[i]);
 		CuAssertStrEquals(testCase, test[i], testCopy);
 		free(testCopy);
@@ -19,10 +19,10 @@ static void testString_copy(CuTest* testCase) {
 }
 
 static void testString_print(CuTest* testCase) {
-	char *cA = st_string_print("Hello %s, foo %i %.1f", "world", 5, 7.0);
+	char *cA = stString_print("Hello %s, foo %i %.1f", "world", 5, 7.0);
 	CuAssertStrEquals(testCase, "Hello world, foo 5 7.0", cA);
 	free(cA);
-	cA = st_string_print("");
+	cA = stString_print("");
 	CuAssertStrEquals(testCase, "", cA);
 	free(cA);
 }
@@ -31,37 +31,37 @@ static void testString_getNextWord(CuTest* testCase) {
 	const char *cA = "Hello    world \n 5 \t6.0 ( )";
 	char **pointer = (char **)&cA;
 	char *cA2;
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, "Hello", cA2);
 	free(cA2);
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, "world", cA2);
 	free(cA2);
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, "5", cA2);
 	free(cA2);
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, "6.0", cA2);
 	free(cA2);
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, "(", cA2);
 	free(cA2);
-	cA2 = st_string_getNextWord(pointer);
+	cA2 = stString_getNextWord(pointer);
 	CuAssertStrEquals(testCase, ")", cA2);
 	free(cA2);
-	CuAssertTrue(testCase, st_string_getNextWord(pointer) == NULL);
-	CuAssertTrue(testCase, st_string_getNextWord(pointer) == NULL);
+	CuAssertTrue(testCase, stString_getNextWord(pointer) == NULL);
+	CuAssertTrue(testCase, stString_getNextWord(pointer) == NULL);
 }
 
 static void testString_replace(CuTest* testCase) {
-	char *cA = st_string_replace("Hello world wowo", "wo", " foo ");
+	char *cA = stString_replace("Hello world wowo", "wo", " foo ");
 	CuAssertStrEquals(testCase, "Hello  foo rld  foo  foo ", cA);
 	free(cA);
 }
 
 static void testString_join(CuTest* testCase) {
 	const char *cA[3] = { "Hello world wo", "wo", " foo " };
-	char *cA2 = st_string_join("\n", cA, 3);
+	char *cA2 = stString_join("\n", cA, 3);
 	CuAssertStrEquals(testCase, "Hello world wo\nwo\n foo ", cA2);
 	free(cA2);
 }

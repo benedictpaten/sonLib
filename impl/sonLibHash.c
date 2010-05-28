@@ -4,7 +4,12 @@
  *  Created on: 4 Apr 2010
  *      Author: benedictpaten
  */
-#include "sonLibGlobalsPrivate.h"
+#include "sonLibGlobalsInternal.h"
+
+struct _stHash {
+	struct hashtable *hash;
+	bool destructKeys, destructValues;
+};
 
 static uint32_t st_hash_key( const void *k ) {
 	return (uint32_t)(size_t)k;
@@ -14,49 +19,49 @@ static int st_hash_equalKey( const void *key1, const void *key2 ) {
 	return key1 == key2;
 }
 
-st_Hash *stHash_construct() {
+stHash *stHash_construct() {
 	return stHash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
 }
 
-st_Hash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
+stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
 	return stHash_construct3(st_hash_key, st_hash_equalKey, destructKeys, destructValues);
 }
 
-st_Hash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
+stHash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
 		void (*destructKeys)(void *), void (*destructValues)(void *)) {
-	st_Hash *hash = st_malloc(sizeof(st_Hash));
+	stHash *hash = st_malloc(sizeof(stHash));
 	hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
 	hash->destructKeys = destructKeys != NULL;
 	hash->destructValues = destructValues != NULL;
 	return hash;
 }
 
-void st_hash_destruct(st_Hash *hash) {
+void stHash_destruct(stHash *hash) {
 	hashtable_destroy(hash->hash, hash->destructValues, hash->destructKeys);
 	free(hash);
 }
 
-void st_hash_insert(st_Hash *hash, void *key, void *value) {
+void stHash_insert(stHash *hash, void *key, void *value) {
 	hashtable_insert(hash->hash, key, value);
 }
 
-void *st_hash_search(st_Hash *hash, void *key) {
+void *stHash_search(stHash *hash, void *key) {
 	return hashtable_search(hash->hash, key);
 }
 
-void *st_hash_remove(st_Hash *hash, void *key) {
+void *stHash_remove(stHash *hash, void *key) {
 	return hashtable_remove(hash->hash, key, 0);
 }
 
-int32_t st_hash_size(st_Hash *hash) {
+int32_t stHash_size(stHash *hash) {
 	return hashtable_count(hash->hash);
 }
 
-st_HashIterator *st_hash_getIterator(st_Hash *hash) {
+stHashIterator *stHash_getIterator(stHash *hash) {
 	return hashtable_iterator(hash->hash);
 }
 
-void *st_hash_getNext(st_HashIterator *iterator) {
+void *stHash_getNext(stHashIterator *iterator) {
 	if(iterator->e != NULL) {
 		void *o = hashtable_iterator_key(iterator);
 		hashtable_iterator_advance(iterator);
@@ -65,8 +70,8 @@ void *st_hash_getNext(st_HashIterator *iterator) {
 	return NULL;
 }
 
-st_HashIterator *st_hash_copyIterator(st_HashIterator *iterator) {
-	st_HashIterator *iterator2 = st_malloc(sizeof(st_HashIterator));
+stHashIterator *stHash_copyIterator(stHashIterator *iterator) {
+	stHashIterator *iterator2 = st_malloc(sizeof(stHashIterator));
 	iterator2->h = iterator->h;
 	iterator2->e = iterator->e;
 	iterator2->parent = iterator->parent;
@@ -74,28 +79,28 @@ st_HashIterator *st_hash_copyIterator(st_HashIterator *iterator) {
 	return iterator2;
 }
 
-void st_hash_destructIterator(st_HashIterator *iterator) {
+void stHash_destructIterator(stHashIterator *iterator) {
 	free(iterator);
 }
 
-st_List *st_hash_getKeys(st_Hash *hash) {
-	st_List *list = st_list_construct();
-	st_HashIterator *iterator = st_hash_getIterator(hash);
+stList *stHash_getKeys(stHash *hash) {
+	stList *list = stList_construct();
+	stHashIterator *iterator = stHash_getIterator(hash);
 	void *item;
-	while((item = st_hash_getNext(iterator)) != NULL) {
-		st_list_append(list, item);
+	while((item = stHash_getNext(iterator)) != NULL) {
+		stList_append(list, item);
 	}
-	st_hash_destructIterator(iterator);
+	stHash_destructIterator(iterator);
 	return list;
 }
 
-st_List *st_hash_getValues(st_Hash *hash) {
-	st_List *list = st_list_construct();
-	st_HashIterator *iterator = st_hash_getIterator(hash);
+stList *stHash_getValues(stHash *hash) {
+	stList *list = stList_construct();
+	stHashIterator *iterator = stHash_getIterator(hash);
 	void *item;
-	while((item = st_hash_getNext(iterator)) != NULL) {
-		st_list_append(list, st_hash_search(hash, item));
+	while((item = stHash_getNext(iterator)) != NULL) {
+		stList_append(list, stHash_search(hash, item));
 	}
-	st_hash_destructIterator(iterator);
+	stHash_destructIterator(iterator);
 	return list;
 }

@@ -5,8 +5,8 @@
  *      Author: benedictpaten
  */
 
-#ifndef ETREE_H_
-#define ETREE_H_
+#ifndef SONLIB_ETREE_H_
+#define SONLIB_ETREE_H_
 
 #include "sonLibGlobals.h"
 
@@ -40,7 +40,7 @@ int32_t eTree_getChildNumber(ETree *eTree);
  */
 ETree *eTree_getChild(ETree *eTree, int32_t i);
 
-/* 
+/*
  * find a child by label, returning NULL if not found.
  */
 ETree *eTree_findChild(ETree *eTree, const char *label);

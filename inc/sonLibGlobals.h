@@ -5,8 +5,8 @@
  *      Author: benedictpaten
  */
 
-#ifndef SONLIBGLOBALS_H_
-#define SONLIBGLOBALS_H_
+#ifndef SONLIB_GLOBALS_H_
+#define SONLIB_GLOBALS_H_
 
 #include <inttypes.h>
 
@@ -30,12 +30,12 @@
 ////////////////////////////////////////////////
 
 typedef struct _eTree ETree;
-typedef struct _st_Hash st_Hash;
-typedef struct hashtable_itr st_HashIterator;
-typedef struct _stSortedSet st_SortedSet;
-typedef struct avl_traverser st_SortedSetIterator;
-typedef struct _st_List st_List;
-typedef struct _st_ListIterator st_ListIterator;
+typedef struct _stHash stHash;
+typedef struct hashtable_itr stHashIterator;
+typedef struct _stSortedSet stSortedSet;
+typedef struct avl_traverser stSortedSetIterator;
+typedef struct _stList stList;
+typedef struct _stListIterator stListIterator;
 typedef int32_t stIntTuple;
 
 #endif /* SONLIBGLOBALS_H_ */

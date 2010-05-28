@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "stSafeC.h"
 
-/* 
+/*
  * Exception content Top Of Stack.
  * FIXME: should be in thread-local storage.
  */
