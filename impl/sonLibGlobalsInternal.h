@@ -21,8 +21,11 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <math.h>
+#include <inttypes.h>
 
 #include "CuTest.h"
 #include "sonLib.h"
+
+
 
 #endif /* SONLIBPRIVATE_H_ */

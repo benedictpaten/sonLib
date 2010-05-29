@@ -5,6 +5,8 @@
  *      Author: benedictpaten
  */
 #include "sonLibGlobalsInternal.h"
+#include "hashTableC.h"
+#include "hashTableC_itr.h"
 
 struct _stHash {
 	struct hashtable *hash;

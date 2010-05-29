@@ -10,9 +10,9 @@ from sonLib.bioio import parseSuiteTestOptions
 
 class TestCase(unittest.TestCase):        
     def testSonLibCTests(self):
-        """Run all the sonLibAPI CuTests, fail if any of them fail.
+        """Run all the sonLib CuTests, fail if any of them fail.
         """
-        system("sonLibAPITests")
+        system("sonLibTests")
 
 def allSuites():
     bioioSuite = unittest.makeSuite(bioioTest.TestCase, 'test')
