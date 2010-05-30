@@ -87,7 +87,6 @@ def system(command):
     sts = os.waitpid(process.pid, 0)
     i = sts[1]
     if i != 0:
-        print >>sys.stderr, "Something went wrong: %i" % i
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
     return i
 
@@ -101,7 +100,6 @@ def popen(command, tempFile):
     fileHandle.close()
     i = sts[1]
     if i != 0:
-        print >>sys.stderr, "Something went wrong: %i" % i
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
     return i
  
