@@ -8,7 +8,7 @@
 #ifndef SONLIB_CONTAINERS_H_
 #define SONLIB_CONTAINERS_H_
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 /*
  * Constructs a tuple of length int32_t integers.. be very careful that length equals the

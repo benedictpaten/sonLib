@@ -8,7 +8,7 @@
 #ifndef SONLIB_ETREE_H_
 #define SONLIB_ETREE_H_
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 /*
  * Construct unattached eTree node.

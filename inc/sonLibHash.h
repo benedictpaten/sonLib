@@ -8,7 +8,7 @@
  *      Author: benedictpaten
  */
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 /*
  * Constructs hash, with no destructors for keys or values.

@@ -8,7 +8,7 @@
 #ifndef SONLIB_COMMON_H_
 #define SONLIB_COMMON_H_
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 //////////////////
 //Memory allocation functions

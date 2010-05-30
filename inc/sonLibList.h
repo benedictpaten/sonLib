@@ -8,7 +8,7 @@
 #ifndef SONLIB_LIST_H_
 #define SONLIB_LIST_H_
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 /*
  * Construct a stList with zero length.

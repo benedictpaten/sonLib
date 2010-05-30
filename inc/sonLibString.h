@@ -8,7 +8,7 @@
 #ifndef SONLIB_STRING_H_
 #define SONLIB_STRING_H_
 
-#include "sonLibGlobals.h"
+#include "sonLibTypes.h"
 
 /*
  * Copies a string.
