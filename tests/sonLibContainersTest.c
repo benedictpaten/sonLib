@@ -31,6 +31,7 @@ static void setup() {
 }
 
 static void testStIntTuple_construct(CuTest *testCase) {
+	assert(testCase != NULL);
 	setup(); //we don't do anything, this just checks that everything can construct and destruct okay.
 	teardown();
 }

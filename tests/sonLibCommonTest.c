@@ -10,6 +10,7 @@ static void test_st_logging(CuTest *testCase) {
 	/*
 	 * This just tries printing, but it doesn't verify the output.
 	 */
+	assert(testCase != NULL);
 	st_logDebug("Hello %s", "world");
 	st_logInfo("Bar %s", "foo");
 	st_setLogLevel(ST_LOGGING_INFO);

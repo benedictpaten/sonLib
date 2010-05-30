@@ -34,6 +34,7 @@ static void testTeardown() {
 }
 
 static void testHash_construct(CuTest* testCase) {
+	assert(testCase != NULL);
 	testSetup();
 	/* Do nothing */
 	testTeardown();

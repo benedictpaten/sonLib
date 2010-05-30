@@ -47,7 +47,7 @@ void readDoubles(const char *string, int32_t number, double *dA) {
 
 	tempFile = getTempFile(); //This is kind of a hack.
 	fileHandle = fopen(tempFile, "w");
-	fprintf(fileHandle, string);
+	fprintf(fileHandle, "%s", string);
 	fclose(fileHandle);
 	fileHandle = fopen(tempFile, "r");
 	for(i=0; i<number; i++) {

@@ -52,7 +52,7 @@ char *stString_getNextWord(char **string) {
 }
 
 static int32_t string_replaceP(char *start, const char *pattern) {
-	int32_t i;
+	uint32_t i;
 	for(i=0; i<strlen(pattern); i++) {
 		if(start[i] == '\0' || start[i] != pattern[i]) {
 			return 0;
@@ -63,11 +63,10 @@ static int32_t string_replaceP(char *start, const char *pattern) {
 
 char *stString_replace(const char *originalString, const char *toReplace, const char *replacement) {
 	char *i, *k;
-	int32_t j;
+	uint32_t j;
 	char *newString;
 
 	assert(strlen(toReplace) > 0); //Must be non zero length replacement string.
-
 	j=0;
 	i=(char *)originalString;
 	while(*i != '\0') {

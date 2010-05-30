@@ -883,7 +883,7 @@ struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, i
 	for(i=0; i<levelNumber; i++) {
 		tempFileTree->levelsArray[i] = 0;
 	}
-	sprintf(cA, tempFileTree->rootDir); //defensive
+	sprintf(cA, "%s", tempFileTree->rootDir); //defensive
 	for(i=0; i<levelNumber-1; i++) {
 		sprintf(cA2, "%s/c0", cA);
 		cA3 = cA;
