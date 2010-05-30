@@ -26,5 +26,6 @@ typedef struct avl_traverser stSortedSetIterator;
 typedef struct _stList stList;
 typedef struct _stListIterator stListIterator;
 typedef int32_t stIntTuple;
+typedef struct stExcept stExcept;
 
 #endif /* SONLIBGLOBALS_H_ */

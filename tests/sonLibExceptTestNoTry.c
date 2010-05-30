@@ -1,7 +1,7 @@
 /*
  * test throwing with no try.
  */
-#include "stCExcept.h"
+#include "sonLibExcept.h"
 #include "stSafeC.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,17 +17,19 @@ static void thrower1() {
     stTry {
         thrower2();
     } stCatch(except) {
-        stThrow(stCExcept_newCause(except, ERR1, "error in %s", "thrower1"));
+        stThrow(stExcept_newCause(except, ERR1, "error in %s", "thrower1"));
     } stTryEnd;
 }
 
-static void testThrow() {
+void testThrow() {
     thrower1();
     stSafeCErr("testThrow, should not make it here");
 }
 
+#if 0
 int main(int argc, char **argv) {
     testThrow();
     printf("tests passed\n");
     return 0;
 } 
+#endif

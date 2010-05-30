@@ -1,7 +1,7 @@
 /*
- * basic tests of CExcept.
+ * basic tests of stExcept.
  */
-#include "stCExcept.h"
+#include "sonLibExcept.h"
 #include "stSafeC.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,7 +17,7 @@ static void thrower1() {
     stTry {
         thrower2();
     } stCatch(except) {
-        stThrow(stCExcept_newCause(except, ERR1, "error in %s", "thrower1"));
+        stThrow(stExcept_newCause(except, ERR1, "error in %s", "thrower1"));
     } stTryEnd;
 }
 
@@ -30,19 +30,18 @@ static void testThrow() {
         pastThrow++;
     } stCatch(except) {
         printf("except:\n");
-        for (struct stCExcept *e = except; e != NULL; e = e->cause)  {
-            printf("\t%s: %s\n", e->id, e->msg);
+        for (stExcept *e = except; e != NULL; e = stExcept_getCause(e))  {
+            printf("\t%s: %s\n", stExcept_getId(e), stExcept_getMsg(e));
         }
-        if (except->id != ERR1) {
-            stSafeCErr("expected id %s, got %s", ERR1, except->id);
+        if (stExcept_getId(except) != ERR1) {
+            stSafeCErr("expected id %s, got %s", ERR1, stExcept_getId(except));
         }
-        if (except->cause == NULL) {
+        if (stExcept_getCause(except) == NULL) {
             stSafeCErr("expected chained exception");
+        } else if (stExcept_getId(stExcept_getCause(except)) != ERR2) {
+            stSafeCErr("expected id %s, got %s", ERR2, stExcept_getId(stExcept_getCause(except)));
         }
-        if (except->cause->id != ERR2) {
-            stSafeCErr("expected id %s, got %s", ERR2, except->cause->id);
-        }
-        stCExcept_free(except);
+        stExcept_free(except);
         gotEx++;
     } stTryEnd;
     if (pastThrow > 0) {
@@ -69,7 +68,7 @@ static void testOk() {
         noop();
         pastOk++;
     } stCatch(except) {
-        stCExcept_free(except);
+        stExcept_free(except);
         gotEx++;
     } stTryEnd;
     if (pastOk == 0) {
@@ -89,7 +88,7 @@ static int returnFromTry() {
     stTry {
         stTryReturn(10);
     } stCatch(except) {
-        stCExcept_free(except);
+        stExcept_free(except);
         return 11;
     } stTryEnd;
     return 12;
@@ -99,7 +98,7 @@ static int returnFromCatch() {
     stTry {
         stThrowNew(ERR1, "throw from catch");
     } stCatch(except) {
-        stCExcept_free(except);
+        stExcept_free(except);
         return 11;
     } stTryEnd;
     return 12;
@@ -108,7 +107,7 @@ static int returnFromCatch() {
 static int returnAtEnd() {
     stTry {
     } stCatch(except) {
-        stCExcept_free(except);
+        stExcept_free(except);
         return 11;
     } stTryEnd;
     return 12;
@@ -132,10 +131,9 @@ static void testTryReturn() {
     }
 }
 
-int main(int argc, char **argv) {
+void sonLibExceptTest() {
     testThrow();
     testOk();
     testTryReturn();
     printf("tests passed\n");
-    return 0;
-} 
+}
