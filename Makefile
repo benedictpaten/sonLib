@@ -15,7 +15,7 @@ all : ${libPath}/sonLib.a ${binPath}/sonLibTests
 clean : 
 	rm -f  ${binPath}/sonLibTests ${libPath}/sonLib*.h ${libPath}/sonLib.a ${libPath}/avl.h ${libPath}/bioioC.h ${libPath}/commonC.h ${libPath}/fastCMaths.h ${libPath}/hashTableC.h ${libPath}/pairwiseAlignment.h
 
-${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a
+${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLibTests tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a
 
 ${libPath}/sonLib.a : ${libSources} ${libHeaders} ${libInternalHeaders}

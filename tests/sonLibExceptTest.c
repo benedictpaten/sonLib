@@ -2,7 +2,7 @@
  * basic tests of stExcept.
  */
 #include "sonLibExcept.h"
-#include "stSafeC.h"
+#include "sonLibGlobalsTest.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -13,7 +13,7 @@ static void thrower2() {
     stThrowNew(ERR2, "error in %s", "thrower2");
 }
 
-static void thrower1() {
+static void thrower1(void) {
     stTry {
         thrower2();
     } stCatch(except) {
@@ -21,47 +21,36 @@ static void thrower1() {
     } stTryEnd;
 }
 
-static void testThrow() {
-    printf("testThrow\n");
+static void testThrow(CuTest *testCase) {
     volatile int gotEx = 0;
     volatile int pastThrow = 0;
     stTry {
         thrower1();
         pastThrow++;
     } stCatch(except) {
-        printf("except:\n");
-        for (stExcept *e = except; e != NULL; e = stExcept_getCause(e))  {
-            printf("\t%s: %s\n", stExcept_getId(e), stExcept_getMsg(e));
-        }
-        if (stExcept_getId(except) != ERR1) {
-            stSafeCErr("expected id %s, got %s", ERR1, stExcept_getId(except));
-        }
-        if (stExcept_getCause(except) == NULL) {
-            stSafeCErr("expected chained exception");
-        } else if (stExcept_getId(stExcept_getCause(except)) != ERR2) {
-            stSafeCErr("expected id %s, got %s", ERR2, stExcept_getId(stExcept_getCause(except)));
+        CuAssertTrue(testCase, stExcept_getId(except) == ERR1);
+        CuAssertStrEquals(testCase, stExcept_getMsg(except), "error in thrower1");
+
+        const stExcept *cause = stExcept_getCause(except); 
+        CuAssertTrue(testCase, cause != NULL);
+        if (cause != NULL) {
+            CuAssertTrue(testCase, stExcept_getId(cause) == ERR2);
+            CuAssertStrEquals(testCase, stExcept_getMsg(cause), "error in thrower2");
+            CuAssertTrue(testCase, stExcept_getCause(cause) == NULL);
         }
         stExcept_free(except);
         gotEx++;
     } stTryEnd;
-    if (pastThrow > 0) {
-        stSafeCErr("went past throw");
-    }
-    if (gotEx == 0) {
-        stSafeCErr("didn't get except");
-    }
-    if (_cexceptTOS != NULL) {
-        stSafeCErr("_cexceptTOS not NULL");
-    }
-    
+    CuAssertTrue(testCase, pastThrow == 0);
+    CuAssertTrue(testCase,  gotEx != 0);
+    CuAssertTrue(testCase, _cexceptTOS == NULL);
 }
 
 /* test execution with no exception */
-static void noop() {
+static void noop(void) {
 }
 
-static void testOk() {
-    printf("testOk\n");
+static void testOk(CuTest *testCase) {
     volatile int gotEx = 0;
     volatile int pastOk = 0;
     stTry {
@@ -71,20 +60,13 @@ static void testOk() {
         stExcept_free(except);
         gotEx++;
     } stTryEnd;
-    if (pastOk == 0) {
-        stSafeCErr("didn't finish try");
-    }
-    if (gotEx > 0) {
-        stSafeCErr("got except");
-    }
-    if (_cexceptTOS != NULL) {
-        stSafeCErr("_cexceptTOS not NULL");
-    }
-    
+    CuAssertTrue(testCase, pastOk != 0);
+    CuAssertTrue(testCase,  gotEx == 0);
+    CuAssertTrue(testCase,  _cexceptTOS == NULL);
 }
 
 /* test ceTryReturn */
-static int returnFromTry() {
+static int returnFromTry(void) {
     stTry {
         stTryReturn(10);
     } stCatch(except) {
@@ -94,7 +76,7 @@ static int returnFromTry() {
     return 12;
 }
 
-static int returnFromCatch() {
+static int returnFromCatch(void) {
     stTry {
         stThrowNew(ERR1, "throw from catch");
     } stCatch(except) {
@@ -104,7 +86,7 @@ static int returnFromCatch() {
     return 12;
 }
 
-static int returnAtEnd() {
+static int returnAtEnd(void) {
     stTry {
     } stCatch(except) {
         stExcept_free(except);
@@ -113,27 +95,20 @@ static int returnAtEnd() {
     return 12;
 }
 
-static void testTryReturn() {
-    printf("testTryReturn\n");
+static void testTryReturn(CuTest *testCase) {
     int val = returnFromTry();
-    if (val != 10) {
-        stSafeCErr("expected 10 from returnFromTry, got %d", val);
-    }
-    
+    CuAssertTrue(testCase, val == 10);
     val = returnFromCatch();
-    if (val != 11) {
-        stSafeCErr("expected 11 from returnFromCatch, got %d", val);
-    }
-    
+    CuAssertTrue(testCase, val == 11);
     val = returnAtEnd();
-    if (val != 12) {
-        stSafeCErr("expected 12 from returnAtEnd, got %d", val);
-    }
+    CuAssertTrue(testCase, val == 12);
 }
 
-void sonLibExceptTest() {
-    testThrow();
-    testOk();
-    testTryReturn();
-    printf("tests passed\n");
+CuSuite* sonLib_stExceptTestSuite(void) {
+    CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testThrow);
+    SUITE_ADD_TEST(suite, testOk);
+    SUITE_ADD_TEST(suite, testTryReturn);
+    return suite;
 }
+

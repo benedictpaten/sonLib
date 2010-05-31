@@ -1,12 +1,13 @@
 #include "sonLibGlobalsTest.h"
 
-CuSuite *sonLibETreeTestSuite();
-CuSuite *sonLibStringTestSuite();
-CuSuite *sonLibHashTestSuite();
-CuSuite *sonLibSortedSetTestSuite();
-CuSuite *sonLib_stListTestSuite();
-CuSuite *sonLib_stCommonTestSuite();
-CuSuite* sonLib_stContainersTestSuite();
+CuSuite *sonLibETreeTestSuite(void);
+CuSuite *sonLibStringTestSuite(void);
+CuSuite *sonLibHashTestSuite(void);
+CuSuite *sonLibSortedSetTestSuite(void);
+CuSuite *sonLib_stListTestSuite(void);
+CuSuite *sonLib_stCommonTestSuite(void);
+CuSuite* sonLib_stContainersTestSuite(void);
+CuSuite* sonLib_stExceptTestSuite(void);
 
 int sonLibRunAllTests(void) {
 	CuString *output = CuStringNew();
@@ -18,7 +19,7 @@ int sonLibRunAllTests(void) {
 	CuSuiteAddSuite(suite, sonLibHashTestSuite());
 	CuSuiteAddSuite(suite, sonLib_stListTestSuite());
 	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
-
+	CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
 
 	CuSuiteRun(suite);
 	CuSuiteSummary(suite, output);
