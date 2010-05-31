@@ -16,7 +16,8 @@ void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);
 //memory
 struct Chunks {
     struct List *chunkList;
-    void * chunk;
+    char * chunk;
+    //void * chunk;
     int32_t remaining;
     int32_t chunkSize;
     int32_t elementSize;

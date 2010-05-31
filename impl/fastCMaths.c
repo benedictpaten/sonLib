@@ -12,6 +12,7 @@
 #include <assert.h> 
 
 #include "fastCMaths.h" 
+#include "sonLib.h"
 
 //typedef FLOAT_32 FLOAT_32; 
 

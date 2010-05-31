@@ -20,7 +20,8 @@
 #define TRUE 1
 #define FALSE 0
 
-#define LOG_ZERO -1e30000
+#define LOG_ZERO -INFINITY //-1e300
+//#define LOG_ZERO -1e30000
 //-2e20
 #define LOG_ONE 0.0
 #define ZERO 0.0

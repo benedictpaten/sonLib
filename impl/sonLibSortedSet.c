@@ -15,7 +15,7 @@ struct _stSortedSet {
 };
 
 static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
-	return key1 - key2;
+	return key1 > key2 ? 1 : key1 < key2 ? -1 : 0;
 }
 
 stSortedSet *stSortedSet_construct() {
@@ -26,14 +26,20 @@ stSortedSet *stSortedSet_construct2(void (*destructElementFn)(void *)) {
 	return stSortedSet_construct3(st_sortedSet_cmpFn, destructElementFn);
 }
 
-static int st_sortedSet_construct3P(const void *a, const void *b, int (*cmpFn)(const void *, const void *)) {
-	return cmpFn(a, b);
+struct _stSortedSet_construct3Fn {
+	int (*compareFn)(const void *, const void *);
+};
+
+static int st_sortedSet_construct3P(const void *a, const void *b, struct _stSortedSet_construct3Fn *c) { //int (*cmpFn)(const void *, const void *)) {
+	return c->compareFn(a, b);
 }
 
 stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *),
 									  void (*destructElementFn)(void *)) {
 	stSortedSet *sortedSet = st_malloc(sizeof(stSortedSet));
-	sortedSet->sortedSet = avl_create((int (*)(const void *, const void *, void *))st_sortedSet_construct3P, compareFn, NULL);
+	struct _stSortedSet_construct3Fn *i = st_malloc(sizeof(struct _stSortedSet_construct3Fn));
+	i->compareFn = compareFn; //this is a total hack to make the function pass ISO C compatible.
+	sortedSet->sortedSet = avl_create((int (*)(const void *, const void *, void *))st_sortedSet_construct3P, i, NULL);
 	sortedSet->destructElementFn = destructElementFn;
 	return sortedSet;
 }
@@ -50,6 +56,7 @@ void stSortedSet_destruct(stSortedSet *sortedSet) {
 		avl_destroy(sortedSet->sortedSet, (void (*)(void *, void *))st_sortedSet_destructP);
 	}
 	else {
+		free(sortedSet->sortedSet->avl_param); //clean up the param..
 		avl_destroy(sortedSet->sortedSet, NULL);
 	}
 }
