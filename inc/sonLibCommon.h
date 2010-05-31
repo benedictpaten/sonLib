@@ -72,12 +72,14 @@ int32_t st_system(const char *string, ...);
 //////////////////////
 
 /*
- * Print the given error message and exit the program.
+ * Print the given error message to stderr followed by a newline and exit the
+ * program.
  */
 void st_errAbort(char *format, ...);
 
 /*
- * Print the error message, but don't exit.
+ * Print the given error message to stderr followed the POSIX error message for the current errno,
+ * and then a newline and exit the. program.
  */
 void st_errnoAbort(char *format, ...);
 

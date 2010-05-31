@@ -6,6 +6,7 @@
  */
 
 #include "sonLibGlobalsInternal.h"
+#include <errno.h>
 
 static int32_t LOG_LEVEL = ST_LOGGING_OFF;
 
@@ -82,6 +83,7 @@ void st_errAbort(char *format, ...) {
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
+        fputc('\n', stderr);
 	exit(1);
 }
 
@@ -90,4 +92,6 @@ void st_errnoAbort(char *format, ...) {
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
+        fprintf(stderr, ": %s\n", strerror(errno));
+        exit(1);
 }

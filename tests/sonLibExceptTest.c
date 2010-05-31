@@ -3,8 +3,10 @@
  */
 #include "sonLibExcept.h"
 #include "sonLibGlobalsTest.h"
+#include "sonLibCommon.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "stSafeC.h"
 
 /* test throwing through two levels */
 static const char *const ERR1 = "err1";
@@ -103,6 +105,40 @@ static void testTryReturn(CuTest *testCase) {
     val = returnAtEnd();
     CuAssertTrue(testCase, val == 12);
 }
+
+#if 0
+// FIXME: finish this once there are some functions to read in all of a file
+
+/* Child process that throws an exception with no catch, redirecting stdout/stderr to
+ * the specified file. */
+static void noCatchChild(const char *errFile) {
+    fflush(stdout);
+    fflush(stderr);
+    int fn = open(errFile, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+    if (fn < 0) {
+        st_errnoAbort("can't open: %s", errFile);
+    }
+    if (dup2(STDOUT_FILENO, fn) < 0) {
+        st_errnoAbort("dup stdout failed");
+    }
+    if (dup2(STDERR_FILENO, fn) < 0) {
+        st_errnoAbort("dup stderr failed");
+    }
+    thrower1();
+    fprintf(stderr, "shouldn't make it past throw without catch\n");
+    exit(1);
+}
+
+/* test handling of a throw without a catch, which is must be run in a
+ * separate process */
+static void testNoCatch(CuTest *testCase) {
+    // FIXME: need function to get tmp file honoring TMPENV
+    char *errFile = "sonLibExceptTest.tmp";
+    noCatchChild
+    
+    unlink(errFile);  // ignore failures
+}
+#endif
 
 CuSuite* sonLib_stExceptTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
