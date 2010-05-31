@@ -1,12 +1,12 @@
 /*
- * sonLibWrappers.h
+ * sonLibTuples.h
  *
  *  Created on: 26-May-2010
  *      Author: benedictpaten
  */
 
-#ifndef SONLIB_CONTAINERS_H_
-#define SONLIB_CONTAINERS_H_
+#ifndef SONLIB_TUPLES_H_
+#define SONLIB_TUPLES_H_
 
 #include "sonLibTypes.h"
 

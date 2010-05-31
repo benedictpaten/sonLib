@@ -6,7 +6,7 @@ CuSuite *sonLibHashTestSuite(void);
 CuSuite *sonLibSortedSetTestSuite(void);
 CuSuite *sonLib_stListTestSuite(void);
 CuSuite *sonLib_stCommonTestSuite(void);
-CuSuite* sonLib_stContainersTestSuite(void);
+CuSuite* sonLib_stTuplesTestSuite(void);
 CuSuite* sonLib_stExceptTestSuite(void);
 
 int sonLibRunAllTests(void) {
@@ -15,7 +15,7 @@ int sonLibRunAllTests(void) {
 	CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
 	CuSuiteAddSuite(suite, sonLibETreeTestSuite());
 	CuSuiteAddSuite(suite, sonLibStringTestSuite());
-	CuSuiteAddSuite(suite, sonLib_stContainersTestSuite());
+	CuSuiteAddSuite(suite, sonLib_stTuplesTestSuite());
 	CuSuiteAddSuite(suite, sonLibHashTestSuite());
 	CuSuiteAddSuite(suite, sonLib_stListTestSuite());
 	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());

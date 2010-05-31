@@ -96,7 +96,7 @@ static void testStIntTuple_getPosition(CuTest *testCase) {
 	teardown();
 }
 
-CuSuite* sonLib_stContainersTestSuite(void) {
+CuSuite* sonLib_stTuplesTestSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, testStIntTuple_construct);
 	SUITE_ADD_TEST(suite, testStIntTuple_hashKey);
