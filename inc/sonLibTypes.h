@@ -9,6 +9,8 @@
 #define SONLIB_GLOBALS_H_
 
 #include <inttypes.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -27,5 +29,10 @@ typedef struct _stList stList;
 typedef struct _stListIterator stListIterator;
 typedef int32_t stIntTuple;
 typedef struct stExcept stExcept;
+typedef struct stAlign stAlign;
+typedef struct stAlignIterator stAlignIterator;
+typedef struct stAlignBlock stAlignBlock;
+typedef struct stAlignBlockIterator stAlignBlockIterator;
+typedef struct stAlignSegment stAlignSegment;
 
 #endif /* SONLIBGLOBALS_H_ */
