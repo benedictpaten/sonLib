@@ -10,24 +10,24 @@ CuSuite* sonLib_stTuplesTestSuite(void);
 CuSuite* sonLib_stExceptTestSuite(void);
 
 int sonLibRunAllTests(void) {
-	CuString *output = CuStringNew();
-	CuSuite* suite = CuSuiteNew();
-	CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
-	CuSuiteAddSuite(suite, sonLibETreeTestSuite());
-	CuSuiteAddSuite(suite, sonLibStringTestSuite());
-	CuSuiteAddSuite(suite, sonLib_stTuplesTestSuite());
-	CuSuiteAddSuite(suite, sonLibHashTestSuite());
-	CuSuiteAddSuite(suite, sonLib_stListTestSuite());
-	CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
-	CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
+    CuString *output = CuStringNew();
+    CuSuite* suite = CuSuiteNew();
+    CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
+    CuSuiteAddSuite(suite, sonLibETreeTestSuite());
+    CuSuiteAddSuite(suite, sonLibStringTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stTuplesTestSuite());
+    CuSuiteAddSuite(suite, sonLibHashTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stListTestSuite());
+    CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
 
-	CuSuiteRun(suite);
-	CuSuiteSummary(suite, output);
-	CuSuiteDetails(suite, output);
-	printf("%s\n", output->buffer);
-	return suite->failCount > 0;
+    CuSuiteRun(suite);
+    CuSuiteSummary(suite, output);
+    CuSuiteDetails(suite, output);
+    printf("%s\n", output->buffer);
+    return suite->failCount > 0;
 }
 
 int main(void) {
-	return sonLibRunAllTests();
+    return sonLibRunAllTests();
 }

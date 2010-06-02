@@ -24,7 +24,7 @@ stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(v
  * Constructs a hash using the given comparison functions.
  */
 stHash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
-		void (*destructKeys)(void *), void (*destructValues)(void *));
+        void (*destructKeys)(void *), void (*destructValues)(void *));
 
 /*
  * Destructs a hash.

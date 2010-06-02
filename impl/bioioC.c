@@ -41,20 +41,20 @@ void writeIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
 /////////////////////////////////////////////////////////
 
 void readDoubles(const char *string, int32_t number, double *dA) {
-	FILE *fileHandle;
-	char *tempFile;
-	int32_t i;
+    FILE *fileHandle;
+    char *tempFile;
+    int32_t i;
 
-	tempFile = getTempFile(); //This is kind of a hack.
-	fileHandle = fopen(tempFile, "w");
-	fprintf(fileHandle, "%s", string);
-	fclose(fileHandle);
-	fileHandle = fopen(tempFile, "r");
-	for(i=0; i<number; i++) {
-		assert(fscanf(fileHandle, "%lf", &(dA[i])) == 1);
-	}
-	fclose(fileHandle);
-	removeTempFile(tempFile);
+    tempFile = getTempFile(); //This is kind of a hack.
+    fileHandle = fopen(tempFile, "w");
+    fprintf(fileHandle, "%s", string);
+    fclose(fileHandle);
+    fileHandle = fopen(tempFile, "r");
+    for(i=0; i<number; i++) {
+        assert(fscanf(fileHandle, "%lf", &(dA[i])) == 1);
+    }
+    fclose(fileHandle);
+    removeTempFile(tempFile);
 }
 
 /////////////////////////////////////////////////////////
@@ -69,57 +69,57 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
     /*
      * Removes white space which is treated weirdly by many programs.
      */
-	const char *c;
-	int32_t i, j;
-	char *c2;
+    const char *c;
+    int32_t i, j;
+    char *c2;
 
-	i = 0;
-	c = fastaHeader;
-	while(c[0] != ' ' && c[0] != '\t' && c[0] != '\n' && c[0] != '\0') {
-		c++;
-		i++;
-	}
-	c2 = st_malloc(sizeof(char)*(i+1));
-	for(j=0; j<i; j++) {
-		c2[j] = fastaHeader[j];
-	}
-	c2[i] = '\0';
-	return c2;
+    i = 0;
+    c = fastaHeader;
+    while(c[0] != ' ' && c[0] != '\t' && c[0] != '\n' && c[0] != '\0') {
+        c++;
+        i++;
+    }
+    c2 = st_malloc(sizeof(char)*(i+1));
+    for(j=0; j<i; j++) {
+        c2[j] = fastaHeader[j];
+    }
+    c2[i] = '\0';
+    return c2;
 }
 
 struct List *fastaDecodeHeader(const char *fastaHeader) {
     /*
      * Decodes the fasta header
      */
-	struct List *attributes = constructEmptyList(0, free);
-	char *cA = stString_copy(fastaHeader);
-	char *cA2 = strtok(cA, "|");
-	while(cA2 != NULL) {
-		listAppend(attributes, stString_copy(cA2));
-		cA2 = strtok(NULL, "|");
-	}
-	free(cA);
-	return attributes;
+    struct List *attributes = constructEmptyList(0, free);
+    char *cA = stString_copy(fastaHeader);
+    char *cA2 = strtok(cA, "|");
+    while(cA2 != NULL) {
+        listAppend(attributes, stString_copy(cA2));
+        cA2 = strtok(NULL, "|");
+    }
+    free(cA);
+    return attributes;
 }
 
 char *fastaEncodeHeader(struct List *attributes) {
     /*
      * Decodes the fasta header
      */
-	return stString_join("|", (const char **)attributes->list, attributes->length);
+    return stString_join("|", (const char **)attributes->list, attributes->length);
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
-	int32_t i, k;
-	char j;
+    int32_t i, k;
+    char j;
 
-	fprintf(file, ">%s\n", header);
-	k = (int)strlen(sequence);
-	for(i=0; i<k; i++) {
-		j = sequence[i];
-		assert((j >= 'A' && j <= 'Z') || (j >= 'a' && j <= 'z')); //For safety and sanity I only allows roman alphabet characters in fasta sequences.
-	}
-	fprintf(file, "%s\n", sequence);
+    fprintf(file, ">%s\n", header);
+    k = (int)strlen(sequence);
+    for(i=0; i<k; i++) {
+        j = sequence[i];
+        assert((j >= 'A' && j <= 'Z') || (j >= 'a' && j <= 'z')); //For safety and sanity I only allows roman alphabet characters in fasta sequences.
+    }
+    fprintf(file, "%s\n", sequence);
 }
 
 char *addSeqToList(char *seq, int32_t *length, int32_t *maxLength, char *fastaName, void (*addSeq)(const char *, const char *, int32_t)) {
@@ -186,16 +186,16 @@ struct List *fastaRead_seqs;
 struct List *fastaRead_seqLengths;
 
 void fastaRead_function(const char *fastaHeader, const char *sequence, int32_t length) {
-	listAppend(fastaRead_fastaNames, stString_copy(fastaHeader));
-	listAppend(fastaRead_seqs, stString_copy(sequence));
-	listAppend(fastaRead_seqLengths, constructInt(length));
+    listAppend(fastaRead_fastaNames, stString_copy(fastaHeader));
+    listAppend(fastaRead_seqs, stString_copy(sequence));
+    listAppend(fastaRead_seqLengths, constructInt(length));
 }
 
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames) {
-	fastaRead_fastaNames = fastaNames;
-	fastaRead_seqs = seqs;
-	fastaRead_seqLengths = seqLengths;
-	fastaReadToFunction(fastaFile, fastaRead_function);
+    fastaRead_fastaNames = fastaNames;
+    fastaRead_seqs = seqs;
+    fastaRead_seqLengths = seqLengths;
+    fastaReadToFunction(fastaFile, fastaRead_function);
 }
 
 /////////////////////////////////////////////////////////
@@ -215,66 +215,66 @@ char *eatWhiteSpace(char *string) {
 }
 
 int32_t parseInt(char **string, int32_t *j) {
-	/*
-	 * Parses a string from the input string, and moves up the pointer.
-	 * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
-	 */
-	int32_t i;
+    /*
+     * Parses a string from the input string, and moves up the pointer.
+     * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
+     */
+    int32_t i;
 
-	i = sscanf(*string, INT_STRING, j);
-	if(i == 1) {
-		*string = eatWhiteSpace(*string);
-		while(*string != '\0' && !isspace(**string)) {
-			(*string)++;
-		}
-		*string = eatWhiteSpace(*string);
-		return 1;
-	}
-	else {
-		return 0;
-	}
+    i = sscanf(*string, INT_STRING, j);
+    if(i == 1) {
+        *string = eatWhiteSpace(*string);
+        while(*string != '\0' && !isspace(**string)) {
+            (*string)++;
+        }
+        *string = eatWhiteSpace(*string);
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 int32_t parseFloat(char **string, float *j) {
-	/*
-	 * Parses a string from the input string, and moves up the pointer.
-	 * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
-	 */
-	int32_t i;
+    /*
+     * Parses a string from the input string, and moves up the pointer.
+     * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
+     */
+    int32_t i;
 
-	i = sscanf(*string, "%f", j);
-	if(i == 1) {
-		*string = eatWhiteSpace(*string);
-		while(*string != '\0' && !isspace(**string)) {
-			(*string)++;
-		}
-		*string = eatWhiteSpace(*string);
-		return 1;
-	}
-	else {
-		return 0;
-	}
+    i = sscanf(*string, "%f", j);
+    if(i == 1) {
+        *string = eatWhiteSpace(*string);
+        while(*string != '\0' && !isspace(**string)) {
+            (*string)++;
+        }
+        *string = eatWhiteSpace(*string);
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 int32_t parseString(char **string, char *cA) {
-	/*
-	 * Parses a string from the input string, and moves up the pointer.
-	 * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
-	 */
+    /*
+     * Parses a string from the input string, and moves up the pointer.
+     * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
+     */
     int32_t i;
 
-	i = sscanf(*string, "%s", cA);
-	if(i == 1) {
-		*string = eatWhiteSpace(*string);
-		while(*string != '\0' && !isspace(**string)) {
-			(*string)++;
-		}
-		*string = eatWhiteSpace(*string);
-		return 1;
-	}
-	else {
-		return 0;
-	}
+    i = sscanf(*string, "%s", cA);
+    if(i == 1) {
+        *string = eatWhiteSpace(*string);
+        while(*string != '\0' && !isspace(**string)) {
+            (*string)++;
+        }
+        *string = eatWhiteSpace(*string);
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 /////////////////////////////////////////////////////////
@@ -359,11 +359,11 @@ char *newickTreeParser_fn(char *newickTreeString, float *distance) {
 }
 
 static char *newickTreeParser_getLabel(char *newickTreeString, char **label) {
-	if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
-	    return eatString(newickTreeString, label);
-	}
-	*label = stString_copy("");
-	return newickTreeString;
+    if(*newickTreeString != ':' && *newickTreeString != ',' && *newickTreeString != ';' && *newickTreeString != ')' && *newickTreeString != '\0') {
+        return eatString(newickTreeString, label);
+    }
+    *label = stString_copy("");
+    return newickTreeString;
 }
 
 char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct BinaryTree **binaryTree, int32_t unaryNodes) {
@@ -381,7 +381,7 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
         assert(*newickTreeString != ')');
         leaves = 0;
         while(1) {
-        	leaves++;
+            leaves++;
             newickTreeString = newickTreeParser_fn2(newickTreeString, defaultDistance, &temp2, unaryNodes);
             if(temp1 != NULL) {
                 //merge node
@@ -394,22 +394,22 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
                 newickTreeString = eatWhiteSpace(++newickTreeString);
             }
             else {
-            	assert(*newickTreeString == ')');
-            	break;
+                assert(*newickTreeString == ')');
+                break;
             }
         }
         if(unaryNodes && leaves == 1) { //make a unary node
-        	temp1 = constructBinaryTree(0.0f, TRUE, "", temp1, NULL);
+            temp1 = constructBinaryTree(0.0f, TRUE, "", temp1, NULL);
         }
         else { //eat any label
-        	char *cA;
-        	newickTreeString = newickTreeParser_getLabel(newickTreeString, &cA);
-        	free(cA);
+            char *cA;
+            newickTreeString = newickTreeParser_getLabel(newickTreeString, &cA);
+            free(cA);
         }
         newickTreeString = eatWhiteSpace(++newickTreeString);
     }
     else {
-    	temp1 = constructBinaryTree(0.0f, FALSE, "", NULL, NULL);
+        temp1 = constructBinaryTree(0.0f, FALSE, "", NULL, NULL);
     }
     free(temp1->label);
     newickTreeString = newickTreeParser_getLabel(newickTreeString, &temp1->label);
@@ -506,32 +506,32 @@ void destructCharColumnAlignment(struct CharColumnAlignment *charColumnAlignment
 /////////////////////////////////////////////////////////
 
 int32_t benLine(char **s, int32_t *n, FILE *f) {
-	register int32_t nMinus1= ((*n)-1), i= 0;
+    register int32_t nMinus1= ((*n)-1), i= 0;
 
-	char *s2 = *s;
-	while(TRUE) {
-		register int32_t ch= (char)getc(f);
+    char *s2 = *s;
+    while(TRUE) {
+        register int32_t ch= (char)getc(f);
 
-		if(ch == '\r') {
-			ch= getc(f);
-		}
+        if(ch == '\r') {
+            ch= getc(f);
+        }
 
-		if(i == nMinus1) {
-			*n = 2*(*n) + 1;
-			*s = realloc(*s, (*n + 1)*sizeof(char));
-			assert(*s != NULL);
-			s2 = *s + i;
-			nMinus1 = ((*n)-1);
-		}
+        if(i == nMinus1) {
+            *n = 2*(*n) + 1;
+            *s = realloc(*s, (*n + 1)*sizeof(char));
+            assert(*s != NULL);
+            s2 = *s + i;
+            nMinus1 = ((*n)-1);
+        }
 
-		if((ch == '\n') || (ch == EOF)) {
-			*s2 = '\0';
-			return(feof(f) ? -1 : i);
-		}
-		else {
-			*s2 = ch;
-			s2++;
-		}
-		++i;
-	}
+        if((ch == '\n') || (ch == EOF)) {
+            *s2 = '\0';
+            return(feof(f) ? -1 : i);
+        }
+        else {
+            *s2 = ch;
+            s2++;
+        }
+        ++i;
+    }
 }

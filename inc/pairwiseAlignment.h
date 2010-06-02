@@ -9,9 +9,9 @@
 #define PAIRWISE_INDEL_Y 2
 
 struct AlignmentOperation {
-	int32_t opType;
-	int32_t length;
-	float score;
+    int32_t opType;
+    int32_t length;
+    float score;
 };
 
 struct AlignmentOperation *constructAlignmentOperation(int32_t type, int32_t length, float score);
@@ -19,23 +19,23 @@ struct AlignmentOperation *constructAlignmentOperation(int32_t type, int32_t len
 void destructAlignmentOperation(struct AlignmentOperation *alignmentOperation);
 
 struct PairwiseAlignment {
-	char *contig1;
-	int32_t start1;
-	int32_t end1;
-	int32_t strand1;
+    char *contig1;
+    int32_t start1;
+    int32_t end1;
+    int32_t strand1;
 
-	char *contig2;
-	int32_t start2;
-	int32_t end2;
-	int32_t strand2;
+    char *contig2;
+    int32_t start2;
+    int32_t end2;
+    int32_t strand2;
 
-	float score;
-	struct List *operationList;
+    float score;
+    struct List *operationList;
 };
 
 struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int32_t start1, int32_t end1, int32_t strand1,
-												     char *contig2, int32_t start2, int32_t end2, int32_t strand2,
-													 float score, struct List *operationList);
+                                                     char *contig2, int32_t start2, int32_t end2, int32_t strand2,
+                                                     float score, struct List *operationList);
 
 void destructPairwiseAlignment(struct PairwiseAlignment *pairwiseAlignment);
 

@@ -150,7 +150,7 @@ hashtable_count(struct hashtable *h)
 int32_t
 hashtable_insert(struct hashtable *h, void *k, void *v)
 {
-	/* This method allows duplicate keys - but they shouldn't be used */
+    /* This method allows duplicate keys - but they shouldn't be used */
     uint32_t index;
     struct entry *e;
     if (++(h->entrycount) > h->loadlimit)

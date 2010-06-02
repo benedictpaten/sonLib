@@ -10,35 +10,35 @@
 #include "pairwiseAlignment.h"
 
 int main(int argc, char *argv[]) {
-	int32_t i;
-	struct List *pAs;
-	FILE *fileHandle;
-	struct PairwiseAlignment *pA;
-	int32_t keepProbs;
+    int32_t i;
+    struct List *pAs;
+    FILE *fileHandle;
+    struct PairwiseAlignment *pA;
+    int32_t keepProbs;
 
-	assert(argc == 3);
-	if(strcmp(argv[2], "True") == 0) {
-		keepProbs = TRUE;
-	}
-	else {
-		assert(strcmp(argv[2], "False") == 0);
-		keepProbs = FALSE;
-	}
+    assert(argc == 3);
+    if(strcmp(argv[2], "True") == 0) {
+        keepProbs = TRUE;
+    }
+    else {
+        assert(strcmp(argv[2], "False") == 0);
+        keepProbs = FALSE;
+    }
 
-	pAs = constructEmptyList(0, (void (*)(void *))destructPairwiseAlignment);
-	fileHandle = fopen(argv[1], "r");
-	pA = cigarRead(fileHandle);
-	while(pA != NULL) {
-		listAppend(pAs, pA);
-		pA = cigarRead(fileHandle);
-	}
-	fclose(fileHandle);
+    pAs = constructEmptyList(0, (void (*)(void *))destructPairwiseAlignment);
+    fileHandle = fopen(argv[1], "r");
+    pA = cigarRead(fileHandle);
+    while(pA != NULL) {
+        listAppend(pAs, pA);
+        pA = cigarRead(fileHandle);
+    }
+    fclose(fileHandle);
 
-	fileHandle = fopen(argv[1], "w");
-	for(i=0; i<pAs->length; i++) {
-		cigarWrite(fileHandle, pAs->list[i], keepProbs);
-	}
-	fclose(fileHandle);
+    fileHandle = fopen(argv[1], "w");
+    for(i=0; i<pAs->length; i++) {
+        cigarWrite(fileHandle, pAs->list[i], keepProbs);
+    }
+    fclose(fileHandle);
 
-	return 0;
+    return 0;
 }

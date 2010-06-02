@@ -10,14 +10,14 @@
 #include <sys/stat.h>
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
-	if(exitValue != 0) {
-		va_list ap;
-		va_start(ap, failureMessage);
-		vfprintf(stderr, failureMessage, ap);
-		//vfprintf(stdout, string, ap);
-		va_end(ap);
-		exit(1);
-	}
+    if(exitValue != 0) {
+        va_list ap;
+        va_start(ap, failureMessage);
+        vfprintf(stderr, failureMessage, ap);
+        //vfprintf(stdout, string, ap);
+        va_end(ap);
+        exit(1);
+    }
 }
 
 struct Chunks *constructChunks(int32_t chunkSize, int32_t elementSize) {
@@ -168,34 +168,34 @@ void swapListFields(struct List *list1, struct List *list2) {
 }
 
 struct List *cloneList(struct List *source) {
-	struct List *to;
-	int32_t i;
+    struct List *to;
+    int32_t i;
 
-	to = constructEmptyList(0, source->destructElement);
-	for(i=0; i<source->length; i++) {
-		listAppend(to, source->list[i]);
-	}
-	return to;
+    to = constructEmptyList(0, source->destructElement);
+    for(i=0; i<source->length; i++) {
+        listAppend(to, source->list[i]);
+    }
+    return to;
 }
 
 struct List *listCopy(struct List *list) {
-	struct List *list2;
-	int32_t i;
+    struct List *list2;
+    int32_t i;
 
-	list2 = constructEmptyList(0, list->destructElement);
-	for(i=0; i<list->length; i++) {
-		listAppend(list2, list->list[i]);
-	}
-	return list2;
+    list2 = constructEmptyList(0, list->destructElement);
+    for(i=0; i<list->length; i++) {
+        listAppend(list2, list->list[i]);
+    }
+    return list2;
 }
 
 void copyList(struct List *from, struct List *to) {
-	int32_t i;
+    int32_t i;
 
-	to->length = 0;
-	for(i=0; i<from->length; i++) {
-		listAppend(to, from->list[i]);
-	}
+    to->length = 0;
+    for(i=0; i<from->length; i++) {
+        listAppend(to, from->list[i]);
+    }
 
     /*assert(from != to);
     assert(from->list == NULL || from->list != to->list);
@@ -237,14 +237,14 @@ void listAppendArray(struct List *list, void **array, int32_t length) {
 }
 
 int32_t listContains(struct List *list, void *k) {
-	int32_t i;
+    int32_t i;
 
-	for(i=0; i<list->length; i++) {
-		if(list->list[i] == k) {
-			return TRUE;
-		}
-	}
-	return FALSE;
+    for(i=0; i<list->length; i++) {
+        if(list->list[i] == k) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 int32_t listGetInt(struct List *list, int32_t index) {
@@ -262,55 +262,55 @@ float listGetFloat(struct List *list, int32_t index) {
 }
 
 void listRemove(struct List *list, void *k) {
-	int32_t i, j;
-	for(i=0; i<list->length; i++) {
-		if(list->list[i] == k) {
-			for(j=i+1; j<list->length; j++) {
-				list->list[j-1] = list->list[j];
-			}
-			list->length--;
-		}
-	}
+    int32_t i, j;
+    for(i=0; i<list->length; i++) {
+        if(list->list[i] == k) {
+            for(j=i+1; j<list->length; j++) {
+                list->list[j-1] = list->list[j];
+            }
+            list->length--;
+        }
+    }
 }
 
 struct List *lRD_list2 = NULL;
 
 void listRemoveDuplicates(struct List *list) {
-	int32_t i;
-	void *k;
+    int32_t i;
+    void *k;
 
-	if(lRD_list2 == NULL) {
-		lRD_list2 = constructEmptyList(0, NULL);
-	}
-	lRD_list2->length = 0;
+    if(lRD_list2 == NULL) {
+        lRD_list2 = constructEmptyList(0, NULL);
+    }
+    lRD_list2->length = 0;
 
-	for(i=0; i<list->length; i++) {
-		k = list->list[i];
-		if(listContains(lRD_list2, k) == FALSE) {
-			listAppend(lRD_list2, k);
-		}
-	}
+    for(i=0; i<list->length; i++) {
+        k = list->list[i];
+        if(listContains(lRD_list2, k) == FALSE) {
+            listAppend(lRD_list2, k);
+        }
+    }
 
-	for(i=0; i<lRD_list2->length; i++) {
-		list->list[i] = lRD_list2->list[i];
-	}
-	list->length = lRD_list2->length;
+    for(i=0; i<lRD_list2->length; i++) {
+        list->list[i] = lRD_list2->list[i];
+    }
+    list->length = lRD_list2->length;
 }
 
 int32_t listContainsDuplicates(struct List *list) {
-	int32_t i, j;
-	void *k, *l;
+    int32_t i, j;
+    void *k, *l;
 
-	for(i=0; i<list->length; i++) {
-		k = list->list[i];
-		for(j=i+1; j<list->length; j++) {
-			l = list->list[j];
-			if(k==l) {
-				return TRUE;
-			}
-		}
-	}
-	return FALSE;
+    for(i=0; i<list->length; i++) {
+        k = list->list[i];
+        for(j=i+1; j<list->length; j++) {
+            l = list->list[j];
+            if(k==l) {
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
 }
 
 //list functions
@@ -377,36 +377,36 @@ int64_t *constructChunkLong(int64_t longValue, struct Chunks *chunks) {
 //int lists
 
 struct IntList *constructEmptyIntList(int32_t length) {
-	struct IntList *intList;
+    struct IntList *intList;
 
-	intList = st_malloc(sizeof(struct IntList));
-	intList->length = length;
-	intList->maxLength = length;
-	intList->list = st_malloc(sizeof(int32_t)*length);
+    intList = st_malloc(sizeof(struct IntList));
+    intList->length = length;
+    intList->maxLength = length;
+    intList->list = st_malloc(sizeof(int32_t)*length);
 
-	return intList;
+    return intList;
 }
 
 void destructIntList(struct IntList *intList) {
-	free(intList->list);
-	free(intList);
+    free(intList->list);
+    free(intList);
 }
 
 struct IntList *intListCopy(struct IntList *intList) {
-	int32_t i;
-	struct IntList *intList2 = constructEmptyIntList(intList->length);
-	assert(intList->length == intList2->length);
-	for(i=0; i<intList->length; i++) {
-		intList2->list[i] = intList->list[i];
-	}
-	return intList2;
+    int32_t i;
+    struct IntList *intList2 = constructEmptyIntList(intList->length);
+    assert(intList->length == intList2->length);
+    for(i=0; i<intList->length; i++) {
+        intList2->list[i] = intList->list[i];
+    }
+    return intList2;
 }
 
 void intListAppend(struct IntList *list, int32_t item) {
-	if(list->length >= list->maxLength) {
-	    list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength*2 + TINY_CHUNK_SIZE, sizeof(int32_t));
-	}
-	list->list[list->length++] = item;
+    if(list->length >= list->maxLength) {
+        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength*2 + TINY_CHUNK_SIZE, sizeof(int32_t));
+    }
+    list->list[list->length++] = item;
 }
 
 //ints
@@ -435,30 +435,30 @@ void destructInt(int32_t *i) {
 }
 
 uint32_t hashtable_intPairHashKey( const void *k ) {
-	const int32_t *iA;
-	iA = k;
+    const int32_t *iA;
+    iA = k;
     return iA[0] + iA[1];
 }
 
 int hashtable_intPairEqualKey( const void *key1, const void *key2 ) {
-	const int32_t *iA;
-	const int32_t *iA2;
-	iA = key1;
-	iA2 = key2;
+    const int32_t *iA;
+    const int32_t *iA2;
+    iA = key1;
+    iA2 = key2;
     return  (iA[0] == iA2[0] && iA[1] == iA2[1]) || (iA[0] == iA2[1] && iA[1] == iA2[0]);
 }
 
 uint32_t hashtable_orderedIntPairHashKey( const void *k ) {
-	const int32_t *iA;
-	iA = k;
+    const int32_t *iA;
+    iA = k;
     return iA[0];
 }
 
 int hashtable_orderedIntPairEqualKey( const void *key1, const void *key2 ) {
-	const int32_t *iA;
-	const int32_t *iA2;
-	iA = key1;
-	iA2 = key2;
+    const int32_t *iA;
+    const int32_t *iA2;
+    iA = key1;
+    iA2 = key2;
     return  iA[0] == iA2[0] && iA[1] == iA2[1];
 }
 
@@ -490,15 +490,15 @@ void destructLong(int64_t *i) {
 
 
 uint32_t hashtable_stringHashKey( const void *k ) {
-	uint32_t i, j;
-	const char *cA;
+    uint32_t i, j;
+    const char *cA;
 
-	cA = k;
-	j = 0;
-	for(i=0; i<strlen(cA) && i<10; i++) {
-		j += cA[i];
-	}
-	return j;
+    cA = k;
+    j = 0;
+    for(i=0; i<strlen(cA) && i<10; i++) {
+        j += cA[i];
+    }
+    return j;
     }
 /**
 uint32_t hashtable_stringHashKey( void *k )
@@ -517,7 +517,7 @@ uint32_t hashtable_stringHashKey( void *k )
 **/
 
 int hashtable_stringEqualKey( const void *key1, const  void *key2 ) {
-	return strcmp(key1, key2) == 0;
+    return strcmp(key1, key2) == 0;
 }
 
 uint32_t hashtable_intHashKey( const void *k ) {
@@ -537,11 +537,11 @@ int hashtable_longEqualKey( const void *key1, const void *key2 ) {
 }
 
 uint32_t hashtable_key( const void *k ) {
-	return (uint32_t)(size_t)k;
+    return (uint32_t)(size_t)k;
 }
 
 int hashtable_equalKey( const void *key1, const void *key2 ) {
-	return key1 == key2;
+    return key1 == key2;
 }
 
 int32_t intComparator(int32_t *i, int32_t *j) {
@@ -561,7 +561,7 @@ int longComparator_Int(int64_t *i, int64_t *j) {
 }
 
 int floatComparator(float **f, float **f2) {
-	return **f > **f2 ? 1 : (**f < **f2 ? -1 : 0);
+    return **f > **f2 ? 1 : (**f < **f2 ? -1 : 0);
 }
 
 int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
@@ -603,7 +603,7 @@ void destructTraversalID(struct TraversalID *traversalID) {
 }
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
-									   const char *label,
+                                       const char *label,
                                        struct BinaryTree *left,
                                        struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
@@ -620,7 +620,7 @@ struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
 
 void destructBinaryTree(struct BinaryTree *binaryTree) {
     if(binaryTree->traversalID != NULL) {
-    	destructTraversalID(binaryTree->traversalID);
+        destructTraversalID(binaryTree->traversalID);
     }
     if(binaryTree->left != NULL) {
         destructBinaryTree(binaryTree->left);
@@ -664,19 +664,19 @@ static void binaryTree_depthFirstNumbers_Traverse(struct BinaryTree *binaryTree,
 }
 
 void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct List *leafStrings) {
-	if(binaryTree->internal) {
-		binaryTree_getOrderedLeafStringsP(binaryTree->left, leafStrings);
-		binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
-	}
-	else {
-		listAppend(leafStrings, stString_copy(binaryTree->label));
-	}
+    if(binaryTree->internal) {
+        binaryTree_getOrderedLeafStringsP(binaryTree->left, leafStrings);
+        binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
+    }
+    else {
+        listAppend(leafStrings, stString_copy(binaryTree->label));
+    }
 }
 
 struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree) {
-	struct List *leafStrings = constructEmptyList(0, free);
-	binaryTree_getOrderedLeafStringsP(binaryTree, leafStrings);
-	return leafStrings;
+    struct List *leafStrings = constructEmptyList(0, free);
+    binaryTree_getOrderedLeafStringsP(binaryTree, leafStrings);
+    return leafStrings;
 }
 
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
@@ -689,11 +689,11 @@ void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
 
 void printBinaryTreeP(FILE *file, struct BinaryTree *binaryTree) {
     if(binaryTree->internal) {
-    	fprintf(file, "(");
+        fprintf(file, "(");
         printBinaryTreeP(file, binaryTree->left);
         if(binaryTree->right != NULL) {
-        	fprintf(file, ",");
-        	printBinaryTreeP(file, binaryTree->right);
+            fprintf(file, ",");
+            printBinaryTreeP(file, binaryTree->right);
         }
         fprintf(file, ")%s:%g", binaryTree->label, binaryTree->distance);
     }
@@ -703,8 +703,8 @@ void printBinaryTreeP(FILE *file, struct BinaryTree *binaryTree) {
 }
 
 void printBinaryTree(FILE *file, struct BinaryTree *binaryTree) {
-	printBinaryTreeP(file, binaryTree);
-	fprintf(file, ";\n");
+    printBinaryTreeP(file, binaryTree);
+    fprintf(file, ";\n");
 }
 
 void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list) {
@@ -752,20 +752,20 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
 }
 
 char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
-	char *fullPath;
+    char *fullPath;
 
-	fullPath = st_malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
-	if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
-		sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
-	}
-	else {
-		sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
-	}
-	return fullPath;
+    fullPath = st_malloc(sizeof(char)*(strlen(pathPrefix) + strlen(pathSuffix) + 2));
+    if(strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix)-1] == '/') {
+        sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
+    }
+    else {
+        sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
+    }
+    return fullPath;
 }
 
 int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
-	return (valueOne - valueTwo <= precision) || (valueTwo - valueOne <= precision);
+    return (valueOne - valueTwo <= precision) || (valueTwo - valueOne <= precision);
 }
 
 /////////////////////////////////////////////////////////
@@ -777,202 +777,202 @@ int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
 /////////////////////////////////////////////////////////
 
 int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
-	/*
-	 * Creates a random directory in the directory pointed to by tempFilePath.
-	 * Initialses tempDir with this string.
-	 * Returns 0 if okay.
-	 */
-	char *cA;
-	int32_t i;
+    /*
+     * Creates a random directory in the directory pointed to by tempFilePath.
+     * Initialses tempDir with this string.
+     * Returns 0 if okay.
+     */
+    char *cA;
+    int32_t i;
 
-	cA = st_malloc(sizeof(char)*(strlen(tempFilePath)+50));
-	sprintf(cA, "%s/", tempFilePath);
+    cA = st_malloc(sizeof(char)*(strlen(tempFilePath)+50));
+    sprintf(cA, "%s/", tempFilePath);
 
-	for(i=strlen(tempFilePath)+1; i<(int32_t)strlen(tempFilePath) + 11; i++) {
-		cA[i] = 65 + (RANDOM() * 26);
-	}
-	cA[i] = '\0';
+    for(i=strlen(tempFilePath)+1; i<(int32_t)strlen(tempFilePath) + 11; i++) {
+        cA[i] = 65 + (RANDOM() * 26);
+    }
+    cA[i] = '\0';
 
-	i = mkdir(cA, S_IRWXU);
-	if(i != 0) {
-		free(cA);
-		st_logDebug("Something went wrong making temp dir in constructRandomDir\n");
-		return i;
-	}
-	*tempDir = cA;
-	return 0;
+    i = mkdir(cA, S_IRWXU);
+    if(i != 0) {
+        free(cA);
+        st_logDebug("Something went wrong making temp dir in constructRandomDir\n");
+        return i;
+    }
+    *tempDir = cA;
+    return 0;
 }
 
 int32_t destructRandomDir(char *tempDir) {
-	/*
-	 * Destructs the given temp dir and frees the appropriate string pointing
-	 * to this directory. Partner of constructRandomDir.
-	 */
-	char *cA;
-	int32_t i;
+    /*
+     * Destructs the given temp dir and frees the appropriate string pointing
+     * to this directory. Partner of constructRandomDir.
+     */
+    char *cA;
+    int32_t i;
 
-	cA = st_malloc(sizeof(char)*(strlen(tempDir)+50));
-	sprintf(cA, "rm -rf %s", tempDir);
-	i = system(cA);
-	if(i != 0) {
-		return i;
-	}
-	free(cA);
-	free(tempDir);
-	return 0;
+    cA = st_malloc(sizeof(char)*(strlen(tempDir)+50));
+    sprintf(cA, "rm -rf %s", tempDir);
+    i = system(cA);
+    if(i != 0) {
+        return i;
+    }
+    free(cA);
+    free(tempDir);
+    return 0;
 }
 
 struct TempFileTree *tempFileTree = NULL;
 
 void initialiseTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber) {
-	tempFileTree = constructTempFileTree(rootDir, filesPerDir, levelNumber);
+    tempFileTree = constructTempFileTree(rootDir, filesPerDir, levelNumber);
 }
 
 char *getTempFile() {
-	/*
-	 * Gets a temporary file, using the tempFileTree, if initialised.
-	 */
-	if(tempFileTree != NULL) {
-		return tempFileTree_getTempFile(tempFileTree);
-	}
+    /*
+     * Gets a temporary file, using the tempFileTree, if initialised.
+     */
+    if(tempFileTree != NULL) {
+        return tempFileTree_getTempFile(tempFileTree);
+    }
 
-	char *fileName;
-	fileName = st_malloc(sizeof(char)*(1+L_tmpnam));
-	tmpnam(fileName);
-	return fileName;
+    char *fileName;
+    fileName = st_malloc(sizeof(char)*(1+L_tmpnam));
+    tmpnam(fileName);
+    return fileName;
 }
 
 void removeTempFile(char *tempFile) {
-	/*
-	 * Removes a temporary file created by getTempFile.
-	 * Also frees the associated string.
-	 */
-	if(tempFileTree != NULL) {
-		tempFileTree->tempFilesDestroyed++;
-	}
-	remove(tempFile);
-	free(tempFile);
+    /*
+     * Removes a temporary file created by getTempFile.
+     * Also frees the associated string.
+     */
+    if(tempFileTree != NULL) {
+        tempFileTree->tempFilesDestroyed++;
+    }
+    remove(tempFile);
+    free(tempFile);
 }
 
 void removeAllTempFiles() {
-	assert(tempFileTree != NULL);
-	destructTempFileTree(tempFileTree);
-	tempFileTree = NULL;
+    assert(tempFileTree != NULL);
+    destructTempFileTree(tempFileTree);
+    tempFileTree = NULL;
 }
 
 struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber) {
-	struct TempFileTree *tempFileTree;
-	int32_t i, j;
-	char *cA;
-	char *cA2;
-	char *cA3;
+    struct TempFileTree *tempFileTree;
+    int32_t i, j;
+    char *cA;
+    char *cA2;
+    char *cA3;
 
-	i = sizeof(char)*(strlen(rootDir)+30*levelNumber+1);
-	cA = st_malloc(i); //generous safety space.
-	cA2 = st_malloc(i);
+    i = sizeof(char)*(strlen(rootDir)+30*levelNumber+1);
+    cA = st_malloc(i); //generous safety space.
+    cA2 = st_malloc(i);
 
-	tempFileTree = st_malloc(sizeof(struct TempFileTree));
-	sprintf(cA, "%s/tempC", rootDir);
-	tempFileTree->rootDir = st_malloc(sizeof(char)*(strlen(cA)+1));
-	strcpy(tempFileTree->rootDir, cA);
-	mkdir(tempFileTree->rootDir, S_IRWXU);
+    tempFileTree = st_malloc(sizeof(struct TempFileTree));
+    sprintf(cA, "%s/tempC", rootDir);
+    tempFileTree->rootDir = st_malloc(sizeof(char)*(strlen(cA)+1));
+    strcpy(tempFileTree->rootDir, cA);
+    mkdir(tempFileTree->rootDir, S_IRWXU);
 
-	tempFileTree->filesPerDir = filesPerDir;
-	tempFileTree->levelNumber = levelNumber;
-	tempFileTree->levelsArray = st_malloc(sizeof(int32_t)*levelNumber);
-	for(i=0; i<levelNumber; i++) {
-		tempFileTree->levelsArray[i] = 0;
-	}
-	sprintf(cA, "%s", tempFileTree->rootDir); //defensive
-	for(i=0; i<levelNumber-1; i++) {
-		sprintf(cA2, "%s/c0", cA);
-		cA3 = cA;
-		cA = cA2;
-		cA2 = cA3;
-		j = mkdir(cA, S_IRWXU);
-		if(j != 0) {
-			exit(1);
-		}
-	}
-	tempFileTree->tempFilesCreated = 0;
-	tempFileTree->tempFilesDestroyed = 0;
+    tempFileTree->filesPerDir = filesPerDir;
+    tempFileTree->levelNumber = levelNumber;
+    tempFileTree->levelsArray = st_malloc(sizeof(int32_t)*levelNumber);
+    for(i=0; i<levelNumber; i++) {
+        tempFileTree->levelsArray[i] = 0;
+    }
+    sprintf(cA, "%s", tempFileTree->rootDir); //defensive
+    for(i=0; i<levelNumber-1; i++) {
+        sprintf(cA2, "%s/c0", cA);
+        cA3 = cA;
+        cA = cA2;
+        cA2 = cA3;
+        j = mkdir(cA, S_IRWXU);
+        if(j != 0) {
+            exit(1);
+        }
+    }
+    tempFileTree->tempFilesCreated = 0;
+    tempFileTree->tempFilesDestroyed = 0;
 
-	free(cA);
-	free(cA2);
-	return tempFileTree;
+    free(cA);
+    free(cA2);
+    return tempFileTree;
 }
 
 void destructTempFileTree(struct TempFileTree *tempFileTree) {
-	//does not currently dissmantle the directory structure/temp files!
-	char cA[1000];
-	int32_t i;
+    //does not currently dissmantle the directory structure/temp files!
+    char cA[1000];
+    int32_t i;
 
-	st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
-			 tempFileTree->tempFilesCreated, tempFileTree->tempFilesDestroyed);
+    st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
+             tempFileTree->tempFilesCreated, tempFileTree->tempFilesDestroyed);
 
-	sprintf(cA, "rm -rf %s", tempFileTree->rootDir);
-	i = system(cA);
-	if(i != 0) {
-		exit(i); //failed to remove root directory structure of temp files.
-	}
-	free(tempFileTree->levelsArray);
-	free(tempFileTree->rootDir);
-	free(tempFileTree);
+    sprintf(cA, "rm -rf %s", tempFileTree->rootDir);
+    i = system(cA);
+    if(i != 0) {
+        exit(i); //failed to remove root directory structure of temp files.
+    }
+    free(tempFileTree->levelsArray);
+    free(tempFileTree->rootDir);
+    free(tempFileTree);
 }
 
 char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
-	int32_t i, j, k;
-	char *cA;
-	char *cA2;
-	char *cA3;
-	char *cA4;
-	FILE *fileHandle;
+    int32_t i, j, k;
+    char *cA;
+    char *cA2;
+    char *cA3;
+    char *cA4;
+    FILE *fileHandle;
 
-	i = sizeof(char)*(strlen(tempFileTree->rootDir)+30*tempFileTree->levelNumber+1);
-	cA = st_malloc(i); //generous safety space.
-	cA2 = st_malloc(i);
-	cA4 = NULL;
-	for(i=tempFileTree->levelNumber-1; i>=0; i--) {
-		if(tempFileTree->levelsArray[i] == tempFileTree->filesPerDir) {
-			if(i == 0) {
-				fprintf(stderr, "Run out of temporary files!\n");
-				exit(1);
-			}
-			tempFileTree->levelsArray[i] = 0;
-		}
-		else {
-			tempFileTree->levelsArray[i] += 1;
-			if(i != tempFileTree->levelNumber-1) {
-				for(j=i; j<tempFileTree->levelNumber-1; j++) {
-					sprintf(cA, "%s", tempFileTree->rootDir);
-					for(k=0; k<=j; k++) {
-						sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[k]);
-						cA3 = cA;
-						cA = cA2;
-						cA2 = cA3;
-					}
-					mkdir(cA, S_IRWXU);
-				}
-			}
-			sprintf(cA, "%s", tempFileTree->rootDir);
-			for(j=0; j<tempFileTree->levelNumber; j++) {
-				sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[j]);
-				cA3 = cA;
-				cA = cA2;
-				cA2 = cA3;
-			}
-			cA4 = st_malloc(sizeof(char)*(strlen(cA)+1));
-			strcpy(cA4,cA);
-			break;
-		}
-	}
-	assert(cA4 != NULL);
-	fileHandle = fopen(cA4, "w");
-	fclose(fileHandle);
-	free(cA);
-	free(cA2);
-	tempFileTree->tempFilesCreated++;
-	return cA4;
+    i = sizeof(char)*(strlen(tempFileTree->rootDir)+30*tempFileTree->levelNumber+1);
+    cA = st_malloc(i); //generous safety space.
+    cA2 = st_malloc(i);
+    cA4 = NULL;
+    for(i=tempFileTree->levelNumber-1; i>=0; i--) {
+        if(tempFileTree->levelsArray[i] == tempFileTree->filesPerDir) {
+            if(i == 0) {
+                fprintf(stderr, "Run out of temporary files!\n");
+                exit(1);
+            }
+            tempFileTree->levelsArray[i] = 0;
+        }
+        else {
+            tempFileTree->levelsArray[i] += 1;
+            if(i != tempFileTree->levelNumber-1) {
+                for(j=i; j<tempFileTree->levelNumber-1; j++) {
+                    sprintf(cA, "%s", tempFileTree->rootDir);
+                    for(k=0; k<=j; k++) {
+                        sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[k]);
+                        cA3 = cA;
+                        cA = cA2;
+                        cA2 = cA3;
+                    }
+                    mkdir(cA, S_IRWXU);
+                }
+            }
+            sprintf(cA, "%s", tempFileTree->rootDir);
+            for(j=0; j<tempFileTree->levelNumber; j++) {
+                sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[j]);
+                cA3 = cA;
+                cA = cA2;
+                cA2 = cA3;
+            }
+            cA4 = st_malloc(sizeof(char)*(strlen(cA)+1));
+            strcpy(cA4,cA);
+            break;
+        }
+    }
+    assert(cA4 != NULL);
+    fileHandle = fopen(cA4, "w");
+    fclose(fileHandle);
+    free(cA);
+    free(cA2);
+    tempFileTree->tempFilesCreated++;
+    return cA4;
 }
 
 /*
@@ -980,8 +980,8 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
  */
 
 void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
-		double width, double height, const char *shape, const char *colour,
-		int32_t fontsize) {
+        double width, double height, const char *shape, const char *colour,
+        int32_t fontsize) {
     /*
      * Adds a node to the graph.
      */
@@ -990,12 +990,12 @@ void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const 
 }
 
 void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
-		const char *label, const char *colour, double length, double weight, const char *direction) {
+        const char *label, const char *colour, double length, double weight, const char *direction) {
     /*
      * Links two nodes in the graph together.
      */
-	fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n", colour, length, weight, direction);
-	fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName, childNodeName, label);
+    fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n", colour, length, weight, direction);
+    fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName, childNodeName, label);
 }
 
 void graphViz_setupGraphFile(FILE *graphFileHandle) {
@@ -1018,24 +1018,24 @@ const char *graphViz_getColour() {
     /*
      * Returns a valid colour.
      */
-	getColour_Index++;
+    getColour_Index++;
     static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown", "black", "grey" };
     return colours[getColour_Index % 11];
 }
 
 void arrayShuffle(void **array, int32_t n) {
-	/* Arrange the N elements of ARRAY in random order.
-	   Only effective if N is much smaller than RAND_MAX;
-	   if this may not be the case, use a better random
-	   number generator. */
+    /* Arrange the N elements of ARRAY in random order.
+       Only effective if N is much smaller than RAND_MAX;
+       if this may not be the case, use a better random
+       number generator. */
     if (n > 1) {
         int32_t i;
-		for (i = 0; i < n - 1; i++) {
-		  int32_t j = i + rand() / (RAND_MAX / (n - i) + 1);
-		  void *t = array[j];
-		  array[j] = array[i];
-		  array[i] = t;
-		}
+        for (i = 0; i < n - 1; i++) {
+          int32_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+          void *t = array[j];
+          array[j] = array[i];
+          array[i] = t;
+        }
     }
 }
 

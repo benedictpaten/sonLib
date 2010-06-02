@@ -197,7 +197,7 @@ int32_t rightMostLeafNo(struct TraversalID *traversalID);
 int32_t leafNoInSubtree(struct TraversalID *traversalID);
 
 struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
-										const char *label,
+                                        const char *label,
                                               struct BinaryTree *left,
                                               struct BinaryTree *right);
 
@@ -250,12 +250,12 @@ void removeTempFile(char *tempFile);
 void removeAllTempFiles();
 
 struct TempFileTree {
-	char *rootDir;
-	int32_t filesPerDir;
-	int32_t *levelsArray;
-	int32_t levelNumber;
-	int32_t tempFilesCreated;
-	int32_t tempFilesDestroyed;
+    char *rootDir;
+    int32_t filesPerDir;
+    int32_t *levelsArray;
+    int32_t levelNumber;
+    int32_t tempFilesCreated;
+    int32_t tempFilesDestroyed;
 };
 
 struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber);
@@ -273,11 +273,11 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree);
 /////////////////////////////////////////////////////////
 
 void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
-		double width, double height, const char *shape, const char *colour,
-		int32_t fontsize);
+        double width, double height, const char *shape, const char *colour,
+        int32_t fontsize);
 
 void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
-		const char *label, const char *colour, double length, double weight, const char *direction);
+        const char *label, const char *colour, double length, double weight, const char *direction);
 
 void graphViz_setupGraphFile(FILE *graphFileHandle);
 

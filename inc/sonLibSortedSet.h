@@ -28,7 +28,7 @@ stSortedSet *stSortedSet_construct2(void (*destructElementFn)(void *));
  * If destruct element function is null then it is ignored.
  */
 stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *),
-									  void (*destructElementFn)(void *));
+                                      void (*destructElementFn)(void *));
 
 /*
  * Destructs the sorted set.
