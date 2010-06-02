@@ -31,6 +31,7 @@ static void testThrow(CuTest *testCase) {
         pastThrow++;
     } stCatch(except) {
         CuAssertTrue(testCase, stExcept_getId(except) == ERR1);
+        CuAssertTrue(testCase, stExcept_idEq(except, ERR1));
         CuAssertStrEquals(testCase, stExcept_getMsg(except), "error in thrower1");
 
         const stExcept *cause = stExcept_getCause(except); 

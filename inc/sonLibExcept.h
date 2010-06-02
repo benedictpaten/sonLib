@@ -47,6 +47,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <string.h>
 //@{
 /// @defgroup CExcept class CExcept
 /// @ingroup CExceptions
@@ -105,6 +106,14 @@ void stExcept_free(stExcept *except);
  * @ingroup stExcept
  */
 const char* stExcept_getId(const stExcept *except);
+
+/**
+ * Determine if the id in an exception is equal to a specified id.
+ * @ingroup stExcept
+ */
+static inline bool stExcept_idEq(const stExcept *except, const char *id) {
+    return strcmp(stExcept_getId(except), id) == 0;
+}
 
 /**
  * Get the message for a stExcept.
