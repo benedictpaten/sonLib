@@ -16,5 +16,6 @@
 #include "sonLibCommon.h"
 #include "sonLibTuples.h"
 #include "sonLibAlign.h"
+#include "sonLibExcept.h"
 
 #endif /* SONLIB_H_ */

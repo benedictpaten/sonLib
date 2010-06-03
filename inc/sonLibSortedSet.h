@@ -3,6 +3,9 @@
 
 #include "sonLibTypes.h"
 
+//The exception string
+extern const char *SORTED_SET_EXCEPTION_ID;
+
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -96,5 +99,25 @@ stSortedSetIterator *stSortedSet_copyIterator(stSortedSetIterator *iterator);
  * the elements in it or the sorted set.
  */
 stList *stSortedSet_getList(stSortedSet *sortedSet);
+
+/*
+ * Returns non-zero iff the two sets contain the same set of elements, in the same order (i.e. under the same comparison function).
+ */
+int stSortedSet_equals(stSortedSet *sortedSet1, stSortedSet *sortedSet2);
+
+/*
+ * Get the union of two sorted sets. Creates exception if they have different comparators.
+ */
+stSortedSet *stSortedSet_getUnion(stSortedSet *sortedSet1, stSortedSet *sortedSet2);
+
+/*
+ * Get the intersection of two sorted sets. Creates exception if they have different comparators.
+ */
+stSortedSet *stSortedSet_getIntersection(stSortedSet *sortedSet1, stSortedSet *sortedSet2);
+
+/*
+ * Get the set difference of sortedSet1 \ sortedSet2. Creates exception if they have different comparators.
+ */
+stSortedSet *stSortedSet_getDifference(stSortedSet *sortedSet1, stSortedSet *sortedSet2);
 
 #endif

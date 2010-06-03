@@ -1,6 +1,8 @@
 #include "sonLibGlobalsInternal.h"
 #include "avl.h"
 
+const char *SORTED_SET_EXCEPTION_ID = "SORTED_SET_EXCEPTION";
+
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -113,4 +115,100 @@ stSortedSetIterator *stSortedSet_copyIterator(stSortedSetIterator *iterator) {
 
 void *stSortedSet_getPrevious(stSortedSetIterator *iterator) {
     return avl_t_prev(iterator);
+}
+
+static struct _stSortedSet_construct3Fn *stSortedSet_getComparator(stSortedSet *sortedSet) {
+    return (struct _stSortedSet_construct3Fn *)sortedSet->sortedSet->avl_param;
+}
+
+static int stSortedSet_comparatorsEqual(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
+    return stSortedSet_getComparator(sortedSet1)->compareFn == stSortedSet_getComparator(sortedSet2)->compareFn;
+}
+
+int stSortedSet_equals(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
+    if(stSortedSet_size(sortedSet1) != stSortedSet_size(sortedSet2)) {
+        return 0;
+    }
+    if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
+        return 0;
+    }
+    int (*cmpFn)(const void *, const void *) = stSortedSet_getComparator(sortedSet1)->compareFn;
+
+    stSortedSetIterator *it1 = stSortedSet_getIterator(sortedSet1);
+    stSortedSetIterator *it2 = stSortedSet_getIterator(sortedSet2);
+    void *o1 = stSortedSet_getNext(it1), *o2 = stSortedSet_getNext(it2);
+    while(o1 != NULL && o2 != NULL) {
+        if(cmpFn(o1, o2) != 0) {
+            stSortedSet_destructIterator(it1);
+            stSortedSet_destructIterator(it2);
+            return 0;
+        }
+        o1 = stSortedSet_getNext(it1);
+        o2 = stSortedSet_getNext(it2);
+    }
+    stSortedSet_destructIterator(it1);
+    stSortedSet_destructIterator(it2);
+    return 1;
+}
+
+stSortedSet *stSortedSet_getUnion(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
+    if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the union of two sorted sets!\n");
+    }
+    stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
+
+    //Add those from sortedSet1
+    stSortedSetIterator *it= stSortedSet_getIterator(sortedSet1);
+    void *o;
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        stSortedSet_insert(sortedSet3, o);
+    }
+    stSortedSet_destructIterator(it);
+
+    //Add those from sortedSet2
+    it= stSortedSet_getIterator(sortedSet2);
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        stSortedSet_insert(sortedSet3, o);
+    }
+    stSortedSet_destructIterator(it);
+
+    return sortedSet3;
+}
+
+stSortedSet *stSortedSet_getIntersection(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
+    if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating an intersection of two sorted sets!\n");
+    }
+    stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
+
+    //Add those from sortedSet1 only if they are also in sortedSet2
+    stSortedSetIterator *it= stSortedSet_getIterator(sortedSet1);
+    void *o;
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        if(stSortedSet_search(sortedSet2, o) != NULL) {
+            stSortedSet_insert(sortedSet3, o);
+        }
+    }
+    stSortedSet_destructIterator(it);
+
+    return sortedSet3;
+}
+
+stSortedSet *stSortedSet_getDifference(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
+    if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the sorted set difference !\n");
+    }
+    stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
+
+    //Add those from sortedSet1 only if they are not in sortedSet2
+    stSortedSetIterator *it= stSortedSet_getIterator(sortedSet1);
+    void *o;
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        if(stSortedSet_search(sortedSet2, o) == NULL) {
+            stSortedSet_insert(sortedSet3, o);
+        }
+    }
+    stSortedSet_destructIterator(it);
+
+    return sortedSet3;
 }
