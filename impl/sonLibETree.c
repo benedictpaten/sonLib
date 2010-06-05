@@ -6,6 +6,8 @@
  */
 
 #include "sonLibGlobalsInternal.h"
+#include <stdbool.h>
+#include "sonLibString.h"
 
 /*
  * The actual datastructure.
@@ -62,17 +64,17 @@ ETree *eTree_getChild(ETree *eTree, int32_t i) {
 }
 
 ETree *eTree_findChild(ETree *eTree, const char *label) {
-        for (int i = 0; i < stList_length(eTree->nodes); i++) {
-                ETree *node = (ETree *)stList_get(eTree->nodes, i);
-                if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
-                        return node;
-                }
-                ETree *hit = eTree_findChild(node, label);
-                if (hit != NULL) {
-                        return hit;
-                }
+    for (int i = 0; i < stList_length(eTree->nodes); i++) {
+        ETree *node = (ETree *)stList_get(eTree->nodes, i);
+        if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
+            return node;
         }
-        return NULL;
+        ETree *hit = eTree_findChild(node, label);
+        if (hit != NULL) {
+            return hit;
+        }
+    }
+    return NULL;
 }
 
 double eTree_getBranchLength(ETree *eTree) {
@@ -92,6 +94,14 @@ void eTree_setLabel(ETree *eTree, const char *label) {
         free(eTree->label);
     }
     eTree->label = label == NULL ? NULL : stString_copy(label);
+}
+
+int eTree_getNumNodes(ETree *root) {
+    int cnt = 1; // this node
+    for (int i = 0; i < eTree_getChildNumber(root); i++) {
+        cnt += eTree_getNumNodes(eTree_getChild(root, i));
+    }
+    return cnt;
 }
 
 /////////////////////////////
@@ -222,30 +232,21 @@ char *eTree_getNewickTreeString(ETree *eTree) {
     return cA2;
 }
 
-#if 0 // not yet need, hence no tests, so function is disabled
-/* Compare two tree for equality.  Trees must have same structure and distances,
- * however order of children does not have to match. */
 bool eTree_equals(ETree *eTree1, ETree *eTree2) {
-        if (eTree_getBranchLength(eTree1) != eTree_getBranchLength(eTree2)) {
-                return FALSE;
+    if (eTree_getBranchLength(eTree1) != eTree_getBranchLength(eTree2)) {
+        return false;
+    }
+    if (!stString_eq(eTree_getLabel(eTree1), eTree_getLabel(eTree2))) {
+        return false;
+    }
+    int numChildren = eTree_getChildNumber(eTree1);
+    if (eTree_getChildNumber(eTree2) != numChildren) {
+        return false;
+    }
+    for (int i = 0; i < numChildren; i++) {
+        if (!eTree_equals(eTree_getChild(eTree1, i), eTree_getChild(eTree2, i))) {
+            return false;
         }
-        if (strcmp(eTree_getLabel(eTree1), eTree_getLabel(eTree2)) != 0) {
-                return FALSE;
-        }
-        int numChildren = eTree_getChildNumber(eTree1);
-        if (eTree_getChildNumber(eTree2) != numChildren) {
-                return FALSE;
-        }
-        for (int i = 0; i < numChildren; i++) {
-                ETree *child1 = eTree_getChild(eTree1, i);
-                ETree *child2 = eTree_findChild(eTree2, eTree_getLabel(child1));
-                if (child2 == NULL) {
-                        return FALSE;
-                }
-                if (!eTree_equals(child1, child2)) {
-                        return FALSE;
-                }
-        }
-        return TRUE;
+    }
+    return true;
 }
-#endif

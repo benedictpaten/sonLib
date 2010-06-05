@@ -122,6 +122,35 @@ static void testETree_newickTreeParser(CuTest *testCase) {
     teardown();
 }
 
+static void testETree_getNumNodes(CuTest* testCase) {
+    setup();
+    CuAssertTrue(testCase, eTree_getNumNodes(root) == 4);
+    teardown();
+}
+
+static void testETree_equals(CuTest* testCase) {
+    setup();
+    ETree *root0 = root;
+    setup();
+    CuAssertTrue(testCase, eTree_equals(root, root0));
+
+    eTree_setLabel(internal, "INTERNAL");
+    CuAssertTrue(testCase, !eTree_equals(root, root0));
+
+    teardown();
+    setup();
+    eTree_setBranchLength(internal, 1.01);
+    CuAssertTrue(testCase, !eTree_equals(root, root0));
+
+    teardown();
+    setup();
+    eTree_setParent(eTree_construct(), internal);
+    CuAssertTrue(testCase, !eTree_equals(root, root0));
+
+    eTree_destruct(root0);
+    teardown();
+}
+
 CuSuite* sonLibETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testETree_construct);
@@ -131,5 +160,7 @@ CuSuite* sonLibETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, testETree_getSetBranchLength);
     SUITE_ADD_TEST(suite, testETree_newickTreeParser);
     SUITE_ADD_TEST(suite, testETree_label);
+    SUITE_ADD_TEST(suite, testETree_getNumNodes);
+    SUITE_ADD_TEST(suite, testETree_equals);
     return suite;
 }

@@ -9,6 +9,7 @@
 #define SONLIB_STRING_H_
 
 #include "sonLibTypes.h"
+#include <string.h>
 
 /*
  * Copies a string.
@@ -19,6 +20,20 @@ char *stString_copy(const char *string);
  * Like printf, but into a new string.
  */
 char *stString_print(const char *string, ...);
+
+/*
+ * Compare two strings for equality.  NULL is considered a valid value and
+ * both strings being NULL returns true.
+ */
+inline static bool stString_eq(const char *string1, const char *string2) {
+    if ((string1 == NULL) && (string2 == NULL)) {
+        return true;
+    } else if ((string1 == NULL) || (string2 == NULL)) {
+        return false;
+    } else {
+        return strcmp(string1, string2) == 0;
+    }
+}
 
 /*
  * Parses the next word from a string, updates the string pointer and returns

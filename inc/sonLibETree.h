@@ -66,6 +66,15 @@ const char *eTree_getLabel(ETree *eTree);
 void eTree_setLabel(ETree *eTree, const char *label);
 
 /*
+ * Get the number of nodes in the tree, starting with the specified root.
+ */
+int eTree_getNumNodes(ETree *root);
+
+/* Compare two tree for equality.  Trees must have same structure, labels and distances.
+ * Children must be in same order. */
+bool eTree_equals(ETree *eTree1, ETree *eTree2);
+
+/*
  * Parses the newick tree string according to the format standard (I think).
  */
 ETree *eTree_parseNewickString(const char *string);
