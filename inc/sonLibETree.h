@@ -21,6 +21,11 @@ ETree *eTree_construct();
 void eTree_destruct(ETree *eTree);
 
 /*
+ * Clone a tree.
+ */
+ETree *eTree_clone(ETree *root);
+
+/*
  * Get the parent node.
  */
 ETree *eTree_getParent(ETree *eTree);

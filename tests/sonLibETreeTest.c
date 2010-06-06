@@ -151,6 +151,14 @@ static void testETree_equals(CuTest* testCase) {
     teardown();
 }
 
+static void testETree_clone(CuTest* testCase) {
+    setup();
+    ETree *root2 = eTree_clone(root);
+    CuAssertTrue(testCase, eTree_equals(root, root2));
+    teardown();
+}
+
+
 CuSuite* sonLibETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testETree_construct);
@@ -162,5 +170,6 @@ CuSuite* sonLibETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, testETree_label);
     SUITE_ADD_TEST(suite, testETree_getNumNodes);
     SUITE_ADD_TEST(suite, testETree_equals);
+    SUITE_ADD_TEST(suite, testETree_clone);
     return suite;
 }

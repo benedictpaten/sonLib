@@ -41,6 +41,28 @@ void eTree_destruct(ETree *eTree) {
     free(eTree);
 }
 
+/* clone a node */
+static ETree *eTree_cloneNode(ETree *node) {
+    ETree *node2 = eTree_construct();
+    eTree_setBranchLength(node2, eTree_getBranchLength(node));
+    eTree_setLabel(node2, eTree_getLabel(node));
+    return node2;
+}
+
+/* recursively clone a tree */
+static ETree *eTree_cloneTree(ETree *node, ETree *parent2) {
+    ETree *node2 = eTree_cloneNode(node);
+    eTree_setParent(node2, parent2);
+    for (int i = 0; i < eTree_getChildNumber(node); i++) {
+        eTree_cloneTree(eTree_getChild(node, i), node2);
+    }
+    return node2;
+}
+
+ETree *eTree_clone(ETree *root) {
+    return eTree_cloneTree(root, NULL);
+}
+
 ETree *eTree_getParent(ETree *eTree) {
     return eTree->parent;
 }
