@@ -192,8 +192,8 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 #########################################################
 
 def getBasicOptionParser(usage, version):
-    usage = "usage: %prog [options]"
-    version = "%prog 0.1"
+    #usage = "usage: %prog [options]"
+    #version = "%prog 0.1"
     parser = OptionParser(usage=usage, version=version)
     
     parser.add_option("--logInfo", dest="logInfo", action="store_true",
