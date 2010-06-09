@@ -61,6 +61,7 @@ void stSortedSet_destruct(stSortedSet *sortedSet) {
         free(sortedSet->sortedSet->avl_param); //clean up the param..
         avl_destroy(sortedSet->sortedSet, NULL);
     }
+    free(sortedSet);
 }
 
 void stSortedSet_insert(stSortedSet *sortedSet, void *object) {
