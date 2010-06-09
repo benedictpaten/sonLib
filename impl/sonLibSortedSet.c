@@ -53,14 +53,15 @@ static void st_sortedSet_destructP(void *a, void *b) {
 }
 
 void stSortedSet_destruct(stSortedSet *sortedSet) {
+    void *a = sortedSet->sortedSet->avl_param;
     if(sortedSet->destructElementFn != NULL) {
         st_sortedSet_destruct_destructElementFn = sortedSet->destructElementFn;
         avl_destroy(sortedSet->sortedSet, (void (*)(void *, void *))st_sortedSet_destructP);
     }
     else {
-        free(sortedSet->sortedSet->avl_param); //clean up the param..
         avl_destroy(sortedSet->sortedSet, NULL);
     }
+    free(a);
     free(sortedSet);
 }
 
