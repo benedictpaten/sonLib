@@ -251,7 +251,7 @@ static char *eTree_getNewickTreeStringP(ETree *eTree) {
         cA = cA2;
     }
     if(eTree_getBranchLength(eTree) != INFINITY) {
-        char *cA2 = stString_print("%s:%f", cA, eTree_getBranchLength(eTree));
+        char *cA2 = stString_print("%s:%g", cA, eTree_getBranchLength(eTree));
         free(cA);
         cA = cA2;
     }
