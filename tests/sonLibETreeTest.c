@@ -162,8 +162,11 @@ static void testETree_equals(CuTest* testCase) {
 
 static void testETree_clone(CuTest* testCase) {
     setup();
+    int data = 1010;
+    eTree_setClientData(child1, &data);
     ETree *root2 = eTree_clone(root);
     CuAssertTrue(testCase, eTree_equals(root, root2));
+    CuAssertTrue(testCase, (eTree_getClientData(eTree_findChild(root2, "CHILD1")) == &data));
     teardown();
 }
 

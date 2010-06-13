@@ -86,7 +86,7 @@ void eTree_setLabel(ETree *eTree, const char *label);
 int eTree_getNumNodes(ETree *root);
 
 /* Compare two trees for equality.  Trees must have same structure, labels and
- * distances.  Children must be in same order. */
+ * distances.  Children must be in same order.  Client data is not compared. */
 bool eTree_equals(ETree *eTree1, ETree *eTree2);
 
 /*

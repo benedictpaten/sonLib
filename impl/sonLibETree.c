@@ -46,6 +46,7 @@ void eTree_destruct(ETree *eTree) {
 static ETree *eTree_cloneNode(ETree *node) {
     ETree *node2 = eTree_construct();
     eTree_setBranchLength(node2, eTree_getBranchLength(node));
+    eTree_setClientData(node2, eTree_getClientData(node));
     eTree_setLabel(node2, eTree_getLabel(node));
     return node2;
 }
