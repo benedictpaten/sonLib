@@ -92,6 +92,15 @@ static void testETree_getSetBranchLength(CuTest* testCase) {
     teardown();
 }
 
+static void testETree_getSetClentData(CuTest* testCase) {
+    setup();
+    int data = 1010;
+    CuAssertTrue(testCase, eTree_getClientData(child1) == NULL);
+    eTree_setClientData(child1, &data);
+    CuAssertTrue(testCase, eTree_getClientData(child1) == &data);
+    teardown();
+}
+
 static void testETree_label(CuTest* testCase) {
     setup();
     CuAssertStrEquals(testCase, "CHILD1", eTree_getLabel(child1));
@@ -166,6 +175,7 @@ CuSuite* sonLibETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, testETree_getChildNumber);
     SUITE_ADD_TEST(suite, testETree_getChild);
     SUITE_ADD_TEST(suite, testETree_getSetBranchLength);
+    SUITE_ADD_TEST(suite, testETree_getSetClentData);
     SUITE_ADD_TEST(suite, testETree_newickTreeParser);
     SUITE_ADD_TEST(suite, testETree_label);
     SUITE_ADD_TEST(suite, testETree_getNumNodes);

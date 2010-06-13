@@ -61,6 +61,16 @@ double eTree_getBranchLength(ETree *eTree);
 void eTree_setBranchLength(ETree *eTree, double distance);
 
 /*
+ * Get the clientData object, or NULL of not set.
+ */
+void *eTree_getClientData(ETree *eTree);
+
+/*
+ * Set the clientData object
+ */
+void eTree_setClientData(ETree *eTree, void *clientData);
+
+/*
  * Get any label associated with the branch (or NULL, if none set).
  */
 const char *eTree_getLabel(ETree *eTree);
@@ -75,8 +85,8 @@ void eTree_setLabel(ETree *eTree, const char *label);
  */
 int eTree_getNumNodes(ETree *root);
 
-/* Compare two tree for equality.  Trees must have same structure, labels and distances.
- * Children must be in same order. */
+/* Compare two trees for equality.  Trees must have same structure, labels and
+ * distances.  Children must be in same order. */
 bool eTree_equals(ETree *eTree1, ETree *eTree2);
 
 /*

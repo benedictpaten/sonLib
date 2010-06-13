@@ -17,6 +17,7 @@ struct _eTree {
     double branchLength;
     stList *nodes;
     char *label;
+    void *clientData;
     ETree *parent;
 };
 
@@ -106,6 +107,15 @@ double eTree_getBranchLength(ETree *eTree) {
 void eTree_setBranchLength(ETree *eTree, double distance) {
     eTree->branchLength = distance;
 }
+
+void *eTree_getClientData(ETree *eTree) {
+    return eTree->clientData;
+}
+
+void eTree_setClientData(ETree *eTree, void *clientData) {
+    eTree->clientData = clientData;
+}
+
 
 const char *eTree_getLabel(ETree *eTree) {
     return eTree->label;
