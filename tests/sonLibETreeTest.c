@@ -170,7 +170,6 @@ static void testETree_clone(CuTest* testCase) {
     teardown();
 }
 
-
 CuSuite* sonLibETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testETree_construct);
