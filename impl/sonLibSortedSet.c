@@ -82,13 +82,13 @@ int32_t stSortedSet_size(stSortedSet *sortedSet) {
 }
 
 void *stSortedSet_getFirst(stSortedSet *items) {
-    static stSortedSetIterator iterator;
+    stSortedSetIterator iterator;
     avl_t_init(&iterator, items->sortedSet);
     return avl_t_first(&iterator, items->sortedSet);
 }
 
 void *stSortedSet_getLast(stSortedSet *items) {
-    static stSortedSetIterator iterator;
+    stSortedSetIterator iterator;
     avl_t_init(&iterator, items->sortedSet);
     return avl_t_last(&iterator, items->sortedSet);
 }
