@@ -32,11 +32,14 @@ stList *stList_construct3(int32_t size, void (*destructElement)(void *));
 /*
  * Destructs the stList and, if a destructElement function was given to the constructor,
  * calls the destruct element function for each non-null element in the stList.
+ * The list maybe NULL.
  */
 void stList_destruct(stList *list);
 
 /*
- * Returns the number of elements in the stList.
+ * Returns the number of elements in the stList.  The list maybe NULL,
+ * in which case zero is returned.  This allows for NULL to be used
+ * as an efficient way of returning an empty list.
  */
 int32_t stList_length(stList *list);
 
@@ -103,7 +106,9 @@ stList *stList_copy(stList *list, void (*destructItem)(void *));
 void stList_reverse(stList *list);
 
 /*
- * Gets an iterator for the stList.
+ * Gets an iterator for the stList.  The list maybe NULL, in which case a
+ * iterator that only returns NULL is created..  This allows for NULL to be
+ * used as an efficient way of returning an empty list.
  */
 stListIterator *stList_getIterator(stList *list);
 

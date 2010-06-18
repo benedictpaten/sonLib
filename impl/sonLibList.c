@@ -47,23 +47,33 @@ stList *stList_construct3(int32_t length, void (*destructElement)(void *)) {
     return list;
 }
 
-void stList_destruct(stList *list) {
-    int32_t i;
-    if (list->destructElement != NULL) {
-        for(i=0; i<stList_length(list); i++) { //only free up to known area of list
-            if(stList_get(list, i) != NULL) {
-                list->destructElement(stList_get(list, i));
-            }
+/* free elements in list */
+static void destructElements(stList *list) {
+    for(int32_t i=0; i<stList_length(list); i++) { //only free up to known area of list
+        if(stList_get(list, i) != NULL) {
+            list->destructElement(stList_get(list, i));
         }
     }
-    if(list->list != NULL) {
-        free(list->list);
+}
+
+void stList_destruct(stList *list) {
+    if (list != NULL) {
+        if (list->destructElement != NULL) {
+            destructElements(list);
+        }
+        if(list->list != NULL) {
+            free(list->list);
+        }
+        free(list);
     }
-    free(list);
 }
 
 int32_t stList_length(stList *list) {
-    return list->length;
+    if (list == NULL) {
+        return 0;
+    } else {
+        return list->length;
+    }
 }
 
 void *stList_get(stList *list, int32_t index) {
@@ -176,11 +186,19 @@ void stList_destructIterator(stListIterator *iterator) {
 }
 
 void *stList_getNext(stListIterator *iterator) {
-    return iterator->index < stList_length(iterator->list) ? stList_get(iterator->list, iterator->index++) : NULL;
+    if ((iterator->list == NULL) || (iterator->index >= stList_length(iterator->list))) {
+        return NULL;
+    } else {
+        return stList_get(iterator->list, iterator->index++);
+    }
 }
 
 void *stList_getPrevious(stListIterator *iterator) {
-    return iterator->index > 0 ? stList_get(iterator->list, --iterator->index) : NULL;
+    if ((iterator->list == NULL) || (iterator->index == 0)) {
+        return NULL;
+    } else {
+        return stList_get(iterator->list, --iterator->index);
+    }
 }
 
 stListIterator *stList_copyIterator(stListIterator *iterator) {

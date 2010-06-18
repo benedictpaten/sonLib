@@ -184,6 +184,16 @@ void test_stList_iterator(CuTest *testCase) {
     teardown();
 }
 
+void test_stList_nullList(CuTest *testCase) {
+    stList *empty = NULL;
+    CuAssertTrue(testCase, stList_length(empty) == 0);
+    stListIterator *it = stList_getIterator(empty);
+    CuAssertTrue(testCase, stList_getNext(it) == NULL);
+    CuAssertTrue(testCase, stList_getPrevious(it) == NULL);
+    stList_destructIterator(it);
+    stList_destruct(empty);
+}
+
 void test_stList_sort(CuTest *testCase) {
     setup();
     stList_sort(list, (int (*)(const void *, const void *))strcmp);
@@ -227,6 +237,7 @@ CuSuite* sonLib_stListTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stList_copy);
     SUITE_ADD_TEST(suite, test_stList_reverse);
     SUITE_ADD_TEST(suite, test_stList_iterator);
+    SUITE_ADD_TEST(suite, test_stList_nullList);
     SUITE_ADD_TEST(suite, test_stList_sort);
     SUITE_ADD_TEST(suite, test_stList_getSortedSet);
     return suite;
