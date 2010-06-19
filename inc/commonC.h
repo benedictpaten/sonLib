@@ -243,11 +243,11 @@ int32_t destructRandomDir(char *tempDir);
 
 void initialiseTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber);
 
-char *getTempFile();
+char *getTempFile(void);
 
 void removeTempFile(char *tempFile);
 
-void removeAllTempFiles();
+void removeAllTempFiles(void);
 
 struct TempFileTree {
     char *rootDir;
@@ -283,6 +283,6 @@ void graphViz_setupGraphFile(FILE *graphFileHandle);
 
 void graphViz_finishGraphFile(FILE *graphFileHandle);
 
-const char *graphViz_getColour();
+const char *graphViz_getColour(void);
 
 #endif /*COMMONC_H_*/

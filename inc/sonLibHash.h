@@ -13,7 +13,7 @@
 /*
  * Constructs hash, with no destructors for keys or values.
  */
-stHash *stHash_construct();
+stHash *stHash_construct(void);
 
 /*
  * Constructs a hash with given destructors, if null then destructors are ignored

@@ -41,7 +41,7 @@ void st_setLogLevel(int32_t level);
 /*
  * Get the log level. Either ST_LOGGING_OFF/INFO/DEBUG.
  */
-int32_t st_getLogLevel();
+int32_t st_getLogLevel(void);
 
 /*
  * Print a log string with level info.

@@ -130,7 +130,7 @@ void MAX_PLUS_EQUALS (float *x, float y){
 //
 // Return random FLOAT_32 in range [0 - 1.0 }
 /////////////////////////////////////////////////////////////////
-float RANDOM() {
+float RANDOM(void) {
     static const float i = (RAND_MAX+1.0)*1.0f;
     return rand()/i;
 }
@@ -140,6 +140,6 @@ float RANDOM() {
 //
 // Return random FLOAT_32 in range [0 - 1.0 }
 /////////////////////////////////////////////////////////////////
-float RANDOM_LOG() {
+float RANDOM_LOG(void) {
     return LOG(RANDOM());
 }

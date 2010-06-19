@@ -13,7 +13,7 @@
 /*
  * Construct unattached eTree node.
  */
-ETree *eTree_construct();
+ETree *eTree_construct(void);
 
 /*
  * Destruct the eTree node and any descendants.

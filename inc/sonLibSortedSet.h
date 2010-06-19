@@ -17,7 +17,7 @@ extern const char *SORTED_SET_EXCEPTION_ID;
 /*
  * Constructs a sorted set, using pointer based comparison function.
  */
-stSortedSet *stSortedSet_construct();
+stSortedSet *stSortedSet_construct(void);
 
 /*
  * Constructs a sorted set, using pointer based comparison function,

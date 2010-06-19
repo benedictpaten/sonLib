@@ -35,7 +35,7 @@ void st_setLogLevel(int32_t level) {
     LOG_LEVEL = level;
 }
 
-int32_t st_getLogLevel() {
+int32_t st_getLogLevel(void) {
     return LOG_LEVEL;
 }
 

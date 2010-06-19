@@ -29,7 +29,7 @@ struct _stListIterator {
  * The functions..
  */
 
-stList *stList_construct() {
+stList *stList_construct(void) {
     return stList_construct3(0, NULL);
 }
 

@@ -20,7 +20,7 @@ static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
     return key1 > key2 ? 1 : key1 < key2 ? -1 : 0;
 }
 
-stSortedSet *stSortedSet_construct() {
+stSortedSet *stSortedSet_construct(void) {
     return stSortedSet_construct3(st_sortedSet_cmpFn, NULL);
 }
 

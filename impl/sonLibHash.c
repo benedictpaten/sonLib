@@ -21,7 +21,7 @@ static int st_hash_equalKey( const void *key1, const void *key2 ) {
     return key1 == key2;
 }
 
-stHash *stHash_construct() {
+stHash *stHash_construct(void) {
     return stHash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
 }
 

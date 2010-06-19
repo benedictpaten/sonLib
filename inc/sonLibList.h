@@ -14,7 +14,7 @@
  * Construct a stList with zero length.
  * The destructor will not clean up the elements in the stList.
  */
-stList *stList_construct();
+stList *stList_construct(void);
 
 /*
  * Construct a stList with size length.

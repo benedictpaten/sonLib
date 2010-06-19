@@ -828,7 +828,7 @@ void initialiseTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNum
     tempFileTree = constructTempFileTree(rootDir, filesPerDir, levelNumber);
 }
 
-char *getTempFile() {
+char *getTempFile(void) {
     /*
      * Gets a temporary file, using the tempFileTree, if initialised.
      */
@@ -854,7 +854,7 @@ void removeTempFile(char *tempFile) {
     free(tempFile);
 }
 
-void removeAllTempFiles() {
+void removeAllTempFiles(void) {
     assert(tempFileTree != NULL);
     destructTempFileTree(tempFileTree);
     tempFileTree = NULL;
@@ -1014,7 +1014,7 @@ void graphViz_finishGraphFile(FILE *graphFileHandle) {
 }
 
 static int32_t getColour_Index = 0;
-const char *graphViz_getColour() {
+const char *graphViz_getColour(void) {
     /*
      * Returns a valid colour.
      */

@@ -25,7 +25,7 @@ struct _eTree {
  * The functions..
  */
 
-ETree *eTree_construct() {
+ETree *eTree_construct(void) {
     ETree *eTree = st_malloc(sizeof(ETree));
     eTree->branchLength = INFINITY;
     eTree->nodes = stList_construct3(0, (void (*)(void *))eTree_destruct);
