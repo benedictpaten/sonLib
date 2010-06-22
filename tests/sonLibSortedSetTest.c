@@ -233,6 +233,97 @@ static void testDifference(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
+static void test_searchLessThanOrEqual(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+    for(int32_t i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    //static int32_t sortedInput[] = { -10, -1, 1, 3, 5, 10, 12 };
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -11)) == NULL);
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+                stIntTuple_construct(1, -10)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+                 stIntTuple_construct(1, -5)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+                 stIntTuple_construct(1, 1)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 1)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+                 stIntTuple_construct(1, 13)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 12)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet,
+                 stIntTuple_construct(1, 7)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 5)));
+
+    sonLibSortedSetTestTeardown();
+}
+
+static void test_searchLessThan(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+    for(int32_t i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    //static int32_t sortedInput[] = { -10, -1, 1, 3, 5, 10, 12 };
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, -11)) == NULL);
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, -10)) == NULL);
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, -5)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, 1)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -1)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, 13)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 12)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, 8)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 5)));
+    CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet,
+            stIntTuple_construct(1, 10)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 5)));
+
+    sonLibSortedSetTestTeardown();
+}
+
+static void test_searchGreaterThanOrEqual(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+
+    for(int32_t i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    //static int32_t sortedInput[] = { -10, -1, 1, 3, 5, 10, 12 };
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -11)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -10)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -5)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -1)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 1)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 1)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 13)) == NULL);
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 5)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 5)));
+
+    sonLibSortedSetTestTeardown();
+}
+
+static void test_searchGreaterThan(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+
+    for(int32_t i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    //static int32_t sortedInput[] = { -10, -1, 1, 3, 5, 10, 12 };
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -11)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -10)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -10)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -1)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, -5)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, -1)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 1)) == stSortedSet_search(sortedSet, stIntTuple_construct(1, 3)));
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 13)) == NULL);
+    CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet,
+            stIntTuple_construct(1, 12)) == NULL);
+
+    sonLibSortedSetTestTeardown();
+}
 
 CuSuite* sonLibSortedSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
@@ -243,5 +334,9 @@ CuSuite* sonLibSortedSetTestSuite(void) {
     SUITE_ADD_TEST(suite, testIntersection);
     SUITE_ADD_TEST(suite, testUnion);
     SUITE_ADD_TEST(suite, testDifference);
+    SUITE_ADD_TEST(suite, test_searchLessThanOrEqual);
+    SUITE_ADD_TEST(suite, test_searchLessThan);
+    SUITE_ADD_TEST(suite, test_searchGreaterThanOrEqual);
+    SUITE_ADD_TEST(suite, test_searchGreaterThan);
     return suite;
 }

@@ -44,9 +44,29 @@ void stSortedSet_destruct(stSortedSet *sortedSet);
 void stSortedSet_insert(stSortedSet *sortedSet, void *object);
 
 /*
- * Finds the objects in the sorted set, or returns null.
+ * Finds the object in the sorted set, or returns null.
  */
 void *stSortedSet_search(stSortedSet *sortedSet, void *object);
+
+/*
+ * Finds the object in the the sorted set that is less than or equal to the object, or returns NULL if not found.
+ */
+void *stSortedSet_searchLessThanOrEqual(stSortedSet *sortedSet, void *object);
+
+/*
+ * Finds the object in the the sorted set that is less than the object, or returns NULL if not found.
+ */
+void *stSortedSet_searchLessThan(stSortedSet *sortedSet, void *object);
+
+/*
+ * Finds the object in the the sorted set that is greater than or equal to the object, or returns NULL if not found.
+ */
+void *stSortedSet_searchGreaterThanOrEqual(stSortedSet *sortedSet, void *object);
+
+/*
+ * Finds the object in the the sorted set that is greater than the object, or returns NULL if not found.
+ */
+void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object);
 
 /*
  * Deletes the object in the sorted set.

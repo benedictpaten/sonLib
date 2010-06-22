@@ -73,6 +73,23 @@ void *stSortedSet_search(stSortedSet *sortedSet, void *object) {
     return avl_find(sortedSet->sortedSet, object);
 }
 
+void *stSortedSet_searchLessThanOrEqual(stSortedSet *sortedSet, void *object) {
+    return NULL;
+}
+
+
+void *stSortedSet_searchLessThan(stSortedSet *sortedSet, void *object) {
+    return NULL;
+}
+
+void *stSortedSet_searchGreaterThanOrEqual(stSortedSet *sortedSet, void *object) {
+    return NULL;
+}
+
+void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object) {
+    return NULL;
+}
+
 void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
     avl_delete(sortedSet->sortedSet, object);
 }
