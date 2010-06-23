@@ -8,9 +8,13 @@ void st_randomSeed(int32_t seed) {
 
 int32_t st_randomInt(int32_t min, int32_t max) {
     if(max - min < 1) {
+        assert(0);
         stThrowNew(RANDOM_EXCEPTION_ID, "Range for random int is not positive, min: %i, max %i\n", min, max);
     }
-    return min + (max - min) * st_random();
+    int32_t i = min + (int32_t)((max - min) * st_random());
+    assert(i >= min);
+    assert(i < max);
+    return i;
 }
 
 float st_random() {

@@ -74,20 +74,19 @@ void *stSortedSet_search(stSortedSet *sortedSet, void *object) {
 }
 
 void *stSortedSet_searchLessThanOrEqual(stSortedSet *sortedSet, void *object) {
-    return NULL;
+    return avl_find_lessThanOrEqual(sortedSet->sortedSet, object);
 }
 
-
 void *stSortedSet_searchLessThan(stSortedSet *sortedSet, void *object) {
-    return NULL;
+    return avl_find_lessThan(sortedSet->sortedSet, object);
 }
 
 void *stSortedSet_searchGreaterThanOrEqual(stSortedSet *sortedSet, void *object) {
-    return NULL;
+    return avl_find_greaterThanOrEqual(sortedSet->sortedSet, object);
 }
 
 void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object) {
-    return NULL;
+    return avl_find_greaterThan(sortedSet->sortedSet, object);
 }
 
 void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
@@ -168,6 +167,19 @@ int stSortedSet_equals(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
     stSortedSet_destructIterator(it1);
     stSortedSet_destructIterator(it2);
     return 1;
+}
+
+stList *stSortedSet_getList(stSortedSet *sortedSet) {
+    stList *list = stList_construct2(stSortedSet_size(sortedSet));
+    stSortedSetIterator *it = stSortedSet_getIterator(sortedSet);
+    void *o;
+    int32_t i=0;
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        stList_set(list, i++, o);
+    }
+    assert(i == stSortedSet_size(sortedSet));
+    stSortedSet_destructIterator(it);
+    return list;
 }
 
 stSortedSet *stSortedSet_getUnion(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
