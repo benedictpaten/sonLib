@@ -44,6 +44,9 @@ void stHash_destruct(stHash *hash) {
 }
 
 void stHash_insert(stHash *hash, void *key, void *value) {
+    if(stHash_search(hash, key) != NULL) { //This will ensure we don't end up with duplicate keys..
+        stHash_remove(hash, key);
+    }
     hashtable_insert(hash->hash, key, value);
 }
 
