@@ -7,9 +7,6 @@ libHeaders = inc/*.h
 libInternalHeaders = impl/*.h
 libTests = tests/sonLib*.c
 
-# Benedict: uncomment this and fix errors
-#cflags += -Werror -pedantic
-
 all : ${libPath}/sonLib.a ${binPath}/sonLibTests
 
 clean : 

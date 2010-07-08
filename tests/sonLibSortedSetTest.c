@@ -75,6 +75,34 @@ static void testIterator(CuTest* testCase) {
     stSortedSet_destructIterator(iterator2);
     sonLibSortedSetTestTeardown();
 }
+
+static void testIterator_getIteratorFrom(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+    int32_t i;
+    for(i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    struct avl_traverser *iterator = stSortedSet_getIterator(sortedSet);
+    CuAssertTrue(testCase, iterator != NULL);
+
+    for(i=0; i<sortedSize; i++) {
+        stSortedSetIterator *it = stSortedSet_getIteratorFrom(sortedSet, stIntTuple_construct(1, sortedInput[i]));
+        stIntTuple *intTuple = stSortedSet_getNext(it);
+        CuAssertTrue(testCase, intTuple != NULL);
+        CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_getPosition(intTuple, 0));
+        stSortedSet_destructIterator(it);
+    }
+
+    stTry {
+        stSortedSet_getIteratorFrom(sortedSet, stIntTuple_construct(1, 7)); //This number if not in the input.
+        CuAssertTrue(testCase, 0);
+    } stCatch(except) {
+        CuAssertTrue(testCase, stExcept_getId(except) == SORTED_SET_EXCEPTION_ID);
+    } stTryEnd
+
+    sonLibSortedSetTestTeardown();
+}
+
 static void testEquals(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     CuAssertTrue(testCase, stSortedSet_equals(sortedSet, sortedSet));
@@ -182,6 +210,7 @@ static void testUnion(CuTest* testCase) {
     stSortedSet *sortedSet4 = stSortedSet_construct();
     stTry {
         stSortedSet_getUnion(sortedSet, sortedSet4);
+        CuAssertTrue(testCase, 0);
     } stCatch(except) {
         CuAssertTrue(testCase, stExcept_getId(except) == SORTED_SET_EXCEPTION_ID);
     } stTryEnd
@@ -225,6 +254,7 @@ static void testDifference(CuTest* testCase) {
     stSortedSet *sortedSet4 = stSortedSet_construct();
     stTry {
        stSortedSet_getDifference(sortedSet, sortedSet4);
+       CuAssertTrue(testCase, 0);
     } stCatch(except) {
         CuAssertTrue(testCase, stExcept_getId(except) == SORTED_SET_EXCEPTION_ID);
     } stTryEnd
@@ -382,6 +412,7 @@ CuSuite* sonLibSortedSetTestSuite(void) {
     SUITE_ADD_TEST(suite, testSortedSet_construct);
     SUITE_ADD_TEST(suite, testSortedSet);
     SUITE_ADD_TEST(suite, testIterator);
+    SUITE_ADD_TEST(suite, testIterator_getIteratorFrom);
     SUITE_ADD_TEST(suite, testEquals);
     SUITE_ADD_TEST(suite, testIntersection);
     SUITE_ADD_TEST(suite, testUnion);

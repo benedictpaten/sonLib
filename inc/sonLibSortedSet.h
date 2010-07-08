@@ -94,6 +94,12 @@ void *stSortedSet_getLast(stSortedSet *items);
 stSortedSetIterator *stSortedSet_getIterator(stSortedSet *items);
 
 /*
+ * Gets an iterator from the given object. Creates an error if the item is not in the set.
+ * The first value returns by the iterator will be the given item.
+ */
+stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item);
+
+/*
  * Destructs an iterator for the sorted set.
  */
 void stSortedSet_destructIterator(stSortedSetIterator *iterator);
