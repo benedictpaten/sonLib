@@ -15,10 +15,10 @@ clean :
 ${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLibTests tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a
 
-${binPath}/sonLib_cigarTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
+${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLib_cigarTest tests/cigarsTest.c ${libPath}/sonLib.a
 
-${binPath}/sonLib_fastaCTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
+${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLib_fastaCTest tests/fastaCTest.c ${libPath}/sonLib.a
 
  
