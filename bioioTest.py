@@ -40,8 +40,8 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         system("rm -rf %s" % self.tempDir)
-        #for tempFile in self.tempFiles:
-        #    os.remove(tempFile)
+        for tempFile in self.tempFiles:
+            os.remove(tempFile)
             
     #########################################################
     #########################################################
