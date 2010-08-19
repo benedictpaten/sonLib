@@ -18,12 +18,12 @@ extern const char *ST_KV_DATABASE_EXCEPTION_ID;
  * Constructs a non-relational database object, using the given url to connect to the
  * database.
  */
-stKVDatabase *stKVDatabase_construct(const char *url);
+stKVDatabase *stKVDatabase_construct(const char *url, bool applyCompression);
 
 /*
  * Destructs a database. If the destruction occurs during a transaction the transaction
  * is aborted and any changes are not committed to the database.
- * Also destroys any tables associated the the database.
+ * Also destroys any databases associated the the database.
  */
 void stKVDatabase_destruct(stKVDatabase *database);
 
@@ -39,14 +39,25 @@ const char *stKVDatabase_getURL(stKVDatabase *database);
 void stKVDatabase_deleteFromDisk(stKVDatabase *database);
 
 /*
- * Returns number of tables in the database.
+ * Writes a key value record to the table. Throws an exception if unsuccessful.
  */
-int64_t stKVDatabase_getNumberOfTables(stKVDatabase *database);
+void stKVDatabase_writeRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
 /*
- * Gets a table from the database, given the key.
+ * Returns number of records in database.
  */
-stKVTable *stKVDatabase_getTable(stKVDatabase *database, const char *name);
+int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database);
+
+/*
+ * Gets a record from the database, given the key. The record is in newly allocated memory, and must be freed.
+ * Returns NULL if the database does not contain the given record.
+ */
+void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key);
+
+/*
+ * Removes a record from the database. Throws an exception if unsuccessful.
+ */
+void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key);
 
 /*
  * Starts a transaction with the database. Throws an exception if unsuccessful.
