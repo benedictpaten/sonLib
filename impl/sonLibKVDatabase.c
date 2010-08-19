@@ -6,26 +6,16 @@
  */
 
 #include "sonLibGlobalsInternal.h"
+#include "sonLibKVDatabasePrivate.h"
 
 const char *ST_KV_DATABASE_EXCEPTION_ID = "ST_KV_DATABASE_EXCEPTION";
-
-struct stKVDatabase {
-    char *url;
-    void *database;
-    void (*destruct)(void *);
-    void (*delete)(void *);
-    int64_t (*numberOfTables)(void *);
-    stKVTable *(*getTable)(void *, const char *name);
-    void (*startTransaction)(void *);
-    void (*commitTransaction)(void *);
-};
 
 stKVDatabase *stKVDatabase_construct(const char *url) {
     //Currently just open the tokyo cabinet implementation..
     stKVDatabase *database = st_malloc(sizeof(struct stKVDatabase));
     database->url = stString_copy(url);
-    //Get type of database and fill out table methods..
-
+    //Get type of database and fill out table methods (currently just tokyo cabinet)
+    stKVDatabase_initialise_tokyoCabinet(database);
     return database;
 }
 

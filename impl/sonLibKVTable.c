@@ -7,28 +7,17 @@
 
 
 #include "sonLibGlobalsInternal.h"
+#include "sonLibKVDatabasePrivate.h"
 
 const char *ST_KV_TABLE_EXCEPTION_ID = "ST_KV_TABLE_EXCEPTION";
-
-struct stKVTable {
-    char *name;
-    void *database;
-    void *table;
-    bool applyCompression;
-    void (*destruct)(void *, void *);
-    void (*removeFromDatabase)(void *, void *);
-    void (*writeRecord)(void *, void *, bool, int64_t, const void *, int64_t);
-    int64_t (*numberOfRecords)(void *, void *);
-    void *(*getRecord)(void *, void *, bool, int64_t key);
-    void (*removeRecord)(void *, void *, int64_t key);
-};
 
 stKVTable *stKVTable_construct(const char *name, stKVDatabase *database, bool applyCompression) {
     stKVTable *table = st_malloc(sizeof(struct stKVTable));
     table->name = stString_copy(name);
     table->database = database;
     table->applyCompression = applyCompression;
-    //Get type of database and fill out table methods..
+    //Get type of database and fill out table methods (currently just tokyo cabinet)
+    stKVTable_initialise_tokyoCabinet(table);
     return table;
 }
 
