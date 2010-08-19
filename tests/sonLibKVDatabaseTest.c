@@ -5,7 +5,7 @@
 
 #include "sonLibGlobalsTest.h"
 
-static const char *url = "hello";
+static const char *url = "testDatabase";
 bool applyCompression = 0;
 static stKVDatabase *database;
 
