@@ -18,5 +18,7 @@
 #include "sonLibAlign.h"
 #include "sonLibExcept.h"
 #include "sonLibRandom.h"
+#include "sonLibKVDatabase.h"
+#include "sonLibKVTable.h"
 
 #endif /* SONLIB_H_ */

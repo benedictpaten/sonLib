@@ -34,5 +34,7 @@ typedef struct stAlignIterator stAlignIterator;
 typedef struct stAlignBlock stAlignBlock;
 typedef struct stAlignBlockIterator stAlignBlockIterator;
 typedef struct stAlignSegment stAlignSegment;
+typedef struct stKVDatabase stKVDatabase;
+typedef struct stKVTable stKVTable;
 
 #endif /* SONLIBGLOBALS_H_ */
