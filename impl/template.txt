@@ -1,0 +1,47 @@
+/*
+ * sonLibKVTokyoCabinet.c
+ *
+ *  Created on: 18-Aug-2010
+ *      Author: benedictpaten
+ */
+
+//Database functions
+
+static void destructDB(void *) {
+
+}
+
+static void deleteDB(void *) {
+
+}
+
+static int64_t numberOfTables(void *) {
+
+}
+
+static stKVTable *getTable(void *, const char *name) {
+
+}
+
+static void startTransaction(void *) {
+
+}
+
+static void commitTransaction(void *) {
+
+}
+
+//Table functions
+
+void destructTable(void *, void *) {
+
+}
+
+void removeFromDatabase(void *, void *) {
+
+}
+
+void (*writeRecord)(void *, void *, bool, int64_t, const void *, int64_t);
+    int64_t (*numberOfRecords)(void *, void *);
+    void *(*getRecord)(void *, void *, bool, int64_t key);
+    void (*removeRecord)(void *, void *, int64_t key);
