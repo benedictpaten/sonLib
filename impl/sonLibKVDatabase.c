@@ -18,6 +18,10 @@ stKVDatabase *stKVDatabase_construct(const char *url, bool applyCompression) {
     database->transactionStarted = 0;
     database->deleted = 0;
     //Get type of database and fill out database methods (currently just tokyo cabinet)
+
+    //URL format: jdbc:mysql://[host][:port]/[database][?property1][=value1]...
+
+
     stKVDatabase_initialise_tokyoCabinet(database);
     return database;
 }
