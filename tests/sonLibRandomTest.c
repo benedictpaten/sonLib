@@ -11,10 +11,12 @@ static void test_st_randomInt(CuTest *testCase) {
     /*
      * Excercies the random int function.
      */
+	int32_t min = INT32_MIN;
+	int32_t max =  INT32_MAX;
     CuAssertTrue(testCase, st_randomInt(1, 2) == 1);
-    for(int32_t i=0; i<10000; i++) {
-        CuAssertTrue(testCase, st_randomInt(1, 10) >= 1);
-        CuAssertTrue(testCase, st_randomInt(1, 10) < 10);
+    for(int64_t i=0; i<100000; i++) {
+        CuAssertTrue(testCase, st_randomInt(min, max) >= min);
+        CuAssertTrue(testCase, st_randomInt(min, max) < max);
     }
     stTry {
         st_randomInt(1, 1);
@@ -27,7 +29,7 @@ static void test_st_random(CuTest *testCase) {
     /*
      * Excercies the random int function.
      */
-    for(int32_t i=0; i<1000; i++) {
+    for(int32_t i=0; i<10000; i++) {
         CuAssertTrue(testCase, st_random() >= 0);
         CuAssertTrue(testCase, st_random() < 1.0);
     }

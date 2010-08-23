@@ -28,7 +28,7 @@ int32_t st_randomInt(int32_t min, int32_t max);
 /*
  * Returns a random value between 0.0 (inclusive) and 1.0 (exclusive).
  */
-float st_random();
+double st_random();
 
 /*
  * Returns a random value from a list.
