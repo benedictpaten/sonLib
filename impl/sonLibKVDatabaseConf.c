@@ -6,6 +6,7 @@
  */
 #include "sonLibKVDatabaseConf.h"
 #include "sonLibKVDatabase.h"
+#include "sonLibExcept.h"
 #include "sonLibTypes.h"
 #include "sonLibString.h"
 #include "stSafeC.h"
