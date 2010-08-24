@@ -12,7 +12,7 @@
 #include <string.h>
 
 /*
- * Copies a string.
+ * Copies a string, if string is NULL, NULL is returned
  */
 char *stString_copy(const char *string);
 

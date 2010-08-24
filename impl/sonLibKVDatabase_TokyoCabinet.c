@@ -12,7 +12,7 @@
 #include <tcutil.h>
 #include <tcbdb.h>
 
-static int database_constructP(const char *vA1, int size1, const char *vA2,
+static int keyCmp(const char *vA1, int size1, const char *vA2,
         int size2, void *a) {
     assert(size1 == sizeof(int64_t));
     assert(size2 == sizeof(int64_t));
@@ -22,105 +22,111 @@ static int database_constructP(const char *vA1, int size1, const char *vA2,
     return i - j > 0 ? 1 : (i < j ? -1 : 0);
 }
 
-static TCBDB *constructDB(const char *url) {
-    int32_t ecode = mkdir(url, S_IRWXU);
-    st_logInfo(
-            "Tried to create the base disk directory with exit value: %i\n",
-            ecode);
-    char *databaseName = stString_print("%s/%s", url, "data");
-    TCBDB *database;
-    database = tcbdbnew();
-    tcbdbsetcmpfunc(database, database_constructP, NULL);
-    if (!tcbdbopen(database, databaseName, BDBOWRITER | BDBOCREAT)) {
-        ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Opening database: %s with error: %s\n", databaseName, tcbdberrmsg(
-                        ecode));
+static TCBDB *constructDB(stKVDatabaseConf *conf, bool create) {
+    const char *dbDir = stKVDatabaseConf_getDir(conf);
+    mkdir(dbDir, S_IRWXU); // just let open of database generate error (FIXME: would be better to make this report errors)
+    char *databaseName = stString_print("%s/%s", dbDir, "data");
+    TCBDB *dbImpl = tcbdbnew();
+    tcbdbsetcmpfunc(dbImpl, keyCmp, NULL);
+    unsigned opts = BDBOWRITER | (create ? BDBOCREAT|BDBOTRUNC : 0);
+    if (!tcbdbopen(dbImpl, databaseName, opts)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening database: %s with error: %s", databaseName, tcbdberrmsg(tcbdbecode(dbImpl)));
     }
     free(databaseName);
-    return database;
+    return dbImpl;
 }
 
-static void destructDB(TCBDB *database) {
-    if (!tcbdbclose(database)) {
-        int32_t ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s\n",
-                tcbdberrmsg(ecode));
+static void destructDB(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (dbImpl != NULL) {
+        if (!tcbdbclose(dbImpl)) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+        }
+        tcbdbdel(dbImpl);
+        database->dbImpl = NULL;
     }
-    tcbdbdel(database);
 }
 
-static void deleteDB(TCBDB *database, const char *url) {
+static void deleteDB(stKVDatabase *database) {
     destructDB(database);
-    int32_t i = st_system("rm -rf %s", url);
+    const char *dbDir = stKVDatabaseConf_getDir(stKVDatabase_getConf(database));
+    int32_t i = st_system("rm -rf %s", dbDir);
     if (i != 0) {
-        st_errAbort(
-                "Tried to delete the temporary cactus disk: %s with exit value %i\n",
-                url, i);
+        st_errAbort("Tried to delete the temporary cactus disk: %s with exit code %d", dbDir, i);
     }
 }
 
-static void writeRecord(TCBDB *database, bool applyCompression, int64_t key,
-        const void *value, int64_t sizeOfRecord) {
-    if (!tcbdbput(database, &key, sizeof(int64_t), value, sizeOfRecord)) {
-        int32_t ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Writing key/value to database error: %s\n", tcbdberrmsg(ecode));
+/* check if a record already exists */
+static bool recordExists(TCBDB *dbImpl, int64_t key) {
+    return tcbdbvnum(dbImpl, &key, sizeof(int64_t)) > 0;
+}
+
+static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to insert a key in the database that already exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
 }
 
-static int64_t numberOfRecords(TCBDB *database) {
-    return tcbdbrnum(database);
+static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to update a key in the database that doesn't exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
 }
 
-static void *getRecord(TCBDB *database, bool applyCompression, int64_t key) {
+static int64_t numberOfRecords(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    return tcbdbrnum(dbImpl);
+}
+
+static void *getRecord(stKVDatabase *database, int64_t key) {
+    TCBDB *dbImpl = database->dbImpl;
     //Return value must be freed.
     int32_t i; //the size is ignored
-    return tcbdbget(database, &key, sizeof(int64_t), &i);
+    return tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
 }
 
-static void removeRecord(TCBDB *database, int64_t key) {
-    if (!tcbdbout(database, &key, sizeof(int64_t))) {
-        int32_t ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Removing key/value to database error: %s\n",
-                tcbdberrmsg(ecode));
+static void removeRecord(stKVDatabase *database, int64_t key) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbout(dbImpl, &key, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
 }
 
-static void startTransaction(TCBDB *database) {
-    if (!tcbdbtranbegin(database)) {
-        int32_t ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to start a transaction but got error: %s\n",
-                tcbdberrmsg(ecode));
+static void startTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbtranbegin(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to start a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
 }
 
-static void commitTransaction(TCBDB *database) {
+static void commitTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
     //Commit the transaction..
-    if (!tcbdbtrancommit(database)) {
-        int32_t ecode = tcbdbecode(database);
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to commit a transaction but got error: %s\n",
-                tcbdberrmsg(ecode));
+    if (!tcbdbtrancommit(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to commit a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
 }
 
 //initialisation function
 
-void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database) {
-    //Initialise the database..
-    database->database = constructDB(stKVDatabase_getURL(database));
-    //iterate through all the databases in the DB disk..
-    database->destruct = (void(*)(void *)) destructDB;
-    database->delete = (void(*)(void *, const char *)) deleteDB;
-    database->writeRecord = (void(*)(void *, bool, int64_t, const void *,
-            int64_t)) writeRecord;
-    database->numberOfRecords = (int64_t(*)(void *)) numberOfRecords;
-    database->getRecord = (void *(*)(void *, bool, int64_t)) getRecord;
-    database->removeRecord = (void(*)(void *, int64_t)) removeRecord;
-    database->startTransaction = (void(*)(void *)) startTransaction;
-    database->commitTransaction = (void(*)(void *)) commitTransaction;
+void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
+    database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
+    database->destruct = destructDB;
+    database->delete = deleteDB;
+    database->insertRecord = insertRecord;
+    database->updateRecord = updateRecord;
+    database->numberOfRecords = numberOfRecords;
+    database->getRecord = getRecord;
+    database->removeRecord = removeRecord;
+    database->startTransaction = startTransaction;
+    database->commitTransaction = commitTransaction;
 }
 
