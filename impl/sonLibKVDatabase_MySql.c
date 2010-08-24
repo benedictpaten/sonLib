@@ -10,6 +10,9 @@
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
 #include "stSafeC.h"
+
+#ifdef HAVE_MYSQL
+
 #include <mysql.h>
 #include <mysqld_error.h>
 
@@ -230,3 +233,5 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
         createKVTable(database->dbImpl);
     }
 }
+
+#endif
