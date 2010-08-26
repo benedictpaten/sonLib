@@ -8,11 +8,7 @@
 #include "sonLibGlobalsInternal.h"
 
 char *stString_copy(const char *string) {
-    if (string == NULL) {
-        return NULL;
-    } else {
-        return strcpy(st_malloc(sizeof(char)*(1+strlen(string))), string);
-    }
+    return strcpy(st_malloc(sizeof(char)*(1+strlen(string))), string);
 }
 
 char *stString_print(const char *string, ...) {

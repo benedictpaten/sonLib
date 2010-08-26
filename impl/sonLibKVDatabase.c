@@ -7,39 +7,39 @@
 
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
-#include "sonLibString.h"
 
 const char *ST_KV_DATABASE_EXCEPTION_ID = "ST_KV_DATABASE_EXCEPTION";
 
-stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
+stKVDatabase *stKVDatabase_construct(const char *url, bool applyCompression) {
+    //Currently just open the tokyo cabinet implementation..
     stKVDatabase *database = st_malloc(sizeof(struct stKVDatabase));
-    database->conf = stKVDatabaseConf_constructClone(conf);
+    database->url = stString_copy(url);
+    database->applyCompression = applyCompression;
     database->transactionStarted = 0;
     database->deleted = 0;
+    //Get type of database and fill out database methods (currently just tokyo cabinet)
 
-    switch (stKVDatabaseConf_getType(conf)) {
-    case stKVDatabaseTypeTokyoCabinet:
-        stKVDatabase_initialise_tokyoCabinet(database, conf, create);
-        break;
-    case stKVDatabaseTypeMySql:
-#ifdef HAVE_MYSQL
-        stKVDatabase_initialise_MySql(database, conf, create);
-#else
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested MySQL database, however sonlib is not compiled with MySql support");
-#endif
-        break;
-    default:
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "BUG: unrecognized database type");
-    }
+    //URL format: jdbc:mysql://[host][:port]/[database][?property1][=value1]...
+
+
+    stKVDatabase_initialise_tokyoCabinet(database);
     return database;
 }
 
 void stKVDatabase_destruct(stKVDatabase *database) {
     if (!database->deleted) {
-        database->destruct(database);
+        database->destruct(database->database);
     }
-    stKVDatabaseConf_destruct(database->conf);
+    free(database->url);
     free(database);
+}
+
+const char *stKVDatabase_getURL(stKVDatabase *database) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "The database has already been deleted, so there is no URL\n");
+    }
+    return database->url;
 }
 
 void stKVDatabase_deleteFromDisk(stKVDatabase *database) {
@@ -47,34 +47,22 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to delete a database that has already been deleted\n");
     }
-    database->delete(database);
+    database->delete(database->database, stKVDatabase_getURL(database));
     database->deleted = 1;
 }
 
-void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
+void stKVDatabase_writeRecord(stKVDatabase *database, int64_t key,
         const void *value, int64_t sizeOfRecord) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to insert a record into a database that has been deleted\n");
+                "Trying to write a record into a database that has been deleted\n");
     }
     if (!database->transactionStarted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to insert a record, but no transaction has been started\n");
+                "Tried to write a record, but no transaction has been started\n");
     }
-    database->insertRecord(database, key, value, sizeOfRecord);
-}
-
-void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
-        const void *value, int64_t sizeOfRecord) {
-    if (database->deleted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to udpade a record in a database that has been deleted\n");
-    }
-    if (!database->transactionStarted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to udapte a record, but no transaction has been started\n");
-    }
-    database->updateRecord(database, key, value, sizeOfRecord);
+    database->writeRecord(database->database, database->applyCompression, key,
+            value, sizeOfRecord);
 }
 
 int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database) {
@@ -82,7 +70,7 @@ int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to get the number of records from a database that has been deleted\n");
     }
-    return database->numberOfRecords(database);
+    return database->numberOfRecords(database->database);
 }
 
 void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
@@ -90,7 +78,8 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to get a record from a database that has already been deleted\n");
     }
-    return database->getRecord(database, key);
+    return database->getRecord(database->database, database->applyCompression,
+            key);
 }
 
 void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
@@ -102,7 +91,7 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Tried to remove a record, but no transaction has been started\n");
     }
-    database->removeRecord(database, key);
+    database->removeRecord(database->database, key);
 }
 
 void stKVDatabase_startTransaction(stKVDatabase *database) {
@@ -114,7 +103,7 @@ void stKVDatabase_startTransaction(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Tried to start a transaction, but one was already started\n");
     }
-    database->startTransaction(database);
+    database->startTransaction(database->database);
     database->transactionStarted = 1;
 }
 
@@ -127,10 +116,6 @@ void stKVDatabase_commitTransaction(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Tried to commit a transaction, but none was started\n");
     }
-    database->commitTransaction(database);
+    database->commitTransaction(database->database);
     database->transactionStarted = 0;
-}
-
-stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database) {
-    return database->conf;
 }

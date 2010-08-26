@@ -2,13 +2,10 @@
  * Wrappers for C library functions that exit on errors.
  */
 #include "stSafeC.h"
-#include "sonLibExcept.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-
-const char *ST_SAFEC_NUM_CONVERT_EXCEPTION_ID = "ST_SAFEC_NUM_CONVERT_EXCEPTION_ID";
 
 /* Abort function that doesn't allocate any memory */
 void stSafeCErr(const char *msg, ...)  {
@@ -26,7 +23,7 @@ void stSafeCErr(const char *msg, ...)  {
 void *stSafeCMalloc(size_t size) {
     void *mem = malloc(size);
     if (mem == NULL) {
-        stSafeCErr("can't allocate %zd bytes of memory", size);
+        stSafeCErr("can't allocate %z bytes of memory", size);
     }
     return mem;
 }
@@ -41,16 +38,9 @@ void *stSafeCCalloc(size_t size) {
 /* Reallocated memory. */
 void *stSafeCRealloc(void *mem, size_t size) {
     if ((mem = realloc(mem, size)) == NULL) {
-        stSafeCErr("can't reallocate %zd bytes of memory", size);
+        stSafeCErr("can't reallocate %z bytes of memory", size);
     }
     return mem;
-}
-
-/* copy a block of memory */
-void *stSafeCCopyMem(void *mem, size_t size) {
-    void *mem2 = stSafeCMalloc(size);
-    memcpy(mem2, mem, size);
-    return mem2;
 }
 
 /* sprintf format with buffer overflow checking. */
@@ -102,23 +92,3 @@ char *stSafeCDynFmt(const char *format, ...) {
     return buf;
 }
 
-
-/* convert a string to a 32 unsigned int, exception if invalid */
-uint32_t stSafeStrToUInt32(const char *str) {
-    char *end;
-    long num = strtol(str, &end, 10);
-    if ((end == str) || (*end != '\0') || (num < 0)) {
-        stThrowNew(ST_SAFEC_NUM_CONVERT_EXCEPTION_ID, "invalid 32-bit unsigned integer: \"%s\"", str);
-    }
-    return num;
-}
-
-/* convert a string to a 64 int, exception if invalid */
-int64_t stSafeStrToInt64(const char *str) {
-    char *end;
-    long long num = strtoll(str, &end, 10);
-    if ((end == str) || (*end != '\0')) {
-        stThrowNew(ST_SAFEC_NUM_CONVERT_EXCEPTION_ID, "invalid 64-bit signed integer: \"%s\"", str);
-    }
-    return num;
-}

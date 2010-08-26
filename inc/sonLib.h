@@ -19,6 +19,5 @@
 #include "sonLibExcept.h"
 #include "sonLibRandom.h"
 #include "sonLibKVDatabase.h"
-#include "sonLibKVDatabaseConf.h"
 
 #endif /* SONLIB_H_ */

@@ -15,11 +15,10 @@ extern const char *ST_KV_DATABASE_EXCEPTION_ID;
 ////////////////////////////////////////////////
 
 /*
- * Constructs a non-relational database object, using the given configuration
- * information to connect to the database.  Create the database if create is
- * true, otherwise it must exist.
+ * Constructs a non-relational database object, using the given url to connect to the
+ * database.
  */
-stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create);
+stKVDatabase *stKVDatabase_construct(const char *url, bool applyCompression);
 
 /*
  * Destructs a database. If the destruction occurs during a transaction the transaction
@@ -29,20 +28,20 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create);
 void stKVDatabase_destruct(stKVDatabase *database);
 
 /*
+ * Get the URL of the database.
+ */
+const char *stKVDatabase_getURL(stKVDatabase *database);
+
+/*
  * Removes the database from the disk. Any further operations on the database will
  * create an exception, so you should generally destruct the object after calling this function.
  */
 void stKVDatabase_deleteFromDisk(stKVDatabase *database);
 
 /*
- * Add a new a key/value record into the table. Throws an exception if unsuccessful.
+ * Writes a key value record to the table. Throws an exception if unsuccessful.
  */
-void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
-
-/*
- * Update an existing key/value record in the table. Throws an exception if unsuccessful.
- */
-void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
+void stKVDatabase_writeRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
 /*
  * Returns number of records in database.
@@ -70,9 +69,5 @@ void stKVDatabase_startTransaction(stKVDatabase *database);
  */
 void stKVDatabase_commitTransaction(stKVDatabase *database);
 
-/*
- * get the configuration object for the database.
- */
-stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database);
 
 #endif
