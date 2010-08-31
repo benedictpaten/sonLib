@@ -35,6 +35,6 @@ typedef struct stAlignBlock stAlignBlock;
 typedef struct stAlignBlockIterator stAlignBlockIterator;
 typedef struct stAlignSegment stAlignSegment;
 typedef struct stKVDatabase stKVDatabase;
-typedef struct stKVTable stKVTable;
+typedef struct stKVDatabaseConf stKVDatabaseConf;
 
 #endif /* SONLIBGLOBALS_H_ */
