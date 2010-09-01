@@ -52,8 +52,11 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host,
 
 static void getExpectedToken(char **tokenStream, const char *expected) {
     char *cA = stString_getNextWord(tokenStream);
-    if(strcmp(cA, expected) != 0) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "BUG: expected the token: %s in database XML string, but I got: %s from the stream %s", expected, cA, *tokenStream);
+    if (strcmp(cA, expected) != 0) {
+        stThrowNew(
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "BUG: expected the token: %s in database XML string, but I got: %s from the stream %s",
+                expected, cA, *tokenStream);
     }
     free(cA);
 }
@@ -67,7 +70,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
     stKVDatabaseConf *databaseConf;
     char *toReplace[7] = { "</", "<", "/>", ">", "=", "\"", "'" };
     char *cA = stString_replace(xmlString, toReplace[0], " "), *cA2;
-    for(int32_t i=1; i<7; i++) {
+    for (int32_t i = 1; i < 7; i++) {
         cA2 = stString_replace(cA, toReplace[i], " ");
         free(cA);
         cA = cA2;
@@ -82,22 +85,49 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
     } else {
         assert(strcmp(type, "mysql") == 0);
         getExpectedToken(&cA2, "mysql");
-        char *host = getKeyValue(&cA2, "host");
-        char *portString = getKeyValue(&cA2, "port");
-        uint32_t port;
-        int32_t i = sscanf(portString, "%ui", &port);
+        stHash *hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey,
+                free, free);
+        for (int32_t i = 0; i < 5; i++) {
+            char *key = stString_getNextWord(&cA2);
+            char *value = stString_getNextWord(&cA2);
+            if (key == NULL || value == NULL) {
+                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "tried to get a key value pair from the MYSQL database conf string, but failed");
+            }
+            if (stHash_search(hash, key) != NULL) {
+                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "got a duplicate entry in the MYSQL conf string");
+            }
+            stHash_insert(hash, key, value);
+        }
+        char *errorString = "did not find a %s value in the MYSQL string";
+        if (stHash_search(hash, "host") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "host");
+        }
+        if (stHash_search(hash, "port") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "port");
+        }
+        if (stHash_search(hash, "user") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "user");
+        }
+        if (stHash_search(hash, "password") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "password");
+        }
+        if (stHash_search(hash, "database_name") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString,
+                    "database_name");
+        }
+        if (stHash_search(hash, "table_name") == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "table_name");
+        }
+        uint32_t port; //Parse the port integer
+        int32_t i = sscanf(stHash_search(hash, "port"), "%ui", &port);
         assert(i == 1);
-        char *user = getKeyValue(&cA2, "user");
-        char *password = getKeyValue(&cA2, "password");
-        char *databaseName = getKeyValue(&cA2, "database_name");
-        char *tableName = getKeyValue(&cA2, "table_name");
-        databaseConf = stKVDatabaseConf_constructMySql(host, port, user, password, databaseName, tableName);
-        free(host);
-        free(portString);
-        free(user);
-        free(password);
-        free(databaseName);
-        free(tableName);
+        databaseConf = stKVDatabaseConf_constructMySql(stHash_search(hash,
+                "host"), port, stHash_search(hash, "user"), stHash_search(hash,
+                "password"), stHash_search(hash, "database_name"),
+                stHash_search(hash, "table_name"));
+        stHash_destruct(hash);
     }
     free(type);
     free(cA);

@@ -13,20 +13,20 @@ struct _stHash {
     bool destructKeys, destructValues;
 };
 
-static uint32_t st_hash_key( const void *k ) {
+static uint32_t stHash_key( const void *k ) {
     return (uint32_t)(size_t)k;
 }
 
-static int st_hash_equalKey( const void *key1, const void *key2 ) {
+static int stHash_equalKey( const void *key1, const void *key2 ) {
     return key1 == key2;
 }
 
 stHash *stHash_construct(void) {
-    return stHash_construct3(st_hash_key, st_hash_equalKey, NULL, NULL);
+    return stHash_construct3(stHash_key, stHash_equalKey, NULL, NULL);
 }
 
 stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
-    return stHash_construct3(st_hash_key, st_hash_equalKey, destructKeys, destructValues);
+    return stHash_construct3(stHash_key, stHash_equalKey, destructKeys, destructValues);
 }
 
 stHash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
@@ -108,4 +108,24 @@ stList *stHash_getValues(stHash *hash) {
     }
     stHash_destructIterator(iterator);
     return list;
+}
+
+/*
+ * Useful hash keys/equals functions
+ */
+
+uint32_t stHash_stringKey( const void *k ) {
+    uint32_t i, j;
+    const char *cA;
+
+    cA = k;
+    j = 0;
+    for(i=0; i<strlen(cA) && i<10; i++) {
+        j += cA[i];
+    }
+    return j;
+    }
+
+int stHash_stringEqualKey( const void *key1, const  void *key2 ) {
+    return strcmp(key1, key2) == 0;
 }

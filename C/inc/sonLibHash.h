@@ -81,4 +81,18 @@ stList *stHash_getKeys(stHash *hash);
  */
 stList *stHash_getValues(stHash *hash);
 
+/*
+ * Useful hash keys..
+ */
+
+/*
+ * A hash function for a char string.
+ */
+uint32_t stHash_stringKey( const void *k );
+
+/*
+ * A hash equals function for two char strings.
+ */
+int stHash_stringEqualKey( const void *key1, const  void *key2 );
+
 #endif

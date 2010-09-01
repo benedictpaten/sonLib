@@ -245,8 +245,9 @@ def parseBasicOptions(parser):
     
     return options, args
 
-def parseSuiteTestOptions():
-    parser = getBasicOptionParser("usage: %prog [options]", "%prog 0.1")
+def parseSuiteTestOptions(parser=None):
+    if parser == None:
+        parser = getBasicOptionParser("usage: %prog [options]", "%prog 0.1")
     
     parser.add_option("--testLength", dest="testLength", type="string",
                      help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG",
