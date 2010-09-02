@@ -45,20 +45,34 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *
 void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
 /*
- * Returns number of records in database.
- */
-int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database);
-
-/*
  * Gets a record from the database, given the key. The record is in newly allocated memory, and must be freed.
  * Returns NULL if the database does not contain the given record.
  */
 void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key);
 
 /*
+ * Gets a record from the database, given the key. The record is in newly allocated memory, and must be freed.
+ * Returns NULL if the database does not contain the given record. Puts the size of the record in the in the record size field.
+ */
+void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize);
+
+/*
  * Removes a record from the database. Throws an exception if unsuccessful.
  */
 void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key);
+
+/*
+ * Gets a record from the database, given the key. This function allows the partial retrieval of a record, using the
+ * given offset and the size of the requested retrieval. The function should thrpw an exception if the record does
+ * not exist (in contrast to stKVDatabase_getRecord) and similarly should throw an exception if the requested region lies
+ * outside of the bounds of the record.
+ */
+void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes);
+
+/*
+ * Returns number of records in database.
+ */
+int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database);
 
 /*
  * Starts a transaction with the database. Throws an exception if unsuccessful.

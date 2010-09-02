@@ -12,7 +12,7 @@
 const char *ST_KV_DATABASE_EXCEPTION_ID = "ST_KV_DATABASE_EXCEPTION";
 
 stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
-    stKVDatabase *database = st_malloc(sizeof(struct stKVDatabase));
+    stKVDatabase *database = st_calloc(1, sizeof(struct stKVDatabase));
     database->conf = stKVDatabaseConf_constructClone(conf);
     database->transactionStarted = 0;
     database->deleted = 0;
@@ -91,6 +91,22 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
                 "Trying to get a record from a database that has already been deleted\n");
     }
     return database->getRecord(database, key);
+}
+
+void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get a record from a database that has already been deleted\n");
+    }
+    return database->getRecord2(database, key, recordSize);
+}
+
+void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                    "Trying to get a record from a database that has already been deleted\n");
+    }
+    return database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes);
 }
 
 void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {

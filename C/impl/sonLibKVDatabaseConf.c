@@ -50,8 +50,20 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host,
     return conf;
 }
 
+char *getNextToken(char **tokenStream) {
+    char *token = stString_getNextWord(tokenStream);
+    if(token != NULL) {
+        char *cA = stString_replace(token, "\"", "");
+        free(token);
+        token = stString_replace(cA, "'", "");
+        free(cA);
+    }
+    //st_uglyf("The token is %s\n", token);
+    return token;
+}
+
 static void getExpectedToken(char **tokenStream, const char *expected) {
-    char *cA = stString_getNextWord(tokenStream);
+    char *cA = getNextToken(tokenStream);
     if (strcmp(cA, expected) != 0) {
         stThrowNew(
                 ST_KV_DATABASE_EXCEPTION_ID,
@@ -63,14 +75,14 @@ static void getExpectedToken(char **tokenStream, const char *expected) {
 
 static char *getKeyValue(char **tokenStream, const char *key) {
     getExpectedToken(tokenStream, key);
-    return stString_getNextWord(tokenStream);
+    return getNextToken(tokenStream);
 }
 
 stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
     stKVDatabaseConf *databaseConf;
-    char *toReplace[7] = { "</", "<", "/>", ">", "=", "\"", "'" };
+    char *toReplace[5] = { "</", "<", "/>", ">", "=" };
     char *cA = stString_replace(xmlString, toReplace[0], " "), *cA2;
-    for (int32_t i = 1; i < 7; i++) {
+    for (int32_t i = 1; i < 5; i++) {
         cA2 = stString_replace(cA, toReplace[i], " ");
         free(cA);
         cA = cA2;
@@ -87,9 +99,9 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
         getExpectedToken(&cA2, "mysql");
         stHash *hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey,
                 free, free);
-        for (int32_t i = 0; i < 5; i++) {
-            char *key = stString_getNextWord(&cA2);
-            char *value = stString_getNextWord(&cA2);
+        for (int32_t i = 0; i < 6; i++) {
+            char *key = getNextToken(&cA2);
+            char *value = getNextToken(&cA2);
             if (key == NULL || value == NULL) {
                 stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                         "tried to get a key value pair from the MYSQL database conf string, but failed");
@@ -100,25 +112,25 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
             }
             stHash_insert(hash, key, value);
         }
-        char *errorString = "did not find a %s value in the MYSQL string";
+        char *errorString = "did not find a %s value in the MYSQL string: %s";
         if (stHash_search(hash, "host") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "host");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "host", xmlString);
         }
         if (stHash_search(hash, "port") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "port");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "port", xmlString);
         }
         if (stHash_search(hash, "user") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "user");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "user", xmlString);
         }
         if (stHash_search(hash, "password") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "password");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "password", xmlString);
         }
         if (stHash_search(hash, "database_name") == NULL) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString,
                     "database_name");
         }
         if (stHash_search(hash, "table_name") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "table_name");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "table_name", xmlString);
         }
         uint32_t port; //Parse the port integer
         int32_t i = sscanf(stHash_search(hash, "port"), "%ui", &port);

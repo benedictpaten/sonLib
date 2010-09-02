@@ -19,6 +19,8 @@ struct stKVDatabase {
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     int64_t (*numberOfRecords)(stKVDatabase *);
     void *(*getRecord)(stKVDatabase *, int64_t key);
+    void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
+    void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes);
     void (*removeRecord)(stKVDatabase *, int64_t key);
     void (*startTransaction)(stKVDatabase *);
     void (*commitTransaction)(stKVDatabase *);

@@ -86,11 +86,32 @@ static int64_t numberOfRecords(stKVDatabase *database) {
     return tcbdbrnum(dbImpl);
 }
 
-static void *getRecord(stKVDatabase *database, int64_t key) {
+static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
     TCBDB *dbImpl = database->dbImpl;
     //Return value must be freed.
-    int32_t i; //the size is ignored
-    return tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
+    int32_t i;
+    void *record = tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
+    *recordSize = i;
+    return record;
+}
+
+static void *getRecord(stKVDatabase *database, int64_t key) {
+    int64_t i;
+    return getRecord2(database, key, &i);
+}
+
+static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+    int64_t recordSize;
+    char *record = getRecord2(database, key, &recordSize);
+    if(record == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The record does not exist: %lld for partial retrieval", (long long)key);
+    }
+    if(zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset + sizeInBytes > recordSize) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, record size: %lld, requested start: %lld, requested size: %lld", (long long)recordSize, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
+    }
+    void *partialRecord = memcpy(st_malloc(sizeInBytes), record + zeroBasedByteOffset, sizeInBytes);
+    free(record);
+    return partialRecord;
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
@@ -125,6 +146,8 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->updateRecord = updateRecord;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getRecord2 = getRecord2;
+    database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;

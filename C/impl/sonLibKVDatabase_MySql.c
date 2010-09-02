@@ -198,6 +198,16 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
     return data;
 }
 
+static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfRecord) {
+    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Not implemented");
+    return NULL;
+}
+
+static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Not implemented");
+    return NULL;
+}
+
 static void removeRecord(stKVDatabase *database, int64_t key) {
     MySqlDb *dbImpl = database->dbImpl;
     sqlExec(dbImpl, "delete from %s where id=%lld", dbImpl->table, (long long)key);
@@ -226,6 +236,8 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->updateRecord = updateRecord;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getRecord2 = getRecord2;
+    database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
