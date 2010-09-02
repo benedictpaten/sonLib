@@ -98,6 +98,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
         stList_append(recordSizes, stIntTuple_construct(1, size));
         stKVDatabase_insertRecord(database, i, randomRecord, size);
     }
+    stKVDatabase_commitTransaction(database);
 
     while (st_random() > 0.001) {
         int32_t recordKey = st_randomInt(0, stList_length(records));
@@ -152,7 +153,6 @@ static void partialRecordRetrieval(CuTest *testCase) {
     stList_destruct(records);
     stList_destruct(recordSizes);
 
-    stKVDatabase_commitTransaction(database);
     teardown();
 }
 

@@ -186,26 +186,42 @@ static int64_t numberOfRecords(stKVDatabase *database) {
     return numRecords;
 }
 
-static void *getRecord(stKVDatabase *database, int64_t key) {
+static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfRecord) {
     MySqlDb *dbImpl = database->dbImpl;
     MYSQL_RES *rs = queryStart(dbImpl, "select data from %s where id=%lld", dbImpl->table,  (long long)key);
     char **row = queryNext(dbImpl, rs);
     void *data = NULL;
+    int64_t readLen = 0;
     if (row != NULL) {
-        data = stSafeCCopyMem(row[0], queryLengths(dbImpl, rs)[0]);
+        readLen = queryLengths(dbImpl, rs)[0];
+        data = stSafeCCopyMem(row[0], readLen);
     }
     queryEnd(dbImpl, rs);
+    if (sizeOfRecord != NULL) {
+        *sizeOfRecord = readLen;
+    }
     return data;
 }
 
-static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfRecord) {
-    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Not implemented");
-    return NULL;
+static void *getRecord(stKVDatabase *database, int64_t key) {
+    return getRecord2(database, key, NULL);
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
-    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Not implemented");
-    return NULL;
+    MySqlDb *dbImpl = database->dbImpl;
+    MYSQL_RES *rs = queryStart(dbImpl, "select substring(data, %lld, %lld) from %s where id=%lld", (long long)zeroBasedByteOffset+1, (long long)sizeInBytes, dbImpl->table, (long long)key);
+    char **row = queryNext(dbImpl, rs);
+    void *data = NULL;
+    int64_t readLen = 0;
+    if (row != NULL) {
+        readLen = queryLengths(dbImpl, rs)[0];
+        data = stSafeCCopyMem(row[0], readLen);
+    }
+    queryEnd(dbImpl, rs);
+    if (readLen != sizeInBytes) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "partial read of key %lld, expected %lld bytes got %lld bytes", (long long)key, (long long)sizeInBytes, (long long)readLen);
+    }
+    return data;
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
