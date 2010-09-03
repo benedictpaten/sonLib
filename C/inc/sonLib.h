@@ -20,5 +20,8 @@
 #include "sonLibRandom.h"
 #include "sonLibKVDatabase.h"
 #include "sonLibKVDatabaseConf.h"
+#include "sonLibCompression.h"
+
+
 
 #endif /* SONLIB_H_ */

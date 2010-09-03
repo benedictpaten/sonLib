@@ -18,7 +18,7 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 0
+#if 1
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
 #elif 0
         //host="localhost" port="0" user="root" password="" database_name="cactus"
@@ -215,8 +215,8 @@ static void testTransactions(CuTest *testCase) {
  */
 static void bigRecordRetrieval(CuTest *testCase) {
     setup();
-    for (int32_t i = 0; i < 5; i++) {
-        int32_t size = st_randomInt(0, 10000000);
+    for (int32_t i = 0; i < 10; i++) {
+        int32_t size = st_randomInt(5000000, 10000000);
         char *randomRecord = st_malloc(size * sizeof(char));
         for (int32_t j = 0; j < size; j++) {
             randomRecord[j] = (char) st_randomInt(0, 100);
