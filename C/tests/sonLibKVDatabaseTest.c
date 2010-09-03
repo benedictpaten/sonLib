@@ -18,12 +18,13 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 1
+#if 0
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
-#else
+#elif 0
         //host="localhost" port="0" user="root" password="" database_name="cactus"
         conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
-        //conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
+#else
+        conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
 #endif
     }
     return conf;

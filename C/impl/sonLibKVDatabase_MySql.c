@@ -34,14 +34,29 @@ __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
+/* create an exception for the current MySQL error */
+static stExcept *createMySqlExceptv(MySqlDb *dbImpl, const char *msg, va_list args) {
+    char *fmtMsg = stSafeCDynFmtv(msg, args);
+    stExcept *except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), mysql_errno(dbImpl->conn));
+    stSafeCFree(fmtMsg);
+    return except;
+}
+
+/* create an exception for the current MySQL error */
+static stExcept *createMySqlExcept(MySqlDb *dbImpl, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    stExcept *except = createMySqlExceptv(dbImpl, msg, args);
+    va_end(args);
+    return except;
+}
+
 /* generate an exception for the current MySQL error */
 static void throwMySqlExcept(MySqlDb *dbImpl, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    char *fmtMsg = stSafeCDynFmtv(msg, args);
+    stExcept *except = createMySqlExceptv(dbImpl, msg, args);
     va_end(args);
-    stExcept *except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), mysql_errno(dbImpl->conn));
-    stSafeCFree(fmtMsg);
     stThrow(except);
 }
 
@@ -97,9 +112,47 @@ static size_t *queryLengths(MySqlDb *dbImpl, MYSQL_RES *rs) {
     return lens;
 }
 
+// collect warnings into an array
+static int getWarnings(MySqlDb *dbImpl, int maxToReport, char **warnings) {
+    int numReturned = 0;
+    MYSQL_RES *rs = queryStart(dbImpl, "show warnings limit %d", maxToReport);
+    char **row;
+    while ((row = queryNext(dbImpl, rs)) != NULL) {
+        if (numReturned < maxToReport) {
+            warnings[numReturned++] = stSafeCDynFmt("%s: %s (%s)", row[0], row[2], row[1]);
+        }
+    }
+    mysql_free_result(rs);
+    return numReturned;
+}
+
+// collect warnings, concat into a string
+static char *getWarningsStr(MySqlDb *dbImpl) {
+    static const int maxToReport = 5;
+    char *warnings[maxToReport];
+    int numReturned = getWarnings(dbImpl, maxToReport, warnings);
+    char *warningsStr = stString_join("\n", (const char**)warnings, numReturned);
+    for (int i = 0; i < numReturned; i++) {
+        stSafeCFree(warnings[i]);
+    }
+    return warningsStr;
+}
+
+// and throw an expection
+static void throwWarnings(MySqlDb *dbImpl) {
+    int numWarnings = mysql_warning_count(dbImpl->conn);
+    char *warningsStr = getWarningsStr(dbImpl);
+    stExcept *ex = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "MySQL request had %d warning(s), possible data lose: %s", numWarnings, warningsStr);
+    stSafeCFree(warningsStr);
+    stThrow(ex);
+}
+
 static void queryEnd(MySqlDb *dbImpl, MYSQL_RES *rs) {
     if (rs != NULL) {
         mysql_free_result(rs);
+    }
+    if (mysql_warning_count(dbImpl->conn) != 0) {
+        throwWarnings(dbImpl);
     }
 }
 
@@ -123,16 +176,32 @@ static void sqlExec(MySqlDb *dbImpl, char *query, ...) {
     queryEnd(dbImpl, rs);
 }
 
+/* disconnect and free MySqlDb object */
+static void disconnect(MySqlDb *dbImpl) {
+    if (dbImpl->conn != NULL) {
+        mysql_close(dbImpl->conn);
+    }
+    stSafeCFree(dbImpl->table);
+    stSafeCFree(dbImpl);
+}
+
 /* connect to a database server */
 static MySqlDb *connect(stKVDatabaseConf *conf) {
     MySqlDb *dbImpl = stSafeCCalloc(sizeof(MySqlDb));
     if ((dbImpl->conn = mysql_init(NULL)) == NULL) {
+        disconnect(dbImpl);
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "mysql_init failed");
     }
     if (mysql_real_connect(dbImpl->conn, stKVDatabaseConf_getHost(conf), stKVDatabaseConf_getUser(conf), stKVDatabaseConf_getPassword(conf), stKVDatabaseConf_getDatabaseName(conf), stKVDatabaseConf_getPort(conf), NULL, 0) == NULL) {
-        throwMySqlExcept(dbImpl, "failed to connect to MySql database: %s on %s as user %s",
-                         stKVDatabaseConf_getDatabaseName(conf), stKVDatabaseConf_getHost(conf), stKVDatabaseConf_getUser(conf));
+        stExcept *ex = createMySqlExcept(dbImpl, "failed to connect to MySql database: %s on %s as user %s",
+                                         stKVDatabaseConf_getDatabaseName(conf), stKVDatabaseConf_getHost(conf), stKVDatabaseConf_getUser(conf));
+        disconnect(dbImpl);
+        stThrow(ex);
     }
+
+    // disable report of notes, so only warnings and errors come back
+    sqlExec(dbImpl, "set sql_notes=0");
+
     dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
 
     // NOTE: commit will not return an error, this does row-level locking on
@@ -145,14 +214,12 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
 /* create the keyword/value table */
 static void createKVTable(MySqlDb *dbImpl) {
     sqlExec(dbImpl, "drop table if exists %s", dbImpl->table);
-    sqlExec(dbImpl, "create table %s (id bigint primary key, data blob) type=INNODB;", dbImpl->table);
+    sqlExec(dbImpl, "create table %s (id bigint primary key, data longblob) engine=INNODB;", dbImpl->table);
 }
 
 static void destructDB(stKVDatabase *database) {
     MySqlDb *dbImpl = database->dbImpl;
-    mysql_close(dbImpl->conn);
-    stSafeCFree(dbImpl->table);
-    stSafeCFree(dbImpl);
+    disconnect(dbImpl);
     database->dbImpl = NULL;
 }
 
