@@ -3,8 +3,11 @@
 
 #include "sonLibTypes.h"
 
-//The exception string
+// General database exception id 
 extern const char *ST_KV_DATABASE_EXCEPTION_ID;
+
+// Dead lock exception, transaction should be retried
+extern const char *ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID;
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -83,6 +86,11 @@ void stKVDatabase_startTransaction(stKVDatabase *database);
  * Commits the transaction to the database. Throws an exception if unsuccessful.
  */
 void stKVDatabase_commitTransaction(stKVDatabase *database);
+
+/*
+ * Abort the current transaction. Throws an exception if unsuccessful.
+ */
+void stKVDatabase_abortTransaction(stKVDatabase *database);
 
 /*
  * get the configuration object for the database.

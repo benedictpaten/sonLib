@@ -37,7 +37,8 @@ __attribute__((format(printf, 2, 3)))
 /* create an exception for the current MySQL error */
 static stExcept *createMySqlExceptv(MySqlDb *dbImpl, const char *msg, va_list args) {
     char *fmtMsg = stSafeCDynFmtv(msg, args);
-    stExcept *except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), mysql_errno(dbImpl->conn));
+    const char *exId = (mysql_errno(dbImpl->conn) == ER_LOCK_DEADLOCK) ?  ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
+    stExcept *except = stExcept_new(exId, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), mysql_errno(dbImpl->conn));
     stSafeCFree(fmtMsg);
     return except;
 }
@@ -315,6 +316,11 @@ static void commitTransaction(stKVDatabase *database) {
     sqlExec(dbImpl, "commit;");
 }
 
+static void abortTransaction(stKVDatabase *database) {
+    MySqlDb *dbImpl = database->dbImpl;
+    sqlExec(dbImpl, "rollback;");
+}
+
 //initialisation function
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = connect(conf);
@@ -329,6 +335,7 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->removeRecord = removeRecord;
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
+    database->abortTransaction = abortTransaction;
     if (create) {
         createKVTable(database->dbImpl);
     }

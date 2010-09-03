@@ -24,6 +24,7 @@ struct stKVDatabase {
     void (*removeRecord)(stKVDatabase *, int64_t key);
     void (*startTransaction)(stKVDatabase *);
     void (*commitTransaction)(stKVDatabase *);
+    void (*abortTransaction)(stKVDatabase *);
 };
 
 /*

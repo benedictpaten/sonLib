@@ -136,6 +136,13 @@ static void commitTransaction(stKVDatabase *database) {
     }
 }
 
+static void abortTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbtranabort(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to abort a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
 //initialisation function
 
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
@@ -151,5 +158,6 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->removeRecord = removeRecord;
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
+    database->abortTransaction = abortTransaction;
 }
 
