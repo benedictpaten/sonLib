@@ -205,7 +205,7 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
     // set max sizes of an sql statment to 1G.  This must also be specified
     // for the server by adding "max_allowed_packet = 1G" to the [mysqld]
     // section of my.cnf
-    sqlExec(dbImpl, "set max_allowed_packet=1073741824");
+    sqlExec(dbImpl, "set global max_allowed_packet=1073741824");
 
     dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
 
