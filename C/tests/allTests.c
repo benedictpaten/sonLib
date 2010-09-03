@@ -14,7 +14,6 @@ CuSuite* sonLib_stKVDatabaseTestSuite(void);
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
-#if 0
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
     CuSuiteAddSuite(suite, sonLibETreeTestSuite());
     CuSuiteAddSuite(suite, sonLibStringTestSuite());
@@ -24,7 +23,6 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
     CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
-#endif
     CuSuiteAddSuite(suite, sonLib_stKVDatabaseTestSuite());
 
     CuSuiteRun(suite);
