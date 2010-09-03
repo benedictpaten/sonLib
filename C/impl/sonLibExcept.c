@@ -69,10 +69,20 @@ stExcept *stExcept_getCause(const stExcept *except) {
     return except->cause;
 }
 
+static void handleUncaught(stExcept *except) {
+    fflush(stdout);
+    fprintf(stderr, "Exception: %s: %s\n", except->id, except->msg);
+    for (stExcept *cause = except->cause; cause != NULL; cause = cause->cause) {
+        fprintf(stderr, "\tcaused by: %s: %s\n", cause->id, cause->msg);
+    }
+    fflush(stderr);
+    stSafeCErr("Uncaught exception");
+}
+
 void stThrow(stExcept *except) {
     assert(except != NULL);
     if (_cexceptTOS == NULL) {
-        stSafeCErr("Exception: %s: %s", except->id, except->msg);
+        handleUncaught(except);
     }
     _cexceptTOS->except = except;
     longjmp(_cexceptTOS->env, 1);
