@@ -65,12 +65,12 @@ static MYSQL_RES *queryStartv(MySqlDb *dbImpl, const char *query, va_list args) 
     char *sql = stSafeCDynFmtv(query, args);
     if (mysql_real_query(dbImpl->conn, sql, strlen(sql)) != 0) {
         stSafeCFree(sql);
-        throwMySqlExcept(dbImpl, "query failed \"%s\"", sql);
+        throwMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
     }
     MYSQL_RES *rs = mysql_use_result(dbImpl->conn);
     if ((rs == NULL) && (mysql_errno(dbImpl->conn) != 0)) {
         stSafeCFree(sql);
-        throwMySqlExcept(dbImpl, "query failed \"%s\"", sql);
+        throwMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
     }
     stSafeCFree(sql);
     return rs;
