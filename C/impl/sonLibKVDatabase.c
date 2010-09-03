@@ -72,7 +72,7 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
     stTry {
         database->insertRecord(database, key, value, sizeOfRecord);
     } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_insertRecord key %lld failed", (long long)key);
+        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_insertRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
     } stTryEnd;
 }
 
@@ -89,7 +89,7 @@ void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
     stTry {
         database->updateRecord(database, key, value, sizeOfRecord);
     } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_updateRecord key %lld failed", (long long)key);
+        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_updateRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
     } stTryEnd;
 }
 
@@ -144,7 +144,7 @@ void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t
     stTry {
         data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes);
     } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getPartialRecord key %lld failed", (long long)key);
+        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getPartialRecord key %lld offset %lld size %lld failed", (long long)key, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
     } stTryEnd;
     return data;
 }
