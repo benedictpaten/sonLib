@@ -21,13 +21,17 @@ static stKVDatabaseConf *getConf() {
 #if 1
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
 #else
-        conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
+        //host="localhost" port="0" user="root" password="" database_name="cactus"
+        conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
+        //conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
 #endif
     }
     return conf;
 }
 
 static void setup() {
+    teardown();
+    database = stKVDatabase_construct(getConf(), true);
     teardown();
     database = stKVDatabase_construct(getConf(), true);
 }
@@ -90,13 +94,14 @@ static void partialRecordRetrieval(CuTest *testCase) {
             (void(*)(void *)) stIntTuple_destruct);
     for (int32_t i = 0; i < 100; i++) {
         int32_t size = st_randomInt(0, 100000);
-        char *randomRecord = st_malloc(size);
+        char *randomRecord = st_malloc(size*sizeof(char));
         for(int32_t j=0; j<size; j++) {
             randomRecord[j] = (char)st_randomInt(0, 100);
         }
         stList_append(records, randomRecord);
         stList_append(recordSizes, stIntTuple_construct(1, size));
-        stKVDatabase_insertRecord(database, i, randomRecord, size);
+        stKVDatabase_insertRecord(database, i, randomRecord, size*sizeof(char));
+        //st_uglyf("I am creating the record %i %i\n", i, size);
     }
     stKVDatabase_commitTransaction(database);
 
@@ -109,8 +114,13 @@ static void partialRecordRetrieval(CuTest *testCase) {
         //Get partial record
         int32_t start = st_randomInt(0, size);
         int32_t partialSize = st_randomInt(start, size) - start;
+        assert(start >= 0);
+        assert(start < size);
+        assert(partialSize >= 0);
+        assert(partialSize + start <= size);
+        //st_uglyf("I am getting record %i %i %i %i\n", recordKey, start, partialSize, size);
         char *partialRecord = stKVDatabase_getPartialRecord(database,
-                recordKey, start, partialSize);
+                recordKey, start*sizeof(char), partialSize*sizeof(char));
 
         //Check they are equivalent..
         for (int32_t i = 0; i < partialSize; i++) {
@@ -199,10 +209,37 @@ static void testTransactions(CuTest *testCase) {
     teardown();
 }
 
+/*
+ * Retrieves really long records from the database.
+ */
+static void bigRecordRetrieval(CuTest *testCase) {
+    setup();
+    for (int32_t i = 0; i < 5; i++) {
+        int32_t size = st_randomInt(0, 10000000);
+        char *randomRecord = st_malloc(size * sizeof(char));
+        for (int32_t j = 0; j < size; j++) {
+            randomRecord[j] = (char) st_randomInt(0, 100);
+        }
+        stKVDatabase_startTransaction(database);
+        stKVDatabase_insertRecord(database, i, randomRecord, size
+                * sizeof(char));
+        stKVDatabase_commitTransaction(database);
+        //st_uglyf("I am creating the record %i %i\n", i, size);
+        //Check they are equivalent.
+        int64_t size2;
+        char *randomRecord2 = stKVDatabase_getRecord2(database, i, &size2);
+        CuAssertTrue(testCase, size == size2);
+        for (int32_t j = 0; j < size; j++) {
+            CuAssertTrue(testCase, randomRecord[j] == randomRecord2[j]);
+        }
+    }
+    teardown();
+}
+
 /* Check that all tuple records in a set are present and have the expect
  * value.  The expected value in the set is multiplied by valueMult to get
  * the actual expected value */
-static void readWriteAndRemoveRecordsBigCheck(CuTest *testCase,
+static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase,
         stSortedSet *set, int valueMult) {
     CuAssertIntEquals(testCase, stSortedSet_size(set), stKVDatabase_getNumberOfRecords(database));
     stSortedSetIterator *it = stSortedSet_getIterator(set);
@@ -216,7 +253,7 @@ static void readWriteAndRemoveRecordsBigCheck(CuTest *testCase,
     stSortedSet_destructIterator(it);
 }
 
-static void readWriteAndRemoveRecordsBigIteration(CuTest *testCase,
+static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
         int numRecords, bool reopenDatabase) {
     stKVDatabase_startTransaction(database);
 
@@ -235,7 +272,7 @@ static void readWriteAndRemoveRecordsBigIteration(CuTest *testCase,
         }
     }
 
-    readWriteAndRemoveRecordsBigCheck(testCase, set, 1);
+    readWriteAndRemoveRecordsLotsCheck(testCase, set, 1);
 
     //Update all records to negate values
     stSortedSetIterator *it = stSortedSet_getIterator(set);
@@ -250,7 +287,7 @@ static void readWriteAndRemoveRecordsBigIteration(CuTest *testCase,
     }
     stSortedSet_destructIterator(it);
 
-    readWriteAndRemoveRecordsBigCheck(testCase, set, -1);
+    readWriteAndRemoveRecordsLotsCheck(testCase, set, -1);
 
     //Try optionally committing the transaction and reloading the database..
     if (reopenDatabase) {
@@ -282,12 +319,15 @@ static void readWriteAndRemoveRecordsBigIteration(CuTest *testCase,
     stKVDatabase_commitTransaction(database);
 }
 
-static void readWriteAndRemoveRecordsBig(CuTest *testCase) {
+/*
+ * Tests the retrieval of lots of records.
+ */
+static void readWriteAndRemoveRecordsLots(CuTest *testCase) {
     setup();
-    readWriteAndRemoveRecordsBigIteration(testCase, 10, false);
-    readWriteAndRemoveRecordsBigIteration(testCase, 56, true);
-    readWriteAndRemoveRecordsBigIteration(testCase, 123, false);
-    readWriteAndRemoveRecordsBigIteration(testCase, 245, true);
+    readWriteAndRemoveRecordsLotsIteration(testCase, 10, false);
+    readWriteAndRemoveRecordsLotsIteration(testCase, 56, true);
+    readWriteAndRemoveRecordsLotsIteration(testCase, 123, false);
+    readWriteAndRemoveRecordsLotsIteration(testCase, 245, true);
     teardown();
 }
 
@@ -306,7 +346,6 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 #ifndef HAVE_MYSQL
     return;
 #endif
-    st_uglyf("We are testing mysql stuff\n");
     const char
             *tokyoCabinetTestString =
                     "<st_kv_database_conf type='mysql'><mysql host='enormous' port='5' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
@@ -325,8 +364,9 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 CuSuite* sonLib_stKVDatabaseTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecords);
-    SUITE_ADD_TEST(suite, readWriteAndRemoveRecordsBig);
+    SUITE_ADD_TEST(suite, readWriteAndRemoveRecordsLots);
     SUITE_ADD_TEST(suite, partialRecordRetrieval);
+    SUITE_ADD_TEST(suite, bigRecordRetrieval);
     SUITE_ADD_TEST(suite, testTransactions);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
