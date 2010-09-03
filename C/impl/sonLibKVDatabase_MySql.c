@@ -202,6 +202,11 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
     // disable report of notes, so only warnings and errors come back
     sqlExec(dbImpl, "set sql_notes=0");
 
+    // set max sizes of an sql statment to 1G.  This must also be specified
+    // for the server by adding "max_allowed_packet = 1G" to the [mysqld]
+    // section of my.cnf
+    sqlExec(dbImpl, "set max_allowed_packet=1073741824");
+
     dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
 
     // NOTE: commit will not return an error, this does row-level locking on
