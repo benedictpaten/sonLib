@@ -18,7 +18,7 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 0
+#if 1
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
 #elif 0
         //host="localhost" port="0" user="root" password="" database_name="cactus"

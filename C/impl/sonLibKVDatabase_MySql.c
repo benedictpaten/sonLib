@@ -281,7 +281,12 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 }
 
 static bool containsRecord(stKVDatabase *database, int64_t key) {
-    return 1;
+    void *data = getRecord(database, key);
+    if(data != NULL) {
+        free(data);
+        return 1;
+    }
+    return 0;
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
