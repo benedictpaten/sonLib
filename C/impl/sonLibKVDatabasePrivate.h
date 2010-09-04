@@ -15,6 +15,7 @@ struct stKVDatabase {
     bool deleted;
     void (*destruct)(stKVDatabase *);
     void (*delete)(stKVDatabase *);
+    bool (*containsRecord)(stKVDatabase *, int64_t);
     void (*insertRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     int64_t (*numberOfRecords)(stKVDatabase *);

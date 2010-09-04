@@ -38,6 +38,11 @@ void stKVDatabase_destruct(stKVDatabase *database);
 void stKVDatabase_deleteFromDisk(stKVDatabase *database);
 
 /*
+ * Returns non-zero if the database contains a record with the given key.
+ */
+bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key);
+
+/*
  * Add a new a key/value record into the table. Throws an exception if unsuccessful.
  */
 void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);

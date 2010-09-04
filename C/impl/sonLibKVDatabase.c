@@ -64,6 +64,24 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database) {
     database->deleted = true;
 }
 
+bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                   "Trying to check if a record is in a database that has been deleted");
+    }
+    bool containsRecord = 0;
+    stTry {
+        containsRecord = database->containsRecord(database, key);
+    } stCatch(ex) {
+        if (isDeadlock(ex)) {
+            stThrow(ex);
+        } else {
+            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_containsRecord key %lld failed", (long long)key);
+        }
+    } stTryEnd;
+    return containsRecord;
+}
+
 void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
         const void *value, int64_t sizeOfRecord) {
     if (database->deleted) {

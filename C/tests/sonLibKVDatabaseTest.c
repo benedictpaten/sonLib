@@ -18,7 +18,7 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 1
+#if 0
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
 #elif 0
         //host="localhost" port="0" user="root" password="" database_name="cactus"
@@ -49,15 +49,27 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
 
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
     //Write some records
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
     stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
-    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
 
-    //Now read the records
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
+    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
+
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
+    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
+
+    //Now read and check the records exist
     CuAssertIntEquals(testCase, 3, stKVDatabase_getNumberOfRecords(database));
     CuAssertStrEquals(testCase, "Red", stKVDatabase_getRecord(database, 1));
     CuAssertStrEquals(testCase, "Green", stKVDatabase_getRecord(database, 2));
     CuAssertStrEquals(testCase, "Black", stKVDatabase_getRecord(database, 0));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
+
 
     //Now check we can retrieve records partially
     CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, 1, 2, 2));
@@ -71,6 +83,7 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
     stKVDatabase_removeRecord(database, 0);
     CuAssertIntEquals(testCase, 2, stKVDatabase_getNumberOfRecords(database));
     CuAssertPtrEquals(testCase, NULL, stKVDatabase_getRecord(database, 0));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
     //Test we get exception if we remove twice.
     stTry {
             stKVDatabase_removeRecord(database, 0);
@@ -101,13 +114,17 @@ static void partialRecordRetrieval(CuTest *testCase) {
         }
         stList_append(records, randomRecord);
         stList_append(recordSizes, stIntTuple_construct(1, size));
+        CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, i));
         stKVDatabase_insertRecord(database, i, randomRecord, size*sizeof(char));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, i));
         //st_uglyf("I am creating the record %i %i\n", i, size);
     }
     stKVDatabase_commitTransaction(database);
 
     while (st_random() > 0.001) {
         int32_t recordKey = st_randomInt(0, stList_length(records));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, recordKey));
+
         char *record = stList_get(records, recordKey);
         int32_t size = stIntTuple_getPosition(
                 stList_get(recordSizes, recordKey), 0);
@@ -230,11 +247,25 @@ static void testAbortedTransaction(CuTest *testCase) {
 
     //First create some stuff to store..
     stKVDatabase_startTransaction(database); //need to start a transaction to create tables etc.
+    //Check records not in
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
+    //Add records
     stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
     stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
     stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
+    //Check they are in
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
 
     stKVDatabase_abortTransaction(database); //Now we abort the transaction..
+
+    //Check the records are no longer in the database
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
 
     stTry { //Test we can not abort a transaction twice.
         stKVDatabase_abortTransaction(database);
@@ -296,6 +327,7 @@ static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase,
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
         int32_t *value = (int32_t *) stKVDatabase_getRecord(database,
                 stIntTuple_getPosition(tuple, 0));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         CuAssertIntEquals(testCase, valueMult*stIntTuple_getPosition(tuple, 0), *value);
         free(value);
     }
@@ -314,9 +346,12 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
         int32_t key = st_randomInt(0, 100 * numRecords);
         stIntTuple *tuple = stIntTuple_construct(1, key);
         if (stSortedSet_search(set, tuple) == NULL) {
+            CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, key));
             stSortedSet_insert(set, tuple);
             stKVDatabase_insertRecord(database, key, &key, sizeof(int32_t));
+            CuAssertTrue(testCase, stKVDatabase_containsRecord(database, key));
         } else {
+            CuAssertTrue(testCase, stKVDatabase_containsRecord(database, key));
             stIntTuple_destruct(tuple); // already in db
         }
     }
@@ -332,6 +367,7 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
         *value *= -1;
         stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0),
                 value, sizeof(int32_t));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         free(value);
     }
     stSortedSet_destructIterator(it);
@@ -349,7 +385,9 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
     //Now remove each one..
     it = stSortedSet_getIterator(set);
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         stKVDatabase_removeRecord(database, stIntTuple_getPosition(tuple, 0));
+        CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         //Test we get exception if we remove twice.
         stTry {
                 stKVDatabase_removeRecord(database, stIntTuple_getPosition(

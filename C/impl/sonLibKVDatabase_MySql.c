@@ -280,6 +280,10 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
     return getRecord2(database, key, NULL);
 }
 
+static bool containsRecord(stKVDatabase *database, int64_t key) {
+    return 1;
+}
+
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
     MySqlDb *dbImpl = database->dbImpl;
     MYSQL_RES *rs = queryStart(dbImpl, "select substring(data, %lld, %lld) from %s where id=%lld", (long long)zeroBasedByteOffset+1, (long long)sizeInBytes, dbImpl->table, (long long)key);
@@ -326,6 +330,7 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->dbImpl = connect(conf);
     database->destruct = destructDB;
     database->delete = deleteDB;
+    database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
     database->numberOfRecords = numberOfRecords;

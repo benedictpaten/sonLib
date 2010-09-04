@@ -61,6 +61,10 @@ static bool recordExists(TCBDB *dbImpl, int64_t key) {
     return tcbdbvnum(dbImpl, &key, sizeof(int64_t)) > 0;
 }
 
+static bool containsRecord(stKVDatabase *database, int64_t key) {
+    return recordExists(database->dbImpl, key);
+}
+
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     TCBDB *dbImpl = database->dbImpl;
     if (recordExists(dbImpl, key)) {
@@ -149,6 +153,7 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
     database->delete = deleteDB;
+    database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
     database->numberOfRecords = numberOfRecords;
