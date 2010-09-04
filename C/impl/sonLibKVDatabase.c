@@ -10,10 +10,10 @@
 #include "sonLibString.h"
 
 const char *ST_KV_DATABASE_EXCEPTION_ID = "ST_KV_DATABASE_EXCEPTION";
-const char *ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID = "ST_KV_DATABASE_DEADLOCK_EXCEPTION";
+const char *ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID = "ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID";
 
-static bool isDeadlock(stExcept *except) {
-    return stExcept_idEq(except, ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID);
+static bool isRetryExcept(stExcept *except) {
+    return stExcept_idEq(except, ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID);
 }
 
 stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
@@ -73,7 +73,7 @@ bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key) {
     stTry {
         containsRecord = database->containsRecord(database, key);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_containsRecord key %lld failed", (long long)key);
@@ -95,7 +95,7 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
     stTry {
         database->insertRecord(database, key, value, sizeOfRecord);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_insertRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
@@ -116,7 +116,7 @@ void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
     stTry {
         database->updateRecord(database, key, value, sizeOfRecord);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_updateRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
@@ -133,7 +133,7 @@ int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database) {
     stTry {
         numRecs = database->numberOfRecords(database);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getNumberOfRecords failed");
@@ -151,7 +151,7 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
     stTry {
         data = database->getRecord(database, key);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getRecord key %lld failed", (long long)key);
@@ -169,7 +169,7 @@ void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *reco
     stTry {
         data = database->getRecord2(database, key, recordSize);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getRecord2 key %lld failed", (long long)key);
@@ -187,7 +187,7 @@ void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t
     stTry {
         data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getPartialRecord key %lld offset %lld size %lld failed", (long long)key, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
@@ -208,7 +208,7 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
     stTry {
         database->removeRecord(database, key);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_removeRecord key %lld failed", (long long)key);
@@ -245,7 +245,7 @@ void stKVDatabase_commitTransaction(stKVDatabase *database) {
     stTry {
         database->commitTransaction(database);
     } stCatch(ex) {
-        if (isDeadlock(ex)) {
+        if (isRetryExcept(ex)) {
             stThrow(ex);
         } else {
             stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_commitTransaction failed");

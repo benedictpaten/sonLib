@@ -34,10 +34,15 @@ __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
+/* is this a mysql error were the transaction should be retried */
+static bool isMysqlRetryError(int mysqlErrNo) {
+    return (mysqlErrNo == ER_LOCK_DEADLOCK) || (mysqlErrNo == ER_LOCK_WAIT_TIMEOUT);
+}
+
 /* create an exception for the current MySQL error */
 static stExcept *createMySqlExceptv(MySqlDb *dbImpl, const char *msg, va_list args) {
     char *fmtMsg = stSafeCDynFmtv(msg, args);
-    const char *exId = (mysql_errno(dbImpl->conn) == ER_LOCK_DEADLOCK) ?  ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
+    const char *exId = isMysqlRetryError(mysql_errno(dbImpl->conn)) ?  ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
     stExcept *except = stExcept_new(exId, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), mysql_errno(dbImpl->conn));
     stSafeCFree(fmtMsg);
     return except;
@@ -65,13 +70,15 @@ static void throwMySqlExcept(MySqlDb *dbImpl, const char *msg, ...) {
 static MYSQL_RES *queryStartv(MySqlDb *dbImpl, const char *query, va_list args) {
     char *sql = stSafeCDynFmtv(query, args);
     if (mysql_real_query(dbImpl->conn, sql, strlen(sql)) != 0) {
+        stExcept *ex = createMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
         stSafeCFree(sql);
-        throwMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
+        stThrow(ex);
     }
     MYSQL_RES *rs = mysql_use_result(dbImpl->conn);
     if ((rs == NULL) && (mysql_errno(dbImpl->conn) != 0)) {
+        stExcept *ex = createMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
         stSafeCFree(sql);
-        throwMySqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
+        stThrow(ex);
     }
     stSafeCFree(sql);
     return rs;

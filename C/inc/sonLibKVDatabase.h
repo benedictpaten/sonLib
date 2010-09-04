@@ -6,8 +6,8 @@
 // General database exception id 
 extern const char *ST_KV_DATABASE_EXCEPTION_ID;
 
-// Dead lock exception, transaction should be retried
-extern const char *ST_KV_DATABASE_DEADLOCK_EXCEPTION_ID;
+// Exception where transaction should be retried
+extern const char *ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID;
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
