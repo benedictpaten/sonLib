@@ -281,12 +281,12 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 }
 
 static bool containsRecord(stKVDatabase *database, int64_t key) {
-    void *data = getRecord(database, key);
-    if(data != NULL) {
-        free(data);
-        return 1;
-    }
-    return 0;
+    MySqlDb *dbImpl = database->dbImpl;
+    MYSQL_RES *rs = queryStart(dbImpl, "select id from %s where id=%lld", dbImpl->table,  (long long)key);
+    char **row = queryNext(dbImpl, rs);
+    bool found = (row != NULL);
+    queryEnd(dbImpl, rs);
+    return found;
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
