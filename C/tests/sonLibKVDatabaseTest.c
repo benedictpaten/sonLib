@@ -18,7 +18,7 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 1
+#if 0
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
 #elif 0

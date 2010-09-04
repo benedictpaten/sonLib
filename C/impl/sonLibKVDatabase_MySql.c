@@ -216,9 +216,13 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
     // section of my.cnf
     sqlExec(dbImpl, "set global max_allowed_packet=1073741824");
 
-    // set the timeout really large for now
-    int waitTimeout = 7* 24 * 60 * 60;  // 1 week
+    // set the idle timeout to a week
+    int waitTimeout = 7 * 24 * 60 * 60;  // 1 week
     sqlExec(dbImpl, "set wait_timeout=%d", waitTimeout);
+
+    // set the read timeout to an hour
+    int readTimeout = 60 * 60;  // 1 hour
+    sqlExec(dbImpl, "set net_read_timeout=%d", readTimeout);
 
     // NOTE: commit will not return an error, this does row-level locking on
     // the select done before the update
