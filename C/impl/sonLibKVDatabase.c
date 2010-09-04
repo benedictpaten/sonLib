@@ -241,7 +241,7 @@ void stKVDatabase_abortTransaction(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to abort a transaction with a database has already been deleted");
     }
-    if (database->transactionStarted) {
+    if (!database->transactionStarted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Tried to abort a transaction, but none was started");
     }

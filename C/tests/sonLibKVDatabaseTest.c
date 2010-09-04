@@ -168,6 +168,9 @@ static void partialRecordRetrieval(CuTest *testCase) {
 }
 
 static void testTransactions(CuTest *testCase) {
+    /*
+     * Tests starting and committing a transaction, does not attempt an abort.
+     */
     setup();
     //The setup method starts a transaction to allow you to create tables.
     //We will try committing the transaction and then reclaiming the created
@@ -210,6 +213,50 @@ static void testTransactions(CuTest *testCase) {
     teardown();
 }
 
+static void testAbortedTransaction(CuTest *testCase) {
+    /*
+     * Tests aborting transactions.
+     */
+    setup();
+
+    stTry { //Test we can not abort a transaction that has not been started
+        stKVDatabase_abortTransaction(database);
+        CuAssertTrue(testCase, 0);
+    }
+    stCatch(except)
+    {
+        CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+    }stTryEnd
+
+    //First create some stuff to store..
+    stKVDatabase_startTransaction(database); //need to start a transaction to create tables etc.
+    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
+    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
+    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
+
+    stKVDatabase_abortTransaction(database); //Now we abort the transaction..
+
+    stTry { //Test we can not abort a transaction twice.
+        stKVDatabase_abortTransaction(database);
+        CuAssertTrue(testCase, 0);
+    }
+    stCatch(except)
+    {
+        CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+    }stTryEnd
+
+    //Now we try again..
+    stKVDatabase_startTransaction(database);
+    //And we should be able to insert these records as the previous transaction was aborted
+    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
+    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
+    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
+    stKVDatabase_commitTransaction(database); //Now we completed things just fine!
+
+    teardown();
+}
+
+
 /*
  * Retrieves really long records from the database.
  */
@@ -222,6 +269,7 @@ static void bigRecordRetrieval(CuTest *testCase) {
             randomRecord[j] = (char) st_randomInt(0, 100);
         }
         stKVDatabase_startTransaction(database);
+        //st_uglyf("I am inserting record %i %i\n", i, size);
         stKVDatabase_insertRecord(database, i, randomRecord, size
                 * sizeof(char));
         stKVDatabase_commitTransaction(database);
@@ -369,6 +417,7 @@ CuSuite* sonLib_stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, partialRecordRetrieval);
     SUITE_ADD_TEST(suite, bigRecordRetrieval);
     SUITE_ADD_TEST(suite, testTransactions);
+    SUITE_ADD_TEST(suite, testAbortedTransaction);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);
