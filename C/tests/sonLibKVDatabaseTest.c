@@ -20,11 +20,14 @@ static stKVDatabaseConf *getConf() {
     if (conf == NULL) {
 #if 1
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
+        fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
 #elif 0
         //host="localhost" port="0" user="root" password="" database_name="cactus"
         conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
+        fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
 #else
         conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
+        fprintf(stderr, "running MySQL kolossus-10 sonLibKVDatabase tests\n");
 #endif
     }
     return conf;

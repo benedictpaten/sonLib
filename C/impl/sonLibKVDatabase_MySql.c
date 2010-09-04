@@ -206,6 +206,7 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
         disconnect(dbImpl);
         stThrow(ex);
     }
+    dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
 
     // disable report of notes, so only warnings and errors come back
     sqlExec(dbImpl, "set sql_notes=0");
@@ -215,7 +216,9 @@ static MySqlDb *connect(stKVDatabaseConf *conf) {
     // section of my.cnf
     sqlExec(dbImpl, "set global max_allowed_packet=1073741824");
 
-    dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
+    // set the timeout really large for now
+    int waitTimeout = 7* 24 * 60 * 60;  // 1 week
+    sqlExec(dbImpl, "set wait_timeout=%d", waitTimeout);
 
     // NOTE: commit will not return an error, this does row-level locking on
     // the select done before the update
