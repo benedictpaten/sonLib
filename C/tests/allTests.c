@@ -11,6 +11,7 @@ CuSuite* sonLib_stExceptTestSuite(void);
 CuSuite* sonLib_stRandomTestSuite(void);
 CuSuite* sonLib_stKVDatabaseTestSuite(void);
 CuSuite* sonLib_stCompressionTestSuite(void);
+CuSuite* sonLibFileTestSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
@@ -26,6 +27,7 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
     CuSuiteAddSuite(suite, sonLib_stKVDatabaseTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());
+    CuSuiteAddSuite(suite, sonLibFileTestSuite());
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, output);
