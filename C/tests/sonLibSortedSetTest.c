@@ -29,6 +29,20 @@ static void testSortedSet_construct(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
+static void testSortedSet_copyConstruct(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+    CuAssertTrue(testCase, sortedSet != NULL);
+    int32_t i;
+    for(i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
+    }
+    stSortedSet *sortedSet2 = stSortedSet_copyConstruct(sortedSet, NULL);
+    CuAssertTrue(testCase, stSortedSet_size(sortedSet2) == stSortedSet_size(sortedSet));
+    CuAssertTrue(testCase, stSortedSet_equals(sortedSet2, sortedSet));
+    stSortedSet_destruct(sortedSet2);
+    sonLibSortedSetTestTeardown();
+}
+
 static void testSortedSet(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     int32_t i;
@@ -410,6 +424,7 @@ static void test_searchGreaterThan(CuTest* testCase) {
 CuSuite* sonLibSortedSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testSortedSet_construct);
+    SUITE_ADD_TEST(suite, testSortedSet_copyConstruct);
     SUITE_ADD_TEST(suite, testSortedSet);
     SUITE_ADD_TEST(suite, testIterator);
     SUITE_ADD_TEST(suite, testIterator_getIteratorFrom);

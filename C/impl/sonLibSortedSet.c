@@ -46,6 +46,21 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
     return sortedSet;
 }
 
+static struct _stSortedSet_construct3Fn *stSortedSet_getComparator(stSortedSet *sortedSet) {
+    return (struct _stSortedSet_construct3Fn *)sortedSet->sortedSet->avl_param;
+}
+
+stSortedSet *stSortedSet_copyConstruct(stSortedSet *sortedSet, void (*destructElementFn)(void *)) {
+    stSortedSet *sortedSet2 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet)->compareFn, destructElementFn);
+    stSortedSetIterator *it = stSortedSet_getIterator(sortedSet);
+    void *o;
+    while((o = stSortedSet_getNext(it)) != NULL) {
+        stSortedSet_insert(sortedSet2, o);
+    }
+    stSortedSet_destructIterator(it);
+    return sortedSet2;
+}
+
 static void (*st_sortedSet_destruct_destructElementFn)(void *);
 static void st_sortedSet_destructP(void *a, void *b) {
     assert(b != NULL);
@@ -143,10 +158,6 @@ stSortedSetIterator *stSortedSet_copyIterator(stSortedSetIterator *iterator) {
 
 void *stSortedSet_getPrevious(stSortedSetIterator *iterator) {
     return avl_t_prev(iterator);
-}
-
-static struct _stSortedSet_construct3Fn *stSortedSet_getComparator(stSortedSet *sortedSet) {
-    return (struct _stSortedSet_construct3Fn *)sortedSet->sortedSet->avl_param;
 }
 
 static int stSortedSet_comparatorsEqual(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {

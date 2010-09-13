@@ -34,6 +34,11 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
                                       void (*destructElementFn)(void *));
 
 /*
+ * Clones the given sorted set, setting the element destructor to the given function.
+ */
+stSortedSet *stSortedSet_copyConstruct(stSortedSet *sortedSet, void (*destructElementFn)(void *));
+
+/*
  * Destructs the sorted set.
  */
 void stSortedSet_destruct(stSortedSet *sortedSet);
