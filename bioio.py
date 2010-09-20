@@ -48,7 +48,7 @@ def addLoggingFileHandler(fileName, rotatingLogging=False):
     logger.addHandler(handler)
     
 def setLogLevel(logLevel):
-    assert logLevel in [ "INFO", "CRITICAL", "DEBUG" ] #Log level must be one of these strings.
+    assert logLevel in [ "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
     global logLevelString
     logLevelString = logLevel
     if logLevel == "INFO":
@@ -71,7 +71,6 @@ def logFile(fileName, printFunction=logger.info):
         printFunction("%s:\t%s" % (shortName, line))
         line = fileHandle.readline()
     fileHandle.close()
-
 
 #########################################################
 #########################################################
