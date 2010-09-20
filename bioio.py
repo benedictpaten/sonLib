@@ -305,7 +305,7 @@ def getTempFile(suffix="", rootDir=None):
         os.close(handle)
         return tmpFile
     else:
-        tmpFile = os.path.join(rootDir, getRandomAlphaNumericString() + suffix)
+        tmpFile = os.path.join(rootDir, "tmp_" + getRandomAlphaNumericString() + suffix)
         open(tmpFile, 'w').close()
         os.chmod(tmpFile, 0777) #Ensure everyone has access to the file.
         return tmpFile
@@ -318,7 +318,7 @@ def getTempDirectory(rootDir=None):
         return tempfile.mkdtemp()
     else:
         while True:
-            rootDir = os.path.join(rootDir, getRandomAlphaNumericString())
+            rootDir = os.path.join(rootDir, "tmp_" + getRandomAlphaNumericString())
             if not os.path.exists(rootDir):
                 break
         os.mkdir(rootDir)
