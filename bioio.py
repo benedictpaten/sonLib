@@ -71,6 +71,46 @@ def logFile(fileName, printFunction=logger.info):
         printFunction("%s:\t%s" % (shortName, line))
         line = fileHandle.readline()
     fileHandle.close()
+    
+def addLoggingOptions(parser):
+    """Adds logging options to an optparse.OptionsParser
+    """
+    parser.add_option("--logInfo", dest="logInfo", action="store_true",
+                     help="Turn on logging at INFO level",
+                     default=False)
+    
+    parser.add_option("--logDebug", dest="logDebug", action="store_true",
+                     help="Turn on logging at DEBUG level",
+                     default=False)
+    
+    parser.add_option("--logLevel", dest="logLevel", type="string",
+                      help="Log at level (may be either INFO/DEBUG/CRITICAL)")
+    
+    parser.add_option("--logFile", dest="logFile", type="string",
+                      help="File to log in")
+    
+    parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false",
+                     help="Turn off rotating logging, which prevents log files getting too big",
+                     default=True)
+
+def setLoggingFromOptions(options):
+    """Sets the logging from a dictionary of name/value options.
+    """
+    #We can now set up the logging info.
+    if options.logLevel != None:
+        setLogLevel(options.logLevel) #Use log level, unless flags are set..   
+     
+    if options.logInfo:
+        setLogLevel("INFO")
+    elif options.logDebug:
+        setLogLevel("DEBUG")
+        
+    logger.info("Logging set at level: %s" % logLevelString)  
+    
+    if options.logFile != None:
+        addLoggingFileHandler(options.logFile, options.logRotating)
+    
+    logger.info("Logging to file: %s" % options.logFile)  
 
 #########################################################
 #########################################################
@@ -190,53 +230,24 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 #########################################################
 #########################################################
 
-def getBasicOptionParser(usage, version):
-    #usage = "usage: %prog [options]"
-    #version = "%prog 0.1"
-    parser = OptionParser(usage=usage, version=version)
+def getBasicOptionParser(usage="usage: %prog [options]", version="%prog 0.1", parser=None):
+    if parser == None:
+        parser = OptionParser(usage=usage, version=version)
     
-    parser.add_option("--logInfo", dest="logInfo", action="store_true",
-                     help="Turn on logging at INFO level",
-                     default=False)
-    
-    parser.add_option("--logDebug", dest="logDebug", action="store_true",
-                     help="Turn on logging at DEBUG level",
-                     default=False)
-    
-    parser.add_option("--logLevel", dest="logLevel", type="string",
-                      help="Log at level (may be either INFO/DEBUG/CRITICAL)")
+    addLoggingOptions(parser)
     
     parser.add_option("--tempDirRoot", dest="tempDirRoot", type="string",
                       help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base",
                       default=os.getcwd())
     
-    parser.add_option("--logFile", dest="logFile", type="string",
-                      help="File to log in")
-    
-    parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false",
-                     help="Turn off rotating logging, which prevents log files getting too big",
-                     default=True)
-    
     return parser
 
 def parseBasicOptions(parser):
+    """Setups the standard things from things added by getBasicOptionParser.
+    """
     (options, args) = parser.parse_args()
-        
-    #We can now set up the logging info.
-    if options.logLevel != None:
-        setLogLevel(options.logLevel) #Use log level, unless flags are set..   
-     
-    if options.logInfo:
-        setLogLevel("INFO")
-    elif options.logDebug:
-        setLogLevel("DEBUG")
-        
-    logger.info("Logging set at level: %s" % logLevelString)  
     
-    if options.logFile != None:
-        addLoggingFileHandler(options.logFile, options.logRotating)
-    
-    logger.info("Logging to file: %s" % options.logFile)  
+    setLoggingFromOptions(options)
     
     #Set up the temp dir root
     if options.tempDirRoot == "None":
@@ -246,7 +257,7 @@ def parseBasicOptions(parser):
 
 def parseSuiteTestOptions(parser=None):
     if parser == None:
-        parser = getBasicOptionParser("usage: %prog [options]", "%prog 0.1")
+        parser = getBasicOptionParser()
     
     parser.add_option("--testLength", dest="testLength", type="string",
                      help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG",
