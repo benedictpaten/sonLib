@@ -18,10 +18,10 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-#if 1
+#if 0
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
-#elif 0
+#elif 1
         //host="localhost" port="0" user="root" password="" database_name="cactus"
         conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
         fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
