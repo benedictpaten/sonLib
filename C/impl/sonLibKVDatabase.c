@@ -44,7 +44,7 @@ void stKVDatabase_destruct(stKVDatabase *database) {
         stTry {
             database->destruct(database);
         } stCatch(ex) {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_deleteFromDisk failed");
+            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_destruct failed");
         } stTryEnd;
     }
     stKVDatabaseConf_destruct(database->conf);

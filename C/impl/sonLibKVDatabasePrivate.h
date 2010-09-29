@@ -11,6 +11,7 @@
 struct stKVDatabase {
     stKVDatabaseConf *conf;
     void *dbImpl;
+    void *cache;
     bool transactionStarted;
     bool deleted;
     void (*destruct)(stKVDatabase *);
