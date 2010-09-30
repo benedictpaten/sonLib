@@ -303,7 +303,7 @@ static bool containsRecord(stKVDatabase *database, int64_t key) {
     return found;
 }
 
-static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     MySqlDb *dbImpl = database->dbImpl;
     MYSQL_RES *rs = queryStart(dbImpl, "select substring(data, %lld, %lld) from %s where id=%lld", (long long)zeroBasedByteOffset+1, (long long)sizeInBytes, dbImpl->table, (long long)key);
     char **row = queryNext(dbImpl, rs);

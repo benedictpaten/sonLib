@@ -27,7 +27,7 @@ typedef struct _diskCache {
     void *(*getRecord2)(stKVDatabase *database, int64_t key,
             int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key,
-            int64_t zeroBasedByteOffset, int64_t sizeInBytes);
+            int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);
 } DiskCache;
 
@@ -329,7 +329,7 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key,
-        int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+        int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     DiskCache *diskCache = database->cache;
     if (diskCache_containsRecord(diskCache, key, zeroBasedByteOffset,
             sizeInBytes)) {
@@ -347,8 +347,11 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key,
     if (i < 0) {
         i = 0;
     }
-    int64_t j = sizeInBytes + zeroBasedByteOffset - i;
-    char *k = diskCache->getPartialRecord(database, key, i, j);
+    int64_t j = sizeInBytes + zeroBasedByteOffset - i + diskCache->boundarySize;
+    if(j + i > recordSize) {
+        j = recordSize - i;
+    }
+    char *k = diskCache->getPartialRecord(database, key, i, j, recordSize);
     diskCache_insertRecord(diskCache, key, k, i, j);
     void *record = memcpy(st_malloc(sizeInBytes), k + zeroBasedByteOffset - i, sizeInBytes);
     free(k);

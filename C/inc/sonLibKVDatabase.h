@@ -87,9 +87,9 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key);
  * Gets a record from the database, given the key. This function allows the partial retrieval of a record, using the
  * given offset and the size of the requested retrieval. The function should thrpw an exception if the record does
  * not exist (in contrast to stKVDatabase_getRecord) and similarly should throw an exception if the requested region lies
- * outside of the bounds of the record.
+ * outside of the bounds of the record (the total size of the record must be passed the function).
  */
-void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes);
+void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
 
 /*
  * Returns number of records in database.

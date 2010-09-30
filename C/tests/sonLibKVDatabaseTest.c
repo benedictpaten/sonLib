@@ -80,10 +80,10 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
 
 
     //Now check we can retrieve records partially
-    CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, 1, 2, 2));
-    CuAssertStrEquals(testCase, "ed", stKVDatabase_getPartialRecord(database, 1, 1, 3));
-    CuAssertStrEquals(testCase, "Red", stKVDatabase_getPartialRecord(database, 1, 0, 4));
-    char *record = stKVDatabase_getPartialRecord(database, 0, 2, 3);
+    CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, 1, 2, 2, sizeof(char) * 4));
+    CuAssertStrEquals(testCase, "ed", stKVDatabase_getPartialRecord(database, 1, 1, 3, sizeof(char) * 4));
+    CuAssertStrEquals(testCase, "Red", stKVDatabase_getPartialRecord(database, 1, 0, 4, sizeof(char) * 4));
+    char *record = stKVDatabase_getPartialRecord(database, 0, 2, 3, sizeof(char) * 6);
     record[2] = '\0';
     CuAssertStrEquals(testCase, "ac", record);
 
@@ -150,7 +150,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
         assert(partialSize + start <= size);
         //st_uglyf("I am getting record %i %i %i %i\n", recordKey, start, partialSize, size);
         char *partialRecord = stKVDatabase_getPartialRecord(database,
-                recordKey, start*sizeof(char), partialSize*sizeof(char));
+                recordKey, start*sizeof(char), partialSize*sizeof(char), size*sizeof(char));
 
         //Check they are equivalent..
         for (int32_t i = 0; i < partialSize; i++) {
@@ -162,7 +162,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
 
         //Check we can not get out of bounds.. (start less than zero)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, -1, 1);
+            stKVDatabase_getPartialRecord(database, recordKey, -1, 1, size*sizeof(char));
         }
         stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
@@ -170,7 +170,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
 
         //Check we can not get out of bounds.. (start greater than index start)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, size, 1);
+            stKVDatabase_getPartialRecord(database, recordKey, size, 1, size*sizeof(char));
         }
         stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
@@ -178,7 +178,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
 
         //Check we can not get out of bounds.. (total size if greater than record length)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, 0, size+1);
+            stKVDatabase_getPartialRecord(database, recordKey, 0, size+1, size*sizeof(char));
         }
         stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
@@ -186,7 +186,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
 
         //Check we can not get non existent record
         stTry {
-            stKVDatabase_getPartialRecord(database, 1000000, 0, size);
+            stKVDatabase_getPartialRecord(database, 1000000, 0, size, size*sizeof(char));
         }
         stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);

@@ -178,17 +178,17 @@ void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *reco
     return data;
 }
 
-void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
+void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "Trying to get a record from a database that has already been deleted");
     }
-    if(zeroBasedByteOffset < 0 || sizeInBytes < 0) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, requested start: %lld, requested size: %lld", (long long)zeroBasedByteOffset, (long long)sizeInBytes);
+    if(zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset + sizeInBytes > recordSize) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, requested start: %lld, requested size: %lld, entry size: %lld", (long long)zeroBasedByteOffset, (long long)sizeInBytes, (long long)recordSize);
     }
     void *data = NULL;
     stTry {
-        data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes);
+        data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes, recordSize);
     } stCatch(ex) {
         if (isRetryExcept(ex)) {
             stThrow(ex);

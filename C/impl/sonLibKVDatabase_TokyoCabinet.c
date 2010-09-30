@@ -104,9 +104,12 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
     return getRecord2(database, key, &i);
 }
 
-static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes) {
-    int64_t recordSize;
-    char *record = getRecord2(database, key, &recordSize);
+static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
+    int64_t recordSize2;
+    char *record = getRecord2(database, key, &recordSize2);
+    if(recordSize2 != recordSize) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The given record size is incorrect: %lld, should be %lld", (long long)recordSize, recordSize2);
+    }
     if(record == NULL) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The record does not exist: %lld for partial retrieval", (long long)key);
     }
