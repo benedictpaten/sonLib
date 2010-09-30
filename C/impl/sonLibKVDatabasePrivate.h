@@ -27,6 +27,7 @@ struct stKVDatabase {
     void (*startTransaction)(stKVDatabase *);
     void (*commitTransaction)(stKVDatabase *);
     void (*abortTransaction)(stKVDatabase *);
+    void (*clearCache)(stKVDatabase *);
 };
 
 /*

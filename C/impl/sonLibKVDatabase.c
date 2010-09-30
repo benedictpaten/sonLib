@@ -183,6 +183,9 @@ void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "Trying to get a record from a database that has already been deleted");
     }
+    if(zeroBasedByteOffset < 0 || sizeInBytes < 0) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, requested start: %lld, requested size: %lld", (long long)zeroBasedByteOffset, (long long)sizeInBytes);
+    }
     void *data = NULL;
     stTry {
         data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes);
@@ -263,6 +266,7 @@ void stKVDatabase_abortTransaction(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Tried to abort a transaction, but none was started");
     }
+    stKVDatabase_clearCache(database); //Currently we empty the cache if we abort a transaction.
     stTry {
         database->abortTransaction(database);
     } stCatch(ex) {
@@ -273,4 +277,10 @@ void stKVDatabase_abortTransaction(stKVDatabase *database) {
 
 stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database) {
     return database->conf;
+}
+
+void stKVDatabase_clearCache(stKVDatabase *database) {
+    if(database->cache != NULL) {
+        database->clearCache(database);
+    }
 }

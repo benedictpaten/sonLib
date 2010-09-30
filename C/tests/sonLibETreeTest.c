@@ -92,7 +92,7 @@ static void testETree_getSetBranchLength(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_getSetClentData(CuTest* testCase) {
+static void testETree_getSetClientData(CuTest* testCase) {
     setup();
     int data = 1010;
     CuAssertTrue(testCase, eTree_getClientData(child1) == NULL);
@@ -177,7 +177,7 @@ CuSuite* sonLibETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, testETree_getChildNumber);
     SUITE_ADD_TEST(suite, testETree_getChild);
     SUITE_ADD_TEST(suite, testETree_getSetBranchLength);
-    SUITE_ADD_TEST(suite, testETree_getSetClentData);
+    SUITE_ADD_TEST(suite, testETree_getSetClientData);
     SUITE_ADD_TEST(suite, testETree_newickTreeParser);
     SUITE_ADD_TEST(suite, testETree_label);
     SUITE_ADD_TEST(suite, testETree_getNumNodes);

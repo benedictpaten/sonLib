@@ -31,6 +31,7 @@ ETree *eTree_construct(void) {
     eTree->nodes = stList_construct3(0, (void (*)(void *))eTree_destruct);
     eTree->label = NULL;
     eTree->parent = NULL;
+    eTree->clientData = NULL;
     return eTree;
 }
 
