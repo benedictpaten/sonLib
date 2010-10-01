@@ -301,13 +301,6 @@ static void insertRecord(stKVDatabase *database, int64_t key,
     diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
 }
 
-static void updateRecord(stKVDatabase *database, int64_t key,
-        const void *value, int64_t sizeOfRecord) {
-    DiskCache *diskCache = database->cache;
-    diskCache->updateRecord(database, key, value, sizeOfRecord);
-    diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
-}
-
 static void *getRecord2(stKVDatabase *database, int64_t key,
         int64_t *recordSize) {
     DiskCache *diskCache = database->cache;
@@ -361,6 +354,37 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key,
      diskCache_insertRecord(diskCache, key, record, zeroBasedByteOffset,
      sizeInBytes);
      return record;*/
+}
+
+static bool recordsIdentical(const char *value, int64_t sizeOfRecord,
+        const char *updatedValue, int64_t updatedSizeOfRecord) {
+    if(sizeOfRecord != updatedSizeOfRecord) {
+        return 0;
+    }
+    for(int64_t j=0; j<sizeOfRecord; j++) {
+        if(value[j] != updatedValue[j]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void updateRecord(stKVDatabase *database, int64_t key,
+        const void *value, int64_t sizeOfRecord) {
+    DiskCache *diskCache = database->cache;
+    if (diskCache_containsRecord(diskCache, key, 0, INT64_MAX)) { //If the record is in the cache, and if
+        //it is identical then we don't need to do anything.
+        int64_t oldRecordSize;
+        void *i = diskCache_getRecord(diskCache, key, 0, INT64_MAX, &oldRecordSize);
+        assert(i != NULL);
+        if(recordsIdentical(i, oldRecordSize, value, sizeOfRecord)) {
+            free(i);
+            return; //We don't need to do anything as the record is already on the disk.
+        }
+        free(i);
+    }
+    diskCache->updateRecord(database, key, value, sizeOfRecord);
+    diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
