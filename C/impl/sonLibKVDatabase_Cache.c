@@ -324,6 +324,9 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 static void *getPartialRecord(stKVDatabase *database, int64_t key,
         int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     DiskCache *diskCache = database->cache;
+    if(sizeInBytes == 0) {
+        return st_malloc(0);
+    }
     if (diskCache_containsRecord(diskCache, key, zeroBasedByteOffset,
             sizeInBytes)) {
         int64_t i;
