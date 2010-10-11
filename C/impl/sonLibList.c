@@ -225,3 +225,7 @@ stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const
     }
     return sortedSet;
 }
+
+void stList_setDestructor(stList *list, void (*destructElement)(void *)) {
+    list->destructElement = destructElement;
+}

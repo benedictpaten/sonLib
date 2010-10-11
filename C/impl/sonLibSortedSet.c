@@ -81,7 +81,12 @@ void stSortedSet_destruct(stSortedSet *sortedSet) {
 }
 
 void stSortedSet_insert(stSortedSet *sortedSet, void *object) {
-    avl_insert(sortedSet->sortedSet, object);
+    if(stSortedSet_search(sortedSet, object) != NULL) {
+        avl_replace(sortedSet->sortedSet, object);
+    }
+    else {
+        avl_insert(sortedSet->sortedSet, object);
+    }
 }
 
 void *stSortedSet_search(stSortedSet *sortedSet, void *object) {
