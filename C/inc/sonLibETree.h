@@ -94,6 +94,9 @@ int eTree_getNumNodes(ETree *root);
  * distances.  Children must be in same order.  Client data is not compared. */
 bool eTree_equals(ETree *eTree1, ETree *eTree2);
 
+/* sort children of each node.  Useful for creating reproducible test results */
+void eTree_sortChildren(ETree *root, int cmpFn(ETree *a, ETree *b));
+
 /*
  * Parses the newick tree string according to the format standard (I think).
  */

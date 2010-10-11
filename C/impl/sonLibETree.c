@@ -284,3 +284,20 @@ bool eTree_equals(ETree *eTree1, ETree *eTree2) {
     }
     return true;
 }
+
+// holds user sort function during sort
+static int (*sortChildrenCmpFn)(ETree *, ETree *b) = NULL;
+
+static int sortChildrenListCmpFn(const void *a, const void *b) {
+    return sortChildrenCmpFn((ETree*)a, (ETree*)b);
+}
+
+void eTree_sortChildren(ETree *root, int cmpFn(ETree *a, ETree *b)) {
+    sortChildrenCmpFn = cmpFn;
+    stList_sort(root->nodes, sortChildrenListCmpFn);
+    sortChildrenCmpFn = NULL;
+    for (int i = 0; i < eTree_getChildNumber(root); i++) {
+        eTree_sortChildren(eTree_getChild(root, i), cmpFn);
+    }
+}
+
