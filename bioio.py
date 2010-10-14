@@ -29,9 +29,10 @@ loggingFormatter = logging.Formatter('%(asctime)s %(levelname)s %(lineno)s %(mes
 
 def __setDefaultLogger():
     l = logging.getLogger()
-    l.setLevel(logging.CRITICAL)
+    for handler in l.handlers: #Do not add a duplicate handler unless needed
+        if handler.stream == sys.stderr:
+            return l
     handler = logging.StreamHandler(sys.stderr)
-    #handler.setLevel(logging.CRITICAL) #null logger, to stop annoying error message
     l.addHandler(handler) 
     return l
 
