@@ -14,10 +14,23 @@ const char *SORTED_SET_EXCEPTION_ID = "SORTED_SET_EXCEPTION";
 struct _stSortedSet {
     struct avl_table *sortedSet;
     void (*destructElementFn)(void *);
+    int numberOfLiveIterators;  // number of currently allocated iterators
+};
+
+struct _stSortedSetIterator {
+    stSortedSet *sortedSet;
+    struct avl_traverser traverser;
 };
 
 static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
     return key1 > key2 ? 1 : key1 < key2 ? -1 : 0;
+}
+
+/* check if the sorted set is in a state that it can be modified */
+static void checkModifiable(stSortedSet *sortedSet) {
+    if (sortedSet->numberOfLiveIterators > 0) {
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify stSortSet while iterators are active");
+    }
 }
 
 stSortedSet *stSortedSet_construct(void) {
@@ -43,6 +56,7 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
     i->compareFn = compareFn; //this is a total hack to make the function pass ISO C compatible.
     sortedSet->sortedSet = avl_create((int (*)(const void *, const void *, void *))st_sortedSet_construct3P, i, NULL);
     sortedSet->destructElementFn = destructElementFn;
+    sortedSet->numberOfLiveIterators = 0;
     return sortedSet;
 }
 
@@ -68,6 +82,12 @@ static void st_sortedSet_destructP(void *a, void *b) {
 }
 
 void stSortedSet_destruct(stSortedSet *sortedSet) {
+#if 0 // FIXME
+    // this breaks the tests, which leak iterators.  Need to revisit with
+    // Benedict and also figure out how to tests this.  In the mean time,
+    // this is for an urgent bug.
+    checkModifiable(sortedSet);
+#endif
     void *a = sortedSet->sortedSet->avl_param;
     if(sortedSet->destructElementFn != NULL) {
         st_sortedSet_destruct_destructElementFn = sortedSet->destructElementFn;
@@ -81,6 +101,8 @@ void stSortedSet_destruct(stSortedSet *sortedSet) {
 }
 
 void stSortedSet_insert(stSortedSet *sortedSet, void *object) {
+    checkModifiable(sortedSet);
+    // FIXME: two passes, modify avl code.
     if(stSortedSet_search(sortedSet, object) != NULL) {
         avl_replace(sortedSet->sortedSet, object);
     }
@@ -110,6 +132,7 @@ void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object) {
 }
 
 void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
+    checkModifiable(sortedSet);
     avl_delete(sortedSet->sortedSet, object);
 }
 
@@ -118,28 +141,30 @@ int32_t stSortedSet_size(stSortedSet *sortedSet) {
 }
 
 void *stSortedSet_getFirst(stSortedSet *items) {
-    stSortedSetIterator iterator;
-    avl_t_init(&iterator, items->sortedSet);
-    return avl_t_first(&iterator, items->sortedSet);
+    struct avl_traverser traverser;
+    avl_t_init(&traverser, items->sortedSet);
+    return avl_t_first(&traverser, items->sortedSet);
 }
 
 void *stSortedSet_getLast(stSortedSet *items) {
-    stSortedSetIterator iterator;
-    avl_t_init(&iterator, items->sortedSet);
-    return avl_t_last(&iterator, items->sortedSet);
+    struct avl_traverser traverser;
+    avl_t_init(&traverser, items->sortedSet);
+    return avl_t_last(&traverser, items->sortedSet);
 }
 
 stSortedSetIterator *stSortedSet_getIterator(stSortedSet *items) {
     stSortedSetIterator *iterator;
     iterator = st_malloc(sizeof(stSortedSetIterator));
-    avl_t_init(iterator, items->sortedSet);
+    iterator->sortedSet = items;
+    avl_t_init(&iterator->traverser, items->sortedSet);
+    items->numberOfLiveIterators++;
     return iterator;
 }
 
 stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item) {
     stSortedSetIterator *iterator = stSortedSet_getIterator(items);
-    if(avl_t_find(iterator, items->sortedSet, item) == NULL) {
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "Tried to create an iterator with an item that is not in the list of items!\n");
+    if(avl_t_find(&iterator->traverser, items->sortedSet, item) == NULL) {
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Tried to create an iterator with an item that is not in the list of items");
     }
     stSortedSet_getPrevious(iterator);
     return iterator;
@@ -147,22 +172,26 @@ stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item)
 
 
 void stSortedSet_destructIterator(stSortedSetIterator *iterator) {
+    assert(iterator->sortedSet->numberOfLiveIterators > 0);
+    iterator->sortedSet->numberOfLiveIterators--;
     free(iterator);
 }
 
 void *stSortedSet_getNext(stSortedSetIterator *iterator) {
-    return avl_t_next(iterator);
+    return avl_t_next(&iterator->traverser);
 }
 
 stSortedSetIterator *stSortedSet_copyIterator(stSortedSetIterator *iterator) {
     stSortedSetIterator *copyIterator;
     copyIterator = st_malloc(sizeof(stSortedSetIterator));
-    avl_t_copy(copyIterator, iterator);
+    copyIterator->sortedSet = iterator->sortedSet;
+    copyIterator->sortedSet->numberOfLiveIterators++;
+    avl_t_copy(&copyIterator->traverser, &iterator->traverser);
     return copyIterator;
 }
 
 void *stSortedSet_getPrevious(stSortedSetIterator *iterator) {
-    return avl_t_prev(iterator);
+    return avl_t_prev(&iterator->traverser);
 }
 
 static int stSortedSet_comparatorsEqual(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
@@ -210,7 +239,7 @@ stList *stSortedSet_getList(stSortedSet *sortedSet) {
 
 stSortedSet *stSortedSet_getUnion(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
     if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the union of two sorted sets!\n");
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the union of two sorted sets");
     }
     stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
 
@@ -234,7 +263,7 @@ stSortedSet *stSortedSet_getUnion(stSortedSet *sortedSet1, stSortedSet *sortedSe
 
 stSortedSet *stSortedSet_getIntersection(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
     if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating an intersection of two sorted sets!\n");
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating an intersection of two sorted sets");
     }
     stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
 
@@ -253,7 +282,7 @@ stSortedSet *stSortedSet_getIntersection(stSortedSet *sortedSet1, stSortedSet *s
 
 stSortedSet *stSortedSet_getDifference(stSortedSet *sortedSet1, stSortedSet *sortedSet2) {
     if(!stSortedSet_comparatorsEqual(sortedSet1, sortedSet2)) {
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the sorted set difference !\n");
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "Comparators are not equal for creating the sorted set difference");
     }
     stSortedSet *sortedSet3 = stSortedSet_construct3(stSortedSet_getComparator(sortedSet1)->compareFn, NULL);
 

@@ -70,14 +70,14 @@ static void testIterator(CuTest* testCase) {
     for(i=0; i<size; i++) {
         stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
     }
-    struct avl_traverser *iterator = stSortedSet_getIterator(sortedSet);
+    stSortedSetIterator *iterator = stSortedSet_getIterator(sortedSet);
     CuAssertTrue(testCase, iterator != NULL);
 
     for(i=0; i<sortedSize; i++) {
         CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_getPosition(stSortedSet_getNext(iterator), 0));
     }
     CuAssertTrue(testCase, stSortedSet_getNext(iterator) == NULL);
-    struct avl_traverser *iterator2 = stSortedSet_copyIterator(iterator);
+    stSortedSetIterator *iterator2 = stSortedSet_copyIterator(iterator);
     CuAssertTrue(testCase, iterator2 != NULL);
     for(i=0; i<sortedSize; i++) {
         CuAssertIntEquals(testCase, sortedInput[sortedSize - 1 - i], stIntTuple_getPosition(stSortedSet_getPrevious(iterator), 0));
@@ -96,7 +96,7 @@ static void testIterator_getIteratorFrom(CuTest* testCase) {
     for(i=0; i<size; i++) {
         stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
     }
-    struct avl_traverser *iterator = stSortedSet_getIterator(sortedSet);
+    stSortedSetIterator *iterator = stSortedSet_getIterator(sortedSet);
     CuAssertTrue(testCase, iterator != NULL);
 
     for(i=0; i<sortedSize; i++) {
