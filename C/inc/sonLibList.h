@@ -140,7 +140,7 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b));
 /*
  * Gets a sorted set representation of the stList, using the given cmpFn as backing. The sorted set
  * has no defined destruct element function, so when the sorted set is destructed the elements in it and
- * in this list will not be destructed.
+ * in this list will not be destructed. If the cmpFn is NULL then we use the default cmpFn.
  */
 stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b));
 

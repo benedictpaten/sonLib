@@ -53,7 +53,7 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
                                       void (*destructElementFn)(void *)) {
     stSortedSet *sortedSet = st_malloc(sizeof(stSortedSet));
     struct _stSortedSet_construct3Fn *i = st_malloc(sizeof(struct _stSortedSet_construct3Fn));
-    i->compareFn = compareFn; //this is a total hack to make the function pass ISO C compatible.
+    i->compareFn = compareFn == NULL ? st_sortedSet_cmpFn : compareFn; //this is a total hack to make the function pass ISO C compatible.
     sortedSet->sortedSet = avl_create((int (*)(const void *, const void *, void *))st_sortedSet_construct3P, i, NULL);
     sortedSet->destructElementFn = destructElementFn;
     sortedSet->numberOfLiveIterators = 0;
