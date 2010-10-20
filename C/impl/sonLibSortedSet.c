@@ -29,6 +29,7 @@ static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
 /* check if the sorted set is in a state that it can be modified */
 static void checkModifiable(stSortedSet *sortedSet) {
     if (sortedSet->numberOfLiveIterators > 0) {
+        //assert(0);
         stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify stSortSet while iterators are active");
     }
 }
