@@ -38,6 +38,11 @@
  *  } stTryEnd;
  *  return cnt;
  * \endcode
+ *
+ * If environment variable ST_ABORT is set, throwing an error causes the
+ * message to be printed to stderr and an abort(), which is useful for
+ * stopping under a debugger.
+ *
  * @defgroup CExceptions Exceptions for C
  */
 

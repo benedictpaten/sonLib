@@ -81,6 +81,12 @@ static void handleUncaught(stExcept *except) {
 
 void stThrow(stExcept *except) {
     assert(except != NULL);
+    if (getenv("ST_ABORT") != NULL) {
+        // print message and call abort to enter debugger
+        fprintf(stderr, "Exception: %s: %s\n", except->id, except->msg);
+        abort();
+    }
+
     if (_cexceptTOS == NULL) {
         handleUncaught(except);
     }
