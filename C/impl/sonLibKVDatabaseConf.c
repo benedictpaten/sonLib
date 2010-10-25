@@ -58,7 +58,6 @@ char *getNextToken(char **tokenStream) {
         token = stString_replace(cA, "'", "");
         free(cA);
     }
-    //st_uglyf("The token is %s\n", token);
     return token;
 }
 
