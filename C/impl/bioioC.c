@@ -510,7 +510,7 @@ int32_t benLine(char **s, int32_t *n, FILE *f) {
 
     char *s2 = *s;
     while(TRUE) {
-        register int32_t ch= (char)getc(f);
+        register int32_t ch = (char)getc(f);
 
         if(ch == '\r') {
             ch= getc(f);
