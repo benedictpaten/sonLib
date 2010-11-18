@@ -121,6 +121,7 @@ char cigarReadFn(char type, int32_t *withProb) {
             return PAIRWISE_INDEL_Y;
         default:
             assert(FALSE);
+            return '\0';
     }
 }
 
@@ -186,6 +187,7 @@ char cigarWriteFn(int32_t type) {
             return 'I';
         default:
             assert(FALSE);
+            return '\0';
     }
 }
 
@@ -199,6 +201,7 @@ char cigarWriteFnWProbs(int32_t type) {
             return 'Z';
         default:
             assert(FALSE);
+            return '\0';
     }
 }
 

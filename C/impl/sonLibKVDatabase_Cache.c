@@ -329,7 +329,7 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key,
     DiskCache *diskCache = database->cache;
     if (diskCache_containsRecord(diskCache, key, zeroBasedByteOffset,
             sizeInBytes)) {
-        int64_t i;
+        int64_t i = 0;
         void *record = diskCache_getRecord(diskCache, key, zeroBasedByteOffset,
                 sizeInBytes, &i);
         assert(i == sizeInBytes);
@@ -377,7 +377,7 @@ static void updateRecord(stKVDatabase *database, int64_t key,
     DiskCache *diskCache = database->cache;
     if (diskCache_containsRecord(diskCache, key, 0, INT64_MAX)) { //If the record is in the cache, and if
         //it is identical then we don't need to do anything.
-        int64_t oldRecordSize;
+        int64_t oldRecordSize = 0;
         void *i = diskCache_getRecord(diskCache, key, 0, INT64_MAX, &oldRecordSize);
         assert(i != NULL);
         if(recordsIdentical(i, oldRecordSize, value, sizeOfRecord)) {
