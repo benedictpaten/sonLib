@@ -120,6 +120,7 @@ void *stList_peek(stList *list) {
 }
 
 void *stList_pop(stList *list) {
+    // FIXME: this would more natural to use if it return NULL when empty
     return stList_remove(list, stList_length(list)-1);
 }
 
