@@ -37,9 +37,14 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
 
 
 /*
- * Function initialises the pointers of the stKVDatabase object with functions for MySl.
+ * Function initialises the pointers of the stKVDatabase object with functions for MySql.
  */
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
+
+/*
+ * Function initialises the pointers of the stKVDatabase object with functions PostgreSql .
+ */
+void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
 #endif /* SONLIBKVDATABASEPRIVATE_H_ */

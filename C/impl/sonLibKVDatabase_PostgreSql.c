@@ -15,98 +15,168 @@
 
 /* PostgreSql client data object, stored in stKVDatabase object */
 typedef struct {
-    PGConn *conn;
+    PGconn *conn;
     char *table;
 } PgSqlDb;
 
-static MYSQL_RES *queryStart(PgSqlDb *dbImpl, const char *query, ...)
+static PGresult *queryStart(PgSqlDb *dbImpl, const char *query, ...)
 #if defined(__GNUC__)
 __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
-static void sqlExec(PgSqlDb *dbImpl, char *query, ...)
+static int sqlExec(PgSqlDb *dbImpl, const char *sqlCmd, ...)
 #if defined(__GNUC__)
 __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
 /* is this a PostgreSql error were the transaction should be retried */
-static bool isPgSqlRetryError(int pgErrNo) {
+static bool isPgSqlRetryError(ExecStatusType status) {
+#if 0 // FIXME
     return (pgErrNo == ER_LOCK_DEADLOCK) || (pgErrNo == ER_LOCK_WAIT_TIMEOUT);
+#else
+    return false;
+#endif
 }
 
-/* create an exception for the current PostgreSql error */
-static stExcept *createPgSqlExceptv(PgSqlDb *dbImpl, const char *msg, va_list args) {
+/* create an exception for the current PostgreSql conn error */
+static stExcept *createPgSqlConnExceptv(PgSqlDb *dbImpl, const char *msg, va_list args) {
     char *fmtMsg = stSafeCDynFmtv(msg, args);
-    const char *exId = isPgSqlRetryError(mysql_errno(dbImpl->conn)) ?  ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
-    stExcept *except = stExcept_new(exId, "%s: %s (%d)", fmtMsg, mysql_error(dbImpl->conn), PQerrorMessage(dbImpl->conn));
+    stExcept *except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: %s (%d)", fmtMsg, PQerrorMessage(dbImpl->conn), PQstatus(dbImpl->conn));
+    stSafeCFree(fmtMsg);
+    return except;
+}
+
+#if 0 // not used
+/* create an exception for the current PostgreSql connn error */
+static stExcept *createPgSqlConnExcept(PgSqlDb *dbImpl, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    stExcept *except = createPgSqlConnExceptv(dbImpl, msg, args);
+    va_end(args);
+    return except;
+}
+#endif
+
+/* generate an exception for the current PostgreSql conn error */
+static void throwPgSqlConnExcept(PgSqlDb *dbImpl, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    stExcept *except = createPgSqlConnExceptv(dbImpl, msg, args);
+    va_end(args);
+    stThrow(except);
+}
+
+/* create an exception for the current PostgreSql results error */
+static stExcept *createPgSqlResultExceptv(PgSqlDb *dbImpl, PGresult *rs, const char *msg, va_list args) {
+    char *fmtMsg = stSafeCDynFmtv(msg, args);
+    stExcept *except;
+    if (rs == NULL) {
+        except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: fatal error (%d)", fmtMsg, PQerrorMessage(dbImpl->conn));
+    } else {        
+        ExecStatusType stat = PQresultStatus(rs);
+        const char *exId = isPgSqlRetryError(stat) ?  ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
+        except = stExcept_new(exId, "%s: %s (%d)", fmtMsg, PQresultErrorMessage(rs), PQresStatus(stat));
+    }
     stSafeCFree(fmtMsg);
     return except;
 }
 
 /* create an exception for the current PostgreSql error */
-static stExcept *createPgSqlExcept(PgSqlDb *dbImpl, const char *msg, ...) {
+static stExcept *createPgSqlResultExcept(PgSqlDb *dbImpl, PGresult *result, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    stExcept *except = createPgSqlExceptv(dbImpl, msg, args);
+    stExcept *except = createPgSqlResultExceptv(dbImpl, result, msg, args);
     va_end(args);
     return except;
 }
 
+#if 0 // not used
 /* generate an exception for the current PostgreSql error */
-static void throwMySqlExcept(PgSqlDb *dbImpl, const char *msg, ...) {
+static void throwPgSqlResultExcept(PgSqlDb *dbImpl, PGresult *result, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    stExcept *except = createPgSqlExceptv(dbImpl, msg, args);
+    stExcept *except = createPgSqlResultExceptv(dbImpl, result, msg, args);
     va_end(args);
     stThrow(except);
 }
+#endif
 
-/* start an SQL query, formatting arguments into the query */
-static MYSQL_RES *queryStartv(PgSqlDb *dbImpl, const char *query, va_list args) {
-    char *sql = stSafeCDynFmtv(query, args);
+/* Execute SQL a non-select query, formatting arguments into the sql command.
+ * returns number of rows affect or zero if that makes no sense */
+static int sqlExecv(PgSqlDb *dbImpl, const char *sqlCmd, va_list args) {
+    char *sql = stSafeCDynFmtv(sqlCmd, args);
     PGresult *rs = PQexec(dbImpl->conn, sql);
-
-    char *PQresultErrorMessage(const PGresult *res);
-        
-    if       ExecStatusType PQresultStatus(const PGresult *res);
-    if (mysql_real_query(dbImpl->conn, sql, strlen(sql)) != 0) {
-        stExcept *ex = createPgSqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
+    if ((rs == NULL) || (PQresultStatus(rs) != PGRES_COMMAND_OK)) {
+        stExcept *ex = createPgSqlResultExcept(dbImpl, rs, "query failed \"%0.60s\"", sql);
         stSafeCFree(sql);
+        PQclear(rs);
         stThrow(ex);
     }
-    MYSQL_RES *rs = mysql_use_result(dbImpl->conn);
-    if ((rs == NULL) && (mysql_errno(dbImpl->conn) != 0)) {
-        stExcept *ex = createPgSqlExcept(dbImpl, "query failed \"%0.60s\"", sql);
+    const char *affected = PQcmdTuples(rs);
+    int numRows = (strlen(affected) == 0) ? 0 : stSafeStrToInt64(affected);
+    stSafeCFree(sql);
+    PQclear(rs);
+    return numRows;
+}
+
+/* start an SQL query, formatting arguments into the query */
+static int sqlExec(PgSqlDb *dbImpl, const char *sqlCmd, ...) {
+    va_list args;
+    va_start(args, sqlCmd);
+    int numRows = sqlExecv(dbImpl, sqlCmd, args);
+    va_end(args);
+    return numRows;
+}
+
+/* Execute SQL a non-select query, formatting arguments into the sql command */
+static PGresult *queryStartv(PgSqlDb *dbImpl, const char *query, va_list args) {
+    char *sql = stSafeCDynFmtv(query, args);
+    PGresult *result = PQexec(dbImpl->conn, sql);
+    if ((result == NULL) || (PQresultStatus(result) != PGRES_TUPLES_OK)) {
+        stExcept *ex = createPgSqlResultExcept(dbImpl, result, "query failed \"%0.60s\"", sql);
         stSafeCFree(sql);
+        PQclear(result);
         stThrow(ex);
     }
     stSafeCFree(sql);
-    return rs;
+    return result;
 }
 
 /* start an SQL query, formatting arguments into the query */
-static MYSQL_RES *queryStart(PgSqlDb *dbImpl, const char *query, ...) {
+static PGresult *queryStart(PgSqlDb *dbImpl, const char *query, ...) {
     va_list args;
     va_start(args, query);
-    MYSQL_RES *rs = queryStartv(dbImpl, query, args);
+    PGresult *result = queryStartv(dbImpl, query, args);
     va_end(args);
-    return rs;
+    return result;
 }
 
-static char **queryNext(PgSqlDb *dbImpl, MYSQL_RES *rs) {
+/* complain about not getting a single result tuple */
+static stExcept *createExpectOneTuple(PgSqlDb *dbImpl, PGresult *rs, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char *fmtMsg = stSafeCDynFmtv(msg, args);
+    va_end(args);
+    stExcept *except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "expected one tuple, got %d:" "%s", PQntuples(rs), fmtMsg);
+    stSafeCFree(fmtMsg);
+    return except;
+}
+
+#if 0 // FIXME
+static char **queryNext(PgSqlDb *dbImpl, PGresult *rs) {
     if (rs == NULL) {
         return NULL;
     }
     char **row = mysql_fetch_row(rs);
     if (mysql_errno(dbImpl->conn) != 0) {
-        throwMySqlExcept(dbImpl, "query fetch failed");
+        throwPgSqlExcept(dbImpl, "query fetch failed");
     }
     return row;
 }
 
-static char **queryNextRequired(PgSqlDb *dbImpl, MYSQL_RES *rs) {
+static char **queryNextRequired(PgSqlDb *dbImpl, PGresult *rs) {
     char **row = queryNext(dbImpl, rs);
     if (row == NULL) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "query did not return required result");
@@ -114,88 +184,48 @@ static char **queryNextRequired(PgSqlDb *dbImpl, MYSQL_RES *rs) {
     return row;
 }
 
-static size_t *queryLengths(PgSqlDb *dbImpl, MYSQL_RES *rs) {
+static size_t *queryLengths(PgSqlDb *dbImpl, PGresult *rs) {
     size_t *lens = mysql_fetch_lengths(rs);
     if (mysql_errno(dbImpl->conn) != 0) {
-        throwMySqlExcept(dbImpl, "mysql_fetch_lengths failed");
+        throwPgSqlExcept(dbImpl, "mysql_fetch_lengths failed");
     }
     return lens;
 }
+#endif
 
-// collect warnings into an array
-static int getWarnings(PgSqlDb *dbImpl, int maxToReport, char **warnings) {
-    int numReturned = 0;
-    MYSQL_RES *rs = queryStart(dbImpl, "show warnings limit %d", maxToReport);
-    char **row;
-    while ((row = queryNext(dbImpl, rs)) != NULL) {
-        if (numReturned < maxToReport) {
-            warnings[numReturned++] = stSafeCDynFmt("%s: %s (%s)", row[0], row[2], row[1]);
-        }
-    }
-    mysql_free_result(rs);
-    return numReturned;
-}
-
-// collect warnings, concat into a string
-static char *getWarningsStr(PgSqlDb *dbImpl) {
-    static const int maxToReport = 5;
-    char *warnings[maxToReport];
-    int numReturned = getWarnings(dbImpl, maxToReport, warnings);
-    char *warningsStr = stString_join("\n", (const char**)warnings, numReturned);
-    for (int i = 0; i < numReturned; i++) {
-        stSafeCFree(warnings[i]);
-    }
-    return warningsStr;
-}
-
-// and throw an expection
-static void throwWarnings(PgSqlDb *dbImpl) {
-    int numWarnings = mysql_warning_count(dbImpl->conn);
-    char *warningsStr = getWarningsStr(dbImpl);
-    stExcept *ex = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "PostgreSql request had %d warning(s), possible data lose: %s", numWarnings, warningsStr);
-    stSafeCFree(warningsStr);
-    stThrow(ex);
-}
-
-static void queryEnd(PgSqlDb *dbImpl, MYSQL_RES *rs) {
-    if (rs != NULL) {
-        mysql_free_result(rs);
-    }
-    if (mysql_warning_count(dbImpl->conn) != 0) {
-        throwWarnings(dbImpl);
-    }
+static void queryEnd(PgSqlDb *dbImpl, PGresult *rs) {
+    PQclear(rs);
 }
 
 /* SQL escape a byte string, result must be freed */
-static char *sqlEscape(PgSqlDb *dbImpl, const void *data, size_t size) {
-    char *escBuf = stSafeCMalloc((2*size)+1);
-    mysql_real_escape_string(dbImpl->conn, escBuf, data, size);
-    return escBuf;
+static unsigned char *sqlEscape(PgSqlDb *dbImpl, const void *data, size_t size) {
+    size_t escStrLen;
+    unsigned char *escStr = PQescapeByteaConn(dbImpl->conn, data, size, &escStrLen);
+    if (escStr == NULL) {
+        throwPgSqlConnExcept(dbImpl, "failed to allocate memory for encoding string");
+    }
+    return escStr;
 }
 
-/* immediate execution of a statement that doesn't return results, formatting
- * arguments into query */
-static void sqlExec(PgSqlDb *dbImpl, char *query, ...) {
-    va_list args;
-    va_start(args, query);
-    MYSQL_RES *rs = queryStartv(dbImpl, query, args);
-    va_end(args);
-    if (queryNext(dbImpl, rs) != NULL) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "SQL command should not have returned a result: \"%s\"", query);
+/* SQL unescape a byte string, result must be freed */
+static void *sqlUnescape(PgSqlDb *dbImpl, const char *escStr, size_t *size) {
+    void *data = PQunescapeBytea((const unsigned char*)escStr, size);
+    if (data == NULL) {
+        throwPgSqlConnExcept(dbImpl, "failed to allocate memory for decoding string");
     }
-    queryEnd(dbImpl, rs);
+    return data;
 }
 
 /* disconnect and free PgSqlDb object */
 static void disconnect(PgSqlDb *dbImpl) {
     if (dbImpl->conn != NULL) {
-        mysql_close(dbImpl->conn);
+        PQfinish(dbImpl->conn);
     }
     stSafeCFree(dbImpl->table);
     stSafeCFree(dbImpl);
 }
 
-/* get port as a string or NULL (WARNING: static return) */
+/* get port as a string or NULL. WARNING: static return */
 static const char *getPortStr(stKVDatabaseConf *conf) {
     static char portStrBuf[64];
     if (stKVDatabaseConf_getPort(conf) > 0) {
@@ -214,8 +244,8 @@ static PgSqlDb *connect(stKVDatabaseConf *conf) {
                                 stKVDatabaseConf_getUser(conf), 
                                 stKVDatabaseConf_getPassword(conf));
     if (PQstatus(dbImpl->conn) != CONNECTION_OK) {
-        stExcept *ex = createPgSqlExcept(dbImpl, "failed to connect to PostgreSql database: %s on %s as user %s",
-                                         stKVDatabaseConf_getDatabaseName(conf), stKVDatabaseConf_getHost(conf), stKVDatabaseConf_getUser(conf));
+        stExcept *ex = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "failed to connect to PostgreSql database: %s on %s as user %s",
+                                    stKVDatabaseConf_getDatabaseName(conf), stKVDatabaseConf_getHost(conf), stKVDatabaseConf_getUser(conf));
         disconnect(dbImpl);
         stThrow(ex);
     }
@@ -223,7 +253,6 @@ static PgSqlDb *connect(stKVDatabaseConf *conf) {
 
     // NOTE: commit will not return an error, this does row-level locking on
     // the select done before the update
-    sqlExec(dbImpl, "set autocommit = 0;");
     sqlExec(dbImpl, "set session transaction isolation level serializable;");
     return dbImpl;
 }
@@ -231,7 +260,7 @@ static PgSqlDb *connect(stKVDatabaseConf *conf) {
 /* create the keyword/value table */
 static void createKVTable(PgSqlDb *dbImpl) {
     sqlExec(dbImpl, "drop table if exists %s", dbImpl->table);
-    sqlExec(dbImpl, "create table %s (id bigint primary key, data longblob) engine=INNODB;", dbImpl->table);
+    sqlExec(dbImpl, "create table %s (id bigint primary key, data bytea);", dbImpl->table);
 }
 
 static void destructDB(stKVDatabase *database) {
@@ -248,37 +277,40 @@ static void deleteDB(stKVDatabase *database) {
 
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     PgSqlDb *dbImpl = database->dbImpl;
-    char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
-    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, \"%s\")", dbImpl->table, (long long)key, buf);
+    unsigned char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
+    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, '%s')", dbImpl->table, (long long)key, buf);
     stSafeCFree(buf);
 }
 
 static void updateRecord(stKVDatabase *database, int64_t key,
                          const void *value, int64_t sizeOfRecord) {
     PgSqlDb *dbImpl = database->dbImpl;
-    char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
-    sqlExec(dbImpl, "update %s set data=\"%s\" where id=%lld", dbImpl->table, buf,  (long long)key);
+    unsigned char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
+    sqlExec(dbImpl, "update %s set data='%s' where id=%lld", dbImpl->table, buf,  (long long)key);
     stSafeCFree(buf);
 }
 
 static int64_t numberOfRecords(stKVDatabase *database) {
     PgSqlDb *dbImpl = database->dbImpl;
-    MYSQL_RES *rs = queryStart(dbImpl, "select count(*) from %s", dbImpl->table);
-    char **row = queryNextRequired(dbImpl, rs);
-    int64_t numRecords = stSafeStrToInt64(row[0]);
+    const char *sqlTmpl = "select count(*) from %s";
+    PGresult *rs = queryStart(dbImpl, sqlTmpl, dbImpl->table);
+    if (PQntuples(rs) != 1) {
+        stExcept *ex = createExpectOneTuple(dbImpl, rs, sqlTmpl, dbImpl->table);
+        queryEnd(dbImpl, rs);
+        stThrow(ex);
+    }
+    int64_t numRecords = stSafeStrToInt64(PQgetvalue(rs, 0, 0));
     queryEnd(dbImpl, rs);
     return numRecords;
 }
 
 static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfRecord) {
     PgSqlDb *dbImpl = database->dbImpl;
-    MYSQL_RES *rs = queryStart(dbImpl, "select data from %s where id=%lld", dbImpl->table,  (long long)key);
-    char **row = queryNext(dbImpl, rs);
+    PGresult *rs = queryStart(dbImpl, "select data from %s where id=%lld", dbImpl->table,  (long long)key);
     void *data = NULL;
-    int64_t readLen = 0;
-    if (row != NULL) {
-        readLen = queryLengths(dbImpl, rs)[0];
-        data = stSafeCCopyMem(row[0], readLen);
+    size_t readLen = 0;
+    if (PQntuples(rs) > 0) {
+        data = sqlUnescape(dbImpl, PQgetvalue(rs, 0, 0), &readLen);
     }
     queryEnd(dbImpl, rs);
     if (sizeOfRecord != NULL) {
@@ -293,22 +325,19 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 
 static bool containsRecord(stKVDatabase *database, int64_t key) {
     PgSqlDb *dbImpl = database->dbImpl;
-    MYSQL_RES *rs = queryStart(dbImpl, "select id from %s where id=%lld", dbImpl->table,  (long long)key);
-    char **row = queryNext(dbImpl, rs);
-    bool found = (row != NULL);
+    PGresult *rs = queryStart(dbImpl, "select id from %s where id=%lld", dbImpl->table,  (long long)key);
+    bool found = PQntuples(rs) > 0;
     queryEnd(dbImpl, rs);
     return found;
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     PgSqlDb *dbImpl = database->dbImpl;
-    MYSQL_RES *rs = queryStart(dbImpl, "select substring(data, %lld, %lld) from %s where id=%lld", (long long)zeroBasedByteOffset+1, (long long)sizeInBytes, dbImpl->table, (long long)key);
-    char **row = queryNext(dbImpl, rs);
+    PGresult *rs = queryStart(dbImpl, "select substring(data, %lld, %lld) from %s where id=%lld", (long long)zeroBasedByteOffset+1, (long long)sizeInBytes, dbImpl->table, (long long)key);
     void *data = NULL;
-    int64_t readLen = 0;
-    if (row != NULL) {
-        readLen = queryLengths(dbImpl, rs)[0];
-        data = stSafeCCopyMem(row[0], readLen);
+    size_t readLen = 0;
+    if (PQntuples(rs) > 0) {
+        data = sqlUnescape(dbImpl, PQgetvalue(rs, 0, 0), &readLen);
     }
     queryEnd(dbImpl, rs);
     if (readLen != sizeInBytes) {
@@ -319,16 +348,15 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
     PgSqlDb *dbImpl = database->dbImpl;
-    sqlExec(dbImpl, "delete from %s where id=%lld", dbImpl->table, (long long)key);
-    my_ulonglong numRows = mysql_affected_rows(dbImpl->conn);
+    int numRows = sqlExec(dbImpl, "delete from %s where id=%lld", dbImpl->table, (long long)key);
     if (numRows == 0) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "remove of non-existent key %lld", (long long)key);
-    } 
+    }
 }
 
 static void startTransaction(stKVDatabase *database) {
     PgSqlDb *dbImpl = database->dbImpl;
-    sqlExec(dbImpl, "start transaction with consistent snapshot;");
+    sqlExec(dbImpl, "start transaction isolation level serializable;");
 }
 
 static void commitTransaction(stKVDatabase *database) {

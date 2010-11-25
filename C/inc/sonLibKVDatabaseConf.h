@@ -4,7 +4,8 @@
 
 typedef enum {
     stKVDatabaseTypeTokyoCabinet,
-    stKVDatabaseTypeMySql
+    stKVDatabaseTypeMySql,
+    stKVDatabaseTypePostgreSql
 } stKVDatabaseType;
 
 /* 
@@ -21,6 +22,14 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
 stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned port, const char *user, const char *password,
                                                   const char *databaseName, const char *tableName);
 
+/* 
+ * Construct a new database configuration object for a PostgreSql database.
+ * password maybe NULL for no password.
+ * port maybe 0 for the default port.
+ */
+stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
+                                                       const char *databaseName, const char *tableName);
+
 /*
  * Decodes a simple piece of XML, structured as follows:
  * <st_kv_database_conf type="TYPE">
@@ -28,7 +37,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned por
  *      <mysql host="" port="" user="" password="" database_name="" table_name=""/>
  * </st_kv_database_conf>
  *
- * Type can be either "tokyo_cabinet" or "mysql". If it is of that type then
+ * Type can be "tokyo_cabinet", "mysql", or "postgresql". If it is of that type then
  * you need to include a nested tag with the parameters for that conf constructor.
  * The labels for the nested tag are name value pairs (no order assumed) for the conf constructor
  * (see above).

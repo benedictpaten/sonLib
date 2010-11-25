@@ -33,6 +33,13 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested MySQL database, however sonlib is not compiled with MySql support");
 #endif
         break;
+    case stKVDatabaseTypePostgreSql:
+#ifdef HAVE_POSTGRESQL
+        stKVDatabase_initialise_PostgreSql(database, conf, create);
+#else
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested PostgreSql database, however sonlib is not compiled with PostgreSql support");
+#endif
+        break;
     default:
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "BUG: unrecognized database type");
     }

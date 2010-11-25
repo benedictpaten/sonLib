@@ -24,23 +24,38 @@ struct stKVDatabaseConf {
     char *tableName;
 };
 
-stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(
-        const char *databaseDir) {
+stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
     conf->type = stKVDatabaseTypeTokyoCabinet;
     conf->databaseDir = stString_copy(databaseDir);
     return conf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host,
-        unsigned port, const char *user, const char *password,
-        const char *databaseName, const char *tableName) {
+stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned port, const char *user, const char *password,
+                                                  const char *databaseName, const char *tableName) {
 #ifndef HAVE_MYSQL
     stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
             "requested MySQL database, however sonlib is not compiled with MySql support");
 #endif
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
     conf->type = stKVDatabaseTypeMySql;
+    conf->host = stString_copy(host);
+    conf->port = port;
+    conf->user = stString_copy(user);
+    conf->password = stString_copy(password);
+    conf->databaseName = stString_copy(databaseName);
+    conf->tableName = stString_copy(tableName);
+    return conf;
+}
+
+stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
+                                                       const char *databaseName, const char *tableName) {
+#ifndef HAVE_POSTGRESQL
+    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+            "requested PostgreSql database, however sonlib is not compiled with MySql support");
+#endif
+    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
+    conf->type = stKVDatabaseTypePostgreSql;
     conf->host = stString_copy(host);
     conf->port = port;
     conf->user = stString_copy(user);

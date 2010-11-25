@@ -20,17 +20,30 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
+        // turn one of these on
 #if 1
+        assert(conf == NULL);
         conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
-#elif 0
-        //host="localhost" port="0" user="root" password="" database_name="cactus"
+#endif
+#if 0
+        assert(conf == NULL);
         conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
         fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
-#else
+#endif
+#if 0
+        assert(conf == NULL);
         conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
         fprintf(stderr, "running MySQL kolossus-10 sonLibKVDatabase tests\n");
 #endif
+#if 0
+        assert(conf == NULL);
+        conf = stKVDatabaseConf_constructPostgreSql("localhost", 0, "cactus", "cactus", "cactus", "cactusDbTest");
+        fprintf(stderr, "running PostgreSql local sonLibKVDatabase tests\n");
+#endif
+    }
+    if (conf == NULL) {
+        st_errAbort("database test config hack doesn't enable any database");
     }
     return conf;
 }
@@ -163,34 +176,30 @@ static void partialRecordRetrieval(CuTest *testCase) {
         //Check we can not get out of bounds.. (start less than zero)
         stTry {
             stKVDatabase_getPartialRecord(database, recordKey, -1, 1, size*sizeof(char));
-        }
-        stCatch(except) {
+        } stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        }stTryEnd
+        } stTryEnd;
 
         //Check we can not get out of bounds.. (start greater than index start)
         stTry {
             stKVDatabase_getPartialRecord(database, recordKey, size, 1, size*sizeof(char));
-        }
-        stCatch(except) {
+        } stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        }stTryEnd
+        } stTryEnd;
 
         //Check we can not get out of bounds.. (total size if greater than record length)
         stTry {
             stKVDatabase_getPartialRecord(database, recordKey, 0, size+1, size*sizeof(char));
-        }
-        stCatch(except) {
+        } stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        }stTryEnd
+        } stTryEnd;
 
         //Check we can not get non existent record
         stTry {
             stKVDatabase_getPartialRecord(database, 1000000, 0, size, size*sizeof(char));
-        }
-        stCatch(except) {
+        } stCatch(except) {
             CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        }stTryEnd
+        } stTryEnd;
     }
 
     stList_destruct(records);
