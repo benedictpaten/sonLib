@@ -76,6 +76,9 @@ static void handleUncaught(stExcept *except) {
         fprintf(stderr, "\tcaused by: %s: %s\n", cause->id, cause->msg);
     }
     fflush(stderr);
+    if (getenv("ST_ABORT_UNCAUGHT") != NULL) {
+        abort();
+    }
     stSafeCErr("Uncaught exception");
 }
 
