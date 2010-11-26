@@ -50,7 +50,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned por
     stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
             "requested MySQL database, however sonlib is not compiled with MySql support");
 #endif
-    return constructSql(stKVDatabaseTypePostgreSql, host, port, user, password, databaseName, tableName);
+    return constructSql(stKVDatabaseTypeMySql, host, port, user, password, databaseName, tableName);
 }
 
 stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
@@ -75,7 +75,7 @@ char *getNextToken(char **tokenStream) {
 
 static void getExpectedToken(char **tokenStream, const char *expected) {
     char *cA = getNextToken(tokenStream);
-    if (stString_eq(cA, expected)) {
+    if (!stString_eq(cA, expected)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                    "BUG: expected the token: %s in database XML string, but I got: %s from the stream %s",
                    expected, cA, *tokenStream);
@@ -103,14 +103,14 @@ static stHash *hackParseXmlString(const char *xmlString) {
         cA = cA2;
     }
     getExpectedToken(&cA2, "st_kv_database_conf");
-    stHash_insert(hash, "conf_type", getKeyValue(&cA2, "type"));
-    stHash_insert(hash, "db_tag", getNextToken(&cA2));
+    stHash_insert(hash, stString_copy("conf_type"), getKeyValue(&cA2, "type"));
+    stHash_insert(hash, stString_copy("db_tag"), getNextToken(&cA2));
 
-    for (int32_t i = 0; i < 6; i++) {
-        char *key = getNextToken(&cA2);
+    char *key;
+    while (((key = getNextToken(&cA2)) != NULL) && !stString_eq(key, "st_kv_database_conf")) {
         char *value = getNextToken(&cA2);
-        if (key == NULL || value == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "tried to get a key value pair from the database database conf string, but failed");
+        if (value == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "failed to to get value for key \"%s\"", key);
         }
         if (stHash_search(hash, key) != NULL) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "got a duplicate entry in the database conf string \"%s\"", key);
@@ -147,11 +147,11 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
     }
     if (stString_eq(type, "tokyo_cabinet")) {
         databaseConf = stKVDatabaseConf_constructTokyoCabinet(getXmlValueRequired(hash, "database_dir"));
-    } else if (strcmp(type, "mysql") == 0) {
+    } else if (stString_eq(type, "mysql")) {
         databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
                                                        getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
                                                        getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
-    } else if (strcmp(type, "postgresql") == 0) {
+    } else if (stString_eq(type, "postgresql")) {
         databaseConf = stKVDatabaseConf_constructPostgreSql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
                                                             getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
                                                             getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
