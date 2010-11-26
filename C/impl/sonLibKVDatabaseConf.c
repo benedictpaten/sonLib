@@ -174,8 +174,16 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
 
 
 stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
-    return constructSql(srcConf->type, srcConf->host, srcConf->port, srcConf->user, srcConf->password,
-                        srcConf->databaseName, srcConf->tableName);
+    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
+    conf->type = srcConf->type;
+    conf->databaseDir = stString_copy(srcConf->databaseDir);
+    conf->host = stString_copy(srcConf->host);
+    conf->port = srcConf->port;
+    conf->user = stString_copy(srcConf->user);
+    conf->password = stString_copy(srcConf->password);
+    conf->databaseName = stString_copy(srcConf->databaseName);
+    conf->tableName = stString_copy(srcConf->tableName);
+    return conf;
 }
 
 void stKVDatabaseConf_destruct(stKVDatabaseConf *conf) {
