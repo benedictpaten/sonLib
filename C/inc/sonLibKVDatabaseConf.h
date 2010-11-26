@@ -35,12 +35,13 @@ stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigne
  * <st_kv_database_conf type="TYPE">
  *      <tokyo_cabinet database_dir=""/>
  *      <mysql host="" port="" user="" password="" database_name="" table_name=""/>
+ *      <postgresql host="" port="" user="" password="" database_name="" table_name=""/>
  * </st_kv_database_conf>
  *
  * Type can be "tokyo_cabinet", "mysql", or "postgresql". If it is of that type then
  * you need to include a nested tag with the parameters for that conf constructor.
  * The labels for the nested tag are name value pairs (no order assumed) for the conf constructor
- * (see above).
+ * (see above).  The port is optional.
  */
 stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString);
 

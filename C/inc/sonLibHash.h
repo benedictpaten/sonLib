@@ -10,6 +10,8 @@
 
 #include "sonLibTypes.h"
 
+// FIXME: passing key as non-const is causing unnecessary casts
+
 /*
  * Constructs hash, with no destructors for keys or values.
  */

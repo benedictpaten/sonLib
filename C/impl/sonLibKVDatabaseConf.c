@@ -31,14 +31,10 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
     return conf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned port, const char *user, const char *password,
-                                                  const char *databaseName, const char *tableName) {
-#ifndef HAVE_MYSQL
-    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-            "requested MySQL database, however sonlib is not compiled with MySql support");
-#endif
+static stKVDatabaseConf *constructSql(stKVDatabaseType type, const char *host, unsigned port, const char *user, const char *password,
+                                      const char *databaseName, const char *tableName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
-    conf->type = stKVDatabaseTypeMySql;
+    conf->type = type;
     conf->host = stString_copy(host);
     conf->port = port;
     conf->user = stString_copy(user);
@@ -48,21 +44,22 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned por
     return conf;
 }
 
+stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned port, const char *user, const char *password,
+                                                  const char *databaseName, const char *tableName) {
+#ifndef HAVE_MYSQL
+    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+            "requested MySQL database, however sonlib is not compiled with MySql support");
+#endif
+    return constructSql(stKVDatabaseTypePostgreSql, host, port, user, password, databaseName, tableName);
+}
+
 stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
                                                        const char *databaseName, const char *tableName) {
 #ifndef HAVE_POSTGRESQL
     stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
             "requested PostgreSql database, however sonlib is not compiled with MySql support");
 #endif
-    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
-    conf->type = stKVDatabaseTypePostgreSql;
-    conf->host = stString_copy(host);
-    conf->port = port;
-    conf->user = stString_copy(user);
-    conf->password = stString_copy(password);
-    conf->databaseName = stString_copy(databaseName);
-    conf->tableName = stString_copy(tableName);
-    return conf;
+    return constructSql(stKVDatabaseTypePostgreSql, host, port, user, password, databaseName, tableName);
 }
 
 char *getNextToken(char **tokenStream) {
@@ -78,11 +75,10 @@ char *getNextToken(char **tokenStream) {
 
 static void getExpectedToken(char **tokenStream, const char *expected) {
     char *cA = getNextToken(tokenStream);
-    if (strcmp(cA, expected) != 0) {
-        stThrowNew(
-                ST_KV_DATABASE_EXCEPTION_ID,
-                "BUG: expected the token: %s in database XML string, but I got: %s from the stream %s",
-                expected, cA, *tokenStream);
+    if (stString_eq(cA, expected)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                   "BUG: expected the token: %s in database XML string, but I got: %s from the stream %s",
+                   expected, cA, *tokenStream);
     }
     free(cA);
 }
@@ -92,8 +88,13 @@ static char *getKeyValue(char **tokenStream, const char *key) {
     return getNextToken(tokenStream);
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
-    stKVDatabaseConf *databaseConf;
+/* Parse XML string into a hash.  This parses all attributes of all tags
+ * into values.  st_kv_database_conf type is stored as conf_type,
+ * database tag is stores as db_tag.  This does minimal error checking
+ * and is really lame.
+ */
+static stHash *hackParseXmlString(const char *xmlString) {
+    stHash *hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey, free, free);
     char *toReplace[5] = { "</", "<", "/>", ">", "=" };
     char *cA = stString_replace(xmlString, toReplace[0], " "), *cA2;
     for (int32_t i = 1; i < 5; i++) {
@@ -102,75 +103,79 @@ stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
         cA = cA2;
     }
     getExpectedToken(&cA2, "st_kv_database_conf");
-    char *type = getKeyValue(&cA2, "type");
-    if (strcmp(type, "tokyo_cabinet") == 0) {
-        getExpectedToken(&cA2, "tokyo_cabinet");
-        char *databaseDir = getKeyValue(&cA2, "database_dir");
-        databaseConf = stKVDatabaseConf_constructTokyoCabinet(databaseDir);
-        free(databaseDir);
-    } else {
-        assert(strcmp(type, "mysql") == 0);
-        getExpectedToken(&cA2, "mysql");
-        stHash *hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey,
-                free, free);
-        for (int32_t i = 0; i < 6; i++) {
-            char *key = getNextToken(&cA2);
-            char *value = getNextToken(&cA2);
-            if (key == NULL || value == NULL) {
-                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                        "tried to get a key value pair from the MYSQL database conf string, but failed");
-            }
-            if (stHash_search(hash, key) != NULL) {
-                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                        "got a duplicate entry in the MYSQL conf string");
-            }
-            stHash_insert(hash, key, value);
+    stHash_insert(hash, "conf_type", getKeyValue(&cA2, "type"));
+    stHash_insert(hash, "db_tag", getNextToken(&cA2));
+
+    for (int32_t i = 0; i < 6; i++) {
+        char *key = getNextToken(&cA2);
+        char *value = getNextToken(&cA2);
+        if (key == NULL || value == NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "tried to get a key value pair from the database database conf string, but failed");
         }
-        char *errorString = "did not find a %s value in the MYSQL string: %s";
-        if (stHash_search(hash, "host") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "host", xmlString);
+        if (stHash_search(hash, key) != NULL) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "got a duplicate entry in the database conf string \"%s\"", key);
         }
-        if (stHash_search(hash, "port") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "port", xmlString);
-        }
-        if (stHash_search(hash, "user") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "user", xmlString);
-        }
-        if (stHash_search(hash, "password") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "password", xmlString);
-        }
-        if (stHash_search(hash, "database_name") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString,
-                    "database_name");
-        }
-        if (stHash_search(hash, "table_name") == NULL) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, errorString, "table_name", xmlString);
-        }
-        uint32_t port; //Parse the port integer
-        int32_t i = sscanf(stHash_search(hash, "port"), "%ui", &port);
-        assert(i == 1);
-        databaseConf = stKVDatabaseConf_constructMySql(stHash_search(hash,
-                "host"), port, stHash_search(hash, "user"), stHash_search(hash,
-                "password"), stHash_search(hash, "database_name"),
-                stHash_search(hash, "table_name"));
-        stHash_destruct(hash);
+        stHash_insert(hash, key, value);
     }
-    free(type);
-    free(cA);
+    return hash;
+}
+
+static const char *getXmlValueRequired(stHash *hash, const char *key) {
+    const char *value = stHash_search(hash, (char*)key);
+    if (value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "did not find a \"%s\" value in the database XML string", key);
+    }
+    return value;
+}
+
+static int getXmlPort(stHash *hash) {
+    const char *value = stHash_search(hash, "port");
+    if (value == NULL) {
+        return 0;
+    } else {
+        return stSafeStrToUInt32(value);
+    }
+}
+
+static stKVDatabaseConf *constructFromString(const char *xmlString) {
+    stHash *hash = hackParseXmlString(xmlString);
+    stKVDatabaseConf *databaseConf;
+    const char *type = getXmlValueRequired(hash, "conf_type");
+    const char *dbTag = getXmlValueRequired(hash, "db_tag");
+    if (!stString_eq(type, dbTag)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Database XML tag \"%s\" did not match st_kv_database_conf type attribute", dbTag, type);
+    }
+    if (stString_eq(type, "tokyo_cabinet")) {
+        databaseConf = stKVDatabaseConf_constructTokyoCabinet(getXmlValueRequired(hash, "database_dir"));
+    } else if (strcmp(type, "mysql") == 0) {
+        databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
+                                                       getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
+                                                       getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
+    } else if (strcmp(type, "postgresql") == 0) {
+        databaseConf = stKVDatabaseConf_constructPostgreSql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
+                                                            getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
+                                                            getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
+    } else {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "invalid database type \"%s\"", type);
+    }
+    stHash_destruct(hash);
     return databaseConf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
-    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
-    conf->type = stKVDatabaseTypeMySql;
-    conf->databaseDir = stString_copy(srcConf->databaseDir);
-    conf->host = stString_copy(srcConf->host);
-    conf->port = srcConf->port;
-    conf->user = stString_copy(srcConf->user);
-    conf->password = stString_copy(srcConf->password);
-    conf->databaseName = stString_copy(srcConf->databaseName);
-    conf->tableName = stString_copy(srcConf->tableName);
+stKVDatabaseConf *stKVDatabaseConf_constructFromString(const char *xmlString) {
+    stKVDatabaseConf *conf = NULL;
+    stTry {
+        conf = constructFromString(xmlString);
+    } stCatch(ex) {
+        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "Invalid database XML specification: %s", xmlString);
+    } stTryEnd;
     return conf;
+}
+
+
+stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
+    return constructSql(srcConf->type, srcConf->host, srcConf->port, srcConf->user, srcConf->password,
+                        srcConf->databaseName, srcConf->tableName);
 }
 
 void stKVDatabaseConf_destruct(stKVDatabaseConf *conf) {

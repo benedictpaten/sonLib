@@ -230,7 +230,7 @@ static void testTransactions(CuTest *testCase) {
 
     stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
     stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
+    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
     stKVDatabase_commitTransaction(database);
     //Try committing the transaction twice
     stTry {
@@ -452,24 +452,19 @@ static void readWriteAndRemoveRecordsLots(CuTest *testCase) {
 
 static void test_stKVDatabaseConf_constructFromString_tokyoCabinet(
         CuTest *testCase) {
-    const char
-            *tokyoCabinetTestString =
+    const char *xmlTestString =
                     "<st_kv_database_conf type='tokyo_cabinet'><tokyo_cabinet database_dir='foo'/></st_kv_database_conf>";
-    stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(
-            tokyoCabinetTestString);
+    stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(xmlTestString);
     CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypeTokyoCabinet);
     CuAssertStrEquals(testCase, "foo", stKVDatabaseConf_getDir(conf));
 }
 
 static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
-#ifndef HAVE_MYSQL
-    return;
-#endif
-    const char
-            *tokyoCabinetTestString =
+#ifdef HAVE_MYSQL
+    const char *xmlTestString =
                     "<st_kv_database_conf type='mysql'><mysql host='enormous' port='5' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
     stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(
-            tokyoCabinetTestString);
+            xmlTestString);
     CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypeMySql);
     CuAssertTrue(testCase, stKVDatabaseConf_getDir(conf) == NULL);
     CuAssertStrEquals(testCase, "enormous", stKVDatabaseConf_getHost(conf));
@@ -478,6 +473,23 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
     CuAssertStrEquals(testCase, "bar", stKVDatabaseConf_getPassword(conf));
     CuAssertStrEquals(testCase, "mammals", stKVDatabaseConf_getDatabaseName(conf));
     CuAssertStrEquals(testCase, "flowers", stKVDatabaseConf_getTableName(conf));
+#endif
+}
+
+static void test_stKVDatabaseConf_constructFromString_postgresql(CuTest *testCase) {
+#ifdef HAVE_POSTGRESQL
+    const char *xmlTestString =
+                    "<st_kv_database_conf type='postgresql'><postgresql host='enormous' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
+    stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(xmlTestString);
+    CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypePostgreSql);
+    CuAssertTrue(testCase, stKVDatabaseConf_getDir(conf) == NULL);
+    CuAssertStrEquals(testCase, "enormous", stKVDatabaseConf_getHost(conf));
+    CuAssertIntEquals(testCase, 0, stKVDatabaseConf_getPort(conf));
+    CuAssertStrEquals(testCase, "foo", stKVDatabaseConf_getUser(conf));
+    CuAssertStrEquals(testCase, "bar", stKVDatabaseConf_getPassword(conf));
+    CuAssertStrEquals(testCase, "mammals", stKVDatabaseConf_getDatabaseName(conf));
+    CuAssertStrEquals(testCase, "flowers", stKVDatabaseConf_getTableName(conf));
+#endif
 }
 
 static void test_cache(CuTest *testCase) {
@@ -531,6 +543,7 @@ CuSuite* sonLib_stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, test_cache);
     SUITE_ADD_TEST(suite, test_cacheWithClearing);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);
+    SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_postgresql);
     return suite;
 }
 
