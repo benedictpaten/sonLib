@@ -7,7 +7,7 @@ libHeaders = inc/*.h
 libInternalHeaders = impl/*.h
 libTests = tests/sonLib*.c
 
-testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
+testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
 cflags += ${tokyoCabinetIncl} ${mysqlIncl} ${pgsqlIncl}
 
@@ -18,6 +18,9 @@ clean :
 
 ${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLibTests tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
+
+${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c
+	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLib_kvDatabaseTest tests/kvDatabaseTest.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
 
 ${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
 	${cxx} ${cflags} -I inc -I ${libPath} -o ${binPath}/sonLib_cigarTest tests/cigarsTest.c ${libPath}/sonLib.a -lm

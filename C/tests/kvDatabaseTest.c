@@ -4,10 +4,19 @@
  */
 
 #include "sonLibGlobalsTest.h"
+#include "stSafeC.h"
+#include <getopt.h>
 
 static stKVDatabase *database = NULL;
 static bool USE_CACHE = 0;
 static bool CLEAR_CACHE = 0;
+/* command line options */
+static stKVDatabaseType optType = stKVDatabaseTypeTokyoCabinet;
+static const char *optDb = "testTCDatabase";
+static const char *optHost = "localhost";
+static unsigned int optPort = 0;
+static const char *optUser = NULL;
+static const char *optPass = NULL;
 
 static void teardown() {
     if (database != NULL) {
@@ -20,30 +29,16 @@ static void teardown() {
 static stKVDatabaseConf *getConf() {
     static stKVDatabaseConf *conf = NULL;
     if (conf == NULL) {
-        // turn one of these on
-#if 1
-        assert(conf == NULL);
-        conf = stKVDatabaseConf_constructTokyoCabinet("testTCDatabase");
-        fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
-#endif
-#if 0
-        assert(conf == NULL);
-        conf = stKVDatabaseConf_constructMySql("localhost", 0, "root", "", "cactus", "cactusDbTest");
-        fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
-#endif
-#if 0
-        assert(conf == NULL);
-        conf = stKVDatabaseConf_constructMySql("kolossus-10", 0, "cactus", "cactus", "cactus", "cactusDbTest");
-        fprintf(stderr, "running MySQL kolossus-10 sonLibKVDatabase tests\n");
-#endif
-#if 0
-        assert(conf == NULL);
-        conf = stKVDatabaseConf_constructPostgreSql("localhost", 0, "cactus", "cactus", "cactus", "cactusDbTest");
-        fprintf(stderr, "running PostgreSql local sonLibKVDatabase tests\n");
-#endif
-    }
-    if (conf == NULL) {
-        st_errAbort("database test config hack doesn't enable any database");
+        if (optType == stKVDatabaseTypeTokyoCabinet) {
+            conf = stKVDatabaseConf_constructTokyoCabinet(optDb);
+            fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
+        } else if (optType == stKVDatabaseTypeMySql) {
+            conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
+            fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
+        } else if (optType == stKVDatabaseTypePostgreSql) {
+            conf = stKVDatabaseConf_constructPostgreSql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
+            fprintf(stderr, "running PostgreSql local sonLibKVDatabase tests\n");
+        }
     }
     return conf;
 }
@@ -530,7 +525,7 @@ static void test_cacheWithClearing(CuTest *testCase) {
     CLEAR_CACHE = 1;
 }
 
-CuSuite* sonLib_stKVDatabaseTestSuite(void) {
+static CuSuite* stKVDatabaseTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecords);
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecordsLots);
@@ -545,5 +540,102 @@ CuSuite* sonLib_stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_postgresql);
     return suite;
+}
+
+static int runTests(void) {
+    CuString *output = CuStringNew();
+    CuSuite* suite = CuSuiteNew();
+    CuSuiteAddSuite(suite, stKVDatabaseTestSuite());
+
+    CuSuiteRun(suite);
+    CuSuiteSummary(suite, output);
+    CuSuiteDetails(suite, output);
+    printf("%s\n", output->buffer);
+    return suite->failCount > 0;
+}
+
+/* usage message and exit */
+static void usage(const char *prog) {
+    static const char *help = 
+        "%s [options]\n"
+        "\n"
+        "Run key/value database tests.\n"
+        "\n"
+        "Options:\n"
+        "\n"
+        "-t --type=dbtype - one of 'TokyoCabinet', 'MySql', or 'PostgreSql'.\n"
+        "    Values area case-insensitive, defaults to TokyoCabinet.\n"
+        "-d --db=database - database directory for TokyoCabinet or database name\n"
+        "    for SQL databases. Defaults to testTCDatabase for TokyoCabinet,\n"
+        "    SQL databases must specify.\n"
+        "--host=host - SQL database host, defaults to localhost\n"
+        "--port=port - SQL database port.\n"
+        "-u, --user=user - SQL database user.\n"
+        "-p, --pass=pass - SQL database password.\n"
+        "-h, --help - print this message.\n";
+    fprintf(stderr, help, prog);
+    exit(1);
+}
+
+static stKVDatabaseType parseDbType(const char *dbTypeStr) {
+    if (stString_eqcase(dbTypeStr, "TokyoCabinet")) {
+        return stKVDatabaseTypeTokyoCabinet;
+    } else if (stString_eqcase(dbTypeStr, "MySql")) {
+        return stKVDatabaseTypeMySql;
+    } else if (stString_eqcase(dbTypeStr, "PostgreSql")) {
+        return stKVDatabaseTypePostgreSql;
+    } else {
+        fprintf(stderr, "Error: invalid value for --type: %s\n", dbTypeStr);
+        exit(1);
+        return stKVDatabaseTypePostgreSql;
+    }
+}
+
+static void parseArgs(int argc, char * const *argv) {
+    static struct option longOptions[] = {
+        {"type", required_argument, NULL, 't'},
+        {"db", required_argument,   NULL, 'd'},
+        {"host", required_argument, NULL, 'H'},
+        {"port", required_argument, NULL, 'P'},
+        {"user", required_argument, NULL, 'u'},
+        {"pass", required_argument, NULL, 'p'},
+        {"help", no_argument,       NULL, 'h'},
+        {NULL, 0, NULL, '\0'}
+    };
+    const char *prog = argv[0];
+    int optKey, optIndex;
+    while ((optKey = getopt_long(argc, argv, "", longOptions, &optIndex)) >= 0) {
+        switch (optKey) {
+        case 't':
+            optType = parseDbType(optarg);
+            break;
+        case 'd':
+            optDb = optarg;
+            break;
+        case 'H':
+            optHost = optarg;
+            break;
+        case 'P':
+            optPort = stSafeStrToUInt32(optarg);
+            break;
+        case 'u':
+            optUser = optarg;
+            break;
+        case 'p':
+            optPass = optarg;
+            break;
+        case 'h':
+            usage(prog);
+            break;
+        default:
+            fprintf(stderr, "Error: invalid  option: %s\n", argv[optind]);
+            usage(prog);
+        }
+    }
+}
+
+int main(int argc, char *const *argv) {
+    parseArgs(argc, argv);
+    return runTests();
 }
 

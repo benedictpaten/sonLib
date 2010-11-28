@@ -36,6 +36,20 @@ inline static bool stString_eq(const char *string1, const char *string2) {
 }
 
 /*
+ * Compare two strings for equality, ignoring case.  NULL is considered a valid value and
+ * both strings being NULL returns true.
+ */
+inline static bool stString_eqcase(const char *string1, const char *string2) {
+    if ((string1 == NULL) && (string2 == NULL)) {
+        return true;
+    } else if ((string1 == NULL) || (string2 == NULL)) {
+        return false;
+    } else {
+        return strcasecmp(string1, string2) == 0;
+    }
+}
+
+/*
  * Parses the next word from a string, updates the string pointer and returns
  * the parsed string. Delimiters are all white space characters.
  */

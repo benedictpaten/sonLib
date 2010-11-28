@@ -10,9 +10,14 @@ from sonLib.bioio import parseSuiteTestOptions
 
 class TestCase(unittest.TestCase):        
     def testSonLibCTests(self):
-        """Run all the sonLib CuTests, fail if any of them fail.
+        """Run m,ost the sonLib CuTests, fail if any of them fail.
         """
         system("sonLibTests")
+
+    def testSonLibKVDatabaseTests(self):
+        """Run all the sonLib KV database tests, fail if any of them fail.
+        """
+        system("sonLib_kvDatabaseTest")
 
 def allSuites():
     bioioSuite = unittest.makeSuite(bioioTest.TestCase, 'test')
