@@ -3,6 +3,7 @@ import unittest
 import bioioTest
 import cigarsTest
 import treeTest
+import socket
 from sonLib.bioio import system
 
 from sonLib.bioio import parseSuiteTestOptions
@@ -18,6 +19,8 @@ class TestCase(unittest.TestCase):
         """Run all the sonLib KV database tests, fail if any of them fail.
         """
         system("sonLib_kvDatabaseTest")
+        if socket.gethostname() == "hgwdev":
+            system("sonLib_kvDatabaseTest --type=mysql --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
 
 def allSuites():
     bioioSuite = unittest.makeSuite(bioioTest.TestCase, 'test')
