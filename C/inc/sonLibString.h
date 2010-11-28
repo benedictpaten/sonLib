@@ -10,6 +10,7 @@
 
 #include "sonLibTypes.h"
 #include <string.h>
+#include <strings.h>
 
 /*
  * Copies a string, if string is NULL, NULL is returned
