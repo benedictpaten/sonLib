@@ -19,6 +19,7 @@ typedef struct {
     char *table;
 } PgSqlDb;
 
+
 static PGresult *queryStart(PgSqlDb *dbImpl, const char *query, ...)
 #if defined(__GNUC__)
 __attribute__((format(printf, 2, 3)))
@@ -69,7 +70,7 @@ static void throwPgSqlConnExcept(PgSqlDb *dbImpl, const char *msg, ...) {
 }
 
 /* create an exception for the current PostgreSql results error */
-static stExcept *createPgSqlResultExceptv(PgSqlDb *dbImpl, PGresult *rs, const char *msg, va_list args) {
+static stExcept *createPgSqlResultExceptv(PgSqlDb *dbImpl, const PGresult *rs, const char *msg, va_list args) {
     char *fmtMsg = stSafeCDynFmtv(msg, args);
     stExcept *except;
     if (rs == NULL) {
@@ -84,7 +85,7 @@ static stExcept *createPgSqlResultExceptv(PgSqlDb *dbImpl, PGresult *rs, const c
 }
 
 /* create an exception for the current PostgreSql error */
-static stExcept *createPgSqlResultExcept(PgSqlDb *dbImpl, PGresult *result, const char *msg, ...) {
+static stExcept *createPgSqlResultExcept(PgSqlDb *dbImpl, const PGresult *result, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
     stExcept *except = createPgSqlResultExceptv(dbImpl, result, msg, args);
@@ -92,16 +93,22 @@ static stExcept *createPgSqlResultExcept(PgSqlDb *dbImpl, PGresult *result, cons
     return except;
 }
 
-#if 0 // not used
 /* generate an exception for the current PostgreSql error */
-static void throwPgSqlResultExcept(PgSqlDb *dbImpl, PGresult *result, const char *msg, ...) {
+static void throwPgSqlResultExcept(PgSqlDb *dbImpl, const PGresult *result, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
     stExcept *except = createPgSqlResultExceptv(dbImpl, result, msg, args);
     va_end(args);
     stThrow(except);
 }
-#endif
+
+/* notice receiver to turn warnings into errors */
+static void noticeReceiver(void *arg, const PGresult *result) {
+    PgSqlDb *dbImpl = arg;
+    if (strncmp(PQresultErrorMessage(result), "WARNING:", 8) == 0) {
+        throwPgSqlResultExcept(dbImpl, result, "warnings treated as errors");
+    }
+}
 
 /* Execute SQL a non-select query, formatting arguments into the sql command.
  * returns number of rows affect or zero if that makes no sense */
@@ -164,35 +171,6 @@ static stExcept *createExpectOneTuple(PgSqlDb *dbImpl, PGresult *rs, const char 
     return except;
 }
 
-#if 0 // FIXME
-static char **queryNext(PgSqlDb *dbImpl, PGresult *rs) {
-    if (rs == NULL) {
-        return NULL;
-    }
-    char **row = mysql_fetch_row(rs);
-    if (mysql_errno(dbImpl->conn) != 0) {
-        throwPgSqlExcept(dbImpl, "query fetch failed");
-    }
-    return row;
-}
-
-static char **queryNextRequired(PgSqlDb *dbImpl, PGresult *rs) {
-    char **row = queryNext(dbImpl, rs);
-    if (row == NULL) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "query did not return required result");
-    }
-    return row;
-}
-
-static size_t *queryLengths(PgSqlDb *dbImpl, PGresult *rs) {
-    size_t *lens = mysql_fetch_lengths(rs);
-    if (mysql_errno(dbImpl->conn) != 0) {
-        throwPgSqlExcept(dbImpl, "mysql_fetch_lengths failed");
-    }
-    return lens;
-}
-#endif
-
 static void queryEnd(PgSqlDb *dbImpl, PGresult *rs) {
     PQclear(rs);
 }
@@ -250,6 +228,7 @@ static PgSqlDb *connect(stKVDatabaseConf *conf) {
         stThrow(ex);
     }
     dbImpl->table = stString_copy(stKVDatabaseConf_getTableName(conf));
+    PQsetNoticeReceiver(dbImpl->conn, noticeReceiver, dbImpl);
 
     // NOTE: commit will not return an error, this does row-level locking on
     // the select done before the update
@@ -278,7 +257,7 @@ static void deleteDB(stKVDatabase *database) {
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     PgSqlDb *dbImpl = database->dbImpl;
     unsigned char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
-    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, '%s')", dbImpl->table, (long long)key, buf);
+    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, E'%s')", dbImpl->table, (long long)key, buf);
     stSafeCFree(buf);
 }
 
@@ -286,7 +265,7 @@ static void updateRecord(stKVDatabase *database, int64_t key,
                          const void *value, int64_t sizeOfRecord) {
     PgSqlDb *dbImpl = database->dbImpl;
     unsigned char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
-    sqlExec(dbImpl, "update %s set data='%s' where id=%lld", dbImpl->table, buf,  (long long)key);
+    sqlExec(dbImpl, "update %s set data=E'%s' where id=%lld", dbImpl->table, buf,  (long long)key);
     stSafeCFree(buf);
 }
 
