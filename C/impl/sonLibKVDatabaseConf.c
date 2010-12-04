@@ -139,7 +139,7 @@ static int getXmlPort(stHash *hash) {
 
 static stKVDatabaseConf *constructFromString(const char *xmlString) {
     stHash *hash = hackParseXmlString(xmlString);
-    stKVDatabaseConf *databaseConf;
+    stKVDatabaseConf *databaseConf = NULL;
     const char *type = getXmlValueRequired(hash, "conf_type");
     const char *dbTag = getXmlValueRequired(hash, "db_tag");
     if (!stString_eq(type, dbTag)) {
