@@ -12,8 +12,6 @@
 #ifdef HAVE_POSTGRESQL
 
 #include <libpq-fe.h>
-#include <c.h>
-#include <utils/elog.h>
 
 /* PostgreSql client data object, stored in stKVDatabase object */
 typedef struct {
