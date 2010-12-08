@@ -12,6 +12,8 @@
 #ifdef HAVE_POSTGRESQL
 
 #include <libpq-fe.h>
+#include <c.h>
+#include <utils/elog.h>
 
 /* PostgreSql client data object, stored in stKVDatabase object */
 typedef struct {
@@ -33,12 +35,17 @@ __attribute__((format(printf, 2, 3)))
 ;
 
 /* is this a PostgreSql error were the transaction should be retried */
-static bool isPgSqlRetryError(ExecStatusType status) {
-#if 0 // FIXME
-    return (pgErrNo == ER_LOCK_DEADLOCK) || (pgErrNo == ER_LOCK_WAIT_TIMEOUT);
-#else
-    return false;
-#endif
+static bool isPgSqlRetryError(const PGresult *rs) {
+    // libpq is painful on how one deals with checked in detailed sqlerror
+    // code./ PQresultErrorField() gives you a string, however there is no
+    // function to convert the the err code constants defined in
+    // postgresql/server/utils/errcodes.h to something that can be compared.
+    // So we look in errcodes-appendix.html and just hard code it.
+
+    // check for class 40
+    const char *sqlState = PQresultErrorField(rs, PG_DIAG_SQLSTATE);
+    return (sqlState != NULL) && (strncmp(sqlState, "40", 2) == 0);
+
 }
 
 /* create an exception for the current PostgreSql conn error */
@@ -76,9 +83,8 @@ static stExcept *createPgSqlResultExceptv(PgSqlDb *dbImpl, const PGresult *rs, c
     if (rs == NULL) {
         except = stExcept_new(ST_KV_DATABASE_EXCEPTION_ID, "%s: fatal error (%d)", fmtMsg, PQerrorMessage(dbImpl->conn));
     } else {        
-        ExecStatusType stat = PQresultStatus(rs);
-        const char *exId = isPgSqlRetryError(stat) ?  ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
-        except = stExcept_new(exId, "%s: %s (%d)", fmtMsg, PQresultErrorMessage(rs), PQresStatus(stat));
+        const char *exId = isPgSqlRetryError(rs) ?  ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID : ST_KV_DATABASE_EXCEPTION_ID;
+        except = stExcept_new(exId, "%s: %s", fmtMsg, PQresultErrorMessage(rs));
     }
     stSafeCFree(fmtMsg);
     return except;

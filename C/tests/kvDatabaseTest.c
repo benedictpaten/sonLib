@@ -1,22 +1,15 @@
 /*
- * sonLibKVDatabaseTest.c
+ * kVDatabaseTest.c
  *
  */
 
 #include "sonLibGlobalsTest.h"
-#include "stSafeC.h"
-#include <getopt.h>
+#include "kvDatabaseTestCommon.h"
 
+static stKVDatabaseConf *conf = NULL;
 static stKVDatabase *database = NULL;
 static bool USE_CACHE = 0;
 static bool CLEAR_CACHE = 0;
-/* command line options */
-static stKVDatabaseType optType = stKVDatabaseTypeTokyoCabinet;
-static const char *optDb = "testTCDatabase";
-static const char *optHost = "localhost";
-static unsigned int optPort = 0;
-static const char *optUser = NULL;
-static const char *optPass = NULL;
 
 static void teardown() {
     if (database != NULL) {
@@ -26,28 +19,11 @@ static void teardown() {
     }
 }
 
-static stKVDatabaseConf *getConf() {
-    static stKVDatabaseConf *conf = NULL;
-    if (conf == NULL) {
-        if (optType == stKVDatabaseTypeTokyoCabinet) {
-            conf = stKVDatabaseConf_constructTokyoCabinet(optDb);
-            fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
-        } else if (optType == stKVDatabaseTypeMySql) {
-            conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
-            fprintf(stderr, "running MySQL local sonLibKVDatabase tests\n");
-        } else if (optType == stKVDatabaseTypePostgreSql) {
-            conf = stKVDatabaseConf_constructPostgreSql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
-            fprintf(stderr, "running PostgreSql local sonLibKVDatabase tests\n");
-        }
-    }
-    return conf;
-}
-
 static void setup() {
     teardown();
-    database = stKVDatabase_construct(getConf(), true);
+    database = stKVDatabase_construct(conf, true);
     teardown();
-    database = stKVDatabase_construct(getConf(), true);
+    database = stKVDatabase_construct(conf, true);
     if(USE_CACHE) {
         stKVDatabase_makeMemCache(database, 50000, 5); //Makes a cache with a 50k cache.
     }
@@ -240,7 +216,7 @@ static void testTransactions(CuTest *testCase) {
     stKVDatabase_destruct(database);
 
     //Now re-open the database and check it is as expected:
-    database = stKVDatabase_construct(getConf(), false);
+    database = stKVDatabase_construct(conf, false);
     CuAssertIntEquals(testCase, 3, stKVDatabase_getNumberOfRecords(database));
     CuAssertStrEquals(testCase, "Red", stKVDatabase_getRecord(database, 1));
     CuAssertStrEquals(testCase, "Green", stKVDatabase_getRecord(database, 2));
@@ -405,7 +381,7 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
     if (reopenDatabase) {
         stKVDatabase_commitTransaction(database);
         stKVDatabase_destruct(database);
-        database = stKVDatabase_construct(getConf(), false);
+        database = stKVDatabase_construct(conf, false);
         stKVDatabase_startTransaction(database);
     }
 
@@ -554,88 +530,11 @@ static int runTests(void) {
     return suite->failCount > 0;
 }
 
-/* usage message and exit */
-static void usage(const char *prog) {
-    static const char *help = 
-        "%s [options]\n"
-        "\n"
-        "Run key/value database tests.\n"
-        "\n"
-        "Options:\n"
-        "\n"
-        "-t --type=dbtype - one of 'TokyoCabinet', 'MySql', or 'PostgreSql'.\n"
-        "    Values area case-insensitive, defaults to TokyoCabinet.\n"
-        "-d --db=database - database directory for TokyoCabinet or database name\n"
-        "    for SQL databases. Defaults to testTCDatabase for TokyoCabinet,\n"
-        "    SQL databases must specify.\n"
-        "--host=host - SQL database host, defaults to localhost\n"
-        "--port=port - SQL database port.\n"
-        "-u, --user=user - SQL database user.\n"
-        "-p, --pass=pass - SQL database password.\n"
-        "-h, --help - print this message.\n";
-    fprintf(stderr, help, prog);
-    exit(1);
-}
-
-static stKVDatabaseType parseDbType(const char *dbTypeStr) {
-    if (stString_eqcase(dbTypeStr, "TokyoCabinet")) {
-        return stKVDatabaseTypeTokyoCabinet;
-    } else if (stString_eqcase(dbTypeStr, "MySql")) {
-        return stKVDatabaseTypeMySql;
-    } else if (stString_eqcase(dbTypeStr, "PostgreSql")) {
-        return stKVDatabaseTypePostgreSql;
-    } else {
-        fprintf(stderr, "Error: invalid value for --type: %s\n", dbTypeStr);
-        exit(1);
-        return stKVDatabaseTypePostgreSql;
-    }
-}
-
-static void parseArgs(int argc, char * const *argv) {
-    static struct option longOptions[] = {
-        {"type", required_argument, NULL, 't'},
-        {"db", required_argument,   NULL, 'd'},
-        {"host", required_argument, NULL, 'H'},
-        {"port", required_argument, NULL, 'P'},
-        {"user", required_argument, NULL, 'u'},
-        {"pass", required_argument, NULL, 'p'},
-        {"help", no_argument,       NULL, 'h'},
-        {NULL, 0, NULL, '\0'}
-    };
-    const char *prog = argv[0];
-    int optKey, optIndex;
-    while ((optKey = getopt_long(argc, argv, "", longOptions, &optIndex)) >= 0) {
-        switch (optKey) {
-        case 't':
-            optType = parseDbType(optarg);
-            break;
-        case 'd':
-            optDb = optarg;
-            break;
-        case 'H':
-            optHost = optarg;
-            break;
-        case 'P':
-            optPort = stSafeStrToUInt32(optarg);
-            break;
-        case 'u':
-            optUser = optarg;
-            break;
-        case 'p':
-            optPass = optarg;
-            break;
-        case 'h':
-            usage(prog);
-            break;
-        default:
-            fprintf(stderr, "Error: invalid  option: %s\n", argv[optind]);
-            usage(prog);
-        }
-    }
-}
-
 int main(int argc, char *const *argv) {
-    parseArgs(argc, argv);
+    const char *desc = "kvDatabaseTests [options]\n"
+        "\n"
+        "Run key/value database tests.\n";
+    conf = kvDatabaseTestParseOptions(argc, argv, desc, 0, 0, NULL, NULL);
     return runTests();
 }
 
