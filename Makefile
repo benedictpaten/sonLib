@@ -2,8 +2,11 @@ include include.mk
 
 all : cP
 
-cP:
+cP: externalToolsP
 	cd C && make all
+	
+externalToolsP:
+	cd externalTools && make all
 
 clean :
 	cd C && make clean
