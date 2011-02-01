@@ -14,7 +14,7 @@ cflags += ${tokyoCabinetIncl} ${mysqlIncl} ${pgsqlIncl}
 all : ${libPath}/sonLib.a ${testProgs}
 
 clean : 
-	rm -f  ${testProgs} ${libPath}/sonLib*.h ${libPath}/sonLib.a ${libPath}/avl.h ${libPath}/bioioC.h ${libPath}/commonC.h ${libPath}/fastCMaths.h ${libPath}/hashTableC.h ${libPath}/pairwiseAlignment.h
+	rm -f  ${testProgs} ${libPath}/sonLib*.h ${libPath}/st*.h ${libPath}/sonLib.a ${libPath}/hashTable* ${libPath}/avl.h ${libPath}/bioioC.h ${libPath}/commonC.h ${libPath}/fastCMaths.h ${libPath}/pairwiseAlignment.h
 
 ${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}

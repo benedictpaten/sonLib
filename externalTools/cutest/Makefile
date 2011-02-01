@@ -6,7 +6,7 @@ all : ${libPath}/cuTest.a
 
 clean : 
 	#Removing test binaries
-	rm -f ${libPath}/cuTest.a ${libPath}/cuTest.h
+	rm -f ${libPath}/cuTest.a ${libPath}/CuTest.h
 
 ${libPath}/cuTest.a : CuTest.c CuTest.h
 	${cxx} ${cflags} -c CuTest.c
