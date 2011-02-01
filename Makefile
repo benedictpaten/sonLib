@@ -1,6 +1,4 @@
-include ../../include.mk
-binPath = ../../bin
-libPath = ../../lib
+include include.mk
 
 all : cP
 

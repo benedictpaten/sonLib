@@ -1,6 +1,6 @@
-include ../../../include.mk
-binPath = ../../../bin
-libPath = ../../../lib
+include ../include.mk
+binPath = ../bin
+libPath = ../lib
 
 libSources = impl/*.c
 libHeaders = inc/*.h
