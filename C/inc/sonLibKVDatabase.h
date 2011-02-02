@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
 #ifndef SONLIB_KV_DATABASE_H_
 #define SONLIB_KV_DATABASE_H_
 

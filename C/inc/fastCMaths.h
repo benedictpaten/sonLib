@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
 /*This code is taken and adapted directly from the probcons library,
  * with an addition for random numbers.
  */

@@ -1,4 +1,10 @@
 /*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
+/*
  * sonLibPairwiseAlignment.h
  *
  *  Created on: 31 May 2010

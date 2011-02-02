@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
 #ifndef SONLIB_SORTED_SET_H_
 #define SONLIB_SORTED_SET_H_
 

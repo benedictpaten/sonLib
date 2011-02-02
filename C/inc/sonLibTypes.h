@@ -1,4 +1,10 @@
 /*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
+/*
  * sonLibGlobals.h
  *
  *  Created on: 21 May 2010

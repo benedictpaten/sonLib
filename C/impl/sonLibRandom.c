@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
 #include "sonLibGlobalsInternal.h"
 
 const char *RANDOM_EXCEPTION_ID = "RANDOM_EXCEPTION";
