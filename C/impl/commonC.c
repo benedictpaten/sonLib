@@ -60,7 +60,7 @@ void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, 
         free(current);
     }
     *currentSize = newSize;
-    return st_malloc(base*newSize);
+    return st_malloc(base*((int64_t)newSize));
 }
 
 void *arrayResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
