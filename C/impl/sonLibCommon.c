@@ -30,7 +30,7 @@ void *st_calloc(int64_t elementNumber, size_t elementSize) {
      void *k;
      k = calloc(elementNumber, elementSize);
      if(k == 0) {
-         fprintf(stderr, "Calloc failed with request for %lld lots of %zu bytes\n", elementNumber, elementSize);
+         fprintf(stderr, "Calloc failed with request for %lld lots of %zu bytes\n", (long long int)elementNumber, elementSize);
          exit(1);
      }
      return k;
