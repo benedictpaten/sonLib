@@ -20,17 +20,17 @@ void *st_malloc(size_t i) {
     void *j;
     j = malloc(i);
     if(j == 0) {
-        fprintf(stderr, "Malloc failed with a request for: %i bytes\n", i);
+        fprintf(stderr, "Malloc failed with a request for: %zu bytes\n", i);
         exit(1);
     }
     return j;
 }
 
-void *st_calloc(int32_t elementNumber, int32_t elementSize) {
+void *st_calloc(int64_t elementNumber, size_t elementSize) {
      void *k;
      k = calloc(elementNumber, elementSize);
      if(k == 0) {
-         fprintf(stderr, "Calloc failed with request for %i lots of %i bytes\n", elementNumber, elementSize);
+         fprintf(stderr, "Calloc failed with request for %lld lots of %zu bytes\n", elementNumber, elementSize);
          exit(1);
      }
      return k;

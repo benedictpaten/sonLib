@@ -23,12 +23,12 @@
 /*
  * Safe malloc.
  */
-void *st_malloc(int32_t i);
+void *st_malloc(size_t i);
 
 /*
  * Safe calloc.
  */
-void *st_calloc(int32_t elementNumber, int32_t elementSize);
+void *st_calloc(int64_t elementNumber, size_t elementSize);
 
 //////////////////
 //Logging / std error printing
