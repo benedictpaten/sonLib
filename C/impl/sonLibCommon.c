@@ -16,7 +16,7 @@
 
 static int32_t LOG_LEVEL = ST_LOGGING_OFF;
 
-void *st_malloc(int32_t i) {
+void *st_malloc(size_t i) {
     void *j;
     j = malloc(i);
     if(j == 0) {
