@@ -21,6 +21,7 @@ void *st_malloc(size_t i) {
     j = malloc(i);
     if(j == 0) {
         fprintf(stderr, "Malloc failed with a request for: %zu bytes\n", i);
+        assert(0);
         exit(1);
     }
     return j;
