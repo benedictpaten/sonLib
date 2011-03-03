@@ -120,17 +120,21 @@ stList *stHash_getValues(stHash *hash) {
  * Useful hash keys/equals functions
  */
 
-uint32_t stHash_stringKey( const void *k ) {
-    uint32_t i, j;
-    const char *cA;
-
-    cA = k;
-    j = 0;
-    for(i=0; i<strlen(cA) && i<10; i++) {
-        j += cA[i];
+uint32_t stHash_stringKey(const void *k) {
+    // djb2
+    // This algorithm was first reported by Dan Bernstein
+    // many years ago in comp.lang.c
+    //
+    uint32_t hash = 0; //5381;
+    int c;
+    char *cA;
+    cA = (char *)k;
+    while ((c = *cA++) != '\0') {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+        //hash = ((hash << 5) + hash) + c; // hash*33 + c
     }
-    return j;
-    }
+    return hash;
+}
 
 int stHash_stringEqualKey( const void *key1, const  void *key2 ) {
     return strcmp(key1, key2) == 0;
