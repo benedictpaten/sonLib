@@ -15,6 +15,8 @@
 
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
+
+#ifdef HAVE_TOKYO_CABINET
 #include <tcutil.h>
 #include <tcbdb.h>
 
@@ -175,3 +177,4 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->abortTransaction = abortTransaction;
 }
 
+#endif

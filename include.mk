@@ -34,25 +34,19 @@ cflags = ${cflags_opt}
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
    # hgwdev hive install
    tcPrefix = /hive/groups/recon/local
-   tokyoCabinetIncl = -I${tcPrefix}/include
+   tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 else ifneq ($(wildcard /opt/local/include/tcbdb.h),)
    # OS/X with TC installed from MacPorts
    tcPrefix = /opt/local
-   tokyoCabinetIncl = -I${tcPrefix}/include
+   tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
    # /usr/local install (FreeBSD, etc)
    tcPrefix = /usr/local
-   tokyoCabinetIncl = -I${tcPrefix}/include
+   tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
-else
-   # default
-   tokyoCabinetIncl = 
-   tokyoCabinetLib = -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
-
-cflags += ${tokyoCabinetIncl}
 
 # location of mysql
 ifneq ($(wildcard /usr/include/mysql/mysql.h),)
