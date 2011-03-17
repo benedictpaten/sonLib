@@ -70,5 +70,5 @@ else ifneq ($(wildcard /usr/include/libpq-fe.h),)
     pgsqlLibs = /usr/lib64/libpq.a -lkrb5 -lgssapi -lcrypto -lssl -lcrypt -lldap
 endif
 
-dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs}
+dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
 
