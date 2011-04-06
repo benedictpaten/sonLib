@@ -37,6 +37,13 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
     return conf;
 }
 
+stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *databaseDir) {
+    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
+    conf->type = stKVDatabaseTypeTokyoTyrant;
+    conf->databaseDir = stString_copy(databaseDir);
+    return conf;
+}
+
 static stKVDatabaseConf *constructSql(stKVDatabaseType type, const char *host, unsigned port, const char *user, const char *password,
                                       const char *databaseName, const char *tableName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
@@ -153,6 +160,8 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
     }
     if (stString_eq(type, "tokyo_cabinet")) {
         databaseConf = stKVDatabaseConf_constructTokyoCabinet(getXmlValueRequired(hash, "database_dir"));
+    } else if (stString_eq(type, "tokyo_tyrant")) {
+        databaseConf = stKVDatabaseConf_constructTokyoTyrant(getXmlValueRequired(hash, "database_dir"));
     } else if (stString_eq(type, "mysql")) {
         databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
                                                        getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),

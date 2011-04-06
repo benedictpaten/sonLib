@@ -17,7 +17,7 @@ static void usage(const char *desc) {
     static const char *help = 
         "Options:\n"
         "\n"
-        "-t --type=dbtype - one of 'TokyoCabinet', 'MySql', or 'PostgreSql'.\n"
+        "-t --type=dbtype - one of 'TokyoTyrant', 'TokyoCabinet', 'MySql', or 'PostgreSql'.\n"
         "    Values area case-insensitive, defaults to TokyoCabinet.\n"
         "-d --db=database - database directory for TokyoCabinet or database name\n"
         "    for SQL databases. Defaults to testTCDatabase for TokyoCabinet,\n"
@@ -34,6 +34,8 @@ static void usage(const char *desc) {
 static stKVDatabaseType parseDbType(const char *dbTypeStr) {
     if (stString_eqcase(dbTypeStr, "TokyoCabinet")) {
         return stKVDatabaseTypeTokyoCabinet;
+    } else if (stString_eqcase(dbTypeStr, "TokyoTyrant")) {
+        return stKVDatabaseTypeTokyoTyrant;
     } else if (stString_eqcase(dbTypeStr, "MySql")) {
         return stKVDatabaseTypeMySql;
     } else if (stString_eqcase(dbTypeStr, "PostgreSql")) {
