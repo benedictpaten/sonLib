@@ -75,4 +75,9 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
  */
 char *stString_join(const char *pad, const char **strings, int32_t length);
 
+/*
+ * Splits a string using stString_getNextWord into a bunch of tokens and returns them as a list.
+ */
+stList *stString_split(const char *string);
+
 #endif /* SONLIBSTRING_H_ */

@@ -129,3 +129,15 @@ char *stString_join(const char *pad, const char **strings, int32_t length) {
     cA[j] = '\0';
     return cA;
 }
+
+stList *stString_split(const char *string) {
+    char *cA = stString_copy(string);
+    char *cA2 = cA;
+    char *token;
+    stList *tokens = stList_construct3(0, free);
+    while((token = stString_getNextWord(&cA)) != NULL) {
+        stList_append(tokens, token);
+    }
+    free(cA2);
+    return tokens;
+}

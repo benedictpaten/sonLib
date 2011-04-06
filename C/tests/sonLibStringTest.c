@@ -72,6 +72,18 @@ static void testString_join(CuTest* testCase) {
     free(cA2);
 }
 
+static void testString_split(CuTest *testCase) {
+    const char *input = " Hello world\ttwo\nwo\n foo ";
+    stList *tokens = stString_split(input);
+    CuAssertIntEquals(testCase, 5, stList_length(tokens));
+    CuAssertStrEquals(testCase, "Hello", stList_get(tokens, 0));
+    CuAssertStrEquals(testCase, "world", stList_get(tokens, 1));
+    CuAssertStrEquals(testCase, "two", stList_get(tokens, 2));
+    CuAssertStrEquals(testCase, "wo", stList_get(tokens, 3));
+    CuAssertStrEquals(testCase, "foo", stList_get(tokens, 4));
+    stList_destruct(tokens);
+}
+
 CuSuite* sonLibStringTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testString_copy);
@@ -79,6 +91,7 @@ CuSuite* sonLibStringTestSuite(void) {
     SUITE_ADD_TEST(suite, testString_getNextWord);
     SUITE_ADD_TEST(suite, testString_replace);
     SUITE_ADD_TEST(suite, testString_join);
+    SUITE_ADD_TEST(suite, testString_split);
     return suite;
 }
 
