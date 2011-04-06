@@ -10,6 +10,7 @@
 
 typedef enum {
     stKVDatabaseTypeTokyoCabinet,
+    stKVDatabaseTypeTokyoTyrant,
     stKVDatabaseTypeMySql,
     stKVDatabaseTypePostgreSql
 } stKVDatabaseType;
@@ -19,6 +20,12 @@ typedef enum {
  * database.
  */
 stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir);
+
+/* 
+ * Construct a new database configuration object for a Tokyo Tyrant
+ * database.
+ */
+stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *databaseDir);
 
 /* 
  * Construct a new database configuration object for a MySql database.
