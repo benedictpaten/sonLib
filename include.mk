@@ -55,10 +55,12 @@ ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
 endif
 
 # location of PostgreSQL
-ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
-    pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
-    pgsqlLibs = $(shell pg_config --ldflags) -lpq
-endif
+#### just disable this for now, since we are having problems with not
+#### having postgres share libraries on the cluster.
+# ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
+#     #pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
+#     #pgsqlLibs = $(shell pg_config --ldflags) -lpq
+# endif
 
 dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
 
