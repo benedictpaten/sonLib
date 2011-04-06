@@ -50,17 +50,14 @@ endif
 
 # location of mysql
 ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
-    mysqlIncl = $(shell mysql_config --include)
+    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
     mysqlLibs = $(shell mysql_config --libs)
 endif
 
 # location of PostgreSQL
-ifneq ($(wildcard /usr/local/include/libpq-fe.h),)
-    pgsqlIncl = -I/usr/local/include -DHAVE_POSTGRESQL=1
-    pgsqlLibs = -L/usr/local/lib -lpq
-else ifneq ($(wildcard /usr/include/libpq-fe.h),)
-    pgsqlIncl = -DHAVE_POSTGRESQL=1
-    pgsqlLibs = /usr/lib64/libpq.a -lkrb5 -lgssapi -lcrypto -lssl -lcrypt -lldap
+ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
+    pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
+    pgsqlLibs = $(shell pg_config --ldflags) -lpq  $(shell pg_config --libs)
 endif
 
 dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
