@@ -57,7 +57,7 @@ endif
 # location of PostgreSQL
 ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
     pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
-    pgsqlLibs = $(shell pg_config --ldflags) -lpq  $(shell pg_config --libs)
+    pgsqlLibs = $(shell pg_config --ldflags) -lpq
 endif
 
 dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
