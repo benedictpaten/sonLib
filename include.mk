@@ -52,13 +52,13 @@ endif
 ifneq ($(wildcard /usr/include/mysql/mysql.h),)
     mysqlIncl = -I/usr/include/mysql -DHAVE_MYSQL=1
 ifneq ($(wildcard /usr/lib64/mysql/libmysqlclient.a),)
-    mysqlLibs = /usr/lib64/mysql/libmysqlclient.a
+    mysqlLibs = /usr/lib64/mysql/libmysqlclient.a -lssl -lcrypt
 else
-    mysqlLibs = /usr/lib/libmysqlclient.a
+    mysqlLibs = /usr/lib/libmysqlclient.a -lssl -lcrypt
 endif
 else ifneq ($(wildcard /usr/local/mysql/include/mysql.h),)
     mysqlIncl = -I/usr/local/mysql/include -DHAVE_MYSQL=1
-    mysqlLibs = -L/usr/local/mysql/lib -lmysqlclient
+    mysqlLibs = -L/usr/local/mysql/lib -lmysqlclient -lssl -lcrypt
 endif
 
 # location of PostgreSQL
@@ -70,5 +70,5 @@ else ifneq ($(wildcard /usr/include/libpq-fe.h),)
     pgsqlLibs = /usr/lib64/libpq.a -lkrb5 -lgssapi -lcrypto -lssl -lcrypt -lldap
 endif
 
-dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs}
+dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
 
