@@ -49,17 +49,17 @@ else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
 endif
 
 # location of Tokyo Tyrant
-ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
+ifneq ($(wildcard /hive/groups/recon/local/include/tcrdb.h),)
    # hgwdev hive install
    tcPrefix = /hive/groups/recon/local
    tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
    tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /opt/local/include/tcbdb.h),)
+else ifneq ($(wildcard /opt/local/include/tcrdb.h),)
    # OS/X with TC installed from MacPorts
    tcPrefix = /opt/local
    tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
    tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
+else ifneq ($(wildcard /usr/local/include/tcrdb.h),)
    # /usr/local install (FreeBSD, etc)
    tcPrefix = /usr/local
    tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
@@ -78,5 +78,5 @@ ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
     pgsqlLibs = $(shell pg_config --ldflags) -lpq
 endif
 
-dblibs = ${tokyoCabinetLib} ${mysqlLibs} ${pgsqlLibs} -lz
+dblibs = ${tokyoCabinetLib} ${tokyoTyrantLib} ${mysqlLibs} ${pgsqlLibs} -lz
 

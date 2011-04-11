@@ -20,6 +20,7 @@
 #include <tcutil.h>
 #include <tcrdb.h>
 
+/*
 static int keyCmp(const char *vA1, int size1, const char *vA2,
         int size2, void *a) {
     assert(size1 == sizeof(int64_t));
@@ -29,15 +30,15 @@ static int keyCmp(const char *vA1, int size1, const char *vA2,
     int64_t j = *(int64_t *) vA2;
     return i - j > 0 ? 1 : (i < j ? -1 : 0);
 }
+*/
 
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
 */
 static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
     const char *dbRemote_Host = stKVDatabaseConf_getHost(conf);
-    const char *dbRemote_Port = stKVDatabaseConf_getPort(conf);
+    unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
     TCRDB *rdb = tcrdbnew();
-    unsigned opts = BDBOWRITER | (create ? BDBOCREAT|BDBOTRUNC : 0);
     if (!tcrdbopen(rdb, dbRemote_Host, dbRemote_Port)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening database: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
     }
@@ -59,7 +60,8 @@ static void destructDB(stKVDatabase *database) {
 
 /* check if a record already exists */
 static bool recordExists(TCRDB *rdb, int64_t key) {
-    if (tcrdbget(rdb, &key, sizeof(int64_t)) == NULL) {
+    int sp;
+    if (tcrdbget(rdb, &key, sizeof(int64_t), &sp) == NULL) {
         return false;
     } else {
         return true;
@@ -137,6 +139,7 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     }
 }
 
+/*
 static void startTransaction(stKVDatabase *database) {
     TCRDB *dbImpl = database->dbImpl;
     if (!tcrdbtranbegin(dbImpl)) {
@@ -158,6 +161,7 @@ static void abortTransaction(stKVDatabase *database) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to abort a transaction but got error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
     }
 }
+*/
 
 //initialisation function
 
@@ -172,9 +176,11 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
+    /*
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
+    */
 }
 
 #endif
