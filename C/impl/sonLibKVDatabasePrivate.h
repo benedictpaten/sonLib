@@ -41,6 +41,11 @@ struct stKVDatabase {
  */
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
+/*
+ * Function initialises the pointers of the stKVDatabase object with functions for tokyoCabinet.
+ */
+void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+
 
 /*
  * Function initialises the pointers of the stKVDatabase object with functions for MySql.
