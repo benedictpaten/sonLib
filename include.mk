@@ -48,6 +48,24 @@ else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
 
+# location of Tokyo Tyrant
+ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
+   # hgwdev hive install
+   tcPrefix = /hive/groups/recon/local
+   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+else ifneq ($(wildcard /opt/local/include/tcbdb.h),)
+   # OS/X with TC installed from MacPorts
+   tcPrefix = /opt/local
+   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
+   # /usr/local install (FreeBSD, etc)
+   tcPrefix = /usr/local
+   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+endif
+
 # location of mysql
 ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
     mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
