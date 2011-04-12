@@ -40,7 +40,7 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
     TCRDB *rdb = tcrdbnew();
     if (!tcrdbopen(rdb, dbRemote_Host, dbRemote_Port)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening database: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
     }
     return rdb;
 }

@@ -18,7 +18,7 @@ class TestCase(unittest.TestCase):
         system("sonLib_kvDatabaseTest --type=tokyocabinet --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
 
     def testSonLibKVTokyoTyrant(self):
-        system("sonLib_kvDatabaseTest --type=tokyotyrant --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
+        system("sonLib_kvDatabaseTest --type=tokyotyrant --host=kolossus-10.kilokluster.ucsc.edu --port=1978 --user=cactus --pass=cactus  --db=cactus")
 
     def testSonLibKVSQLTest(self):
         if socket.gethostname() == "hgwdev":

@@ -117,6 +117,9 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
     if (optType == stKVDatabaseTypeTokyoCabinet) {
         conf = stKVDatabaseConf_constructTokyoCabinet(optDb);
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
+    } else if (optType == stKVDatabaseTypeTokyoTyrant) {
+        conf = stKVDatabaseConf_constructTokyoTyrant(optHost, optPort);
+        fprintf(stderr, "running Tokyo Tyrant sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeMySql) {
         conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
         fprintf(stderr, "running MySQL sonLibKVDatabase tests\n");

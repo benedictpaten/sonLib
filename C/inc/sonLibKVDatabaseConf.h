@@ -23,9 +23,9 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
 
 /* 
  * Construct a new database configuration object for a Tokyo Tyrant
- * database.
+ * database remote object.
  */
-stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *databaseDir);
+stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsigned port);
 
 /* 
  * Construct a new database configuration object for a MySql database.
