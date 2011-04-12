@@ -49,9 +49,14 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
 static void destructDB(stKVDatabase *database) {
     TCRDB *rdb = database->dbImpl;
     if (rdb != NULL) {
+        // this removes all records from the remove database object
+        tcrdbvanish(rdb);
+
+        // close the connection
         if (!tcrdbclose(rdb)) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s", tcrdberrmsg(tcrdbecode(rdb)));
         }
+        // delete the local in-memory object
         tcrdbdel(rdb);
         database->dbImpl = NULL;
     }
