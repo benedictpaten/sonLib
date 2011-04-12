@@ -45,7 +45,6 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
     return rdb;
 }
 
-
 /* closes the remote DB connection and deletes the rdb object */
 static void destructDB(stKVDatabase *database) {
     TCRDB *rdb = database->dbImpl;
@@ -58,9 +57,14 @@ static void destructDB(stKVDatabase *database) {
     }
 }
 
+static void deleteDB(stKVDatabase *database) {
+    destructDB(database);
+}
+
+
 /* check if a record already exists */
 static bool recordExists(TCRDB *rdb, int64_t key) {
-    int sp;
+    int32_t sp;
     if (tcrdbget(rdb, &key, sizeof(int64_t), &sp) == NULL) {
         return false;
     } else {
@@ -139,35 +143,24 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     }
 }
 
-/*
 static void startTransaction(stKVDatabase *database) {
-    TCRDB *dbImpl = database->dbImpl;
-    if (!tcrdbtranbegin(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to start a transaction but got error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
-    }
+    return;
 }
 
 static void commitTransaction(stKVDatabase *database) {
-    TCRDB *dbImpl = database->dbImpl;
-    //Commit the transaction..
-    if (!tcrdbtrancommit(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to commit a transaction but got error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
-    }
+    return;
 }
 
 static void abortTransaction(stKVDatabase *database) {
-    TCRDB *dbImpl = database->dbImpl;
-    if (!tcrdbtranabort(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to abort a transaction but got error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
-    }
+    return;
 }
-*/
 
 //initialisation function
 
 void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
+    database->delete = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
@@ -176,11 +169,9 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    /*
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
-    */
 }
 
 #endif

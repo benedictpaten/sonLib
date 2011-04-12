@@ -44,7 +44,6 @@ static void constructDestructAndDelete(CuTest *testCase) {
 static void readWriteAndRemoveRecords(CuTest *testCase) {
     setup();
     stKVDatabase_startTransaction(database);
-
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
     //Write some records
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));

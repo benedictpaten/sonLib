@@ -22,8 +22,8 @@ static void usage(const char *desc) {
         "-d --db=database - database directory for TokyoCabinet or database name\n"
         "    for SQL databases. Defaults to testTCDatabase for TokyoCabinet,\n"
         "    SQL databases must specify.\n"
-        "--host=host - SQL database host, defaults to localhost\n"
-        "--port=port - SQL database port.\n"
+        "--host=host - SQL or Tyrant database host, defaults to localhost\n"
+        "--port=port - SQL or Tyrant database port.\n"
         "-u, --user=user - SQL database user.\n"
         "-p, --pass=pass - SQL database password.\n"
         "-h, --help - print this message.\n";
