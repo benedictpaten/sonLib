@@ -149,14 +149,17 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
 }
 
 static void startTransaction(stKVDatabase *database) {
+    // transactions not supported in Tokyo Tyrant...
     return;
 }
 
 static void commitTransaction(stKVDatabase *database) {
+    // transactions not supported in Tokyo Tyrant...
     return;
 }
 
 static void abortTransaction(stKVDatabase *database) {
+    // transactions not supported in Tokyo Tyrant...
     return;
 }
 
