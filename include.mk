@@ -51,19 +51,19 @@ endif
 # location of Tokyo Tyrant
 ifneq ($(wildcard /hive/groups/recon/local/include/tcrdb.h),)
    # hgwdev hive install
-   tcPrefix = /hive/groups/recon/local
-   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+   ttPrefix = /hive/groups/recon/local
+   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
 else ifneq ($(wildcard /opt/local/include/tcrdb.h),)
    # OS/X with TC installed from MacPorts
-   tcPrefix = /opt/local
-   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+   ttPrefix = /opt/local
+   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
 else ifneq ($(wildcard /usr/local/include/tcrdb.h),)
    # /usr/local install (FreeBSD, etc)
-   tcPrefix = /usr/local
-   tokyoTyrantIncl = -I${tcPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+   ttPrefix = /usr/local
+   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
+   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
 endif
 
 # location of mysql
