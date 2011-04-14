@@ -1,9 +1,10 @@
-sonLib
+#sonLib
 
-This is the readme for 'sonLib', a (very) compact C/Python library 
+This is the README for **sonLib**, a (very) compact C/Python library 
 for sequence analysis in bioinformatics.
 
 For basic data-structures it simply contains: 
+
  * array lists (automatically resizing) 
  * hashes
  * sorted sets (backed by an AVL tree)
