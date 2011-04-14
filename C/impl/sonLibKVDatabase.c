@@ -37,7 +37,7 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
 #endif
         break;
     case stKVDatabaseTypeTokyoTyrant:
-#ifdef HAVE_TOKYO_CABINET
+#ifdef HAVE_TOKYO_TYRANT
         stKVDatabase_initialise_tokyoTyrant(database, conf, create);
 #else
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested Tokyo Tyrant database, however sonlib is not compiled with Tokyo Tyrant support");
