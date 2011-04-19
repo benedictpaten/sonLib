@@ -54,12 +54,11 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
     return rdb;
 }
 
-/* closes the remote DB connection and deletes the rdb object */
+/* closes the remote DB connection and deletes the rdb object, but does not destroy the 
+remote database */
 static void destructDB(stKVDatabase *database) {
     TCRDB *rdb = database->dbImpl;
     if (rdb != NULL) {
-        // this removes all records from the remove database object
-        tcrdbvanish(rdb);
 
         // close the connection
         if (!tcrdbclose(rdb)) {
@@ -71,8 +70,12 @@ static void destructDB(stKVDatabase *database) {
     }
 }
 
+/* WARNING: destroys the remote database */
 static void deleteDB(stKVDatabase *database) {
+    TCRDB *rdb = database->dbImpl;
     destructDB(database);
+    // this removes all records from the remove database object
+    tcrdbvanish(rdb);
 }
 
 
