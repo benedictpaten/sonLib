@@ -73,9 +73,9 @@ static void destructDB(stKVDatabase *database) {
 /* WARNING: destroys the remote database */
 static void deleteDB(stKVDatabase *database) {
     TCRDB *rdb = database->dbImpl;
+    tcrdbvanish(rdb);
     destructDB(database);
     // this removes all records from the remove database object
-    tcrdbvanish(rdb);
 }
 
 
