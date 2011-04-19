@@ -36,12 +36,21 @@ static int keyCmp(const char *vA1, int size1, const char *vA2,
 * construct in the Tokyo Tyrant case means connect to the remote DB
 */
 static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
+
+    // we actually do need a local DB dir for Tokyo Tyrant to store the sequences file
+    const char *dbDir = stKVDatabaseConf_getDir(conf);
+    mkdir(dbDir, S_IRWXU); // just let open of database generate error (FIXME: would be better to make this report errors)
+    char *databaseName = stString_print("%s/%s", dbDir, "data");
+
     const char *dbRemote_Host = stKVDatabaseConf_getHost(conf);
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
     TCRDB *rdb = tcrdbnew();
+    // tcrdb open sets the host and port for the rdb object
     if (!tcrdbopen(rdb, dbRemote_Host, dbRemote_Port)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
     }
+
+    free(databaseName);
     return rdb;
 }
 
