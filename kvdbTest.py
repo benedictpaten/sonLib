@@ -17,11 +17,11 @@ class TestCase(unittest.TestCase):
     def testSonLibKVTokyoCabinet(self):
         system("sonLib_kvDatabaseTest --type=tokyocabinet --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
 
-    def testSonLibKVTokyoTyrant(self):
+    def testSonLibKVTokyoTyrant(self): #Needs to be made general
         system("sonLib_kvDatabaseTest --type=tokyotyrant --host=kolossus-10.kilokluster.ucsc.edu --port=1978 --user=cactus --pass=cactus  --db=cactus")
 
     def testSonLibKVSQLTest(self):
-        if socket.gethostname() == "hgwdev":
+        if socket.gethostname() == "hgwdev": 
             system("sonLib_kvDatabaseTest --type=mysql --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
 
 
