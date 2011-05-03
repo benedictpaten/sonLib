@@ -43,6 +43,13 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested Tokyo Tyrant database, however sonlib is not compiled with Tokyo Tyrant support");
 #endif
         break;
+    case stKVDatabaseTypeKyotoTycoon:
+#ifdef HAVE_KYOTO_TYCOON
+        stKVDatabase_initialise_kyotoTycoon(database, conf, create);
+#else
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested Kyoto Tycoon database, however sonlib is not compiled with Kyoto Tycoon support");
+#endif
+        break;
     case stKVDatabaseTypeMySql:
 #ifdef HAVE_MYSQL
         stKVDatabase_initialise_MySql(database, conf, create);

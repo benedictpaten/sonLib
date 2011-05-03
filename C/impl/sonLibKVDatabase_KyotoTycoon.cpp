@@ -19,34 +19,29 @@
 #ifdef HAVE_KYOTO_TYCOON
 #include <ktremotedb.h>
 
-/*
-static int keyCmp(const char *vA1, int size1, const char *vA2,
-        int size2, void *a) {
-    assert(size1 == sizeof(int64_t));
-    assert(size2 == sizeof(int64_t));
-    assert(a == NULL);
-    int64_t i = *(int64_t *) vA1;
-    int64_t j = *(int64_t *) vA2;
-    return i - j > 0 ? 1 : (i < j ? -1 : 0);
-}
-*/
+using namespace std;
+using namespace kyototycoon;
 
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
 */
-static kyototycoon::RemoteDB::RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
+static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 
-    // we actually do need a local DB dir for Tokyo Tyrant to store the sequences file
+    // we actually do need a local DB dir for Kyoto Tycoon to store the sequences file
     const char *dbDir = stKVDatabaseConf_getDir(conf);
     mkdir(dbDir, S_IRWXU); // just let open of database generate error (FIXME: would be better to make this report errors)
     char *databaseName = stString_print("%s/%s", dbDir, "data");
 
     const char *dbRemote_Host = stKVDatabaseConf_getHost(conf);
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
-    kyototycoon::RemoteDB::RemoteDB *rdb = kyototycoon::RemoteDB::RemoteDB ();
+    int timeout = stKVDatabaseConf_getTimeout(conf);
+
+    // new tycoon object
+    RemoteDB rdb;
+
     // tcrdb open sets the host and port for the rdb object
-    if (!rdb::open(dbRemote_Host, dbRemote_Port, timeout)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
+    if (!rdb.open(dbRemote_Host, dbRemote_Port, timeout)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, rdb.error().name());
     }
 
     free(databaseName);

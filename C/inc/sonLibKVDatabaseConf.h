@@ -11,6 +11,7 @@
 typedef enum {
     stKVDatabaseTypeTokyoCabinet,
     stKVDatabaseTypeTokyoTyrant,
+    stKVDatabaseTypeKyotoTycoon,
     stKVDatabaseTypeMySql,
     stKVDatabaseTypePostgreSql
 } stKVDatabaseType;
@@ -26,6 +27,12 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
  * database remote object.
  */
 stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsigned port, const char *databaseDir);
+
+/* 
+ * Construct a new database configuration object for a Kyoto Tycoon
+ * database remote object.
+ */
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, const char *databaseDir);
 
 /* 
  * Construct a new database configuration object for a MySql database.
@@ -81,6 +88,9 @@ const char *stKVDatabaseConf_getHost(stKVDatabaseConf *conf);
 
 /* get the port for server based databases */
 unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf);
+
+/* get the remote server timeout for server based databases */
+int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf);
 
 /* get the user for server based databases */
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf);

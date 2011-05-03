@@ -24,6 +24,7 @@ struct stKVDatabaseConf {
     char *databaseDir;
     char *host;
     unsigned port;
+    int timeout;
     char *user;
     char *password;
     char *databaseName;
@@ -43,6 +44,16 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsign
     conf->databaseDir = stString_copy(databaseDir);
     conf->host = stString_copy(host);
     conf->port = port;
+    return conf;
+}
+
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir) {
+    stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
+    conf->type = stKVDatabaseTypeKyotoTycoon;
+    conf->databaseDir = stString_copy(databaseDir);
+    conf->host = stString_copy(host);
+    conf->port = port;
+    conf->timeout = timeout;
     return conf;
 }
 
@@ -152,6 +163,16 @@ static int getXmlPort(stHash *hash) {
     }
 }
 
+static int getXmlTimeout(stHash *hash) {
+    const char *value = stHash_search(hash, "timeout");
+    if (value == NULL) {
+        // default to -1 -- meaning no timeout
+        return -1;
+    } else {
+        return stSafeStrToUInt32(value);
+    }
+}
+
 static stKVDatabaseConf *constructFromString(const char *xmlString) {
     stHash *hash = hackParseXmlString(xmlString);
     stKVDatabaseConf *databaseConf = NULL;
@@ -165,6 +186,11 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
     } else if (stString_eq(type, "tokyo_tyrant")) {
         databaseConf = stKVDatabaseConf_constructTokyoTyrant(getXmlValueRequired(hash, "host"), 
                                                         getXmlPort(hash), 
+                                                        getXmlValueRequired(hash, "database_dir"));
+    } else if (stString_eq(type, "kyoto_tycoon")) {
+        databaseConf = stKVDatabaseConf_constructKyotoTycoon(getXmlValueRequired(hash, "host"), 
+                                                        getXmlPort(hash), 
+                                                        getXmlTimeout(hash), 
                                                         getXmlValueRequired(hash, "database_dir"));
     } else if (stString_eq(type, "mysql")) {
         databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
@@ -198,6 +224,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
     conf->databaseDir = stString_copy(srcConf->databaseDir);
     conf->host = stString_copy(srcConf->host);
     conf->port = srcConf->port;
+    conf->timeout = srcConf->timeout;
     conf->user = stString_copy(srcConf->user);
     conf->password = stString_copy(srcConf->password);
     conf->databaseName = stString_copy(srcConf->databaseName);
@@ -231,6 +258,10 @@ const char *stKVDatabaseConf_getHost(stKVDatabaseConf *conf) {
 
 unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf) {
     return conf->port;
+}
+
+unsigned stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf) {
+    return conf->timeout;
 }
 
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf) {
