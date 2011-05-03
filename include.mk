@@ -8,10 +8,13 @@ ifeq (${SYS},FreeBSD)
     # default FreeBSD gcc (4.2.1) has warning bug
     #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
+    cpp = g++
 else
     cxx = gcc -std=c99
+    cpp = g++ 
 # -Wno-unused-result
 endif
+
 
 
 #Release compiler flags
@@ -75,12 +78,12 @@ ifneq ($(wildcard /hive/groups/recon/local/include/ktcommon.h),)
 else ifneq ($(wildcard /opt/local/include/ktcommon.h),)
    # OS/X with TC installed from MacPorts
    ttPrefix = /opt/local
-   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
    kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lz -lbz2 -lpthread -lm
 else ifneq ($(wildcard /usr/local/include/ktcommon.h),)
    # /usr/local install (FreeBSD, etc)
    ttPrefix = /usr/local
-   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
    kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lz -lbz2 -lpthread -lm
 endif
 

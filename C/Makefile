@@ -3,6 +3,7 @@ binPath = ../bin
 libPath = ../lib
 
 libSources = impl/*.c
+cppSources = impl/*.cpp
 libHeaders = inc/*.h
 libInternalHeaders = impl/*.h
 libTests = tests/sonLib*.c
@@ -34,6 +35,7 @@ ${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libSources} ${li
 ${libPath}/sonLib.a : ${libSources} ${libHeaders} ${libInternalHeaders}
 	cp ${libHeaders} ${libPath}/
 	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
+	${cpp} ${cflags} -I inc -I ${libPath}/ -c ${cppSources}
 	ar rc sonLib.a *.o
 	ranlib sonLib.a 
 	rm *.o
