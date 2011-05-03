@@ -57,8 +57,6 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
  */
 void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
-#endif /* SONLIBKVDATABASEPRIVATE_H_ */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,3 +64,5 @@ void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseCon
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SONLIBKVDATABASEPRIVATE_H_ */

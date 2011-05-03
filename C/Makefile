@@ -9,7 +9,7 @@ libTests = tests/sonLib*.c
 
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_kvDatabaseTransactionTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
-cflags += ${tokyoCabinetIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
+cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
 
 all : ${libPath}/sonLib.a ${testProgs}
 
