@@ -54,7 +54,7 @@ static kyototycoon::RemoteDB::RemoteDB *constructDB(stKVDatabaseConf *conf, bool
 }
 
 #ifdef NEVER_DEFINED
- not implemented yet -- copied from Tyrant...
+ not implemented yet -- copied from Tyrant... --test--
 /* closes the remote DB connection and deletes the rdb object, but does not destroy the 
 remote database */
 static void destructDB(stKVDatabase *database) {
