@@ -46,7 +46,6 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
  */
 void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
-
 /*
  * Function initialises the pointers of the stKVDatabase object with functions for MySql.
  */
@@ -59,3 +58,11 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
 void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
 #endif /* SONLIBKVDATABASEPRIVATE_H_ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+#ifdef __cplusplus
+}
+#endif

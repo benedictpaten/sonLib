@@ -67,10 +67,10 @@ else ifneq ($(wildcard /usr/local/include/tcrdb.h),)
 endif
 
 # location of mysql
-#ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
-#    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
-#    mysqlLibs = $(shell mysql_config --libs)
-#endif
+ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
+    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
+    mysqlLibs = $(shell mysql_config --libs)
+endif
 
 # location of PostgreSQL
 #### just disable this for now, since we are having problems with not

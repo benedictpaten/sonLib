@@ -5,9 +5,9 @@
  */
 
 /*
- * sonLibKVDatabase_TokyoTyrant.c
+ * sonLibKVDatabase_KyotoTycoon.cpp
  *
- *  Created on: 4-8-11
+ *  Created on: 5-1-11
  *      Author: epaull
  */
 
@@ -16,9 +16,8 @@
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
 
-#ifdef HAVE_TOKYO_TYRANT
-#include <tcutil.h>
-#include <tcrdb.h>
+#ifdef HAVE_KYOTO_TYCOON
+#include <ktremotedb.h>
 
 /*
 static int keyCmp(const char *vA1, int size1, const char *vA2,
@@ -35,7 +34,7 @@ static int keyCmp(const char *vA1, int size1, const char *vA2,
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
 */
-static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
+static kyototycoon::RemoteDB::RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 
     // we actually do need a local DB dir for Tokyo Tyrant to store the sequences file
     const char *dbDir = stKVDatabaseConf_getDir(conf);
@@ -44,9 +43,9 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
 
     const char *dbRemote_Host = stKVDatabaseConf_getHost(conf);
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
-    TCRDB *rdb = tcrdbnew();
+    kyototycoon::RemoteDB::RemoteDB *rdb = kyototycoon::RemoteDB::RemoteDB ();
     // tcrdb open sets the host and port for the rdb object
-    if (!tcrdbopen(rdb, dbRemote_Host, dbRemote_Port)) {
+    if (!rdb::open(dbRemote_Host, dbRemote_Port, timeout)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, tcrdberrmsg(tcrdbecode(rdb)));
     }
 
@@ -54,10 +53,11 @@ static TCRDB *constructDB(stKVDatabaseConf *conf, bool create) {
     return rdb;
 }
 
+#ifdef NEVER_DEFINED
+ not implemented yet -- copied from Tyrant...
 /* closes the remote DB connection and deletes the rdb object, but does not destroy the 
 remote database */
 static void destructDB(stKVDatabase *database) {
-    TCRDB *rdb = database->dbImpl;
     if (rdb != NULL) {
 
         // close the connection
@@ -195,5 +195,6 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
 }
+#endif 
 
 #endif
