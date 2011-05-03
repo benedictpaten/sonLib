@@ -260,7 +260,7 @@ unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf) {
     return conf->port;
 }
 
-unsigned stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf) {
+int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf) {
     return conf->timeout;
 }
 
