@@ -9,6 +9,9 @@
  *
  *  Created on: 5-1-11
  *      Author: epaull
+ * 
+ * Note: all the KT methods seem to have a C and a CPP version (in terms of the arguments) , 
+ * and for this implementation we're using the plain C versions as much as we can.
  */
 
 //Database functions
@@ -48,28 +51,29 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     return rdb;
 }
 
-#ifdef NEVER_DEFINED
- not implemented yet -- copied from Tyrant... --test--
 /* closes the remote DB connection and deletes the rdb object, but does not destroy the 
 remote database */
 static void destructDB(stKVDatabase *database) {
+    RemoteDB rdb = database->dbImpl;
     if (rdb != NULL) {
 
-        // close the connection
-        if (!tcrdbclose(rdb)) {
-            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s", tcrdberrmsg(tcrdbecode(rdb)));
+        // close the connection: first try a graceful close, then a forced close
+        if (!rdb.close(true)) {
+            if (!rdb.close(false)) {
+                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s",rdb.error().name());
+            }
         }
         // delete the local in-memory object
-        tcrdbdel(rdb);
+        
         database->dbImpl = NULL;
     }
 }
 
-/* WARNING: destroys the remote database */
+/* WARNING: removes all records from the remote database */
 static void deleteDB(stKVDatabase *database) {
-    TCRDB *rdb = database->dbImpl;
+    RemoteDB rdb = database->dbImpl;
     if (rdb != NULL) {
-        tcrdbvanish(rdb);
+        rdb.clear();
     }
     destructDB(database);
     // this removes all records from the remove database object
@@ -77,9 +81,9 @@ static void deleteDB(stKVDatabase *database) {
 
 
 /* check if a record already exists */
-static bool recordExists(TCRDB *rdb, int64_t key) {
-    int32_t sp;
-    if (tcrdbget(rdb, &key, sizeof(int64_t), &sp) == NULL) {
+static bool recordExists(RemoteDB rdb, int64_t key) {
+    size_t sp;
+    if (rdb.get(&key,sizeof(key), &sp) == NULL)
         return false;
     } else {
         return true;
@@ -90,45 +94,39 @@ static bool containsRecord(stKVDatabase *database, int64_t key) {
     return recordExists(database->dbImpl, key);
 }
 
-/* uses tcrdbputkeep : if the record already exists it won't overwrite it */
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    TCRDB *dbImpl = database->dbImpl;
-    if (recordExists(dbImpl, key)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to insert a key in the database that already exists: %lld", (long long)key);
-    }
-    if (!tcrdbputkeep(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
+    RemoteDB rdb = database->dbImpl;
+    // add method: If the key already exists the record will not be modified and it'll return false 
+    if (!rdb.add(&key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb.error().name());
     }
 }
 
-/* tcrdbput will overwrite the record if it exists */
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    TCRDB *dbImpl = database->dbImpl;
-    if (!recordExists(dbImpl, key)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to update a key in the database that doesn't exists: %lld", (long long)key);
-    }
-    if (!tcrdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
+    RemoteDB rdb = database->dbImpl;
+    // replace method: If the key doesn't already exist it won't be created, and we'll get an error
+    if (!rdb.replace(&key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb.error().name());
     }
 }
 
 static int64_t numberOfRecords(stKVDatabase *database) {
-    TCRDB *dbImpl = database->dbImpl;
-    return tcrdbrnum(dbImpl);
+    RemoteDB rdb = database->dbImpl;
+    return rdb.count();
 }
 
 static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
-    TCRDB *dbImpl = database->dbImpl;
+    RemoteDB rdb = database->dbImpl;
     //Return value must be freed.
-    int32_t i;
-    void *record = tcrdbget(dbImpl, &key, sizeof(int64_t), &i);
-    *recordSize = i;
+    size_t i;
+    void *record = (void *)rdb.get(&key, sizeof(int64_t), &i);
+    *recordSize = (int64_t)i;
     return record;
 }
 
 /* get a single non-string record */
 static void *getRecord(stKVDatabase *database, int64_t key) {
-    int64_t i;
+    size_t i;
     return getRecord2(database, key, &i);
 }
 
@@ -151,30 +149,29 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
-    TCRDB *dbImpl = database->dbImpl;
-    if (!tcrdbout(dbImpl, &key, sizeof(int64_t))) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", tcrdberrmsg(tcrdbecode(dbImpl)));
+    RemoteDB rdb = database->dbImpl;
+    if (!rdb.remove(&key, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb.error().name());
     }
 }
 
 static void startTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
+    // transactions supported through bulk_... methods
     return;
 }
 
 static void commitTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
+    // transactions supported through bulk_... methods
     return;
 }
 
 static void abortTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
+    // transactions supported through bulk_... methods
     return;
 }
 
-//initialisation function
 
-void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
+void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
     database->delete = deleteDB;
@@ -190,6 +187,5 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
 }
-#endif 
 
 #endif
