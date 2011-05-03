@@ -45,6 +45,7 @@ avl_create(avl_comparison_func *compare, void *param,
         allocator = &avl_allocator_default;
 
     tree = allocator->libavl_malloc(allocator, sizeof *tree);
+    assert(tree != NULL);
     if (tree == NULL)
         return NULL;
 
