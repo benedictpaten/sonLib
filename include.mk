@@ -29,9 +29,11 @@ cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 
+#  for cpp code: don't use pedantic, or Werror
+cppflags = -g -Wall -funroll-loops -lm 
+
 #Flags to use
 cflags = ${cflags_opt} 
-#cflags = ${cflags_dbg}
 
 # location of Tokyo cabinet
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)

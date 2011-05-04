@@ -11,6 +11,7 @@ libTests = tests/sonLib*.c
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_kvDatabaseTransactionTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
 cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
+cppflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
 
 all : ${libPath}/sonLib.a ${testProgs}
 
@@ -35,7 +36,7 @@ ${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libSources} ${li
 ${libPath}/sonLib.a : ${libSources} ${libHeaders} ${libInternalHeaders}
 	cp ${libHeaders} ${libPath}/
 	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
-	${cpp} ${cflags} -I inc -I ${libPath}/ -c ${cppSources}
+	${cpp} ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
 	ar rc sonLib.a *.o
 	ranlib sonLib.a 
 	rm *.o
