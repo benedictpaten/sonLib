@@ -84,7 +84,7 @@ static void deleteDB(stKVDatabase *database) {
 /* check if a record already exists */
 static bool recordExists(RemoteDB *rdb, int64_t key) {
     size_t sp;
-    if (rdb->get(&key,sizeof(key), &sp) == NULL) {
+    if (rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL) == NULL) {
         return false;
     } else {
         return true;
@@ -92,13 +92,13 @@ static bool recordExists(RemoteDB *rdb, int64_t key) {
 }
 
 static bool containsRecord(stKVDatabase *database, int64_t key) {
-    return recordExists(database->dbImpl, key);
+    return recordExists((RemoteDB *)database->dbImpl, key);
 }
 
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     // add method: If the key already exists the record will not be modified and it'll return false 
-    if (!rdb->add(&key, sizeof(int64_t), value, sizeOfRecord)) {
+    if (!rdb->add((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
     }
 }
@@ -106,7 +106,7 @@ static void insertRecord(stKVDatabase *database, int64_t key, const void *value,
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     // replace method: If the key doesn't already exist it won't be created, and we'll get an error
-    if (!rdb->replace(&key, sizeof(int64_t), value, sizeOfRecord)) {
+    if (!rdb->replace((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb->error().name());
     }
 }
@@ -120,21 +120,21 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     //Return value must be freed.
     size_t i;
-    void *record = (void *)rdb->get(&key, sizeof(int64_t), &i);
+    void *record = (void *)rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
     *recordSize = (int64_t)i;
     return record;
 }
 
 /* get a single non-string record */
 static void *getRecord(stKVDatabase *database, int64_t key) {
-    size_t i;
+    int64_t i;
     return getRecord2(database, key, &i);
 }
 
 /* get part of a string record */
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     int64_t recordSize2;
-    char *record = getRecord2(database, key, &recordSize2);
+    char *record = (char *)getRecord2(database, key, &recordSize2);
     if(recordSize2 != recordSize) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The given record size is incorrect: %lld, should be %lld", (long long)recordSize, recordSize2);
     }
@@ -151,7 +151,7 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    if (!rdb->remove(&key, sizeof(int64_t))) {
+    if (!rdb->remove((char *)&key, (size_t)sizeof(int64_t))) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb->error().name());
     }
 }
