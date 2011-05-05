@@ -362,7 +362,7 @@ static void abortTransaction(stKVDatabase *database) {
 void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = connect(conf);
     database->destruct = destructDB;
-    database->delete = deleteDB;
+    database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;

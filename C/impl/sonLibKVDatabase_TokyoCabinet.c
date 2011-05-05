@@ -163,7 +163,7 @@ static void abortTransaction(stKVDatabase *database) {
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
-    database->delete = deleteDB;
+    database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;

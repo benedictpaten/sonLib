@@ -88,7 +88,7 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database) {
                 "Trying to delete a database that has already been deleted");
     }
     stTry {
-        database->delete(database);
+        database->deleteDatabase(database);
     } stCatch(ex) {
         stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_deleteFromDisk failed");
     } stTryEnd;
