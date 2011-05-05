@@ -39,12 +39,13 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
     int timeout = stKVDatabaseConf_getTimeout(conf);
 
-    // new tycoon object
-    RemoteDB rdb;
+    // create the database object
+    RemoteDB db;
+    RemoteDB *rdb = &db;
 
     // tcrdb open sets the host and port for the rdb object
-    if (!rdb.open(dbRemote_Host, dbRemote_Port, timeout)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, rdb.error().name());
+    if (!rdb->open(dbRemote_Host, dbRemote_Port, timeout)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, rdb->error().name());
     }
 
     free(databaseName);
@@ -54,26 +55,26 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 /* closes the remote DB connection and deletes the rdb object, but does not destroy the 
 remote database */
 static void destructDB(stKVDatabase *database) {
-    RemoteDB rdb = database->dbImpl;
+    RemoteDB *rdb = (RemoteDB*)database->dbImpl;
     if (rdb != NULL) {
 
         // close the connection: first try a graceful close, then a forced close
-        if (!rdb.close(true)) {
-            if (!rdb.close(false)) {
-                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s",rdb.error().name());
+        if (!rdb->close(true)) {
+            if (!rdb->close(false)) {
+                stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Closing database error: %s",rdb->error().name());
             }
         }
         // delete the local in-memory object
-        
+        delete rdb; 
         database->dbImpl = NULL;
     }
 }
 
 /* WARNING: removes all records from the remote database */
 static void deleteDB(stKVDatabase *database) {
-    RemoteDB rdb = database->dbImpl;
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     if (rdb != NULL) {
-        rdb.clear();
+        rdb->clear();
     }
     destructDB(database);
     // this removes all records from the remove database object
@@ -81,9 +82,9 @@ static void deleteDB(stKVDatabase *database) {
 
 
 /* check if a record already exists */
-static bool recordExists(RemoteDB rdb, int64_t key) {
+static bool recordExists(RemoteDB *rdb, int64_t key) {
     size_t sp;
-    if (rdb.get(&key,sizeof(key), &sp) == NULL)
+    if (rdb->get(&key,sizeof(key), &sp) == NULL) {
         return false;
     } else {
         return true;
@@ -95,31 +96,31 @@ static bool containsRecord(stKVDatabase *database, int64_t key) {
 }
 
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    RemoteDB rdb = database->dbImpl;
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     // add method: If the key already exists the record will not be modified and it'll return false 
-    if (!rdb.add(&key, sizeof(int64_t), value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb.error().name());
+    if (!rdb->add(&key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
     }
 }
 
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    RemoteDB rdb = database->dbImpl;
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     // replace method: If the key doesn't already exist it won't be created, and we'll get an error
-    if (!rdb.replace(&key, sizeof(int64_t), value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb.error().name());
+    if (!rdb->replace(&key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb->error().name());
     }
 }
 
 static int64_t numberOfRecords(stKVDatabase *database) {
-    RemoteDB rdb = database->dbImpl;
-    return rdb.count();
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    return rdb->count();
 }
 
 static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
-    RemoteDB rdb = database->dbImpl;
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     //Return value must be freed.
     size_t i;
-    void *record = (void *)rdb.get(&key, sizeof(int64_t), &i);
+    void *record = (void *)rdb->get(&key, sizeof(int64_t), &i);
     *recordSize = (int64_t)i;
     return record;
 }
@@ -149,9 +150,9 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
-    RemoteDB rdb = database->dbImpl;
-    if (!rdb.remove(&key, sizeof(int64_t))) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb.error().name());
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    if (!rdb->remove(&key, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb->error().name());
     }
 }
 
