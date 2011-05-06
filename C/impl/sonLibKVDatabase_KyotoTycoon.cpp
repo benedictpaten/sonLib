@@ -39,8 +39,7 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     int timeout = stKVDatabaseConf_getTimeout(conf);
 
     // create the database object
-    RemoteDB db;
-    RemoteDB *rdb = &db;
+    RemoteDB *rdb = new RemoteDB();
 
     // tcrdb open sets the host and port for the rdb object
     if (!rdb->open(dbRemote_Host, dbRemote_Port, timeout)) {
