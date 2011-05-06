@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Construct unattached eTree node.
  */
@@ -114,4 +118,7 @@ ETree *eTree_parseNewickString(const char *string);
 char *eTree_getNewickTreeString(ETree *eTree);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* ETREE_H_ */

@@ -9,6 +9,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // General database exception id 
 extern const char *ST_KV_DATABASE_EXCEPTION_ID;
 
@@ -122,4 +126,7 @@ void stKVDatabase_abortTransaction(stKVDatabase *database);
  */
 stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

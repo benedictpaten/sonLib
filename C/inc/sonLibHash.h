@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // FIXME: passing key as non-const is causing unnecessary casts
 
 /*
@@ -103,4 +107,7 @@ uint32_t stHash_stringKey( const void *k );
  */
 int stHash_stringEqualKey( const void *key1, const  void *key2 );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

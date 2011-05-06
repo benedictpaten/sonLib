@@ -14,6 +14,10 @@
 #ifndef SONLIB_GLOBALS_H_
 #define SONLIB_GLOBALS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -43,4 +47,7 @@ typedef struct stAlignSegment stAlignSegment;
 typedef struct stKVDatabase stKVDatabase;
 typedef struct stKVDatabaseConf stKVDatabaseConf;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBGLOBALS_H_ */

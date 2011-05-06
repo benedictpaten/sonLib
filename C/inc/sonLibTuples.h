@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Constructs a tuple of length int32_t integers.. be very careful that length equals the
  * number of subsequent arguments..
@@ -57,4 +61,7 @@ int32_t stIntTuple_length(stIntTuple *intTuple);
  */
 int32_t stIntTuple_getPosition(stIntTuple *intTuple, int32_t index);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBWRAPPERS_H_ */

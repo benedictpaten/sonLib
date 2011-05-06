@@ -15,12 +15,11 @@
  */
 
 //Database functions
-
+#ifdef HAVE_KYOTO_TYCOON
+#include <ktremotedb.h>
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
 
-#ifdef HAVE_KYOTO_TYCOON
-#include <ktremotedb.h>
 
 using namespace std;
 using namespace kyototycoon;

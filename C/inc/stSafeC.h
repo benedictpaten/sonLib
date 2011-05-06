@@ -13,6 +13,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "sonLibTypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //@{
 
 /**
@@ -105,4 +110,7 @@ uint32_t stSafeStrToUInt32(const char *str);
 /* convert a string to a 64 int, exception if invalid */
 int64_t stSafeStrToInt64(const char *str);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

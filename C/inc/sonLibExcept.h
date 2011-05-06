@@ -56,6 +56,11 @@
 #ifndef sonLibExcept_h
 #define sonLibExcept_h
 #include "sonLibTypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <assert.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -220,4 +225,7 @@ void stThrowNew(const char *id, const char *msg, ...);
 void stThrowNewCause(stExcept *cause, const char *id, const char *msg, ...);
 //@}
 //@}
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -8,6 +8,10 @@
 #define SONLIBKVDATABASECONF_H
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     stKVDatabaseTypeTokyoCabinet,
     stKVDatabaseTypeTokyoTyrant,
@@ -104,4 +108,7 @@ const char *stKVDatabaseConf_getDatabaseName(stKVDatabaseConf *conf);
 /* get the table name for server based databases */
 const char *stKVDatabaseConf_getTableName(stKVDatabaseConf *conf);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -9,6 +9,10 @@
 
 #include "commonC.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -121,4 +125,7 @@ char *replaceAndFreeString(char *oldString, char old, char *replacement, int32_t
 
 int32_t benLine(char **s, int32_t *n, FILE *f);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*BIOIOC_H_*/

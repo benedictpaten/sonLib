@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Construct a stList with zero length.
  * The destructor will not clean up the elements in the stList.
@@ -155,4 +159,7 @@ stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const
  */
 void stList_setDestructor(stList *list, void (*destructElement)(void *));
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBLIST_H_ */
