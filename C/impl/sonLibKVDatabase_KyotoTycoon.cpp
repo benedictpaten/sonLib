@@ -46,7 +46,6 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     if (!rdb->open(dbRemote_Host, dbRemote_Port, timeout)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, rdb->error().name());
     }
-
     free(databaseName);
     return rdb;
 }

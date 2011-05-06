@@ -129,7 +129,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
         fprintf(stderr, "running Tokyo Tyrant sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeKyotoTycoon) {
         conf = stKVDatabaseConf_constructKyotoTycoon(optHost, optPort, optTimeout, optDb);
-        fprintf(stderr, "running Tokyo Tyrant sonLibKVDatabase tests\n");
+        fprintf(stderr, "running Kyoto Tycoon sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeMySql) {
         conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
         fprintf(stderr, "running MySQL sonLibKVDatabase tests\n");
