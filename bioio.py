@@ -103,7 +103,7 @@ def setLoggingFromOptions(options):
     """Sets the logging from a dictionary of name/value options.
     """
     #We can now set up the logging info.
-    if options.logLevel != None:
+    if options.logLevel is not None:
         setLogLevel(options.logLevel) #Use log level, unless flags are set..   
      
     if options.logInfo:
@@ -113,7 +113,7 @@ def setLoggingFromOptions(options):
         
     logger.info("Logging set at level: %s" % logLevelString)  
     
-    if options.logFile != None:
+    if options.logFile is not None:
         addLoggingFileHandler(options.logFile, options.logRotating)
     
     logger.info("Logging to file: %s" % options.logFile)  
@@ -245,7 +245,7 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 #########################################################
 
 def getBasicOptionParser(usage="usage: %prog [options]", version="%prog 0.1", parser=None):
-    if parser == None:
+    if parser is None:
         parser = OptionParser(usage=usage, version=version)
     
     addLoggingOptions(parser)
@@ -270,7 +270,7 @@ def parseBasicOptions(parser):
     return options, args
 
 def parseSuiteTestOptions(parser=None):
-    if parser == None:
+    if parser is None:
         parser = getBasicOptionParser()
     
     parser.add_option("--testLength", dest="testLength", type="string",
@@ -283,17 +283,21 @@ def parseSuiteTestOptions(parser=None):
     options, args = parseBasicOptions(parser)
     logger.info("Parsed arguments")
     
+    options.testLength = options.testLength.upper()
+    
     if options.testLength == "SHORT":
         TestStatus.setTestStatus(TestStatus.TEST_SHORT)
     elif options.testLength == "MEDIUM":
         TestStatus.setTestStatus(TestStatus.TEST_MEDIUM)
     elif options.testLength == "LONG":
         TestStatus.setTestStatus(TestStatus.TEST_LONG)
-    else: 
-        assert options.testLength == "VERY_LONG" #Otherwise an unrecognised option
+    elif options.testLength == "VERY_LONG":
         TestStatus.setTestStatus(TestStatus.TEST_VERY_LONG)
+    else:
+        parser.error('Unrecognised option for --testLength, %s. Options are SHORT, MEDIUM, LONG, VERY_LONG.' % 
+                     options.testLength)
     
-    if options.saveError != None:
+    if options.saveError is not None:
         TestStatus.setSaveErrorLocation(options.saveError)
         
     return options, args
@@ -305,7 +309,7 @@ def nameValue(name, value, valueType=str):
         if value:
             return "--%s" % name
         return ""
-    if value == None:
+    if value is None:
         return ""
     return "--%s %s" % (name, valueType(value))    
 
@@ -325,7 +329,7 @@ def getRandomAlphaNumericString(length=10):
 def getTempFile(suffix="", rootDir=None):
     """Returns a string representing a temporary file, that must be manually deleted
     """
-    if rootDir == None:
+    if rootDir is None:
         handle, tmpFile = tempfile.mkstemp(suffix)
         os.close(handle)
         return tmpFile
@@ -339,7 +343,7 @@ def getTempDirectory(rootDir=None):
     """
     returns a temporary directory that must be manually deleted
     """
-    if rootDir == None:
+    if rootDir is None:
         return tempfile.mkdtemp()
     else:
         while True:
@@ -594,7 +598,7 @@ def fastaAlignmentRead(fasta, mapFn=(lambda x : x), l=None):
     """
     reads in columns of multiple alignment and returns them iteratively
     """
-    if l == None:
+    if l is None:
         l = _getMultiFastaOffsets(fasta)
     else:
         l = l[:]
@@ -759,12 +763,12 @@ def newickTreeParser(newickTree, defaultDistance=DEFAULT_DISTANCE, \
 def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePrintFn=(lambda f : "%f" % f)):
     def fn(binaryTree):
         #print " tree Node ", binaryTree.left, binaryTree.right, binaryTree.distance, binaryTree.internal, binaryTree.iD 
-        if binaryTree.iD != None:
+        if binaryTree.iD is not None:
             iD = str(binaryTree.iD)
         else:
             iD = ''
-        if binaryTree.internal and (dontStopAtID or binaryTree.iD == None):
-            if binaryTree.right != None:
+        if binaryTree.internal and (dontStopAtID or binaryTree.iD is None):
+            if binaryTree.right is not None:
                 s = '(' + fn(binaryTree.left) + ',' + fn(binaryTree.right) + ')' + iD
             else:
                 s = '(' + fn(binaryTree.left) + ')' + iD 
@@ -832,7 +836,7 @@ class AlignmentOperation:
         self.score = score
     
     def __eq__(self, op):
-        if op == None:
+        if op is None:
             return False
         return self.type == op.type and self.length == op.length and close(self.score, op.score, 0.0001)
     
@@ -873,7 +877,7 @@ class PairwiseAlignment:
         assert i == abs(end2 - start2) #Check alignment is of right length with respect to the target
         
     def __eq__(self, pairwiseAlignment):
-        if pairwiseAlignment == None:
+        if pairwiseAlignment is None:
             return False
         return self.contig1 == pairwiseAlignment.contig1 and \
         self.start1 == pairwiseAlignment.start1 and \
@@ -896,7 +900,7 @@ def cigarRead(fileHandle):
     line = fileHandle.readline()
     while line != '':
         i = p.match(line)
-        if i != None:
+        if i is not None:
             m = i.groups()
             if len(m) == 11:
                 l = m[10].split(" ")
