@@ -5,10 +5,11 @@ libPath = ../../lib
 all : ${libPath}/cuTest.a
 
 clean : 
-	#Removing test binaries
+#Removing test binaries
 	rm -f ${libPath}/cuTest.a ${libPath}/CuTest.h
 
 ${libPath}/cuTest.a : CuTest.c CuTest.h
+	@mkdir -p $(dir $@)
 	${cxx} ${cflags} -c CuTest.c
 	ar rc cuTest.a *.o
 	ranlib cuTest.a
