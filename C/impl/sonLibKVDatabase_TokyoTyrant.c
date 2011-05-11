@@ -162,21 +162,6 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     }
 }
 
-static void startTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
-    return;
-}
-
-static void commitTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
-    return;
-}
-
-static void abortTransaction(stKVDatabase *database) {
-    // transactions not supported in Tokyo Tyrant...
-    return;
-}
-
 //initialisation function
 
 void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
@@ -191,11 +176,6 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    /*
-    database->startTransaction = startTransaction;
-    database->commitTransaction = commitTransaction;
-    database->abortTransaction = abortTransaction;
-    */
 }
 
 #endif

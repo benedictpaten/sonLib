@@ -335,6 +335,7 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     } 
 }
 
+/*
 static void startTransaction(stKVDatabase *database) {
     MySqlDb *dbImpl = database->dbImpl;
     sqlExec(dbImpl, "start transaction with consistent snapshot;");
@@ -349,6 +350,7 @@ static void abortTransaction(stKVDatabase *database) {
     MySqlDb *dbImpl = database->dbImpl;
     sqlExec(dbImpl, "rollback;");
 }
+*/
 
 //initialisation function
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {

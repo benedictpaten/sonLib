@@ -120,9 +120,12 @@ static void setRecord(stKVDatabase *database, int64_t key, const void *value, in
 /* no timeout */
 static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    if (!rdb->increment((char *)&key, (size_t)sizeof(int64_t), incrementAmount, -1)) {
+    int64_t returnValue = kyotocabinet::INT64MIN;
+    if ( (returnValue = rdb->increment((char *)&key, (size_t)sizeof(int64_t), incrementAmount, -1)) == kyotocabinet::INT64MIN ) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
     }
+
+    return returnValue;
 }
 
 static void bulkSetRecords(stKVDatabase *database, stList *records) {
@@ -144,7 +147,7 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
     }
    
     // set values, atomic = true
-    if (!rdb->set_bulk(&recs, -1, true) < 0) {
+    if (!rdb->set_bulk(recs, -1, true) < 0) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
     }
 }
@@ -167,7 +170,7 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
     }
 
     // set values, atomic = true
-    if (!rdb->remove_bulk(&keys, true) < 0) {
+    if (!rdb->remove_bulk(keys, true) < 0) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon remove bulk record failed: %s", rdb->error().name());
     }
 }
