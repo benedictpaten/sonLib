@@ -194,7 +194,8 @@ void stKVDatabase_setRecord(stKVDatabase *database, int64_t key,
             }stTryEnd;
 }
 
-int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key,
+        int64_t incrementAmount) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to increment a numerical record from a database that has been deleted");
@@ -206,7 +207,9 @@ int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key, int64_
                 if (isRetryExcept(ex)) {
                     stThrow(ex);
                 } else {
-                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
                             "stKVDatabase_incrementRecord key: %lld increment size: %lld failed",
                             (long long) key, (long long) incrementAmount);
                 }
@@ -271,6 +274,13 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to bulk remove records from a database that has been deleted");
+    }
+    for (int32_t i = 0; i < stList_length(records); i++) {
+        int64_t key = stInt64Tuple_getPosition(stList_get(records, i), 0);
+        if (!stKVDatabase_containsRecord(database, key)) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                    "The key is not in the database which we aim to remove: %lli", key);
+        }
     }
     stTry {
             database->bulkRemoveRecords(database, records);
@@ -389,6 +399,10 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to remove a record from a database that has already been deleted");
+    }
+    if (!stKVDatabase_containsRecord(database, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "The key is not in the database: %lli", key);
     }
     stTry {
             database->removeRecord(database, key);

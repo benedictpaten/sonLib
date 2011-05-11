@@ -238,7 +238,7 @@ static void testBulkSetRecords(CuTest *testCase) {
     CuAssertTrue(testCase, j == *m);
     free(m);
 
-    m = stKVDatabase_getRecord(database, 2);
+    m = stKVDatabase_getRecord(database, 3);
     CuAssertTrue(testCase, k == *m);
     free(m);
 
@@ -264,10 +264,10 @@ static void testBulkRemoveRecords(CuTest *testCase) {
 
     stList *requests = stList_construct3(0, (void(*)(void *)) stInt64Tuple_destruct);
 
-    stList_append(requests, stInt64Tuple_construct(1, i));
-    stList_append(requests, stInt64Tuple_construct(1, j));
-    stList_append(requests, stInt64Tuple_construct(1, k));
-    stList_append(requests, stInt64Tuple_construct(1, l));
+    stList_append(requests, stInt64Tuple_construct(1, 1));
+    stList_append(requests, stInt64Tuple_construct(1, 2));
+    stList_append(requests, stInt64Tuple_construct(1, 3));
+    stList_append(requests, stInt64Tuple_construct(1, 4));
 
     stKVDatabase_bulkRemoveRecords(database, requests);
 

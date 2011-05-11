@@ -30,10 +30,16 @@ typedef struct _diskCache {
     bool (*containsRecord)(stKVDatabase *, int64_t);
     void (*insertRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*setRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*bulkSetRecords)(stKVDatabase *, stList *requests);
+    void (*bulkRemoveRecords)(stKVDatabase *, stList *requests);
+    int64_t (*incrementRecord)(stKVDatabase *database, int64_t key,
+            int64_t incrementAmount);
     void *(*getRecord2)(stKVDatabase *database, int64_t key,
             int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key,
-            int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
+            int64_t zeroBasedByteOffset, int64_t sizeInBytes,
+            int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);
 } DiskCache;
 
@@ -201,8 +207,8 @@ static void diskCache_deleteRecord(DiskCache *diskCache, int64_t key,
             int64_t newSize = record->size - (start + size - record->start);
             int64_t newStart = start + size;
             assert(newSize >= 0);
-            char *newMem = memcpy(st_malloc(newSize), record->record + start
-                    + size - record->start, newSize);
+            char *newMem = memcpy(st_malloc(newSize),
+                    record->record + start + size - record->start, newSize);
             free(record->record);
             record->record = newMem;
             record->start = newStart;
@@ -329,7 +335,7 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key,
         int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
-    if(sizeInBytes == 0) {
+    if (sizeInBytes == 0) {
         return st_malloc(0);
     }
     DiskCache *diskCache = database->cache;
@@ -350,12 +356,13 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key,
         i = 0;
     }
     int64_t j = sizeInBytes + zeroBasedByteOffset - i + diskCache->boundarySize;
-    if(j + i > recordSize) {
+    if (j + i > recordSize) {
         j = recordSize - i;
     }
     char *k = diskCache->getPartialRecord(database, key, i, j, recordSize);
     diskCache_insertRecord(diskCache, key, k, i, j);
-    void *record = memcpy(st_malloc(sizeInBytes), k + zeroBasedByteOffset - i, sizeInBytes);
+    void *record = memcpy(st_malloc(sizeInBytes), k + zeroBasedByteOffset - i,
+            sizeInBytes);
     free(k);
     return record;
     /*void *record = diskCache->getPartialRecord(database, key,
@@ -367,13 +374,30 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key,
 
 static bool recordsIdentical(const char *value, int64_t sizeOfRecord,
         const char *updatedValue, int64_t updatedSizeOfRecord) {
-    if(sizeOfRecord != updatedSizeOfRecord) {
+    if (sizeOfRecord != updatedSizeOfRecord) {
         return 0;
     }
-    for(int64_t j=0; j<sizeOfRecord; j++) {
-        if(value[j] != updatedValue[j]) {
+    for (int64_t j = 0; j < sizeOfRecord; j++) {
+        if (value[j] != updatedValue[j]) {
             return 0;
         }
+    }
+    return 1;
+}
+
+static bool updateRecordP(DiskCache *diskCache, stKVDatabase *database,
+        int64_t key, const void *value, int64_t sizeOfRecord) {
+    if (diskCache_containsRecord(diskCache, key, 0, INT64_MAX)) { //If the record is in the cache, and if
+        //it is identical then we don't need to do anything.
+        int64_t oldRecordSize = 0;
+        void *i = diskCache_getRecord(diskCache, key, 0, INT64_MAX,
+                &oldRecordSize);
+        assert(i != NULL);
+        if (recordsIdentical(i, oldRecordSize, value, sizeOfRecord)) {
+            free(i);
+            return 0; //We don't need to do anything as the record is already on the disk.
+        }
+        free(i);
     }
     return 1;
 }
@@ -381,19 +405,28 @@ static bool recordsIdentical(const char *value, int64_t sizeOfRecord,
 static void updateRecord(stKVDatabase *database, int64_t key,
         const void *value, int64_t sizeOfRecord) {
     DiskCache *diskCache = database->cache;
-    if (diskCache_containsRecord(diskCache, key, 0, INT64_MAX)) { //If the record is in the cache, and if
-        //it is identical then we don't need to do anything.
-        int64_t oldRecordSize = 0;
-        void *i = diskCache_getRecord(diskCache, key, 0, INT64_MAX, &oldRecordSize);
-        assert(i != NULL);
-        if(recordsIdentical(i, oldRecordSize, value, sizeOfRecord)) {
-            free(i);
-            return; //We don't need to do anything as the record is already on the disk.
-        }
-        free(i);
+    if (updateRecordP(diskCache, database, key, value, sizeOfRecord)) {
+        diskCache->updateRecord(database, key, value, sizeOfRecord);
+        diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
     }
-    diskCache->updateRecord(database, key, value, sizeOfRecord);
-    diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
+}
+
+static void setRecord(stKVDatabase *database, int64_t key, const void *value,
+        int64_t sizeOfRecord) {
+    DiskCache *diskCache = database->cache;
+    if (updateRecordP(diskCache, database, key, value, sizeOfRecord)) {
+        diskCache->setRecord(database, key, value, sizeOfRecord);
+        diskCache_insertRecord(diskCache, key, value, 0, sizeOfRecord);
+    }
+}
+
+static int64_t incrementRecord(stKVDatabase *database, int64_t key,
+        int64_t incrementAmount) {
+    DiskCache *diskCache = database->cache;
+    int64_t updatedValue = diskCache->incrementRecord(database, key,
+            incrementAmount);
+    diskCache_insertRecord(diskCache, key, &updatedValue, 0, sizeof(int64_t));
+    return updatedValue;
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
@@ -402,19 +435,41 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     diskCache->removeRecord(database, key);
 }
 
+static void bulkSetRecords(stKVDatabase *database, stList *requests) {
+    DiskCache *diskCache = database->cache;
+    for (int32_t i = 0; i < stList_length(requests); i++) {
+        stKVDatabaseBulkRequest *request = stList_get(requests, i);
+        diskCache_insertRecord(diskCache, request->key, request->value, 0,
+                                request->size);
+    }
+    diskCache->bulkSetRecords(database, requests);
+}
+
+static void bulkRemoveRecords(stKVDatabase *database, stList *requests) {
+    DiskCache *diskCache = database->cache;
+    for (int32_t i = 0; i < stList_length(requests); i++) {
+        stInt64Tuple *j = stList_get(requests, i);
+        diskCache_deleteRecord(diskCache, stInt64Tuple_getPosition(j, 0), 0,
+                INT64_MAX);
+    }
+    diskCache->bulkRemoveRecords(database, requests);
+}
+
 static void clearCache(stKVDatabase *database) {
     DiskCache *diskCache = database->cache;
     assert(diskCache != NULL);
     stSortedSet_destruct(diskCache->cache);
-    diskCache->cache = stSortedSet_construct3(diskCacheRecord_cmp, (void(*)(
-            void *)) diskCacheRecord_destruct);
+    diskCache->cache = stSortedSet_construct3(diskCacheRecord_cmp,
+            (void(*)(void *)) diskCacheRecord_destruct);
     diskCache->size = 0;
 }
 
-void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size, int64_t boundarySize) {
+void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size,
+        int64_t boundarySize) {
     assert(database->cache == NULL);
     DiskCache *diskCache = st_malloc(sizeof(DiskCache));
-    diskCache->cache = stSortedSet_construct3(diskCacheRecord_cmp, (void(*)(void *)) diskCacheRecord_destruct);
+    diskCache->cache = stSortedSet_construct3(diskCacheRecord_cmp,
+            (void(*)(void *)) diskCacheRecord_destruct);
     diskCache->size = size;
     diskCache->boundarySize = boundarySize;
 
@@ -422,6 +477,10 @@ void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size, int64_t bou
     diskCache->containsRecord = database->containsRecord;
     diskCache->insertRecord = database->insertRecord;
     diskCache->updateRecord = database->updateRecord;
+    diskCache->bulkSetRecords = database->bulkSetRecords;
+    diskCache->bulkRemoveRecords = database->bulkRemoveRecords;
+    diskCache->incrementRecord = database->incrementRecord;
+    diskCache->setRecord = database->setRecord;
     diskCache->getRecord2 = database->getRecord2;
     diskCache->getPartialRecord = database->getPartialRecord;
     diskCache->removeRecord = database->removeRecord;
@@ -431,6 +490,12 @@ void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size, int64_t bou
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
+
+    database->bulkSetRecords = bulkSetRecords;
+    database->bulkRemoveRecords = bulkRemoveRecords;
+    database->incrementRecord = incrementRecord;
+    database->setRecord = setRecord;
+
     database->getRecord = getRecord;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
