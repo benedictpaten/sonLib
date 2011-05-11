@@ -363,9 +363,11 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
+    /*
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
+    */
     if (create) {
         createKVTable(database->dbImpl);
     }

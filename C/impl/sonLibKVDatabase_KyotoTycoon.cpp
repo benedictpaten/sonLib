@@ -20,6 +20,7 @@
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
 
+#include <sstream>
 
 using namespace std;
 using namespace kyototycoon;
@@ -108,6 +109,69 @@ static void updateRecord(stKVDatabase *database, int64_t key, const void *value,
     }
 }
 
+static void setRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    if (!rdb->set((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon setting key/value failed: %s", rdb->error().name());
+    }
+}
+
+/* increment a record by the specified numerical value: atomic operation */
+/* no timeout */
+static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    if (!rdb->increment((char *)&key, (size_t)sizeof(int64_t), incrementAmount, -1)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
+    }
+}
+
+static void bulkSetRecords(stKVDatabase *database, stList *records) {
+
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    map<string,string> recs;
+
+    // copy the records from our C data structure to the CPP map needed for the Tycoon API
+    for(int32_t i=0; i<stList_length(records); i++) {
+        stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
+
+        // hack to get our integer key into a string object
+        string key;
+        stringstream out;
+        out << request->key;
+        key = out.str(); 
+
+        recs.insert(pair<string,string>(key, string((const char *)request->value)));
+    }
+   
+    // set values, atomic = true
+    if (!rdb->set_bulk(&recs, -1, true) < 0) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
+    }
+}
+
+static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
+
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+    vector<string> keys;
+
+    for(int32_t i=0; i<stList_length(records); i++) {
+        stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
+
+        // hack to get our integer key into a string object
+        string key;
+        stringstream out;
+        out << request->key;
+        key = out.str(); 
+
+        keys.push_back(key);
+    }
+
+    // set values, atomic = true
+    if (!rdb->remove_bulk(&keys, true) < 0) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon remove bulk record failed: %s", rdb->error().name());
+    }
+}
+
 static int64_t numberOfRecords(stKVDatabase *database) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     return rdb->count();
@@ -153,21 +217,6 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     }
 }
 
-static void startTransaction(stKVDatabase *database) {
-    // transactions supported through bulk_... methods
-    return;
-}
-
-static void commitTransaction(stKVDatabase *database) {
-    // transactions supported through bulk_... methods
-    return;
-}
-
-static void abortTransaction(stKVDatabase *database) {
-    // transactions supported through bulk_... methods
-    return;
-}
-
 
 void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
@@ -176,14 +225,15 @@ void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseCon
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
+    database->setRecord = setRecord;
+    database->incrementRecord = incrementRecord;
+    database->bulkSetRecords = bulkSetRecords;
+    database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    database->startTransaction = startTransaction;
-    database->commitTransaction = commitTransaction;
-    database->abortTransaction = abortTransaction;
 }
 
 #endif

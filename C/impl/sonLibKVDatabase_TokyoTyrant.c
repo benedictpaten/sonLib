@@ -191,9 +191,11 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
+    /*
     database->startTransaction = startTransaction;
     database->commitTransaction = commitTransaction;
     database->abortTransaction = abortTransaction;
+    */
 }
 
 #endif
