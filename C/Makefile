@@ -8,7 +8,7 @@ libHeaders = inc/*.h
 libInternalHeaders = impl/*.h
 libTests = tests/sonLib*.c
 
-testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_kvDatabaseTransactionTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
+testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
 cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
 cppflags += ${kyotoTycoonIncl} 

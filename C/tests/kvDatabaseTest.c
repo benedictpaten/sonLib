@@ -30,7 +30,7 @@ static void setup() {
     database = stKVDatabase_construct(conf, true);
     teardown();
     database = stKVDatabase_construct(conf, true);
-    if(USE_CACHE) {
+    if (USE_CACHE) {
         stKVDatabase_makeMemCache(database, 50000, 5); //Makes a cache with a 50k cache.
     }
 }
@@ -66,7 +66,6 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
 
-
     //Now check we can retrieve records partially
     CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, 1, 2, 2, sizeof(char) * 4));
     CuAssertStrEquals(testCase, "ed", stKVDatabase_getPartialRecord(database, 1, 1, 3, sizeof(char) * 4));
@@ -86,9 +85,9 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
             CuAssertTrue(testCase, false);
         }
         stCatch(except)
-                {
-                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-                }stTryEnd;
+            {
+                CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+            }stTryEnd;
 
     teardown();
 }
@@ -98,24 +97,23 @@ static void partialRecordRetrieval(CuTest *testCase) {
 
     //Make some number of large records
     stList *records = stList_construct3(0, free);
-    stList *recordSizes = stList_construct3(0,
-            (void(*)(void *)) stIntTuple_destruct);
+    stList *recordSizes = stList_construct3(0, (void(*)(void *)) stIntTuple_destruct);
     for (int32_t i = 0; i < 300; i++) {
         int32_t size = st_randomInt(0, 80);
-        size = size *size *size; //Use cubic size distribution
-        char *randomRecord = st_malloc(size*sizeof(char));
-        for(int32_t j=0; j<size; j++) {
-            randomRecord[j] = (char)st_randomInt(0, 100);
+        size = size * size * size; //Use cubic size distribution
+        char *randomRecord = st_malloc(size * sizeof(char));
+        for (int32_t j = 0; j < size; j++) {
+            randomRecord[j] = (char) st_randomInt(0, 100);
         }
         stList_append(records, randomRecord);
         stList_append(recordSizes, stIntTuple_construct(1, size));
         CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, i));
-        stKVDatabase_insertRecord(database, i, randomRecord, size*sizeof(char));
+        stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, i));
         //st_uglyf("I am creating the record %i %i\n", i, size);
     }
 
-    if(CLEAR_CACHE) {
+    if (CLEAR_CACHE) {
         stKVDatabase_clearCache(database);
     }
 
@@ -124,8 +122,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, recordKey));
 
         char *record = stList_get(records, recordKey);
-        int32_t size = stIntTuple_getPosition(
-                stList_get(recordSizes, recordKey), 0);
+        int32_t size = stIntTuple_getPosition(stList_get(recordSizes, recordKey), 0);
 
         //Get partial record
         int32_t start = size > 0 ? st_randomInt(0, size) : 0;
@@ -134,44 +131,49 @@ static void partialRecordRetrieval(CuTest *testCase) {
         assert(partialSize >= 0);
         assert(partialSize + start <= size);
         //st_uglyf("I am getting record %i %i %i %i\n", recordKey, start, partialSize, size);
-        char *partialRecord = stKVDatabase_getPartialRecord(database,
-                recordKey, start*sizeof(char), partialSize*sizeof(char), size*sizeof(char));
+        char *partialRecord = stKVDatabase_getPartialRecord(database, recordKey, start * sizeof(char),
+                partialSize * sizeof(char), size * sizeof(char));
 
         //Check they are equivalent..
         for (int32_t i = 0; i < partialSize; i++) {
-            if(record[start + i] != partialRecord[i]) {
-                st_uglyf("There was a difference %i %i for record %i %i\n", record[start + i], partialRecord[i], i, partialSize);
+            if (record[start + i] != partialRecord[i]) {
+                st_uglyf("There was a difference %i %i for record %i %i\n", record[start + i], partialRecord[i], i,
+                        partialSize);
             }
             //CuAssertTrue(testCase, record[start + i] == partialRecord[i]);
         }
 
         //Check we can not get out of bounds.. (start less than zero)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, -1, 1, size*sizeof(char));
-        } stCatch(except) {
-            CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        } stTryEnd;
+                stKVDatabase_getPartialRecord(database, recordKey, -1, 1, size * sizeof(char));
+            }stCatch(except)
+                {
+                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+                }stTryEnd;
 
         //Check we can not get out of bounds.. (start greater than index start)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, size, 1, size*sizeof(char));
-        } stCatch(except) {
-            CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        } stTryEnd;
+                stKVDatabase_getPartialRecord(database, recordKey, size, 1, size * sizeof(char));
+            }stCatch(except)
+                {
+                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+                }stTryEnd;
 
         //Check we can not get out of bounds.. (total size if greater than record length)
         stTry {
-            stKVDatabase_getPartialRecord(database, recordKey, 0, size+1, size*sizeof(char));
-        } stCatch(except) {
-            CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        } stTryEnd;
+                stKVDatabase_getPartialRecord(database, recordKey, 0, size + 1, size * sizeof(char));
+            }stCatch(except)
+                {
+                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+                }stTryEnd;
 
         //Check we can not get non existent record
         stTry {
-            stKVDatabase_getPartialRecord(database, 1000000, 0, size, size*sizeof(char));
-        } stCatch(except) {
-            CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-        } stTryEnd;
+                stKVDatabase_getPartialRecord(database, 1000000, 0, size, size * sizeof(char));
+            }stCatch(except)
+                {
+                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+                }stTryEnd;
     }
 
     stList_destruct(records);
@@ -180,44 +182,105 @@ static void partialRecordRetrieval(CuTest *testCase) {
     teardown();
 }
 
-static void testTransactions(CuTest *testCase) {
+static void testIncrementRecord(CuTest *testCase) {
     /*
-     * Tests starting and committing a transaction, does not attempt an abort.
+     * Tests incrementing records
      */
     setup();
-    //The setup method starts a transaction to allow you to create tables.
-    //We will try committing the transaction and then reclaiming the created
+    int64_t i = 100;
+    stKVDatabase_insertRecord(database, 1, &i, sizeof(int64_t));
+    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, 10) == 110);
+    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, 15) == 125);
+    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, -25) == 100);
+    teardown();
+}
 
-    //First create some stuff to store..
+static void testSetRecord(CuTest *testCase) {
+    /*
+     * Tests 'setting' records (where you don't know if it's an update or an insert).
+     */
+    setup();
+    int64_t i = 100;
+    stKVDatabase_setRecord(database, 1, &i, sizeof(int64_t));
+    int64_t *j = stKVDatabase_getRecord(database, 1);
+    CuAssertTrue(testCase, i == *j);
+    free(j);
+    i = 110;
+    stKVDatabase_setRecord(database, 1, &i, sizeof(int64_t));
+    j = stKVDatabase_getRecord(database, 1);
+    CuAssertTrue(testCase, i == *j);
+    free(j);
+    teardown();
+}
 
+static void testBulkSetRecords(CuTest *testCase) {
+    /*
+     * Tests doing a bulk update of a set of records.
+     */
+    setup();
+    int64_t i = 100, j = 110, k = 120, l = 130;
+    stKVDatabase_insertRecord(database, 1, &i, sizeof(int64_t));
 
-    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
-    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
-    //stKVDatabase_commitTransaction(database);
-    //Try committing the transaction twice
-    stTry {
-            //stKVDatabase_commitTransaction(database);
-            CuAssertTrue(testCase, 0);
-        }
-        stCatch(except)
-                {
-                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-                }stTryEnd;
+    stList *requests = stList_construct3(0, (void(*)(void *)) stKVDatabaseBulkRequest_destruct);
+    stList_append(requests, stKVDatabaseBulkRequest_constructInsertRequest(2, &j, sizeof(int64_t)));
+    stList_append(requests, stKVDatabaseBulkRequest_constructSetRequest(3, &k, sizeof(int64_t)));
+    stList_append(requests, stKVDatabaseBulkRequest_constructUpdateRequest(1, &l, sizeof(int64_t)));
 
-    stKVDatabase_destruct(database);
+    stKVDatabase_bulkSetRecords(database, requests);
 
-    //Now re-open the database and check it is as expected:
-    database = stKVDatabase_construct(conf, false);
-    CuAssertIntEquals(testCase, 3, stKVDatabase_getNumberOfRecords(database));
-    CuAssertStrEquals(testCase, "Red", stKVDatabase_getRecord(database, 1));
-    CuAssertStrEquals(testCase, "Green", stKVDatabase_getRecord(database, 2));
-    CuAssertStrEquals(testCase, "Black", stKVDatabase_getRecord(database, 0));
+    stList_destruct(requests);
+
+    int64_t *m = stKVDatabase_getRecord(database, 1);
+    CuAssertTrue(testCase, l == *m);
+    free(m);
+
+    m = stKVDatabase_getRecord(database, 2);
+    CuAssertTrue(testCase, j == *m);
+    free(m);
+
+    m = stKVDatabase_getRecord(database, 2);
+    CuAssertTrue(testCase, k == *m);
+    free(m);
 
     teardown();
 }
 
+static void testBulkRemoveRecords(CuTest *testCase) {
+    /*
+     * Tests doing a bulk update of a set of records.
+     */
+    setup();
+    int64_t i = 100, j = 110, k = 120, l = 130;
+    stKVDatabase_insertRecord(database, 1, &i, sizeof(int64_t));
+    stKVDatabase_insertRecord(database, 2, &j, sizeof(int64_t));
+    stKVDatabase_insertRecord(database, 3, &k, sizeof(int64_t));
+    stKVDatabase_insertRecord(database, 4, &l, sizeof(int64_t));
 
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 3));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 4));
+    CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 4);
+
+    stList *requests = stList_construct3(0, (void(*)(void *)) stInt64Tuple_destruct);
+
+    stList_append(requests, stInt64Tuple_construct(1, i));
+    stList_append(requests, stInt64Tuple_construct(1, j));
+    stList_append(requests, stInt64Tuple_construct(1, k));
+    stList_append(requests, stInt64Tuple_construct(1, l));
+
+    stKVDatabase_bulkRemoveRecords(database, requests);
+
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 3));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 4));
+    CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 0);
+
+    stList_destruct(requests);
+
+    teardown();
+}
 
 /*
  * Retrieves really long records from the database.
@@ -232,10 +295,9 @@ static void bigRecordRetrieval(CuTest *testCase) {
         }
 
         //st_uglyf("I am inserting record %i %i\n", i, size);
-        stKVDatabase_insertRecord(database, i, randomRecord, size
-                * sizeof(char));
+        stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
 
-        if(CLEAR_CACHE) {
+        if (CLEAR_CACHE) {
             stKVDatabase_clearCache(database);
         }
         //st_uglyf("I am creating the record %i %i\n", i, size);
@@ -253,14 +315,12 @@ static void bigRecordRetrieval(CuTest *testCase) {
 /* Check that all tuple records in a set are present and have the expect
  * value.  The expected value in the set is multiplied by valueMult to get
  * the actual expected value */
-static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase,
-        stSortedSet *set, int valueMult) {
+static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase, stSortedSet *set, int valueMult) {
     CuAssertIntEquals(testCase, stSortedSet_size(set), stKVDatabase_getNumberOfRecords(database));
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int32_t *value = (int32_t *) stKVDatabase_getRecord(database,
-                stIntTuple_getPosition(tuple, 0));
+        int32_t *value = (int32_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         CuAssertIntEquals(testCase, valueMult*stIntTuple_getPosition(tuple, 0), *value);
         free(value);
@@ -268,11 +328,9 @@ static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase,
     stSortedSet_destructIterator(it);
 }
 
-static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
-        int numRecords, bool reopenDatabase) {
+static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numRecords, bool reopenDatabase) {
     //Make a big old list of records..
-    stSortedSet *set = stSortedSet_construct3((int(*)(const void *,
-            const void *)) stIntTuple_cmpFn,
+    stSortedSet *set = stSortedSet_construct3((int(*)(const void *, const void *)) stIntTuple_cmpFn,
             (void(*)(void *)) stIntTuple_destruct);
     while (stSortedSet_size(set) < numRecords) {
         int32_t key = st_randomInt(0, 100 * numRecords);
@@ -290,7 +348,7 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
 
     readWriteAndRemoveRecordsLotsCheck(testCase, set, 1);
 
-    if(CLEAR_CACHE) {
+    if (CLEAR_CACHE) {
         stKVDatabase_clearCache(database);
     }
 
@@ -298,11 +356,9 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int32_t *value = (int32_t *) stKVDatabase_getRecord(database,
-                stIntTuple_getPosition(tuple, 0));
+        int32_t *value = (int32_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
         *value *= -1;
-        stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0),
-                value, sizeof(int32_t));
+        stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0), value, sizeof(int32_t));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         free(value);
     }
@@ -326,14 +382,13 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
         CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         //Test we get exception if we remove twice.
         stTry {
-                stKVDatabase_removeRecord(database, stIntTuple_getPosition(
-                        tuple, 0));
+                stKVDatabase_removeRecord(database, stIntTuple_getPosition(tuple, 0));
                 CuAssertTrue(testCase, 0);
             }
             stCatch(except)
-                    {
-                        CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-                    }stTryEnd;
+                {
+                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
+                }stTryEnd;
     }
     stSortedSet_destructIterator(it);
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
@@ -353,10 +408,9 @@ static void readWriteAndRemoveRecordsLots(CuTest *testCase) {
     teardown();
 }
 
-static void test_stKVDatabaseConf_constructFromString_tokyoCabinet(
-        CuTest *testCase) {
+static void test_stKVDatabaseConf_constructFromString_tokyoCabinet(CuTest *testCase) {
     const char *xmlTestString =
-                    "<st_kv_database_conf type='tokyo_cabinet'><tokyo_cabinet database_dir='foo'/></st_kv_database_conf>";
+            "<st_kv_database_conf type='tokyo_cabinet'><tokyo_cabinet database_dir='foo'/></st_kv_database_conf>";
     stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(xmlTestString);
     CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypeTokyoCabinet);
     CuAssertStrEquals(testCase, "foo", stKVDatabaseConf_getDir(conf));
@@ -365,7 +419,7 @@ static void test_stKVDatabaseConf_constructFromString_tokyoCabinet(
 static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 #ifdef HAVE_MYSQL
     const char *xmlTestString =
-                    "<st_kv_database_conf type='mysql'><mysql host='enormous' port='5' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
+    "<st_kv_database_conf type='mysql'><mysql host='enormous' port='5' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
     stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(
             xmlTestString);
     CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypeMySql);
@@ -382,7 +436,7 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 static void test_stKVDatabaseConf_constructFromString_postgresql(CuTest *testCase) {
 #ifdef HAVE_POSTGRESQL
     const char *xmlTestString =
-                    "<st_kv_database_conf type='postgresql'><postgresql host='enormous' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
+    "<st_kv_database_conf type='postgresql'><postgresql host='enormous' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
     stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(xmlTestString);
     CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypePostgreSql);
     CuAssertTrue(testCase, stKVDatabaseConf_getDir(conf) == NULL);
@@ -405,8 +459,10 @@ static void test_cache(CuTest *testCase) {
     readWriteAndRemoveRecordsLots(testCase);
     partialRecordRetrieval(testCase);
     bigRecordRetrieval(testCase);
-    testTransactions(testCase);
-    //testAbortedTransaction(testCase);
+    testIncrementRecord(testCase);
+    testSetRecord(testCase);
+    testBulkRemoveRecords(testCase);
+    testBulkSetRecords(testCase);
     constructDestructAndDelete(testCase);
     test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
     test_stKVDatabaseConf_constructFromString_mysql(testCase);
@@ -424,8 +480,10 @@ static void test_cacheWithClearing(CuTest *testCase) {
     readWriteAndRemoveRecordsLots(testCase);
     partialRecordRetrieval(testCase);
     bigRecordRetrieval(testCase);
-    testTransactions(testCase);
-    //testAbortedTransaction(testCase);
+    testIncrementRecord(testCase);
+    testSetRecord(testCase);
+    testBulkRemoveRecords(testCase);
+    testBulkSetRecords(testCase);
     constructDestructAndDelete(testCase);
     test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
     test_stKVDatabaseConf_constructFromString_mysql(testCase);
@@ -439,8 +497,10 @@ static CuSuite* stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecordsLots);
     SUITE_ADD_TEST(suite, partialRecordRetrieval);
     SUITE_ADD_TEST(suite, bigRecordRetrieval);
-    SUITE_ADD_TEST(suite, testTransactions);
-    //SUITE_ADD_TEST(suite, testAbortedTransaction);
+    SUITE_ADD_TEST(suite, testIncrementRecord);
+    SUITE_ADD_TEST(suite, testSetRecord);
+    SUITE_ADD_TEST(suite, testBulkRemoveRecords);
+    SUITE_ADD_TEST(suite, testBulkSetRecords);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
     SUITE_ADD_TEST(suite, test_cache);
@@ -462,7 +522,7 @@ static int runTests(void) {
     return suite->failCount > 0;
 }
 
-int main(int argc, char *const *argv) {
+int main(int argc, char * const *argv) {
     const char *desc = "kvDatabaseTests [options]\n"
         "\n"
         "Run key/value database tests.\n";
