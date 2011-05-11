@@ -24,9 +24,6 @@ ${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHe
 ${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
 	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@ tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
 
-${binPath}/sonLib_kvDatabaseTransactionTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a tests/kvDatabaseTransactionTest.c tests/kvDatabaseTestCommon.c
-	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@ tests/kvDatabaseTransactionTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${dblibs} ${mysqlLibs}
-
 ${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/cigarsTest.c ${libPath}/sonLib.a -lm
 

@@ -77,6 +77,49 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *
 void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
 /*
+ * Update an existing key/value record in the table. If the record does not exist it is inserted. Throws an exception if unsuccessful.
+ */
+void stKVDatabase_setRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
+
+/*
+ * Takes an existing record and treats it as type int64_t, incrementing the given amount in one atomic operation.
+ * The result is the resulting incremented value.
+ */
+int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount);
+
+/*
+ * Creates an insert request. The value memory is copied and stored in the record, and only destroyed when freed (see stKVDatabaseBulkRequest_destruct).
+ */
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructInsertRequest(int64_t key, const void *value, int64_t sizeOfRecord);
+
+/*
+ * Construct an update request (like stKVDatabaseBulkRequest_constructInsertRequest).
+ */
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructUpdateRequest(int64_t key, const void *value, int64_t sizeOfRecord);
+
+/*
+ * Construct a set request (like stKVDatabaseBulkRequest_constructInsertRequest).
+ */
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructSetRequest(int64_t key, const void *value, int64_t sizeOfRecord);
+
+/*
+ * Cleans up a kvDatabaseRecord object.
+ */
+void stKVDatabaseBulkRequest_destruct(stKVDatabaseBulkRequest *record);
+
+/*
+ * Updates in bulk a set of stKVDatabaseBulkRequests, represented in the list.
+ * Throws a KV_DATABASE exception if unsuccessful.
+ */
+void stKVDatabase_bulkSetRecords(stKVDatabase *database, stList *records);
+
+/*
+ * Destruct a set of records, where each record is specified by a key, encoded in a stInt64Tuple.
+ * Throws a KV_DATABASE exception if unsuccessful.
+ */
+void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records);
+
+/*
  * Gets a record from the database, given the key. The record is in newly allocated memory, and must be freed.
  * Returns NULL if the database does not contain the given record.
  */
@@ -106,25 +149,12 @@ void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t
  */
 int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database);
 
-/*
- * Starts a transaction with the database. Throws an exception if unsuccessful.
- */
-void stKVDatabase_startTransaction(stKVDatabase *database);
-
-/*
- * Commits the transaction to the database. Throws an exception if unsuccessful.
- */
-void stKVDatabase_commitTransaction(stKVDatabase *database);
-
-/*
- * Abort the current transaction. Throws an exception if unsuccessful.
- */
-void stKVDatabase_abortTransaction(stKVDatabase *database);
 
 /*
  * get the configuration object for the database.
  */
 stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database);
+
 
 #ifdef __cplusplus
 }

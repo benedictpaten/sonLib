@@ -43,7 +43,6 @@ static void constructDestructAndDelete(CuTest *testCase) {
 
 static void readWriteAndRemoveRecords(CuTest *testCase) {
     setup();
-    stKVDatabase_startTransaction(database);
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
     //Write some records
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
@@ -91,13 +90,11 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
                     CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
                 }stTryEnd;
 
-    stKVDatabase_commitTransaction(database);
     teardown();
 }
 
 static void partialRecordRetrieval(CuTest *testCase) {
     setup();
-    stKVDatabase_startTransaction(database);
 
     //Make some number of large records
     stList *records = stList_construct3(0, free);
@@ -117,7 +114,6 @@ static void partialRecordRetrieval(CuTest *testCase) {
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, i));
         //st_uglyf("I am creating the record %i %i\n", i, size);
     }
-    stKVDatabase_commitTransaction(database);
 
     if(CLEAR_CACHE) {
         stKVDatabase_clearCache(database);
@@ -193,24 +189,15 @@ static void testTransactions(CuTest *testCase) {
     //We will try committing the transaction and then reclaiming the created
 
     //First create some stuff to store..
-    stKVDatabase_startTransaction(database); //need to start a transaction to create tables etc.
-    //Try starting the transaction again to capture exception
-    stTry {
-            stKVDatabase_startTransaction(database);
-            CuAssertTrue(testCase, 0);
-        }
-        stCatch(except)
-                {
-                    CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-                }stTryEnd
+
 
     stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
     stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
     stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
-    stKVDatabase_commitTransaction(database);
+    //stKVDatabase_commitTransaction(database);
     //Try committing the transaction twice
     stTry {
-            stKVDatabase_commitTransaction(database);
+            //stKVDatabase_commitTransaction(database);
             CuAssertTrue(testCase, 0);
         }
         stCatch(except)
@@ -230,62 +217,6 @@ static void testTransactions(CuTest *testCase) {
     teardown();
 }
 
-static void testAbortedTransaction(CuTest *testCase) {
-    /*
-     * Tests aborting transactions.
-     */
-    setup();
-
-    stTry { //Test we can not abort a transaction that has not been started
-        stKVDatabase_abortTransaction(database);
-        CuAssertTrue(testCase, 0);
-    }
-    stCatch(except)
-    {
-        CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-    }stTryEnd
-
-    //First create some stuff to store..
-    stKVDatabase_startTransaction(database); //need to start a transaction to create tables etc.
-    //Check records not in
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
-    //Add records
-    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
-    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
-    //Check they are in
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
-
-    stKVDatabase_abortTransaction(database); //Now we abort the transaction..
-
-    //Check the records are no longer in the database
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
-
-    stTry { //Test we can not abort a transaction twice.
-        stKVDatabase_abortTransaction(database);
-        CuAssertTrue(testCase, 0);
-    }
-    stCatch(except)
-    {
-        CuAssertTrue(testCase, stExcept_getId(except) == ST_KV_DATABASE_EXCEPTION_ID);
-    }stTryEnd
-
-    //Now we try again..
-    stKVDatabase_startTransaction(database);
-    //And we should be able to insert these records as the previous transaction was aborted
-    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
-    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 5);
-    stKVDatabase_commitTransaction(database); //Now we completed things just fine!
-
-    teardown();
-}
 
 
 /*
@@ -299,11 +230,10 @@ static void bigRecordRetrieval(CuTest *testCase) {
         for (int32_t j = 0; j < size; j++) {
             randomRecord[j] = (char) st_randomInt(0, 100);
         }
-        stKVDatabase_startTransaction(database);
+
         //st_uglyf("I am inserting record %i %i\n", i, size);
         stKVDatabase_insertRecord(database, i, randomRecord, size
                 * sizeof(char));
-        stKVDatabase_commitTransaction(database);
 
         if(CLEAR_CACHE) {
             stKVDatabase_clearCache(database);
@@ -340,8 +270,6 @@ static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase,
 
 static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
         int numRecords, bool reopenDatabase) {
-    stKVDatabase_startTransaction(database);
-
     //Make a big old list of records..
     stSortedSet *set = stSortedSet_construct3((int(*)(const void *,
             const void *)) stIntTuple_cmpFn,
@@ -384,10 +312,10 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
 
     //Try optionally committing the transaction and reloading the database..
     if (reopenDatabase) {
-        stKVDatabase_commitTransaction(database);
+        //stKVDatabase_commitTransaction(database);
         stKVDatabase_destruct(database);
         database = stKVDatabase_construct(conf, false);
-        stKVDatabase_startTransaction(database);
+        //stKVDatabase_startTransaction(database);
     }
 
     //Now remove each one..
@@ -411,7 +339,6 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase,
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
 
     stSortedSet_destruct(set);
-    stKVDatabase_commitTransaction(database);
 }
 
 /*
@@ -479,7 +406,7 @@ static void test_cache(CuTest *testCase) {
     partialRecordRetrieval(testCase);
     bigRecordRetrieval(testCase);
     testTransactions(testCase);
-    testAbortedTransaction(testCase);
+    //testAbortedTransaction(testCase);
     constructDestructAndDelete(testCase);
     test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
     test_stKVDatabaseConf_constructFromString_mysql(testCase);
@@ -498,7 +425,7 @@ static void test_cacheWithClearing(CuTest *testCase) {
     partialRecordRetrieval(testCase);
     bigRecordRetrieval(testCase);
     testTransactions(testCase);
-    testAbortedTransaction(testCase);
+    //testAbortedTransaction(testCase);
     constructDestructAndDelete(testCase);
     test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
     test_stKVDatabaseConf_constructFromString_mysql(testCase);
@@ -513,7 +440,7 @@ static CuSuite* stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, partialRecordRetrieval);
     SUITE_ADD_TEST(suite, bigRecordRetrieval);
     SUITE_ADD_TEST(suite, testTransactions);
-    SUITE_ADD_TEST(suite, testAbortedTransaction);
+    //SUITE_ADD_TEST(suite, testAbortedTransaction);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
     SUITE_ADD_TEST(suite, test_cache);

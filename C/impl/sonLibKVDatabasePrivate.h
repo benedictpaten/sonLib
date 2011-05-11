@@ -18,22 +18,33 @@ struct stKVDatabase {
     stKVDatabaseConf *conf;
     void *dbImpl;
     void *cache;
-    bool transactionStarted;
     bool deleted;
     void (*destruct)(stKVDatabase *);
     void (*deleteDatabase)(stKVDatabase *);
     bool (*containsRecord)(stKVDatabase *, int64_t);
     void (*insertRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*setRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    int64_t (*incrementRecord)(stKVDatabase *, int64_t, int64_t);
+    void (*bulkSetRecords)(stKVDatabase *, stList *);
+    void (*bulkRemoveRecords)(stKVDatabase *, stList *);
     int64_t (*numberOfRecords)(stKVDatabase *);
     void *(*getRecord)(stKVDatabase *, int64_t key);
     void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);
-    void (*startTransaction)(stKVDatabase *);
-    void (*commitTransaction)(stKVDatabase *);
-    void (*abortTransaction)(stKVDatabase *);
     void (*clearCache)(stKVDatabase *);
+};
+
+enum stKVDatabaseBulkRequestType {
+    UPDATE, INSERT, SET
+};
+
+struct stKVDatabaseBulkRequest {
+    int64_t key;
+    void *value;
+    int64_t size;
+    enum stKVDatabaseBulkRequestType type;
 };
 
 /*
@@ -50,7 +61,6 @@ void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseCon
  * Function initialises the pointers of the stKVDatabase object with functions for MySql.
  */
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
-
 
 /*
  * Function initialises the pointers of the stKVDatabase object with functions PostgreSql .
