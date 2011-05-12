@@ -132,6 +132,11 @@ static stHash *hackParseXmlString(const char *xmlString) {
         }
         stHash_insert(hash, key, value);
     }
+    if(!stString_eq(key, "st_kv_database_conf")) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "got an unexpected final entry \"%s\"", key);
+    }
+    free(key);
+    free(cA);
     return hash;
 }
 
