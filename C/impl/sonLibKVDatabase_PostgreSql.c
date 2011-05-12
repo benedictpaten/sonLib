@@ -358,6 +358,84 @@ static void abortTransaction(stKVDatabase *database) {
     sqlExec(dbImpl, "rollback;");
 }
 
+static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+    startTransaction(database);
+    int64_t returnValue = INT64_MIN;
+    stTry {
+        int64_t recordSize;
+        int64_t *record = getRecord2(database, key, &recordSize);
+        assert(recordSize >= sizeof(int64_t));
+        record[0] += incrementAmount;
+        returnValue = record[0];
+        updateRecord(database, key, record, recordSize);
+        free(record);
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL increment record failed");
+    }stTryEnd;
+    return returnValue;
+}
+
+// TODO: make this one command -- faster, and watch out for maxlength
+static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stInt64Tuple *j = stList_get(records, i);
+            removeRecord(database, stInt64Tuple_getPosition(j, 0));
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL bulk remove records failed");
+    }stTryEnd;
+}
+
+static void setRecord(stKVDatabase *database, int64_t key,
+                         const void *value, int64_t sizeOfRecord) {
+
+    if (containsRecord(database, key)) {
+        updateRecord(database, key, value, sizeOfRecord);
+    } else {
+        insertRecord(database, key, value, sizeOfRecord);
+    }
+}
+
+// TODO: see if this can be made into one compound command
+static void bulkSetRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stKVDatabaseBulkRequest *request = stList_get(records, i);
+            switch(request->type) {
+                case UPDATE:
+                updateRecord(database, request->key, request->value, request->size);
+                break;
+                case INSERT:
+                insertRecord(database, request->key, request->value, request->size);
+                break;
+                case SET:
+                setRecord(database, request->key, request->value, request->size);
+                break;
+            }
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL bulk set records failed");
+    }stTryEnd;
+}
+
 // initialisation function
 void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = connect(conf);
@@ -366,16 +444,15 @@ void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
+    database->setRecord = setRecord;
+    database->incrementRecord = incrementRecord;
+    database->bulkSetRecords = bulkSetRecords;
+    database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    /*
-    database->startTransaction = startTransaction;
-    database->commitTransaction = commitTransaction;
-    database->abortTransaction = abortTransaction;
-    */
     if (create) {
         createKVTable(database->dbImpl);
     }
