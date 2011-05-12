@@ -30,6 +30,9 @@ ${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libSources} ${lib
 ${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/fastaCTest.c ${libPath}/sonLib.a -lm
  
+${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a
+	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@ tests/kt_connect_test.cpp ${libPath}/sonLib.a -lm ${dblibs}
+ 
 ${libPath}/sonLib.a : ${libSources} ${libHeaders} ${libInternalHeaders}
 	cp ${libHeaders} ${libPath}/
 	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
