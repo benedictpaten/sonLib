@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
 
   rdb->add("1", "123");
   rdb->increment("1", 23);
+  // 450 (the existing record was not compatible).
   cerr << "increment error: " << rdb->error().name() << endl;
 
      // retrieve a record
