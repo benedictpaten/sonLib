@@ -45,20 +45,18 @@ int main(int argc, char** argv) {
   cerr << "add record error: " << rdb->error().name() << endl;
 
   record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
-  currValue = kyotocabinet::ntoh64(*record);
+  currValue = kyotocabinet::ntoh64(*((uint64_t*)record));
 
   cout << "added record " << currValue << " of size " << sp << endl;
 
-  KCSafeIV = kyotocabinet::hton64(incrValue);
-
-  rdb->increment((char *)&key, sizeOfKey, KCSafeIV, xt);
+  rdb->increment((char *)&key, sizeOfKey, incrValue, xt);
   //450 (the existing record was not compatible).
   cerr << "increment error: " << rdb->error().name() << endl;
   record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
 
   // Denormalize a 64-bit number in the network byte order into the native order.
   // (big-endian to little endian)
-  currValue = kyotocabinet::ntoh64(*record);
+  currValue = kyotocabinet::ntoh64(*((uint64_t*)record));
 
   printf("value after increment (should be 146): %d and size %d\n", currValue, sp);
 
