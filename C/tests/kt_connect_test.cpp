@@ -2,6 +2,7 @@
 
 //Database functions
 #include <ktremotedb.h>
+#include <kclangc.h>
 
 using namespace std;
 using namespace kyototycoon;
@@ -23,20 +24,43 @@ int main(int argc, char** argv) {
   int64_t xt = 50;
 
   // test integer increment function
-  int64_t key = 1;
-  size_t sizeOfKey = sizeof(int64_t);
-  int initialValue = 123;
-  int incrValue = 23;
-  int64_t sizeOfRecord = sizeof(int);
+  uint64_t key = 7;
+  size_t sizeOfKey = sizeof(uint64_t);
+  uint64_t initialValue = 123;
+  uint64_t incrValue = 23;
+  uint64_t sizeOfRecord = sizeof(uint64_t);
   size_t sp;
 
-  rdb->add((char *)&key, sizeOfKey, (const char *)&initialValue, sizeOfRecord);
+  char *record;
+  uint64_t currValue = 0;
+  
+  cout << "adding record " << initialValue << " of size " << sizeOfRecord << endl;
+
+
+  // Normalize a 64-bit number in the native order into the network byte order.
+  // little endian (our x86 linux machine) to big Endian....
+  uint64_t KCSafeIV = kyotocabinet::hton64(initialValue);
+
+  rdb->add((char *)&key, sizeOfKey, (const char *)&KCSafeIV, sizeOfRecord);
   cerr << "add record error: " << rdb->error().name() << endl;
-  rdb->increment((char *)&key, sizeOfKey, incrValue, xt);
+
+  record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
+  currValue = kyotocabinet::ntoh64(*record);
+
+  cout << "added record " << currValue << " of size " << sp << endl;
+
+  KCSafeIV = kyotocabinet::hton64(incrValue);
+
+  rdb->increment((char *)&key, sizeOfKey, KCSafeIV, xt);
   //450 (the existing record was not compatible).
   cerr << "increment error: " << rdb->error().name() << endl;
-  char *afterIncr = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
-  printf("value after increment (should be 146): %d\n", *afterIncr);
+  record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
+
+  // Denormalize a 64-bit number in the network byte order into the native order.
+  // (big-endian to little endian)
+  currValue = kyotocabinet::ntoh64(*record);
+
+  printf("value after increment (should be 146): %d and size %d\n", currValue, sp);
 
   rdb->clear();
 
