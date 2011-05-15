@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
 
   rdb->clear();
 
+  /* Their CPP version is broke on little-endian (i.e. Intel) machines
   // the CPP version doesn't work either
   rdb->add("1", "123");
   cerr << "add record error: " << rdb->error().name() << endl;
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
   cout << "key 1 incremented to (should be 146): " << value << endl;
 
   rdb->clear();
+  */
 
   // test bulk set operation
   map<string,string> recs;
