@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 
   char *record;
   uint64_t currValue = 0;
-  
+ 
   cout << "adding record " << initialValue << " of size " << sizeOfRecord << endl;
 
 
@@ -57,6 +57,30 @@ int main(int argc, char** argv) {
   // Denormalize a 64-bit number in the network byte order into the native order.
   // (big-endian to little endian)
   currValue = kyotocabinet::ntoh64(*((uint64_t*)record));
+
+  printf("value after increment (should be 146): %d and size %d\n", currValue, sp);
+
+  rdb->clear();
+
+
+  printf("trying a second version of increment (flip the byte order of the incr value instead..\n");
+  // increment 2 hack:
+  rdb->add((char *)&key, sizeOfKey, (const char *)&initialValue, sizeOfRecord);
+  cerr << "add record error: " << rdb->error().name() << endl;
+
+  record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
+  currValue = *((uint64_t*)record);
+
+  cout << "added record " << currValue << " of size " << sp << endl;
+
+  int retVal = rdb->increment((char *)&key, sizeOfKey, kyotocabinet::hton64(incrValue), xt);
+  //450 (the existing record was not compatible).
+  cerr << "increment error: " << rdb->error().name() << "incr value: " << retVal << endl;
+  record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
+
+  // Denormalize a 64-bit number in the network byte order into the native order.
+  // (big-endian to little endian)
+  currValue = *((uint64_t*)record);
 
   printf("value after increment (should be 146): %d and size %d\n", currValue, sp);
 
@@ -88,7 +112,7 @@ int main(int argc, char** argv) {
   recs.insert( pair<string,string>(string((const char*)&key1, sizeof(int64_t)), string((const char *)&val1, sizeof(int64_t))) );
   recs.insert( pair<string,string>(string((const char*)&key2, sizeof(int64_t)), string((const char *)&val2, sizeof(int64_t))) );
   recs.insert( pair<string,string>(string((const char*)&key3, sizeof(int64_t)), string((const char *)&val3, sizeof(int64_t))) );
-  int64_t retVal = rdb->set_bulk(recs, xt, true);
+  retVal = rdb->set_bulk(recs, xt, true);
   cerr << "retval bulk set: " << retVal << endl;
   cerr << " bulk retval: " << rdb->error().name() << endl;
 

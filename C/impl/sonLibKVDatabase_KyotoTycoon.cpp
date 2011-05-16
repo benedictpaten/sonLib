@@ -25,6 +25,10 @@
 using namespace std;
 using namespace kyototycoon;
 
+
+// the default expiration time: negative means indefinite, I believe
+const uint64_t XT = -1;
+
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
 */
@@ -95,8 +99,9 @@ static bool containsRecord(stKVDatabase *database, int64_t key) {
 
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+
     // add method: If the key already exists the record will not be modified and it'll return false 
-    if (!rdb->add((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
+    if (!rdb->add((char *)&key, sizeof(int64_t), (const char *)value, sizeOfRecord)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
     }
 }
@@ -121,37 +126,40 @@ static void setRecord(stKVDatabase *database, int64_t key, const void *value, in
 static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     int64_t returnValue = kyotocabinet::INT64MIN;
-    if ( (returnValue = rdb->increment((char *)&key, (size_t)sizeof(int64_t), incrementAmount, -1)) == kyotocabinet::INT64MIN ) {
+    // hack: assume we're always using a little-endian machine to perform the rdb->add record command:
+    if ( (returnValue = rdb->increment((char *)&key, sizeof(int64_t), kyotocabinet::hton64(incrementAmount), XT)) == kyotocabinet::INT64MIN ) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
     }
 
     return returnValue;
 }
 
+// sets a bulk list of records atomically 
 static void bulkSetRecords(stKVDatabase *database, stList *records) {
 
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     map<string,string> recs;
 
+
     // copy the records from our C data structure to the CPP map needed for the Tycoon API
     for(int32_t i=0; i<stList_length(records); i++) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
-
-        // hack to get our integer key into a string object
-        string key;
-        stringstream out;
-        out << request->key;
-        key = out.str(); 
-
-        recs.insert(pair<string,string>(key, string((const char *)request->value)));
+        string key = string((const char *)&(request->key), sizeof(int64_t));
+        string value = string((const char *)request->value, request->size);
+        recs.insert(pair<string,string>(key, value));
     }
    
     // set values, atomic = true
-    if (!rdb->set_bulk(recs, -1, true) < 0) {
+ 
+    int retVal; 
+    if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
     }
+
+    //printf("size of insert: %d\n", retVal);
 }
 
+// remove a bulk list atomically 
 static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
 
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
@@ -159,18 +167,10 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
 
     for(int32_t i=0; i<stList_length(records); i++) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
-
-        // hack to get our integer key into a string object
-        string key;
-        stringstream out;
-        out << request->key;
-        key = out.str(); 
-
-        keys.push_back(key);
+        keys.push_back(string((const char *)&(request->key), sizeof(int64_t)));
     }
 
-    // set values, atomic = true
-    if (!rdb->remove_bulk(keys, true) < 0) {
+    if (rdb->remove_bulk(keys, true) < 1) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon remove bulk record failed: %s", rdb->error().name());
     }
 }
@@ -184,7 +184,7 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     //Return value must be freed.
     size_t i;
-    void *record = (void *)rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
+    void *record = (void *)rdb->get((char *)&key, sizeof(int64_t), &i, NULL);
     *recordSize = (int64_t)i;
     return record;
 }

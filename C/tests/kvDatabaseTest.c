@@ -187,11 +187,32 @@ static void testIncrementRecord(CuTest *testCase) {
      * Tests incrementing records
      */
     setup();
-    int64_t i = 100;
-    stKVDatabase_insertRecord(database, 1, &i, sizeof(int64_t));
-    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, 10) == 110);
-    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, 15) == 125);
-    CuAssertTrue(testCase, stKVDatabase_incrementRecord(database, 1, -25) == 100);
+    // note: record we're incrementing must be the same size (8-byte integer) as
+    // the one we're adding to it
+    uint64_t i = 100;
+    uint64_t key = 1;
+    stKVDatabase_insertRecord(database, key, &i, sizeof(int64_t));
+    uint64_t *j = stKVDatabase_getRecord(database, key);
+    CuAssertTrue(testCase, j != NULL);
+    CuAssertTrue(testCase, *j == 100);
+
+    uint64_t l = 10;
+    uint64_t m = 15;
+    uint64_t n = -25;
+
+    stKVDatabase_incrementRecord(database, key, l);
+    j = stKVDatabase_getRecord(database, key);
+    CuAssertTrue(testCase, j != NULL);
+    CuAssertTrue(testCase, *j == 110);
+
+    stKVDatabase_incrementRecord(database, key, m);
+    j = stKVDatabase_getRecord(database, key);
+    CuAssertTrue(testCase, *j == 125);
+
+    stKVDatabase_incrementRecord(database, key, n);
+    j = stKVDatabase_getRecord(database, key);
+    CuAssertTrue(testCase, *j == 100);
+
     teardown();
 }
 
