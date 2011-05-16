@@ -231,14 +231,17 @@ static void testBulkSetRecords(CuTest *testCase) {
     stList_destruct(requests);
 
     int64_t *m = stKVDatabase_getRecord(database, 1);
+    CuAssertTrue(testCase, m != NULL);
     CuAssertTrue(testCase, l == *m);
     free(m);
 
     m = stKVDatabase_getRecord(database, 2);
+    CuAssertTrue(testCase, m != NULL);
     CuAssertTrue(testCase, j == *m);
     free(m);
 
     m = stKVDatabase_getRecord(database, 3);
+    CuAssertTrue(testCase, m != NULL);
     CuAssertTrue(testCase, k == *m);
     free(m);
 
