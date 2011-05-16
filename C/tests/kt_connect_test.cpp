@@ -77,39 +77,46 @@ int main(int argc, char** argv) {
 
   // test bulk set operation
   map<string,string> recs;
-  recs.insert( pair<string,string>("5", "5") );
-  recs.insert( pair<string,string>("6", "10") );
-  recs.insert( pair<string,string>("7", "15") );
-  recs.insert( pair<string,string>("8", "20") );
+  int64_t key1 = 5;
+  int64_t key2 = 6;
+  int64_t key3 = 7;
+    
+  int64_t val1 = 5;
+  int64_t val2 = 10;
+  int64_t val3 = 15;
+
+  recs.insert( pair<string,string>(string((const char*)&key1, sizeof(int64_t)), string((const char *)&val1, sizeof(int64_t))) );
+  recs.insert( pair<string,string>(string((const char*)&key2, sizeof(int64_t)), string((const char *)&val2, sizeof(int64_t))) );
+  recs.insert( pair<string,string>(string((const char*)&key3, sizeof(int64_t)), string((const char *)&val3, sizeof(int64_t))) );
   int64_t retVal = rdb->set_bulk(recs, xt, true);
   cerr << "retval bulk set: " << retVal << endl;
   cerr << " bulk retval: " << rdb->error().name() << endl;
 
      // retrieve a record
-  rdb->get("5", &value);
-  cout << "key 5 set to (should be 5): " << value << endl;
+  record = rdb->get((const char *)&key1, sizeof(int64_t), &sp, NULL);
+  cout << "key 5 set to (should be 5): " << *((uint64_t*)record) << endl;
 
-  rdb->get("6", &value);
-  cout << "key 6 set to (should be 10): " << value << endl;
+  record = rdb->get((const char *)&key2, sizeof(int64_t), &sp, NULL);
+  cout << "key 6 set to (should be 10): " << *((uint64_t*)record) << endl;
 
-  rdb->get("7", &value);
-  cout << "key 7 set to (should be 15): " << value << endl;
-
-  rdb->get("8", &value);
-  cout << "key 8 set to (should be 20): " << value << endl;
+  record = rdb->get((const char *)&key3, sizeof(int64_t), &sp, NULL);
+  cout << "key 7 set to (should be 15): " << *((uint64_t*)record) << endl;
 
   value = "";
 
   vector<string> keys;
-  keys.push_back("5");
-  keys.push_back("6");
-  keys.push_back("7");
-  keys.push_back("8");
+  keys.push_back(string((const char*)&key1, sizeof(int64_t)));
+  keys.push_back(string((const char*)&key2, sizeof(int64_t)));
+  keys.push_back(string((const char*)&key3, sizeof(int64_t)));
   retVal = rdb->remove_bulk(keys,true);
   cerr << " bulk records removed: " << retVal << endl;
   cerr << " bulk retval: " << rdb->error().name() << endl;
-  rdb->get("7", &value);
-  cout << "key 8 set to (should be zero): " << value << endl;
+  record = rdb->get((const char *)&key3, sizeof(int64_t), &sp, NULL);
+  if (record == NULL) {
+    cout << "record 7 deleted: success!" << endl;
+  } else {
+    cout << "record 7 not deleted: failed!" << endl;
+  }
 
   rdb->clear();
   if (!rdb->close()) {
