@@ -100,8 +100,9 @@ static bool containsRecord(stKVDatabase *database, int64_t key) {
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 
+    size_t sizeOfKey = sizeof(int64_t);
     // add method: If the key already exists the record will not be modified and it'll return false 
-    if (!rdb->add((char *)&key, sizeof(int64_t), (const char *)value, sizeOfRecord)) {
+    if (!rdb->add((char *)&key, sizeOfKey, (const char *)value, sizeOfRecord)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
     }
 }
@@ -126,8 +127,9 @@ static void setRecord(stKVDatabase *database, int64_t key, const void *value, in
 static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     int64_t returnValue = kyotocabinet::INT64MIN;
+    size_t sizeOfKey = sizeof(int64_t);
     // hack: assume we're always using a little-endian machine to perform the rdb->add record command:
-    if ( (returnValue = rdb->increment((char *)&key, sizeof(int64_t), kyotocabinet::hton64(incrementAmount), XT)) == kyotocabinet::INT64MIN ) {
+    if ( (returnValue = rdb->increment((char *)&key, sizeOfKey, kyotocabinet::hton64(incrementAmount), XT)) == kyotocabinet::INT64MIN ) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
     }
 
@@ -166,8 +168,8 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
     vector<string> keys;
 
     for(int32_t i=0; i<stList_length(records); i++) {
-        stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
-        keys.push_back(string((const char *)&(request->key), sizeof(int64_t)));
+        int64_t key = stInt64Tuple_getPosition((stInt64Tuple *)stList_get(records, i), 0);
+        keys.push_back(string((const char *)&key, sizeof(int64_t)));
     }
 
     if (rdb->remove_bulk(keys, true) < 1) {
@@ -184,7 +186,7 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     //Return value must be freed.
     size_t i;
-    void *record = (void *)rdb->get((char *)&key, sizeof(int64_t), &i, NULL);
+    char *record = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
     *recordSize = (int64_t)i;
     return record;
 }
