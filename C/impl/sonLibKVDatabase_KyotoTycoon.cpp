@@ -26,7 +26,7 @@ using namespace kyototycoon;
 
 
 // the default expiration time: negative means indefinite, I believe
-int64_t XT = 50;
+int64_t XT = kc::INT64MAX;
 
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
