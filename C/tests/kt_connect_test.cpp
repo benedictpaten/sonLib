@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
   cout << "added record " << currValue << " of size " << sp << endl;
 
   rdb->increment((char *)&key, sizeOfKey, incrValue, xt);
+  rdb->increment((char *)&key, sizeOfKey, incrValue, xt);
   //450 (the existing record was not compatible).
   cerr << "increment error: " << rdb->error().name() << endl;
   record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);

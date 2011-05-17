@@ -17,17 +17,16 @@
 //Database functions
 #ifdef HAVE_KYOTO_TYCOON
 #include <ktremotedb.h>
+#include <kclangc.h>
 #include "sonLibGlobalsInternal.h"
 #include "sonLibKVDatabasePrivate.h"
-
-#include <sstream>
 
 using namespace std;
 using namespace kyototycoon;
 
 
 // the default expiration time: negative means indefinite, I believe
-const uint64_t XT = -1;
+int64_t XT = 50;
 
 /*
 * construct in the Tokyo Tyrant case means connect to the remote DB
@@ -112,7 +111,7 @@ static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
 
     // Normalize a 64-bit number in the native order into the network byte order.
     // little endian (our x86 linux machine) to big Endian....
-    uint64_t KCSafeIV = kyotocabinet::hton64(value);
+    int64_t KCSafeIV = kyotocabinet::hton64(value);
 
     if (!rdb->add((char *)&key, sizeof(int64_t), (const char *)&KCSafeIV, sizeof(int64_t))) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting int64 key/value to database error: %s", rdb->error().name());

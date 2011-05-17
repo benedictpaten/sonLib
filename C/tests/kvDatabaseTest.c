@@ -190,7 +190,7 @@ static void testIncrementRecord(CuTest *testCase) {
     // note: record we're incrementing must be the same size (8-byte integer) as
     // the one we're adding to it
     int64_t i = 100;
-    int64_t key = 1;
+    int64_t key = 7;
     stKVDatabase_insertInt64(database, key, i);
     CuAssertTrue(testCase,  stKVDatabase_getInt64(database, key) == 100);
 
