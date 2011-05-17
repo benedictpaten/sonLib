@@ -194,7 +194,7 @@ static int64_t getInt64(stKVDatabase *database, int64_t key) {
     if (record == NULL) {
         return -1;
     } else {
-        return (int64_t)record;
+        return *((int64_t*)record);
     }
 }
 
