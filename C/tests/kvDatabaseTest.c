@@ -199,8 +199,11 @@ static void testIncrementRecord(CuTest *testCase) {
     int64_t n = -25;
 
     CuAssertTrue(testCase, stKVDatabase_incrementInt64(database, key, l) == 110);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, key) == 110);
     CuAssertTrue(testCase, stKVDatabase_incrementInt64(database, key, m) == 125);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, key) == 125);
     CuAssertTrue(testCase, stKVDatabase_incrementInt64(database, key, n) == 100);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, key) == 100);
 
     teardown();
 }
