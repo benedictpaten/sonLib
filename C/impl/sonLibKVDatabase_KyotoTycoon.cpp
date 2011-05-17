@@ -107,6 +107,30 @@ static void insertRecord(stKVDatabase *database, int64_t key, const void *value,
     }
 }
 
+static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+
+    // Normalize a 64-bit number in the native order into the network byte order.
+    // little endian (our x86 linux machine) to big Endian....
+    uint64_t KCSafeIV = kyotocabinet::hton64(value);
+
+    if (!rdb->add((char *)&key, sizeof(int64_t), (const char *)&KCSafeIV, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting int64 key/value to database error: %s", rdb->error().name());
+    }
+}
+
+static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+
+    // Normalize a 64-bit number in the native order into the network byte order.
+    // little endian (our x86 linux machine) to big Endian....
+    uint64_t KCSafeIV = kyotocabinet::hton64(value);
+
+    if (!rdb->replace((char *)&key, sizeof(int64_t), (const char *)&KCSafeIV, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating int64 key/value to database error: %s", rdb->error().name());
+    }
+}
+
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     // replace method: If the key doesn't already exist it won't be created, and we'll get an error
@@ -123,13 +147,14 @@ static void setRecord(stKVDatabase *database, int64_t key, const void *value, in
 }
 
 /* increment a record by the specified numerical value: atomic operation */
-/* no timeout */
-static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+/* return the new record value */
+static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     int64_t returnValue = kyotocabinet::INT64MIN;
+
     size_t sizeOfKey = sizeof(int64_t);
-    // hack: assume we're always using a little-endian machine to perform the rdb->add record command:
-    if ( (returnValue = rdb->increment((char *)&key, sizeOfKey, kyotocabinet::hton64(incrementAmount), XT)) == kyotocabinet::INT64MIN ) {
+
+    if ( (returnValue = rdb->increment((char *)&key, sizeOfKey, incrementAmount, XT)) == kyotocabinet::INT64MIN ) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
     }
 
@@ -146,9 +171,10 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
     // copy the records from our C data structure to the CPP map needed for the Tycoon API
     for(int32_t i=0; i<stList_length(records); i++) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
-        string key = string((const char *)&(request->key), sizeof(int64_t));
-        string value = string((const char *)request->value, request->size);
-        recs.insert(pair<string,string>(key, value));
+        recs.insert(pair<string,string>(
+           string((const char *)&(request->key), sizeof(int64_t)), 
+           string((const char *)request->value, request->size))
+        );
     }
    
     // set values, atomic = true
@@ -197,6 +223,17 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
     return getRecord2(database, key, &i);
 }
 
+/* get a single non-string record */
+static int64_t getInt64(stKVDatabase *database, int64_t key) {
+    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+
+    size_t sp;
+    char *record = rdb->get((char *)&key, sizeof(int64_t), &sp, NULL);
+
+    // convert from KC native big-endian back to little-endian Intel...
+    return kyotocabinet::ntoh64(*((int64_t*)record));
+}
+
 /* get part of a string record */
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     int64_t recordSize2;
@@ -229,13 +266,16 @@ void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseCon
     database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
+    database->insertInt64 = insertInt64;
     database->updateRecord = updateRecord;
+    database->updateInt64 = updateInt64;
     database->setRecord = setRecord;
-    database->incrementRecord = incrementRecord;
+    database->incrementInt64 = incrementInt64;
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;

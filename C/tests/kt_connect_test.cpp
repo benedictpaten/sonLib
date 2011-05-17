@@ -24,28 +24,28 @@ int main(int argc, char** argv) {
   int64_t xt = 50;
 
   // test integer increment function
-  uint64_t key = 7;
+  int64_t key = 7;
   size_t sizeOfKey = sizeof(uint64_t);
-  uint64_t initialValue = 123;
-  uint64_t incrValue = 23;
-  uint64_t sizeOfRecord = sizeof(uint64_t);
+  int64_t initialValue = 123;
+  int64_t incrValue = 23;
+  int64_t sizeOfRecord = sizeof(uint64_t);
   size_t sp;
 
   char *record;
-  uint64_t currValue = 0;
+  int64_t currValue = 0;
  
   cout << "adding record " << initialValue << " of size " << sizeOfRecord << endl;
 
 
   // Normalize a 64-bit number in the native order into the network byte order.
   // little endian (our x86 linux machine) to big Endian....
-  uint64_t KCSafeIV = kyotocabinet::hton64(initialValue);
+  int64_t KCSafeIV = kyotocabinet::hton64(initialValue);
 
   rdb->add((char *)&key, sizeOfKey, (const char *)&KCSafeIV, sizeOfRecord);
   cerr << "add record error: " << rdb->error().name() << endl;
 
   record = rdb->get((char *)&key, sizeOfKey, &sp, NULL);
-  currValue = kyotocabinet::ntoh64(*((uint64_t*)record));
+  currValue = kyotocabinet::ntoh64(*((int64_t*)record));
 
   cout << "added record " << currValue << " of size " << sp << endl;
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
   // Denormalize a 64-bit number in the network byte order into the native order.
   // (big-endian to little endian)
-  currValue = kyotocabinet::ntoh64(*((uint64_t*)record));
+  currValue = kyotocabinet::ntoh64(*((int64_t*)record));
 
   printf("value after increment (should be 146): %d and size %d\n", currValue, sp);
 

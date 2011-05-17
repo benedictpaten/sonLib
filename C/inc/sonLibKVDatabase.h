@@ -67,9 +67,24 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database);
 bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key);
 
 /*
- * Add a new a key/value record into the table. Throws an exception if unsuccessful.
+ * Add a new key/value record into the table. Throws an exception if unsuccessful.
  */
 void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
+
+/*
+ * Add a new int64 key/value record into the table. Throws an exception if unsuccessful.
+ */
+void stKVDatabase_insertInt64(stKVDatabase *database, int64_t key, int64_t value);
+
+/*
+ * Update an existing int64 key/value record into the table. Throws an exception if unsuccessful.
+ */
+void stKVDatabase_updateInt64(stKVDatabase *database, int64_t key, int64_t value);
+
+/*
+ * Get a int64 key/value record from the table. Throws an exception if unsuccessful.
+ */
+int64_t stKVDatabase_getInt64(stKVDatabase *database, int64_t key);
 
 /*
  * Update an existing key/value record in the table. Throws an exception if unsuccessful.
@@ -85,7 +100,7 @@ void stKVDatabase_setRecord(stKVDatabase *database, int64_t key, const void *val
  * Takes an existing record and treats it as type int64_t, incrementing the given amount in one atomic operation.
  * The result is the resulting incremented value.
  */
-int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount);
+int64_t stKVDatabase_incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount);
 
 /*
  * Creates an insert request. The value memory is copied and stored in the record, and only destroyed when freed (see stKVDatabaseBulkRequest_destruct).

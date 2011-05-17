@@ -169,7 +169,7 @@ static void *getRecord(stKVDatabase *database, int64_t key) {
     return getRecord2(database, key, &i);
 }
 
-static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     startTransaction(database);
     int64_t returnValue = INT64_MIN;
     stTry {
@@ -242,7 +242,7 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
     database->setRecord = setRecord;
-    database->incrementRecord = incrementRecord;
+    database->incrementInt64 = incrementInt64;
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;

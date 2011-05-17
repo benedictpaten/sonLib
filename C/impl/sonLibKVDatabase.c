@@ -152,6 +152,48 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
             }stTryEnd;
 }
 
+void stKVDatabase_insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to insert a int64 record into a database that has been deleted");
+    }
+    stTry {
+            database->insertInt64(database, key, value);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_insertRecord key %lld size %d failed",
+                            (long long) key, sizeof(int64_t));
+                }
+            }stTryEnd;
+}
+
+void stKVDatabase_updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to update a int64 record into a database that has been deleted");
+    }
+    stTry {
+            database->updateInt64(database, key, value);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_updateInt64 key %lld size %d failed",
+                            (long long) key, sizeof(int64_t));
+                }
+            }stTryEnd;
+}
+
 void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
         const void *value, int64_t sizeOfRecord) {
     if (database->deleted) {
@@ -194,14 +236,14 @@ void stKVDatabase_setRecord(stKVDatabase *database, int64_t key,
             }stTryEnd;
 }
 
-int64_t stKVDatabase_incrementRecord(stKVDatabase *database, int64_t key,
+int64_t stKVDatabase_incrementInt64(stKVDatabase *database, int64_t key,
         int64_t incrementAmount) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to increment a numerical record from a database that has been deleted");
     }
     stTry {
-            return database->incrementRecord(database, key, incrementAmount);
+            return database->incrementInt64(database, key, incrementAmount);
         }stCatch(ex)
             {
                 if (isRetryExcept(ex)) {
@@ -337,6 +379,27 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
                 }
             }stTryEnd;
     return data;
+}
+
+int64_t stKVDatabase_getInt64(stKVDatabase *database, int64_t key) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get a record from a database that has already been deleted");
+    }
+    int64_t value = -1;
+    stTry {
+            value = database->getInt64(database, key);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getInt64 key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
+    return value;
 }
 
 void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key,

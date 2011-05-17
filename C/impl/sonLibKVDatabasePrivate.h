@@ -23,13 +23,16 @@ struct stKVDatabase {
     void (*deleteDatabase)(stKVDatabase *);
     bool (*containsRecord)(stKVDatabase *, int64_t);
     void (*insertRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*insertInt64)(stKVDatabase *, int64_t, int64_t);
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*updateInt64)(stKVDatabase *, int64_t, int64_t);
     void (*setRecord)(stKVDatabase *, int64_t, const void *, int64_t);
-    int64_t (*incrementRecord)(stKVDatabase *, int64_t, int64_t);
+    int64_t (*incrementInt64)(stKVDatabase *, int64_t, int64_t);
     void (*bulkSetRecords)(stKVDatabase *, stList *);
     void (*bulkRemoveRecords)(stKVDatabase *, stList *);
     int64_t (*numberOfRecords)(stKVDatabase *);
     void *(*getRecord)(stKVDatabase *, int64_t key);
+    int64_t (*getInt64)(stKVDatabase *, int64_t key);
     void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);

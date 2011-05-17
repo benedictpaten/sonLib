@@ -350,7 +350,7 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     } 
 }
 
-static int64_t incrementRecord(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
     startTransaction(database);
     int64_t returnValue = INT64_MIN;
     stTry {
@@ -436,7 +436,7 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->insertRecord = insertRecord;
     database->updateRecord = updateRecord;
     database->setRecord = setRecord;
-    database->incrementRecord = incrementRecord;
+    database->incrementInt64 = incrementInt64;
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
