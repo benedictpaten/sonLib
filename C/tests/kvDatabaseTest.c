@@ -41,6 +41,33 @@ static void constructDestructAndDelete(CuTest *testCase) {
     teardown();
 }
 
+static void readWriteAndUpdateIntRecords(CuTest *testCase) {
+    setup();
+    CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
+    //Write some int64 records
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
+    stKVDatabase_insertInt64(database, 1, (int64_t)50);
+    stKVDatabase_insertInt64(database, 2, (int64_t)100);
+    stKVDatabase_insertInt64(database, 3, (int64_t)150);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 1) == 50);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 2) == 100);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 3) == 150);
+
+    // test update
+    stKVDatabase_insertInt64(database, 4, (int64_t)100);
+    stKVDatabase_updateInt64(database, 4, (int64_t)55);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 4) == 55);
+
+    
+    //Now try removing a record
+    stKVDatabase_removeRecord(database, 4);
+    CuAssertIntEquals(testCase, 3, stKVDatabase_getNumberOfRecords(database));
+    CuAssertPtrEquals(testCase, NULL, stKVDatabase_getRecord(database, 0));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
+
+    teardown();
+}
+
 static void readWriteAndRemoveRecords(CuTest *testCase) {
     setup();
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
@@ -225,6 +252,7 @@ static void testSetRecord(CuTest *testCase) {
     free(j);
     teardown();
 }
+
 
 static void testBulkSetRecords(CuTest *testCase) {
     /*
@@ -510,6 +538,7 @@ static void test_cacheWithClearing(CuTest *testCase) {
 static CuSuite* stKVDatabaseTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecords);
+    SUITE_ADD_TEST(suite, readWriteAndUpdateIntRecords);
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecordsLots);
     SUITE_ADD_TEST(suite, partialRecordRetrieval);
     SUITE_ADD_TEST(suite, bigRecordRetrieval);

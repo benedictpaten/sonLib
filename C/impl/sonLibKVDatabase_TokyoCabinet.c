@@ -83,12 +83,33 @@ static void insertRecord(stKVDatabase *database, int64_t key, const void *value,
     }
 }
 
+static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    TCBDB *dbImpl = database->dbImpl;
+    
+    if (recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to insert a key in the database that already exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), (const void *)&value, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     TCBDB *dbImpl = database->dbImpl;
     if (!recordExists(dbImpl, key)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to update a key in the database that doesn't exists: %lld", (long long)key);
     }
     if (!tcbdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to update a key in the database that doesn't exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), (const void *)&value, sizeof(int64_t))) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
 }
@@ -162,6 +183,19 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
     void *record = tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
     *recordSize = i;
     return record;
+}
+
+static int64_t getInt64(stKVDatabase *database, int64_t key) {
+    TCBDB *dbImpl = database->dbImpl;
+    //Return value must be freed.
+    int32_t i;
+    void *record = tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
+
+    if (record == NULL) {
+        return -1;
+    } else {
+        return (int64_t)record;
+    }
 }
 
 static void *getRecord(stKVDatabase *database, int64_t key) {
@@ -240,13 +274,16 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
+    database->insertInt64 = insertInt64;
     database->updateRecord = updateRecord;
+    database->updateInt64 = updateInt64;
     database->setRecord = setRecord;
     database->incrementInt64 = incrementInt64;
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
