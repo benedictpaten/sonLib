@@ -299,12 +299,14 @@ static void testBulkRemoveRecords(CuTest *testCase) {
     stKVDatabase_insertRecord(database, 2, &j, sizeof(int64_t));
     stKVDatabase_insertRecord(database, 3, &k, sizeof(int64_t));
     stKVDatabase_insertRecord(database, 4, &l, sizeof(int64_t));
+    stKVDatabase_insertRecord(database, 5, NULL, 0); //Test null record addition
 
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 3));
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 4));
-    CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 4);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 5));
+    CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 5);
 
     stList *requests = stList_construct3(0, (void(*)(void *)) stInt64Tuple_destruct);
 
@@ -312,6 +314,7 @@ static void testBulkRemoveRecords(CuTest *testCase) {
     stList_append(requests, stInt64Tuple_construct(1, 2));
     stList_append(requests, stInt64Tuple_construct(1, 3));
     stList_append(requests, stInt64Tuple_construct(1, 4));
+    stList_append(requests, stInt64Tuple_construct(1, 5));
 
     stKVDatabase_bulkRemoveRecords(database, requests);
 
@@ -319,6 +322,7 @@ static void testBulkRemoveRecords(CuTest *testCase) {
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 3));
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 4));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 5));
     CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 0);
 
     stList_destruct(requests);
