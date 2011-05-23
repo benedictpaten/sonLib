@@ -175,9 +175,15 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
            string((const char *)request->value, request->size))
         );
     }
-   
+
+    // test for empty list   
+    if (recs.empty()) {
+        return;
+    } 
+
     // set values, atomic = true
- 
+
+     
     int retVal; 
     if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
@@ -196,9 +202,14 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
         int64_t key = stInt64Tuple_getPosition((stInt64Tuple *)stList_get(records, i), 0);
         keys.push_back(string((const char *)&key, sizeof(int64_t)));
     }
+    // test for empty list   
+    if (keys.empty()) {
+        return;
+    } 
+
 
     if (rdb->remove_bulk(keys, true) < 1) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon remove bulk record failed: %s", rdb->error().name());
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon bulk remove record failed: %s", rdb->error().name());
     }
 }
 

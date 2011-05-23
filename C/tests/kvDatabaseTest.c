@@ -309,6 +309,9 @@ static void testBulkRemoveRecords(CuTest *testCase) {
 
     stList *requests = stList_construct3(0, (void(*)(void *)) stInt64Tuple_destruct);
 
+    // test empty request list
+    stKVDatabase_bulkRemoveRecords(database, requests);
+
     stList_append(requests, stInt64Tuple_construct(1, (int64_t)1));
     stList_append(requests, stInt64Tuple_construct(1, (int64_t)2));
     stList_append(requests, stInt64Tuple_construct(1, (int64_t)3));
