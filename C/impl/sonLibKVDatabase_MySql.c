@@ -255,6 +255,18 @@ static void deleteDB(stKVDatabase *database) {
     destructDB(database);
 }
 
+static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    MySqlDb *dbImpl = database->dbImpl;
+    char *buf = sqlEscape(dbImpl, &value, sizeof(int64_t));
+    sqlExec(dbImpl, "update %s set data=\"%s\" where id=%lld", dbImpl->table, buf,  (long long)key);
+}
+
+static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    MySqlDb *dbImpl = database->dbImpl;
+    char *buf = sqlEscape(dbImpl, &value, sizeof(int64_t));
+    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, \"%s\")", dbImpl->table, (long long)key, buf);
+}
+
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     MySqlDb *dbImpl = database->dbImpl;
     char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
@@ -294,6 +306,11 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfReco
         *sizeOfRecord = readLen;
     }
     return data;
+}
+
+static int64_t getInt64(stKVDatabase *database, int64_t key) {
+    void *record = getRecord2(database, key, NULL);
+    return *((int64_t*)record);
 }
 
 static void *getRecord(stKVDatabase *database, int64_t key) {
@@ -434,13 +451,16 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
     database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
+    database->insertInt64 = insertInt64;
     database->updateRecord = updateRecord;
+    database->updateInt64 = updateInt64;
     database->setRecord = setRecord;
     database->incrementInt64 = incrementInt64;
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
