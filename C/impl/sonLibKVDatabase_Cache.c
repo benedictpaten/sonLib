@@ -33,8 +33,8 @@ typedef struct _diskCache {
     void (*setRecord)(stKVDatabase *, int64_t, const void *, int64_t);
     void (*bulkSetRecords)(stKVDatabase *, stList *requests);
     void (*bulkRemoveRecords)(stKVDatabase *, stList *requests);
-    int64_t (*incrementInt64)(stKVDatabase *database, int64_t key,
-            int64_t incrementAmount);
+    //int64_t (*incrementInt64)(stKVDatabase *database, int64_t key,
+    //        int64_t incrementAmount);
     void *(*getRecord2)(stKVDatabase *database, int64_t key,
             int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key,
@@ -420,15 +420,6 @@ static void setRecord(stKVDatabase *database, int64_t key, const void *value,
     }
 }
 
-static int64_t incrementInt64(stKVDatabase *database, int64_t key,
-        int64_t incrementAmount) {
-    DiskCache *diskCache = database->cache;
-    int64_t updatedValue = diskCache->incrementInt64(database, key,
-            incrementAmount);
-    diskCache_insertRecord(diskCache, key, &updatedValue, 0, sizeof(int64_t));
-    return updatedValue;
-}
-
 static void removeRecord(stKVDatabase *database, int64_t key) {
     DiskCache *diskCache = database->cache;
     diskCache_deleteRecord(diskCache, key, 0, INT64_MAX);
@@ -479,7 +470,6 @@ void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size,
     diskCache->updateRecord = database->updateRecord;
     diskCache->bulkSetRecords = database->bulkSetRecords;
     diskCache->bulkRemoveRecords = database->bulkRemoveRecords;
-    diskCache->incrementInt64 = database->incrementInt64;
     diskCache->setRecord = database->setRecord;
     diskCache->getRecord2 = database->getRecord2;
     diskCache->getPartialRecord = database->getPartialRecord;
@@ -493,7 +483,6 @@ void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size,
 
     database->bulkSetRecords = bulkSetRecords;
     database->bulkRemoveRecords = bulkRemoveRecords;
-    database->incrementInt64 = incrementInt64;
     database->setRecord = setRecord;
 
     database->getRecord = getRecord;

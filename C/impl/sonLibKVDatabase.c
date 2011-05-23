@@ -136,6 +136,10 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to insert a record into a database that has been deleted");
     }
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
+    }
     stTry {
             database->insertRecord(database, key, value, sizeOfRecord);
         }stCatch(ex)
@@ -200,6 +204,10 @@ void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to update a record in a database that has been deleted");
     }
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
+    }
     stTry {
             database->updateRecord(database, key, value, sizeOfRecord);
         }stCatch(ex)
@@ -221,6 +229,10 @@ void stKVDatabase_setRecord(stKVDatabase *database, int64_t key,
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to get set a record from a database that has been deleted");
+    }
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
     }
     stTry {
             database->setRecord(database, key, value, sizeOfRecord);
@@ -265,6 +277,10 @@ static stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_construct(int64_t key,
     stKVDatabaseBulkRequest *buildRequest = st_malloc(
             sizeof(stKVDatabaseBulkRequest));
     buildRequest->key = key;
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
+    }
     buildRequest->value = memcpy(st_malloc(sizeOfRecord), value, sizeOfRecord);
     buildRequest->size = sizeOfRecord;
     buildRequest->type = type;

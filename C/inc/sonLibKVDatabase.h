@@ -67,7 +67,7 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database);
 bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key);
 
 /*
- * Add a new key/value record into the table. Throws an exception if unsuccessful.
+ * Add a new key/value record into the table. Values can not be null. Throws an exception if unsuccessful.
  */
 void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
@@ -87,12 +87,12 @@ void stKVDatabase_updateInt64(stKVDatabase *database, int64_t key, int64_t value
 int64_t stKVDatabase_getInt64(stKVDatabase *database, int64_t key);
 
 /*
- * Update an existing key/value record in the table. Throws an exception if unsuccessful.
+ * Update an existing key/value record in the table. Values can not be null. Throws an exception if unsuccessful.
  */
 void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 
 /*
- * Update an existing key/value record in the table. If the record does not exist it is inserted. Throws an exception if unsuccessful.
+ * Update an existing key/value record in the table. Values can not be null. If the record does not exist it is inserted. Throws an exception if unsuccessful.
  */
 void stKVDatabase_setRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord);
 

@@ -206,7 +206,7 @@ int stDoubleTuple_cmpFn(stDoubleTuple *doubleTuple1,
             return k;
         }
     }
-    return doubleCmp(stDoubleTuple_length(doubleTuple1), stDoubleTuple_length(
+    return intCmp(stDoubleTuple_length(doubleTuple1), stDoubleTuple_length(
             doubleTuple2));
 }
 

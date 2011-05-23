@@ -29,11 +29,11 @@ static void teardown() {
 
 static void setup() {
     teardown();
-    doubleTuple1 = stDoubleTuple_construct(3, 1, 3, 2);
-    doubleTuple2 = stDoubleTuple_construct(4, 1, 5, 2, 7);
+    doubleTuple1 = stDoubleTuple_construct(3, 1.0, 3.0, 2.0);
+    doubleTuple2 = stDoubleTuple_construct(4, 1.0, 5.0, 2.0, 7.0);
     doubleTuple3 = stDoubleTuple_construct(0);
-    doubleTuple4 = stDoubleTuple_construct(3, 1, 3, 2);
-    doubleTuple5 = stDoubleTuple_construct(4, 1, 3, 2, 7);
+    doubleTuple4 = stDoubleTuple_construct(3, 1.0, 3.0, 2.0);
+    doubleTuple5 = stDoubleTuple_construct(4, 1.0, 3.0, 2.0, 7.0);
 }
 
 static void testStDoubleTuple_construct(CuTest *testCase) {
@@ -68,7 +68,6 @@ static void testStDoubleTuple_cmpFn(CuTest *testCase) {
     CuAssertTrue(testCase, stDoubleTuple_cmpFn(doubleTuple2, doubleTuple3) > 0);
     CuAssertTrue(testCase, stDoubleTuple_cmpFn(doubleTuple2, doubleTuple4) > 0);
     CuAssertTrue(testCase, stDoubleTuple_cmpFn(doubleTuple2, doubleTuple5) > 0);
-
     CuAssertTrue(testCase, stDoubleTuple_cmpFn(doubleTuple3, doubleTuple3) == 0);
     teardown();
 }

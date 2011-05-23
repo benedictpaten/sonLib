@@ -63,6 +63,7 @@ int32_t stIntTuple_getPosition(stIntTuple *intTuple, int32_t index);
 
 /*
  * The following are 64 bit in variants of the above functions.
+ * One must be very careful to ensure that the variable arguments are of type int64_t!
  */
 
 stInt64Tuple *stInt64Tuple_construct(int32_t length, ...);
@@ -81,6 +82,7 @@ int64_t stInt64Tuple_getPosition(stInt64Tuple *int64Tuple, int32_t index);
 
 /*
  * The following are double variants of the above functions.
+ *  One must be very careful to ensure that the variable arguments are of type double!
  */
 
 stDoubleTuple *stDoubleTuple_construct(int32_t length, ...);
