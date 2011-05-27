@@ -255,6 +255,18 @@ static void deleteDB(stKVDatabase *database) {
     destructDB(database);
 }
 
+static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    MySqlDb *dbImpl = database->dbImpl;
+    char *buf = sqlEscape(dbImpl, &value, sizeof(int64_t));
+    sqlExec(dbImpl, "update %s set data=\"%s\" where id=%lld", dbImpl->table, buf,  (long long)key);
+}
+
+static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    MySqlDb *dbImpl = database->dbImpl;
+    char *buf = sqlEscape(dbImpl, &value, sizeof(int64_t));
+    sqlExec(dbImpl, "insert into %s (id, data) values (%lld, \"%s\")", dbImpl->table, (long long)key, buf);
+}
+
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     MySqlDb *dbImpl = database->dbImpl;
     char *buf = sqlEscape(dbImpl, value, sizeOfRecord);
@@ -296,6 +308,11 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfReco
     return data;
 }
 
+static int64_t getInt64(stKVDatabase *database, int64_t key) {
+    void *record = getRecord2(database, key, NULL);
+    return *((int64_t*)record);
+}
+
 static void *getRecord(stKVDatabase *database, int64_t key) {
     return getRecord2(database, key, NULL);
 }
@@ -326,15 +343,6 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
     return data;
 }
 
-static void removeRecord(stKVDatabase *database, int64_t key) {
-    MySqlDb *dbImpl = database->dbImpl;
-    sqlExec(dbImpl, "delete from %s where id=%lld", dbImpl->table, (long long)key);
-    my_ulonglong numRows = mysql_affected_rows(dbImpl->conn);
-    if (numRows == 0) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "remove of non-existent key %lld", (long long)key);
-    } 
-}
-
 static void startTransaction(stKVDatabase *database) {
     MySqlDb *dbImpl = database->dbImpl;
     sqlExec(dbImpl, "start transaction with consistent snapshot;");
@@ -350,22 +358,112 @@ static void abortTransaction(stKVDatabase *database) {
     sqlExec(dbImpl, "rollback;");
 }
 
+static void removeRecord(stKVDatabase *database, int64_t key) {
+    MySqlDb *dbImpl = database->dbImpl;
+    sqlExec(dbImpl, "delete from %s where id=%lld", dbImpl->table, (long long)key);
+    my_ulonglong numRows = mysql_affected_rows(dbImpl->conn);
+    if (numRows == 0) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "remove of non-existent key %lld", (long long)key);
+    } 
+}
+
+static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+    startTransaction(database);
+    int64_t returnValue = INT64_MIN;
+    stTry {
+        int64_t recordSize;
+        int64_t *record = getRecord2(database, key, &recordSize);
+        assert(recordSize >= sizeof(int64_t));
+        record[0] += incrementAmount;
+        returnValue = record[0];
+        updateRecord(database, key, record, recordSize);
+        free(record);
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL increment record failed");
+    }stTryEnd;
+    return returnValue;
+}
+
+//TODO: make one command
+static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stInt64Tuple *j = stList_get(records, i);
+            removeRecord(database, stInt64Tuple_getPosition(j, 0));
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL bulk remove records failed");
+    }stTryEnd;
+}
+
+static void setRecord(stKVDatabase *database, int64_t key,
+                         const void *value, int64_t sizeOfRecord) {
+    if (containsRecord(database, key)) {
+        updateRecord(database, key, value, sizeOfRecord);
+    } else {
+        insertRecord(database, key, value, sizeOfRecord);
+    }
+}
+
+// TODO: see if we can make this one command
+static void bulkSetRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stKVDatabaseBulkRequest *request = stList_get(records, i);
+            switch(request->type) {
+                case UPDATE:
+                updateRecord(database, request->key, request->value, request->size);
+                break;
+                case INSERT:
+                insertRecord(database, request->key, request->value, request->size);
+                break;
+                case SET:
+                setRecord(database, request->key, request->value, request->size);
+                break;
+            }
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "MySQL bulk set records failed");
+    }stTryEnd;
+}
+
 //initialisation function
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = connect(conf);
     database->destruct = destructDB;
-    database->delete = deleteDB;
+    database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
+    database->insertInt64 = insertInt64;
     database->updateRecord = updateRecord;
+    database->updateInt64 = updateInt64;
+    database->setRecord = setRecord;
+    database->incrementInt64 = incrementInt64;
+    database->bulkSetRecords = bulkSetRecords;
+    database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    database->startTransaction = startTransaction;
-    database->commitTransaction = commitTransaction;
-    database->abortTransaction = abortTransaction;
     if (create) {
         createKVTable(database->dbImpl);
     }

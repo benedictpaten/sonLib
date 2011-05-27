@@ -5,6 +5,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hashtable;
 
 /* Example of use:
@@ -167,6 +171,9 @@ hashtable_count(struct hashtable *h);
 void
 hashtable_destroy(struct hashtable *h, int32_t free_values, int32_t free_keys);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __HASHTABLE_CWC22_H__ */
 
 /*

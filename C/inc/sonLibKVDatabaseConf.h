@@ -8,11 +8,14 @@
 #define SONLIBKVDATABASECONF_H
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     stKVDatabaseTypeTokyoCabinet,
-    stKVDatabaseTypeTokyoTyrant,
+    stKVDatabaseTypeKyotoTycoon,
     stKVDatabaseTypeMySql,
-    stKVDatabaseTypePostgreSql
 } stKVDatabaseType;
 
 /* 
@@ -22,10 +25,10 @@ typedef enum {
 stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir);
 
 /* 
- * Construct a new database configuration object for a Tokyo Tyrant
+ * Construct a new database configuration object for a Kyoto Tycoon
  * database remote object.
  */
-stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsigned port, const char *databaseDir);
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir);
 
 /* 
  * Construct a new database configuration object for a MySql database.
@@ -35,23 +38,15 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsign
 stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned port, const char *user, const char *password,
                                                   const char *databaseName, const char *tableName);
 
-/* 
- * Construct a new database configuration object for a PostgreSql database.
- * password maybe NULL for no password.
- * port maybe 0 for the default port.
- */
-stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
-                                                       const char *databaseName, const char *tableName);
-
 /*
  * Decodes a simple piece of XML, structured as follows:
  * <st_kv_database_conf type="TYPE">
  *      <tokyo_cabinet database_dir=""/>
  *      <mysql host="" port="" user="" password="" database_name="" table_name=""/>
- *      <postgresql host="" port="" user="" password="" database_name="" table_name=""/>
+ *      <kyoto_cabinet host="" port=""/>
  * </st_kv_database_conf>
  *
- * Type can be "tokyo_cabinet", "mysql", or "postgresql". If it is of that type then
+ * Type can be "tokyo_cabinet", "mysql", or "kyoto_cabinet". If it is of that type then
  * you need to include a nested tag with the parameters for that conf constructor.
  * The labels for the nested tag are name value pairs (no order assumed) for the conf constructor
  * (see above).  The port is optional.
@@ -82,6 +77,9 @@ const char *stKVDatabaseConf_getHost(stKVDatabaseConf *conf);
 /* get the port for server based databases */
 unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf);
 
+/* get the remote server timeout for server based databases */
+int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf);
+
 /* get the user for server based databases */
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf);
 
@@ -94,4 +92,7 @@ const char *stKVDatabaseConf_getDatabaseName(stKVDatabaseConf *conf);
 /* get the table name for server based databases */
 const char *stKVDatabaseConf_getTableName(stKVDatabaseConf *conf);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -18,22 +18,36 @@ struct stKVDatabase {
     stKVDatabaseConf *conf;
     void *dbImpl;
     void *cache;
-    bool transactionStarted;
     bool deleted;
     void (*destruct)(stKVDatabase *);
-    void (*delete)(stKVDatabase *);
+    void (*deleteDatabase)(stKVDatabase *);
     bool (*containsRecord)(stKVDatabase *, int64_t);
     void (*insertRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*insertInt64)(stKVDatabase *, int64_t, int64_t);
     void (*updateRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    void (*updateInt64)(stKVDatabase *, int64_t, int64_t);
+    void (*setRecord)(stKVDatabase *, int64_t, const void *, int64_t);
+    int64_t (*incrementInt64)(stKVDatabase *, int64_t, int64_t);
+    void (*bulkSetRecords)(stKVDatabase *, stList *);
+    void (*bulkRemoveRecords)(stKVDatabase *, stList *);
     int64_t (*numberOfRecords)(stKVDatabase *);
     void *(*getRecord)(stKVDatabase *, int64_t key);
+    int64_t (*getInt64)(stKVDatabase *, int64_t key);
     void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);
-    void (*startTransaction)(stKVDatabase *);
-    void (*commitTransaction)(stKVDatabase *);
-    void (*abortTransaction)(stKVDatabase *);
     void (*clearCache)(stKVDatabase *);
+};
+
+enum stKVDatabaseBulkRequestType {
+    UPDATE, INSERT, SET
+};
+
+struct stKVDatabaseBulkRequest {
+    int64_t key;
+    void *value;
+    int64_t size;
+    enum stKVDatabaseBulkRequestType type;
 };
 
 /*
@@ -42,20 +56,16 @@ struct stKVDatabase {
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
 /*
- * Function initialises the pointers of the stKVDatabase object with functions for tokyoCabinet.
- */
-void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
-
-
-/*
  * Function initialises the pointers of the stKVDatabase object with functions for MySql.
  */
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
-
-/*
- * Function initialises the pointers of the stKVDatabase object with functions PostgreSql .
- */
-void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SONLIBKVDATABASEPRIVATE_H_ */

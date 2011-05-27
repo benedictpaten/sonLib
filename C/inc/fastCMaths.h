@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TRUE 1
 #define FALSE 0
 
@@ -121,4 +125,7 @@ float RANDOM(void);
 /////////////////////////////////////////////////////////////////
 float RANDOM_LOG(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

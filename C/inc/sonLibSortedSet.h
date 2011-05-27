@@ -9,6 +9,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //The exception string
 extern const char *SORTED_SET_EXCEPTION_ID;
 
@@ -157,4 +161,7 @@ stSortedSet *stSortedSet_getIntersection(stSortedSet *sortedSet1, stSortedSet *s
  */
 stSortedSet *stSortedSet_getDifference(stSortedSet *sortedSet1, stSortedSet *sortedSet2);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

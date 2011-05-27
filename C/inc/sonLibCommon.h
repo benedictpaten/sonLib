@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //////////////////
 //Memory allocation functions
 //////////////////
@@ -89,4 +93,7 @@ void st_errAbort(char *format, ...);
  */
 void st_errnoAbort(char *format, ...);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBCOMMON_H_ */

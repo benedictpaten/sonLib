@@ -16,7 +16,8 @@
 #include "sonLibString.h"
 
 const char *ST_KV_DATABASE_EXCEPTION_ID = "ST_KV_DATABASE_EXCEPTION";
-const char *ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID = "ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID";
+const char *ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID =
+        "ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID";
 
 static bool isRetryExcept(stExcept *except) {
     return stExcept_idEq(except, ST_KV_DATABASE_RETRY_TRANSACTION_EXCEPTION_ID);
@@ -25,40 +26,38 @@ static bool isRetryExcept(stExcept *except) {
 stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
     stKVDatabase *database = st_calloc(1, sizeof(struct stKVDatabase));
     database->conf = stKVDatabaseConf_constructClone(conf);
-    database->transactionStarted = false;
     database->deleted = false;
 
     switch (stKVDatabaseConf_getType(conf)) {
-    case stKVDatabaseTypeTokyoCabinet:
+        case stKVDatabaseTypeTokyoCabinet:
 #ifdef HAVE_TOKYO_CABINET
-        stKVDatabase_initialise_tokyoCabinet(database, conf, create);
+            stKVDatabase_initialise_tokyoCabinet(database, conf, create);
 #else
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested Tokyo Cabinet database, however sonlib is not compiled with Tokyo Cabinet support");
+            stThrowNew(
+                    ST_KV_DATABASE_EXCEPTION_ID,
+                    "requested Tokyo Cabinet database, however sonlib is not compiled with Tokyo Cabinet support");
 #endif
-        break;
-    case stKVDatabaseTypeTokyoTyrant:
-#ifdef HAVE_TOKYO_TYRANT
-        stKVDatabase_initialise_tokyoTyrant(database, conf, create);
+            break;
+        case stKVDatabaseTypeKyotoTycoon:
+#ifdef HAVE_KYOTO_TYCOON
+            stKVDatabase_initialise_kyotoTycoon(database, conf, create);
 #else
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested Tokyo Tyrant database, however sonlib is not compiled with Tokyo Tyrant support");
+            stThrowNew(
+                    ST_KV_DATABASE_EXCEPTION_ID,
+                    "requested Kyoto Tycoon database, however sonlib is not compiled with Kyoto Tycoon support");
 #endif
-        break;
-    case stKVDatabaseTypeMySql:
+            break;
+        case stKVDatabaseTypeMySql:
 #ifdef HAVE_MYSQL
-        stKVDatabase_initialise_MySql(database, conf, create);
+            stKVDatabase_initialise_MySql(database, conf, create);
 #else
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested MySQL database, however sonlib is not compiled with MySql support");
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                    "requested MySQL database, however sonlib is not compiled with MySql support");
 #endif
-        break;
-    case stKVDatabaseTypePostgreSql:
-#ifdef HAVE_POSTGRESQL
-        stKVDatabase_initialise_PostgreSql(database, conf, create);
-#else
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "requested PostgreSql database, however sonlib is not compiled with PostgreSql support");
-#endif
-        break;
-    default:
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "BUG: unrecognized database type");
+            break;
+        default:
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                    "BUG: unrecognized database type");
     }
     return database;
 }
@@ -66,10 +65,12 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
 void stKVDatabase_destruct(stKVDatabase *database) {
     if (!database->deleted) {
         stTry {
-            database->destruct(database);
-        } stCatch(ex) {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_destruct failed");
-        } stTryEnd;
+                database->destruct(database);
+            }stCatch(ex)
+                {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_destruct failed");
+                }stTryEnd;
     }
     stKVDatabaseConf_destruct(database->conf);
     free(database);
@@ -81,28 +82,33 @@ void stKVDatabase_deleteFromDisk(stKVDatabase *database) {
                 "Trying to delete a database that has already been deleted");
     }
     stTry {
-        database->delete(database);
-    } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_deleteFromDisk failed");
-    } stTryEnd;
+            database->deleteDatabase(database);
+        }stCatch(ex)
+            {
+                stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                        "stKVDatabase_deleteFromDisk failed");
+            }stTryEnd;
     database->deleted = true;
 }
 
 bool stKVDatabase_containsRecord(stKVDatabase *database, int64_t key) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                   "Trying to check if a record is in a database that has been deleted");
+                "Trying to check if a record is in a database that has been deleted");
     }
     bool containsRecord = 0;
     stTry {
-        containsRecord = database->containsRecord(database, key);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_containsRecord key %lld failed", (long long)key);
-        }
-    } stTryEnd;
+            containsRecord = database->containsRecord(database, key);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_containsRecord key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
     return containsRecord;
 }
 
@@ -112,40 +118,224 @@ void stKVDatabase_insertRecord(stKVDatabase *database, int64_t key,
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to insert a record into a database that has been deleted");
     }
-    if (!database->transactionStarted) {
+    if(value == NULL) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to insert a record, but no transaction has been started");
+                        "Trying to insert a null record into a database");
     }
     stTry {
-        database->insertRecord(database, key, value, sizeOfRecord);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_insertRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
-        }
-    } stTryEnd;
+            database->insertRecord(database, key, value, sizeOfRecord);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_insertRecord key %lld size %lld failed",
+                            (long long) key, (long long) sizeOfRecord);
+                }
+            }stTryEnd;
+}
+
+void stKVDatabase_insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to insert a int64 record into a database that has been deleted");
+    }
+    stTry {
+            database->insertInt64(database, key, value);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_insertRecord key %lld size %d failed",
+                            (long long) key, sizeof(int64_t));
+                }
+            }stTryEnd;
+}
+
+void stKVDatabase_updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to update a int64 record into a database that has been deleted");
+    }
+    stTry {
+            database->updateInt64(database, key, value);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_updateInt64 key %lld size %d failed",
+                            (long long) key, sizeof(int64_t));
+                }
+            }stTryEnd;
 }
 
 void stKVDatabase_updateRecord(stKVDatabase *database, int64_t key,
         const void *value, int64_t sizeOfRecord) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to udpade a record in a database that has been deleted");
+                "Trying to update a record in a database that has been deleted");
     }
-    if (!database->transactionStarted) {
+    if(value == NULL) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to udapte a record, but no transaction has been started");
+                        "Trying to insert a null record into a database");
     }
     stTry {
-        database->updateRecord(database, key, value, sizeOfRecord);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_updateRecord key %lld size %lld failed", (long long)key, (long long)sizeOfRecord);
+            database->updateRecord(database, key, value, sizeOfRecord);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_updateRecord key %lld size %lld failed",
+                            (long long) key, (long long) sizeOfRecord);
+                }
+            }stTryEnd;
+}
+
+void stKVDatabase_setRecord(stKVDatabase *database, int64_t key,
+        const void *value, int64_t sizeOfRecord) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get set a record from a database that has been deleted");
+    }
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
+    }
+    stTry {
+            database->setRecord(database, key, value, sizeOfRecord);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_setRecord key %lld size %lld failed",
+                            (long long) key, (long long) sizeOfRecord);
+                }
+            }stTryEnd;
+}
+
+int64_t stKVDatabase_incrementInt64(stKVDatabase *database, int64_t key,
+        int64_t incrementAmount) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to increment a numerical record from a database that has been deleted");
+    }
+    stTry {
+            return database->incrementInt64(database, key, incrementAmount);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_incrementRecord key: %lld increment size: %lld failed",
+                            (long long) key, (long long) incrementAmount);
+                }
+            }stTryEnd;
+    assert(0);
+}
+
+static stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_construct(int64_t key,
+        const void *value, int64_t sizeOfRecord,
+        enum stKVDatabaseBulkRequestType type) {
+    stKVDatabaseBulkRequest *buildRequest = st_malloc(
+            sizeof(stKVDatabaseBulkRequest));
+    buildRequest->key = key;
+    if(value == NULL) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                        "Trying to insert a null record into a database");
+    }
+    buildRequest->value = memcpy(st_malloc(sizeOfRecord), value, sizeOfRecord);
+    buildRequest->size = sizeOfRecord;
+    buildRequest->type = type;
+    return buildRequest;
+}
+
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructInsertRequest(
+        int64_t key, const void *value, int64_t sizeOfRecord) {
+    return stKVDatabaseBulkRequest_construct(key, value, sizeOfRecord, INSERT);
+}
+
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructUpdateRequest(
+        int64_t key, const void *value, int64_t sizeOfRecord) {
+    return stKVDatabaseBulkRequest_construct(key, value, sizeOfRecord, UPDATE);
+}
+
+stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_constructSetRequest(
+        int64_t key, const void *value, int64_t sizeOfRecord) {
+    return stKVDatabaseBulkRequest_construct(key, value, sizeOfRecord, SET);
+}
+
+void stKVDatabaseBulkRequest_destruct(stKVDatabaseBulkRequest *record) {
+    free(record->value);
+    free(record);
+}
+
+void stKVDatabase_bulkSetRecords(stKVDatabase *database, stList *records) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to bulk set records from a database that has been deleted");
+    }
+    stTry {
+            database->bulkSetRecords(database, records);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_bulkSetRecords with %i records to update",
+                            stList_length(records));
+                }
+            }stTryEnd;
+}
+
+void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to bulk remove records from a database that has been deleted");
+    }
+    for (int32_t i = 0; i < stList_length(records); i++) {
+        int64_t key = stInt64Tuple_getPosition(stList_get(records, i), 0);
+        if (!stKVDatabase_containsRecord(database, key)) {
+            stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                    "The key is not in the database which we aim to remove: %lli", key);
         }
-    } stTryEnd;
+    }
+    stTry {
+            database->bulkRemoveRecords(database, records);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_bulkRemoveRecords with %i records to update",
+                            stList_length(records));
+                }
+            }stTryEnd;
 }
 
 int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database) {
@@ -155,14 +345,16 @@ int64_t stKVDatabase_getNumberOfRecords(stKVDatabase *database) {
     }
     int64_t numRecs = 0;
     stTry {
-        numRecs = database->numberOfRecords(database);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getNumberOfRecords failed");
-        }
-    } stTryEnd;
+            numRecs = database->numberOfRecords(database);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getNumberOfRecords failed");
+                }
+            }stTryEnd;
     return numRecs;
 }
 
@@ -173,53 +365,94 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key) {
     }
     void *data = NULL;
     stTry {
-        data = database->getRecord(database, key);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getRecord key %lld failed", (long long)key);
-        }
-    } stTryEnd;
+            data = database->getRecord(database, key);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getRecord key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
     return data;
 }
 
-void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
+int64_t stKVDatabase_getInt64(stKVDatabase *database, int64_t key) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get a record from a database that has already been deleted");
+    }
+    int64_t value = -1;
+    stTry {
+            value = database->getInt64(database, key);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getInt64 key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
+    return value;
+}
+
+void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key,
+        int64_t *recordSize) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to get a record from a database that has already been deleted");
     }
     void *data = NULL;
     stTry {
-        data = database->getRecord2(database, key, recordSize);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getRecord2 key %lld failed", (long long)key);
-        }
-    } stTryEnd;
+            data = database->getRecord2(database, key, recordSize);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getRecord2 key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
     return data;
 }
 
-void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
+void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key,
+        int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
     if (database->deleted) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                    "Trying to get a record from a database that has already been deleted");
+                "Trying to get a record from a database that has already been deleted");
     }
-    if(zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset + sizeInBytes > recordSize) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, requested start: %lld, requested size: %lld, entry size: %lld", (long long)zeroBasedByteOffset, (long long)sizeInBytes, (long long)recordSize);
+    if (zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset
+            + sizeInBytes > recordSize) {
+        stThrowNew(
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "Partial record retrieval to out of bounds memory, requested start: %lld, requested size: %lld, entry size: %lld",
+                (long long) zeroBasedByteOffset, (long long) sizeInBytes,
+                (long long) recordSize);
     }
     void *data = NULL;
     stTry {
-        data = database->getPartialRecord(database, key, zeroBasedByteOffset, sizeInBytes, recordSize);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_getPartialRecord key %lld offset %lld size %lld failed", (long long)key, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
-        }
-    } stTryEnd;
+            data = database->getPartialRecord(database, key,
+                    zeroBasedByteOffset, sizeInBytes, recordSize);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(
+                            ex,
+                            ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_getPartialRecord key %lld offset %lld size %lld failed",
+                            (long long) key, (long long) zeroBasedByteOffset,
+                            (long long) sizeInBytes);
+                }
+            }stTryEnd;
     return data;
 }
 
@@ -228,75 +461,22 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to remove a record from a database that has already been deleted");
     }
-    if (!database->transactionStarted) {
+    if (!stKVDatabase_containsRecord(database, key)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to remove a record, but no transaction has been started");
+                "The key is not in the database: %lli", key);
     }
     stTry {
-        database->removeRecord(database, key);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_removeRecord key %lld failed", (long long)key);
-        }
-    } stTryEnd;
-}
-
-void stKVDatabase_startTransaction(stKVDatabase *database) {
-    if (database->deleted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to start a transaction with a database that has already been deleted");
-    }
-    if (database->transactionStarted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to start a transaction, but one was already started");
-    }
-    stTry {
-        database->startTransaction(database);
-    } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_startTransaction failed");
-    } stTryEnd;
-    database->transactionStarted = true;
-}
-
-void stKVDatabase_commitTransaction(stKVDatabase *database) {
-    if (database->deleted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to start a transaction with a database has already been deleted");
-    }
-    if (!database->transactionStarted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to commit a transaction, but none was started");
-    }
-    stTry {
-        database->commitTransaction(database);
-    } stCatch(ex) {
-        if (isRetryExcept(ex)) {
-            stThrow(ex);
-        } else {
-            stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_commitTransaction failed");
-        }
-    } stTryEnd;
-    database->transactionStarted = false;
-}
-
-void stKVDatabase_abortTransaction(stKVDatabase *database) {
-    if (database->deleted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Trying to abort a transaction with a database has already been deleted");
-    }
-    if (!database->transactionStarted) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-                "Tried to abort a transaction, but none was started");
-    }
-    stKVDatabase_clearCache(database); //Currently we empty the cache if we abort a transaction.
-    stTry {
-        database->abortTransaction(database);
-    } stCatch(ex) {
-        stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "stKVDatabase_abortTransaction failed");
-    } stTryEnd;
-    database->transactionStarted = false;
+            database->removeRecord(database, key);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_removeRecord key %lld failed",
+                            (long long) key);
+                }
+            }stTryEnd;
 }
 
 stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database) {
@@ -304,7 +484,7 @@ stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database) {
 }
 
 void stKVDatabase_clearCache(stKVDatabase *database) {
-    if(database->cache != NULL) {
+    if (database->cache != NULL) {
         database->clearCache(database);
     }
 }
