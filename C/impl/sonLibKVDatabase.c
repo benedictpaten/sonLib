@@ -38,15 +38,6 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
                     "requested Tokyo Cabinet database, however sonlib is not compiled with Tokyo Cabinet support");
 #endif
             break;
-        case stKVDatabaseTypeTokyoTyrant:
-#ifdef HAVE_TOKYO_TYRANT
-            stKVDatabase_initialise_tokyoTyrant(database, conf, create);
-#else
-            stThrowNew(
-                    ST_KV_DATABASE_EXCEPTION_ID,
-                    "requested Tokyo Tyrant database, however sonlib is not compiled with Tokyo Tyrant support");
-#endif
-            break;
         case stKVDatabaseTypeKyotoTycoon:
 #ifdef HAVE_KYOTO_TYCOON
             stKVDatabase_initialise_kyotoTycoon(database, conf, create);
@@ -62,15 +53,6 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create) {
 #else
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "requested MySQL database, however sonlib is not compiled with MySql support");
-#endif
-            break;
-        case stKVDatabaseTypePostgreSql:
-#ifdef HAVE_POSTGRESQL
-            stKVDatabase_initialise_PostgreSql(database, conf, create);
-#else
-            stThrowNew(
-                    ST_KV_DATABASE_EXCEPTION_ID,
-                    "requested PostgreSql database, however sonlib is not compiled with PostgreSql support");
 #endif
             break;
         default:

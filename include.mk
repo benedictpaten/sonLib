@@ -53,24 +53,6 @@ else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
 
-# location of Tokyo Tyrant
-ifneq ($(wildcard /hive/groups/recon/local/include/tcrdb.h),)
-   # hgwdev hive install
-   ttPrefix = /hive/groups/recon/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /opt/local/include/tcrdb.h),)
-   # OS/X with TC installed from MacPorts
-   ttPrefix = /opt/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /usr/local/include/tcrdb.h),)
-   # /usr/local install (FreeBSD, etc)
-   ttPrefix = /usr/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-endif
-
 # location of Kyoto Tycoon
 ifneq ($(wildcard /hive/groups/recon/local/include/ktcommon.h),)
    # hgwdev hive install
@@ -95,13 +77,5 @@ ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
     mysqlLibs = $(shell mysql_config --libs)
 endif
 
-# location of PostgreSQL
-#### just disable this for now, since we are having problems with not
-#### having postgres share libraries on the cluster.
-# ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
-#     #pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
-#     #pgsqlLibs = $(shell pg_config --ldflags) -lpq
-# endif
-
-dblibs = ${tokyoCabinetLib} ${tokyoTyrantLib} ${kyotoTycoonLib} ${mysqlLibs} ${pgsqlLibs} -lz
+dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz
 

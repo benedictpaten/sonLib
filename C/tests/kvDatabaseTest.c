@@ -482,22 +482,6 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 #endif
 }
 
-static void test_stKVDatabaseConf_constructFromString_postgresql(CuTest *testCase) {
-#ifdef HAVE_POSTGRESQL
-    const char *xmlTestString =
-    "<st_kv_database_conf type='postgresql'><postgresql host='enormous' user='foo' password='bar' database_name='mammals' table_name='flowers'/></st_kv_database_conf>";
-    stKVDatabaseConf *conf = stKVDatabaseConf_constructFromString(xmlTestString);
-    CuAssertTrue(testCase, stKVDatabaseConf_getType(conf) == stKVDatabaseTypePostgreSql);
-    CuAssertTrue(testCase, stKVDatabaseConf_getDir(conf) == NULL);
-    CuAssertStrEquals(testCase, "enormous", stKVDatabaseConf_getHost(conf));
-    CuAssertIntEquals(testCase, 0, stKVDatabaseConf_getPort(conf));
-    CuAssertStrEquals(testCase, "foo", stKVDatabaseConf_getUser(conf));
-    CuAssertStrEquals(testCase, "bar", stKVDatabaseConf_getPassword(conf));
-    CuAssertStrEquals(testCase, "mammals", stKVDatabaseConf_getDatabaseName(conf));
-    CuAssertStrEquals(testCase, "flowers", stKVDatabaseConf_getTableName(conf));
-#endif
-}
-
 static void test_cache(CuTest *testCase) {
     /*
      * Tests all the test functions with a cache.
@@ -556,7 +540,6 @@ static CuSuite* stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, test_cache);
     SUITE_ADD_TEST(suite, test_cacheWithClearing);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);
-    SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_postgresql);
     return suite;
 }
 

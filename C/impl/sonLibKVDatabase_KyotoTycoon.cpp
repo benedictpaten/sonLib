@@ -29,7 +29,7 @@ using namespace kyototycoon;
 int64_t XT = kc::INT64MAX;
 
 /*
-* construct in the Tokyo Tyrant case means connect to the remote DB
+ * construct in the Kyoto Tycoon case means connect to the remote DB
 */
 static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 
@@ -153,7 +153,7 @@ static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incre
 
     size_t sizeOfKey = sizeof(int64_t);
 
-    if ( (returnValue = rdb->increment((char *)&key, sizeOfKey, incrementAmount, XT)) == kyotocabinet::INT64MIN ) {
+    if ( (returnValue = rdb->increment((char *)&key, sizeOfKey, incrementAmount, kyotocabinet::INT64MIN, XT)) == kyotocabinet::INT64MIN ) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon incremement record failed: %s", rdb->error().name());
     }
 

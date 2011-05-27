@@ -18,22 +18,22 @@ all : ${libPath}/sonLib.a ${testProgs}
 clean : 
 	rm -f  ${testProgs} ${libPath}/sonLib*.h ${libPath}/st*.h ${libPath}/sonLib.a ${libPath}/hashTable* ${libPath}/avl.h ${libPath}/bioioC.h ${libPath}/commonC.h ${libPath}/fastCMaths.h ${libPath}/pairwiseAlignment.h
 
-${binPath}/sonLibTests : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
+${binPath}/sonLibTests : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
 
-${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
+${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
 	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@ tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
 
-${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a 
+${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests}${libInternalHeaders} ${libPath}/sonLib.a 
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/cigarsTest.c ${libPath}/sonLib.a -lm
 
-${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a
+${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
 	${cxx} ${cflags} -I inc -I ${libPath} -o $@ tests/fastaCTest.c ${libPath}/sonLib.a -lm
  
-${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libSources} ${libHeaders} ${libInternalHeaders} ${libPath}/sonLib.a
+${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
 	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@ tests/kt_connect_test.cpp ${libPath}/sonLib.a -lm ${dblibs}
  
-${libPath}/sonLib.a : ${libSources} ${libHeaders} ${libInternalHeaders}
+${libPath}/sonLib.a : ${libSources} ${cppSources} ${libHeaders} ${libInternalHeaders}
 	cp ${libHeaders} ${libPath}/
 	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
 	${cpp} ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}

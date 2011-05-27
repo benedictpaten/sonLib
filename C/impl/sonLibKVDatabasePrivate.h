@@ -56,19 +56,9 @@ struct stKVDatabaseBulkRequest {
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
 /*
- * Function initialises the pointers of the stKVDatabase object with functions for tokyoCabinet.
- */
-void stKVDatabase_initialise_tokyoTyrant(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
-
-/*
  * Function initialises the pointers of the stKVDatabase object with functions for MySql.
  */
 void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
-
-/*
- * Function initialises the pointers of the stKVDatabase object with functions PostgreSql .
- */
-void stKVDatabase_initialise_PostgreSql(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
 
 #ifdef __cplusplus
 extern "C" {

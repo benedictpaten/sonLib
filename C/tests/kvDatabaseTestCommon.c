@@ -17,13 +17,13 @@ static void usage(const char *desc) {
     static const char *help = 
         "Options:\n"
         "\n"
-        "-t --type=dbtype - one of 'KyotoTycoon', 'TokyoTyrant', 'TokyoCabinet', 'MySql', or 'PostgreSql'.\n"
+        "-t --type=dbtype - one of 'KyotoTycoon', 'TokyoCabinet' or 'MySql'.\n"
         "    Values area case-insensitive, defaults to TokyoCabinet.\n"
         "-d --db=database - database directory for TokyoCabinet or database name\n"
         "    for SQL databases. Defaults to testTCDatabase for TokyoCabinet,\n"
         "    SQL databases must specify.\n"
-        "--host=host - Tycoon, SQL or Tyrant database host, defaults to localhost\n"
-        "--port=port - Tycoon, SQL or Tyrant database port.\n"
+        "--host=host - Tycoon or SQL database host, defaults to localhost\n"
+        "--port=port - Tycoon or SQL database port.\n"
         "-u, --user=user - SQL database user.\n"
         "-p, --pass=pass - SQL database password.\n"
         "-h, --help - print this message.\n";
@@ -34,18 +34,13 @@ static void usage(const char *desc) {
 static stKVDatabaseType parseDbType(const char *dbTypeStr) {
     if (stString_eqcase(dbTypeStr, "TokyoCabinet")) {
         return stKVDatabaseTypeTokyoCabinet;
-    } else if (stString_eqcase(dbTypeStr, "TokyoTyrant")) {
-        return stKVDatabaseTypeTokyoTyrant;
     } else if (stString_eqcase(dbTypeStr, "KyotoTycoon")) {
         return stKVDatabaseTypeKyotoTycoon;
     } else if (stString_eqcase(dbTypeStr, "MySql")) {
         return stKVDatabaseTypeMySql;
-    } else if (stString_eqcase(dbTypeStr, "PostgreSql")) {
-        return stKVDatabaseTypePostgreSql;
     } else {
         fprintf(stderr, "Error: invalid value for --type: %s\n", dbTypeStr);
         exit(1);
-        return stKVDatabaseTypePostgreSql;
     }
 }
 
@@ -124,18 +119,12 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
     if (optType == stKVDatabaseTypeTokyoCabinet) {
         conf = stKVDatabaseConf_constructTokyoCabinet(optDb);
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
-    } else if (optType == stKVDatabaseTypeTokyoTyrant) {
-        conf = stKVDatabaseConf_constructTokyoTyrant(optHost, optPort, optDb);
-        fprintf(stderr, "running Tokyo Tyrant sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeKyotoTycoon) {
         conf = stKVDatabaseConf_constructKyotoTycoon(optHost, optPort, optTimeout, optDb);
         fprintf(stderr, "running Kyoto Tycoon sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeMySql) {
         conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
         fprintf(stderr, "running MySQL sonLibKVDatabase tests\n");
-    } else if (optType == stKVDatabaseTypePostgreSql) {
-        conf = stKVDatabaseConf_constructPostgreSql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
-        fprintf(stderr, "running PostgreSql sonLibKVDatabase tests\n");
     }
     return conf;
 }
