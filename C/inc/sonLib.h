@@ -28,6 +28,7 @@
 #include "sonLibKVDatabaseConf.h"
 #include "sonLibCompression.h"
 #include "sonLibFile.h"
+#include "sonLibCache.h"
 
 
 

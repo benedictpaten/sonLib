@@ -42,6 +42,7 @@ typedef int64_t stInt64Tuple;
 typedef double stDoubleTuple;
 typedef struct stExcept stExcept;
 typedef struct stAlign stAlign;
+typedef struct stCache stCache;
 typedef struct stAlignIterator stAlignIterator;
 typedef struct stAlignBlock stAlignBlock;
 typedef struct stAlignBlockIterator stAlignBlockIterator;
