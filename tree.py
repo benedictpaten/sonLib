@@ -55,7 +55,7 @@ def binaryTree_depthFirstNumbers(binaryTree, labelTree=True, dontStopAtID=True):
     """
     traversalIDs = {}
     def traverse(binaryTree, mid=0, leafNo=0):
-        if binaryTree.internal and (dontStopAtID or binaryTree.iD == None):
+        if binaryTree.internal and (dontStopAtID or binaryTree.iD is None):
             midStart = mid
             j, leafNo = traverse(binaryTree.left, mid, leafNo)
             mid = j
@@ -92,7 +92,7 @@ def binaryTree_nodeNames(binaryTree):
     return labels
 
 def getBinaryTreeNodes(binaryTree, l):
-    if binaryTree != None:
+    if binaryTree is not None:
         getBinaryTreeNodes(binaryTree.left, l)
         l.append(binaryTree)
         getBinaryTreeNodes(binaryTree.right, l)
@@ -137,7 +137,7 @@ def makeRandomBinaryTree(leafNodeNumber=None):
             if tree.internal:
                 return fn2(tree.left) + fn2(tree.right)
             return 1
-        if leafNodeNumber == None or fn2(tree) == leafNodeNumber:
+        if leafNodeNumber is None or fn2(tree) == leafNodeNumber:
             return tree
 
 def getRandomBinaryTreeLeafNode(binaryTree):
@@ -250,7 +250,7 @@ class DistancePair:
         #doesn't wort for floats return self.distance.__cmp__(distancePair.distance)
         
 def correctTreeDistances(tree):
-    if tree != None:
+    if tree is not None:
         if tree.distance < MIN_TREE_DISTANCE:
             bioio.logger.info(" Correcting tree distance : %i ", tree.distance)
             tree.distance = MIN_TREE_DISTANCE
@@ -605,9 +605,9 @@ def remodelTreeRemovingRoot(root, node):
             return [ bT ]
         elif bT.internal:
             i = fn(bT.left)
-            if i == None:
+            if i is None:
                 i = fn(bT.right)
-            if i != None:
+            if i is not None:
                 hash[i[-1]]= bT
                 i.append(bT)
             return  i
@@ -635,7 +635,7 @@ def moveRoot(root, branch):
     if root.traversalID.mid == branch:
         return bioio.newickTreeParser(bioio.printBinaryTree(root, True))
     def fn2(tree, seq):
-        if seq != None:
+        if seq is not None:
             return '(' + bioio.printBinaryTree(tree, True)[:-1] + ',' + seq + ')'
         return bioio.printBinaryTree(tree, True)[:-1]
     def fn(tree, seq):
@@ -745,7 +745,7 @@ def calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID):
             fn6(speciesTree.left, speciesTree.traversalID.mid, node)
             fn6(speciesTree.right, speciesTree.traversalID.mid, node)
     ancestor = fn6(speciesTree, sys.maxint, b[geneTree.traversalID.mid])
-    assert ancestorHolder[0] != None
+    assert ancestorHolder[0] is not None
     fn5(geneTree, ancestorHolder[0])
     #print "hi", bioio.printBinaryTree(speciesTree, True), len(dups)
     return len(dups), losses[0]
