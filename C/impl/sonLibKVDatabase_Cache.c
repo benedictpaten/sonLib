@@ -428,12 +428,17 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
 
 static void bulkSetRecords(stKVDatabase *database, stList *requests) {
     DiskCache *diskCache = database->cache;
+    stList *filteredRequests = stList_construct();
     for (int32_t i = 0; i < stList_length(requests); i++) {
         stKVDatabaseBulkRequest *request = stList_get(requests, i);
-        diskCache_insertRecord(diskCache, request->key, request->value, 0,
-                                request->size);
+        if(updateRecordP(diskCache, database, request->key, request->value, request->size)) {
+            stList_append(filteredRequests, request);
+            diskCache_insertRecord(diskCache, request->key, request->value, 0,
+                    request->size);
+        }
     }
-    diskCache->bulkSetRecords(database, requests);
+    diskCache->bulkSetRecords(database, filteredRequests);
+    stList_destruct(filteredRequests);
 }
 
 static void bulkRemoveRecords(stKVDatabase *database, stList *requests) {
