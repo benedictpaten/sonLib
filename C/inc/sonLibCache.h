@@ -23,12 +23,9 @@ extern "C" {
 
 /*
  *
- * The size in the number of bytes of the cache. The cache is simple, it stores
- * all records retrieved, added and updated until it is full, then it starts to
- * remove stuff that has been accessed least recently to make room for the newly added
- * stuff.
+ * Create an empty cache.
  */
-stCache *stCache_construct(int64_t size);
+stCache *stCache_construct();
 
 /*
  * Destructs the cache.
@@ -61,9 +58,9 @@ bool stCache_containsRecord(stCache *cache, int64_t key, int64_t zeroBasedByteOf
  */
 void *stCache_getRecord(stCache *cache, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t *recordSize);
 
-void stCache_deleteRecord(stCache *cache, int64_t key,
-        int64_t start, int64_t size);
-
+/*
+ * Returns non-zero iff the two buffers have the same size and are identical.
+ */
 bool stCache_recordsIdentical(const char *value, int64_t sizeOfRecord,
         const char *updatedValue, int64_t updatedSizeOfRecord);
 

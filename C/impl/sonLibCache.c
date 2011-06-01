@@ -4,25 +4,12 @@
  * Released under the MIT license, see LICENSE.txt
  */
 
-/*
- * sonLibDatabase_TokyoCabinet.c
- *
- *  Created on: 18-Aug-2010
- *      Author: benedictpaten
- */
-
-//Database functions
+//Cache functions
 
 #include "sonLibGlobalsInternal.h"
 
 struct stCache {
-    /*
-     * Struct that is sandwiched within a kvDatabase object, with functions
-     * to be called by the sandwich functions of the struct.
-     */
     stSortedSet *cache;
-    int64_t size;
-    int64_t boundarySize;
 };
 
 typedef struct _cacheRecord {
@@ -145,16 +132,56 @@ static stCacheRecord *mergeRecords(stCacheRecord *record1,
     return record3;
 }
 
+void deleteRecord(stCache *cache, int64_t key,
+        int64_t start, int64_t size) {
+    assert(!stCache_containsRecord(cache, key, start, size)); //Will not delete a record wholly contained in.
+    stCacheRecord *record = getLessThanOrEqualRecord(cache, key, start,
+            size);
+    while (record != NULL && recordOverlapsWith(record, key, start, size)) { //could have multiple fragments in there to remove.
+        if (recordContainedIn(record, key, start, size)) { //We get rid of the record because it is contained in the range
+            stSortedSet_remove(cache->cache, record);
+            cacheRecord_destruct(record);
+            record = getLessThanOrEqualRecord(cache, key, start, size);
+        } else { //The range overlaps with, but is not fully contained in, so we trim it..
+            assert(record->start < start);
+            assert(record->start + record->size > start);
+            record->size = start - record->start;
+            assert(record->size >= 0);
+            break;
+        }
+    }
+    record = getGreaterThanOrEqualRecord(cache, key, start, size);
+    while (record != NULL && recordOverlapsWith(record, key, start, size)) { //could have multiple fragments in there to remove.
+        if (recordContainedIn(record, key, start, size)) { //We get rid of the record because it is contained in the range
+            stSortedSet_remove(cache->cache, record);
+            cacheRecord_destruct(record);
+            record = getGreaterThanOrEqualRecord(cache, key, start, size);
+        } else { //The range overlaps with, but is not fully contained in, so we trim it..
+            assert(record->start < start + size);
+            assert(record->start > start);
+            int64_t newSize = record->size - (start + size - record->start);
+            int64_t newStart = start + size;
+            assert(newSize >= 0);
+            char *newMem = memcpy(st_malloc(newSize),
+                    record->record + start + size - record->start, newSize);
+            free(record->record);
+            record->record = newMem;
+            record->start = newStart;
+            record->size = newSize;
+            break; //We can break at this point as we have reached the end of the range (as the record overlapped)
+        }
+    }
+}
+
 
 /*
  * Public functions
  */
 
-stCache *stCache_construct(int64_t size) {
+stCache *stCache_construct() {
     stCache *cache = st_malloc(sizeof(stCache));
     cache->cache = stSortedSet_construct3(cacheRecord_cmp,
             (void(*)(void *)) cacheRecord_destruct);
-    cache->size = size;
     return cache;
 }
 
@@ -167,7 +194,6 @@ void stCache_clear(stCache *cache) {
     stSortedSet_destruct(cache->cache);
     cache->cache = stSortedSet_construct3(cacheRecord_cmp,
             (void(*)(void *)) cacheRecord_destruct);
-    cache->size = 0;
 }
 
 void stCache_setRecord(stCache *cache, int64_t key,
@@ -187,7 +213,7 @@ void stCache_setRecord(stCache *cache, int64_t key,
         return;
     }
     //Get rid of bits that are contained in this record..
-    stCache_deleteRecord(cache, key, start, size);
+    deleteRecord(cache, key, start, size);
     //Now get any left and right bits
     stCacheRecord *record1 = getLessThanOrEqualRecord(cache, key, start,
             size);
@@ -255,46 +281,6 @@ void *stCache_getRecord(stCache *cache, int64_t key,
         return o;
     }
     return NULL;
-}
-
-void stCache_deleteRecord(stCache *cache, int64_t key,
-        int64_t start, int64_t size) {
-    stCacheRecord *record = getLessThanOrEqualRecord(cache, key, start,
-            size);
-    while (record != NULL && recordOverlapsWith(record, key, start, size)) { //could have multiple fragments in there to remove.
-        if (recordContainedIn(record, key, start, size)) { //We get rid of the record because it is contained in the range
-            stSortedSet_remove(cache->cache, record);
-            cacheRecord_destruct(record);
-            record = getLessThanOrEqualRecord(cache, key, start, size);
-        } else { //The range overlaps with, but is not fully contained in, so we trim it..
-            assert(record->start < start);
-            assert(record->start + record->size > start);
-            record->size = start - record->start;
-            assert(record->size >= 0);
-            break;
-        }
-    }
-    record = getGreaterThanOrEqualRecord(cache, key, start, size);
-    while (record != NULL && recordOverlapsWith(record, key, start, size)) { //could have multiple fragments in there to remove.
-        if (recordContainedIn(record, key, start, size)) { //We get rid of the record because it is contained in the range
-            stSortedSet_remove(cache->cache, record);
-            cacheRecord_destruct(record);
-            record = getGreaterThanOrEqualRecord(cache, key, start, size);
-        } else { //The range overlaps with, but is not fully contained in, so we trim it..
-            assert(record->start < start + size);
-            assert(record->start > start);
-            int64_t newSize = record->size - (start + size - record->start);
-            int64_t newStart = start + size;
-            assert(newSize >= 0);
-            char *newMem = memcpy(st_malloc(newSize),
-                    record->record + start + size - record->start, newSize);
-            free(record->record);
-            record->record = newMem;
-            record->start = newStart;
-            record->size = newSize;
-            break; //We can break at this point as we have reached the end of the range (as the record overlapped)
-        }
-    }
 }
 
 bool stCache_recordsIdentical(const char *value, int64_t sizeOfRecord,

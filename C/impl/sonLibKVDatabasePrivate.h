@@ -17,7 +17,6 @@
 struct stKVDatabase {
     stKVDatabaseConf *conf;
     void *dbImpl;
-    void *cache;
     bool deleted;
     void (*destruct)(stKVDatabase *);
     void (*deleteDatabase)(stKVDatabase *);
@@ -36,7 +35,6 @@ struct stKVDatabase {
     void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
     void (*removeRecord)(stKVDatabase *, int64_t key);
-    void (*clearCache)(stKVDatabase *);
 };
 
 enum stKVDatabaseBulkRequestType {

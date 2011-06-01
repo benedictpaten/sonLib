@@ -42,20 +42,6 @@ stKVDatabase *stKVDatabase_construct(stKVDatabaseConf *conf, bool create);
 void stKVDatabase_destruct(stKVDatabase *database);
 
 /*
- * Add a client cache to the database.
- * The size in the number of bytes of the cache. The cache is simple, it stores
- * all records retrieved, added and updated until it is full, then it starts to
- * remove stuff that has been accessed least recently to make room for the newly added
- * stuff.
- */
-void stKVDatabase_makeMemCache(stKVDatabase *database, int64_t size, int64_t boundarySize);
-
-/*
- * Empties the cache (if present).
- */
-void stKVDatabase_clearCache(stKVDatabase *database);
-
-/*
  * Removes the database from the disk. Any further operations on the database will
  * create an exception, so you should generally destruct the object after calling this function.
  */

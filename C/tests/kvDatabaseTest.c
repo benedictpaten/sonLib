@@ -14,8 +14,6 @@
 
 static stKVDatabaseConf *conf = NULL;
 static stKVDatabase *database = NULL;
-static bool USE_CACHE = 0;
-static bool CLEAR_CACHE = 0;
 
 static void teardown() {
     if (database != NULL) {
@@ -30,9 +28,6 @@ static void setup() {
     database = stKVDatabase_construct(conf, true);
     teardown();
     database = stKVDatabase_construct(conf, true);
-    if (USE_CACHE) {
-        stKVDatabase_makeMemCache(database, 50000, 5); //Makes a cache with a 50k cache.
-    }
 }
 
 static void constructDestructAndDelete(CuTest *testCase) {
@@ -138,10 +133,6 @@ static void partialRecordRetrieval(CuTest *testCase) {
         stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, i));
         //st_uglyf("I am creating the record %i %i\n", i, size);
-    }
-
-    if (CLEAR_CACHE) {
-        stKVDatabase_clearCache(database);
     }
 
     while (st_random() > 0.001) {
@@ -346,9 +337,6 @@ static void bigRecordRetrieval(CuTest *testCase) {
         //st_uglyf("I am inserting record %i %i\n", i, size);
         stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
 
-        if (CLEAR_CACHE) {
-            stKVDatabase_clearCache(database);
-        }
         //st_uglyf("I am creating the record %i %i\n", i, size);
         //Check they are equivalent.
         int64_t size2;
@@ -396,10 +384,6 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numReco
     }
 
     readWriteAndRemoveRecordsLotsCheck(testCase, set, 1);
-
-    if (CLEAR_CACHE) {
-        stKVDatabase_clearCache(database);
-    }
 
     //Update all records to negate values
     stSortedSetIterator *it = stSortedSet_getIterator(set);
@@ -482,48 +466,6 @@ static void test_stKVDatabaseConf_constructFromString_mysql(CuTest *testCase) {
 #endif
 }
 
-static void test_cache(CuTest *testCase) {
-    /*
-     * Tests all the test functions with a cache.
-     * These tests do not clear the cache between the adds and the retrieves.
-     */
-    USE_CACHE = 1;
-    readWriteAndRemoveRecords(testCase);
-    readWriteAndRemoveRecordsLots(testCase);
-    partialRecordRetrieval(testCase);
-    bigRecordRetrieval(testCase);
-    testIncrementRecord(testCase);
-    testSetRecord(testCase);
-    testBulkRemoveRecords(testCase);
-    testBulkSetRecords(testCase);
-    constructDestructAndDelete(testCase);
-    test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
-    test_stKVDatabaseConf_constructFromString_mysql(testCase);
-    USE_CACHE = 0;
-}
-
-static void test_cacheWithClearing(CuTest *testCase) {
-    /*
-     * Tests all the test functions with a cache and no clearing.
-     * These tests clear the cache between the adds and the retrieves.
-     */
-    USE_CACHE = 1;
-    CLEAR_CACHE = 1;
-    readWriteAndRemoveRecords(testCase);
-    readWriteAndRemoveRecordsLots(testCase);
-    partialRecordRetrieval(testCase);
-    bigRecordRetrieval(testCase);
-    testIncrementRecord(testCase);
-    testSetRecord(testCase);
-    testBulkRemoveRecords(testCase);
-    testBulkSetRecords(testCase);
-    constructDestructAndDelete(testCase);
-    test_stKVDatabaseConf_constructFromString_tokyoCabinet(testCase);
-    test_stKVDatabaseConf_constructFromString_mysql(testCase);
-    USE_CACHE = 0;
-    CLEAR_CACHE = 1;
-}
-
 static CuSuite* stKVDatabaseTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, readWriteAndRemoveRecords);
@@ -537,8 +479,6 @@ static CuSuite* stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, testBulkSetRecords);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
-    SUITE_ADD_TEST(suite, test_cache);
-    SUITE_ADD_TEST(suite, test_cacheWithClearing);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);
     return suite;
 }

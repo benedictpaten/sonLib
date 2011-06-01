@@ -482,9 +482,3 @@ void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {
 stKVDatabaseConf *stKVDatabase_getConf(stKVDatabase *database) {
     return database->conf;
 }
-
-void stKVDatabase_clearCache(stKVDatabase *database) {
-    if (database->cache != NULL) {
-        database->clearCache(database);
-    }
-}
