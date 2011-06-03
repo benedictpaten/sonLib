@@ -1,3 +1,4 @@
+.PHONY: all clean cutestM cutestM.clean
 
 all : cutestM 
 

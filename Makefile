@@ -1,5 +1,7 @@
 include include.mk
 
+.PHONY: all clean cP cP.clean externalToolsP.clean test 
+
 all : cP
 
 clean : cP.clean externalToolsP.clean
