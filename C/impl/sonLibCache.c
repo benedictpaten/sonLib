@@ -121,9 +121,9 @@ static stCacheRecord *mergeRecords(stCacheRecord *record1,
     /*
      * Merges two adjacenct records.
      */
-#ifdef BEN_DEBUG
+//#ifdef BEN_DEBUG
     assert(recordsAdjacent(record1, record2));
-#endif
+//#endif
     int64_t i = record1->size + record2->size;
     char *j = memcpy(st_malloc(i), record1->record, record1->size);
     memcpy(j + record1->size, record2->record, record2->size);
@@ -266,8 +266,8 @@ void *stCache_getRecord(stCache *cache, int64_t key,
         stCacheRecord *record = getLessThanOrEqualRecord(cache, key,
                 start, size);
         assert(record != NULL);
-        int64_t i = size == INT64_MAX ? record->size : size;
         int64_t j = start - record->start;
+        int64_t i = size == INT64_MAX ? (record->size - j) : size;
 #ifdef BEN_DEBUG
         assert(record->start <= start);
         assert(j >= 0);
@@ -276,9 +276,9 @@ void *stCache_getRecord(stCache *cache, int64_t key,
         assert(j + i <= record->size);
 #endif
         *sizeRead = i;
-        void *o = memcpy(st_malloc(i), record->record + j, i);
-        assert(o != NULL);
-        return o;
+        char *cA = st_malloc(i);
+        memcpy(cA, record->record + j, i);
+        return cA;
     }
     return NULL;
 }

@@ -33,7 +33,8 @@ cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 cppflags = -g -Wall -funroll-loops -lm 
 
 #Flags to use
-cflags = ${cflags_opt} 
+cflags = ${cflags_dbg} 
+#${cflags_opt} 
 
 # location of Tokyo cabinet
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
