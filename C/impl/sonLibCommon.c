@@ -47,6 +47,7 @@ int32_t st_getLogLevel(void) {
 }
 
 void st_logInfo(const char *string, ...) {
+    return;
     if(st_getLogLevel() >= ST_LOGGING_INFO) {
         va_list ap;
         va_start(ap, string);
@@ -56,6 +57,7 @@ void st_logInfo(const char *string, ...) {
 }
 
 void st_logDebug(const char *string, ...) {
+    return;
     if(st_getLogLevel() >= ST_LOGGING_INFO) {
         va_list ap;
         va_start(ap, string);
@@ -65,6 +67,7 @@ void st_logDebug(const char *string, ...) {
 }
 
 void st_uglyf(const char *string, ...) {
+    return;
     va_list ap;
     va_start(ap, string);
     vfprintf(stderr, string, ap);
