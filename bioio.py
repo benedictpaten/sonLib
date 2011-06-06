@@ -63,6 +63,7 @@ def setLogLevel(logLevel):
         logger.setLevel(logging.DEBUG)
     elif logLevel == "CRITICAL":
         logger.setLevel(logging.CRITICAL)
+    logger.setLevel(logging.CRITICAL)
 
 def logFile(fileName, printFunction=logger.info):
     """Writes out a formatted version of the given log file
