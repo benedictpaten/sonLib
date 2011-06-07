@@ -53,7 +53,7 @@ void st_setLogLevelFromString(const char *string) {
             LOG_LEVEL = info;
             st_logInfo("Set log level to INFO\n");
         } else {
-            if (strcmp(string, "debug") != 0) {
+            if (strcmp(string2, "debug") != 0) {
                 free(string2);
                 st_errAbort("Unrecognised logging string %s", string);
             }
