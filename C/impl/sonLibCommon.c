@@ -54,7 +54,6 @@ void st_setLogLevelFromString(const char *string) {
             st_logInfo("Set log level to INFO\n");
         } else {
             if (strcmp(string2, "debug") != 0) {
-                free(string2);
                 st_errAbort("Unrecognised logging string %s", string);
             }
             LOG_LEVEL = debug;
@@ -62,7 +61,6 @@ void st_setLogLevelFromString(const char *string) {
         }
         free(string2);
     }
-
 }
 
 void st_setLogLevel(enum stLogLevel level) {
