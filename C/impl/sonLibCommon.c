@@ -14,12 +14,12 @@
 #include "sonLibGlobalsInternal.h"
 #include <errno.h>
 
-static int32_t LOG_LEVEL = ST_LOGGING_OFF;
+static enum stLogLevel LOG_LEVEL = critical;
 
 void *st_malloc(size_t i) {
     void *j;
     j = malloc(i);
-    if(j == 0) {
+    if (j == 0) {
         fprintf(stderr, "Malloc failed with a request for: %zu bytes\n", i);
         assert(0);
         exit(1);
@@ -28,27 +28,62 @@ void *st_malloc(size_t i) {
 }
 
 void *st_calloc(int64_t elementNumber, size_t elementSize) {
-     void *k;
-     k = calloc(elementNumber, elementSize);
-     if(k == 0) {
-         fprintf(stderr, "Calloc failed with request for %lld lots of %zu bytes\n", (long long int)elementNumber, elementSize);
-         exit(1);
-     }
-     return k;
+    void *k;
+    k = calloc(elementNumber, elementSize);
+    if (k == 0) {
+        fprintf(stderr,
+                "Calloc failed with request for %lld lots of %zu bytes\n",
+                (long long int) elementNumber, elementSize);
+        exit(1);
+    }
+    return k;
 }
 
-void st_setLogLevel(int32_t level) {
-    assert(level == ST_LOGGING_OFF || level == ST_LOGGING_INFO || level == ST_LOGGING_DEBUG);
+void st_setLogLevelFromString(const char *string) {
+    if (string != NULL) {
+        char *string2 = stString_copy(string);
+        for (int32_t i = 0; i < strlen(string); i++) {
+            string2[i] = tolower(string2[i]);
+        }
+        if (strcmp(string2, "off") == 0) {
+            LOG_LEVEL = off;
+        } else if (strcmp(string2, "critical") == 0) {
+            LOG_LEVEL = critical;
+        } else if (strcmp(string2, "info") == 0) {
+            LOG_LEVEL = info;
+            st_logInfo("Set log level to INFO\n");
+        } else {
+            if (strcmp(string, "debug") != 0) {
+                free(string2);
+                st_errAbort("Unrecognised logging string %s", string);
+            }
+            LOG_LEVEL = debug;
+            st_logInfo("Set log level to DEBUG\n");
+        }
+        free(string2);
+    }
+
+}
+
+void st_setLogLevel(enum stLogLevel level) {
     LOG_LEVEL = level;
 }
 
-int32_t st_getLogLevel(void) {
+enum stLogLevel st_getLogLevel(void) {
     return LOG_LEVEL;
 }
 
+void st_logCritical(const char *string, ...) {
+    if (st_getLogLevel() >= critical) {
+        va_list ap;
+        va_start(ap, string);
+        vfprintf(stderr, string, ap);
+        va_end(ap);
+    }
+}
+
 void st_logInfo(const char *string, ...) {
-    return;
-    if(st_getLogLevel() >= ST_LOGGING_INFO) {
+    if (st_getLogLevel() >= info) {
         va_list ap;
         va_start(ap, string);
         vfprintf(stderr, string, ap);
@@ -57,8 +92,7 @@ void st_logInfo(const char *string, ...) {
 }
 
 void st_logDebug(const char *string, ...) {
-    return;
-    if(st_getLogLevel() >= ST_LOGGING_INFO) {
+    if (st_getLogLevel() >= debug) {
         va_list ap;
         va_start(ap, string);
         vfprintf(stderr, string, ap);
@@ -67,7 +101,6 @@ void st_logDebug(const char *string, ...) {
 }
 
 void st_uglyf(const char *string, ...) {
-    return;
     va_list ap;
     va_start(ap, string);
     vfprintf(stderr, string, ap);
@@ -93,7 +126,7 @@ void st_errAbort(char *format, ...) {
     va_start(ap, format);
     vfprintf(stderr, format, ap);
     va_end(ap);
-        fputc('\n', stderr);
+    fputc('\n', stderr);
     exit(1);
 }
 
@@ -102,6 +135,6 @@ void st_errnoAbort(char *format, ...) {
     va_start(ap, format);
     vfprintf(stderr, format, ap);
     va_end(ap);
-        fprintf(stderr, ": %s\n", strerror(errno));
-        exit(1);
+    fprintf(stderr, ": %s\n", strerror(errno));
+    exit(1);
 }

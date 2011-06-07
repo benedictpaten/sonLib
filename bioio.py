@@ -54,16 +54,18 @@ def addLoggingFileHandler(fileName, rotatingLogging=False):
     logger.addHandler(handler)
     
 def setLogLevel(logLevel):
-    assert logLevel in [ "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
+    logLevel = logLevel.upper()
+    assert logLevel in [ "OFF", "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
     global logLevelString
     logLevelString = logLevel
-    if logLevel == "INFO":
+    if logLevel == "OFF":
+        logger.setLevel(logging.FATAL)
+    elif logLevel == "INFO":
         logger.setLevel(logging.INFO)
     elif logLevel == "DEBUG":
         logger.setLevel(logging.DEBUG)
     elif logLevel == "CRITICAL":
         logger.setLevel(logging.CRITICAL)
-    logger.setLevel(logging.CRITICAL)
 
 def logFile(fileName, printFunction=logger.info):
     """Writes out a formatted version of the given log file
@@ -82,22 +84,27 @@ def logFile(fileName, printFunction=logger.info):
 def addLoggingOptions(parser):
     """Adds logging options to an optparse.OptionsParser
     """
+    
+    parser.add_option("--logOff", dest="logOff", action="store_true",
+                     help="Turn of logging. (default is CRITICAL)",
+                     default=False)
+    
     parser.add_option("--logInfo", dest="logInfo", action="store_true",
-                     help="Turn on logging at INFO level",
+                     help="Turn on logging at INFO level. (default is CRITICAL)",
                      default=False)
     
     parser.add_option("--logDebug", dest="logDebug", action="store_true",
-                     help="Turn on logging at DEBUG level",
+                     help="Turn on logging at DEBUG level. (default is CRITICAL)",
                      default=False)
     
     parser.add_option("--logLevel", dest="logLevel", type="string",
-                      help="Log at level (may be either INFO/DEBUG/CRITICAL)")
+                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). By default it is CRITICAL")
     
     parser.add_option("--logFile", dest="logFile", type="string",
                       help="File to log in")
     
     parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false",
-                     help="Turn off rotating logging, which prevents log files getting too big",
+                     help="Turn off rotating logging, which prevents log files getting too big. default=%default",
                      default=True)
 
 def setLoggingFromOptions(options):
@@ -106,8 +113,10 @@ def setLoggingFromOptions(options):
     #We can now set up the logging info.
     if options.logLevel is not None:
         setLogLevel(options.logLevel) #Use log level, unless flags are set..   
-     
-    if options.logInfo:
+    
+    if options.logOff:
+        setLogLevel("OFF")
+    elif options.logInfo:
         setLogLevel("INFO")
     elif options.logDebug:
         setLogLevel("DEBUG")
@@ -118,6 +127,7 @@ def setLoggingFromOptions(options):
         addLoggingFileHandler(options.logFile, options.logRotating)
     
     logger.info("Logging to file: %s" % options.logFile)  
+    
 
 #########################################################
 #########################################################
@@ -148,6 +158,17 @@ def popen(command, tempFile):
     if i != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
     return i
+
+def popenCatch(command):
+    """Runs a command and return standard out.
+    """
+    logger.debug("Running the command: %s" % command)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    sts = os.waitpid(process.pid, 0)
+    i = sts[1]
+    if i != 0:
+        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
+    return process.stdout.read().strip()
 
 def getTotalCpuTime():
     """Gives the total cpu time, including the children. 
@@ -252,7 +273,7 @@ def getBasicOptionParser(usage="usage: %prog [options]", version="%prog 0.1", pa
     addLoggingOptions(parser)
     
     parser.add_option("--tempDirRoot", dest="tempDirRoot", type="string",
-                      help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base",
+                      help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base.",
                       default=os.getcwd())
     
     return parser
@@ -275,7 +296,7 @@ def parseSuiteTestOptions(parser=None):
         parser = getBasicOptionParser()
     
     parser.add_option("--testLength", dest="testLength", type="string",
-                     help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG",
+                     help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG. default=%default",
                      default="SHORT")
     
     parser.add_option("--saveError", dest="saveError", type="string",
@@ -283,8 +304,6 @@ def parseSuiteTestOptions(parser=None):
     
     options, args = parseBasicOptions(parser)
     logger.info("Parsed arguments")
-    
-    options.testLength = options.testLength.upper()
     
     if options.testLength == "SHORT":
         TestStatus.setTestStatus(TestStatus.TEST_SHORT)
@@ -474,7 +493,7 @@ class TempFileTree:
         """Destroys all temp temp file hierarchy, getting rid of all files.
         """
         os.system("rm -rf %s" % self.rootDir)
-        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))     
+        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))  
 
 #########################################################
 #########################################################

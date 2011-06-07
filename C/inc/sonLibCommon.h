@@ -38,20 +38,33 @@ void *st_calloc(int64_t elementNumber, size_t elementSize);
 //Logging / std error printing
 //////////////////
 
-#define ST_LOGGING_OFF 0
-#define ST_LOGGING_INFO 1
-#define ST_LOGGING_DEBUG 2
+enum stLogLevel {
+    off,
+    critical,
+    info,
+    debug
+};
 
 /*
- * Set the log level. Either ST_LOGGING_OFF, ST_LOGGING_INFO or ST_LOGGING_DEBUG.
- * OFF (no logging), info (middle level), debug (copious logging)
+ * Set the log level.
+ * off (no logging), critical (highest level, associated with unexpected stuff), info (middle level), debug (copious logging)
  */
-void st_setLogLevel(int32_t level);
+void st_setLogLevel(enum stLogLevel level);
+
+/*
+ * Set the log level from the string. If string is null it does nothing. Must be either "off", "critical", "info" or "debug", case doesn't matter. Aborts if string is not null and not one of these cases.
+ */
+void st_setLogLevelFromString(const char *string);
 
 /*
  * Get the log level. Either ST_LOGGING_OFF/INFO/DEBUG.
  */
-int32_t st_getLogLevel(void);
+enum stLogLevel st_getLogLevel(void);
+
+/*
+ * Print a log string with level critical.
+ */
+void st_logCritical(const char *string, ...);
 
 /*
  * Print a log string with level info.
