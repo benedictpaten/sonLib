@@ -44,6 +44,19 @@ def __setDefaultLogger():
 logger = __setDefaultLogger()
 logLevelString = "CRITICAL"
 
+def redirectLoggerStreamHandlers(oldStream, newStream):
+    """Redirect the stream of a stream handler to a different stream
+    """
+    for handler in list(logger.handlers): #Remove old handlers
+        if handler.stream == oldStream:
+            handler.close()
+            logger.removeHandler(handler)
+    for handler in logger.handlers: #Do not add a duplicate handler 
+        if handler.stream == newStream:
+           return
+    logger.addHandler(logging.StreamHandler(newStream))
+    
+
 def getLogLevelString():
     return logLevelString
 
