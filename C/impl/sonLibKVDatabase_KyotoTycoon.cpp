@@ -85,9 +85,11 @@ static void deleteDB(stKVDatabase *database) {
 /* check if a record already exists */
 static bool recordExists(RemoteDB *rdb, int64_t key) {
     size_t sp;
-    if (rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL) == NULL) {
+    char *cA;
+    if ((cA = rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL)) == NULL) {
         return false;
     } else {
+        free(cA);
         return true;
     }
 }
