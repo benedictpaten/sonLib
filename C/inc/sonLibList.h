@@ -37,7 +37,7 @@ stList *stList_construct2(int32_t size);
  * The destructor will call the given destructElement function
  * for each non-null entry in the stList.
  */
-stList *stList_construct3(int32_t size, void (*destructElement)(void *));
+stList *stList_construct3(int32_t size, void(*destructElement)(void *));
 
 /*
  * Destructs the stList and, if a destructElement function was given to the constructor,
@@ -108,7 +108,7 @@ int32_t stList_contains(stList *list, void *item);
  * Copies the stList. Sets the given destruct item function to the new stList.. can
  * be null if you want no destruction of the items in that stList.
  */
-stList *stList_copy(stList *list, void (*destructItem)(void *));
+stList *stList_copy(stList *list, void(*destructItem)(void *));
 
 /*
  * Reverses the stList in place.
@@ -148,16 +148,38 @@ stListIterator *stList_copyIterator(stListIterator *iterator);
 void stList_sort(stList *list, int cmpFn(const void *a, const void *b));
 
 /*
+ * Returns a new list, either containing the intersection with set if include is non-zero,
+ * or containing the set difference if include is zero.
+ */
+stList *stList_filter(stList *list, bool(*fn)(void *));
+
+/*
  * Gets a sorted set representation of the stList, using the given cmpFn as backing. The sorted set
  * has no defined destruct element function, so when the sorted set is destructed the elements in it and
  * in this list will not be destructed. If the cmpFn is NULL then we use the default cmpFn.
  */
-stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b));
+stSortedSet *stList_getSortedSet(stList *list,
+        int(*cmpFn)(const void *a, const void *b));
+
+/*
+ * Returns a new list, identical to list, but with any elements contained in set removed.
+ */
+stList *stList_filterToExclude(stList *list, stSortedSet *set);
 
 /*
  * Sets the destructor of the list.
  */
-void stList_setDestructor(stList *list, void (*destructElement)(void *));
+void stList_setDestructor(stList *list, void(*destructElement)(void *));
+
+/*
+ * Returns a new list, identical to list, but with any elements not contained in set removed.
+ */
+stList *stList_filterToInclude(stList *list, stSortedSet *set);
+
+/*
+ * Returns new list which contains elements of the list of list concatenated in one list.
+ */
+stList *stList_join(stList *listOfLists);
 
 #ifdef __cplusplus
 }
