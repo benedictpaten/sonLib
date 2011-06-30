@@ -107,6 +107,13 @@ uint32_t stHash_stringKey( const void *k );
  */
 int stHash_stringEqualKey( const void *key1, const  void *key2 );
 
+/*
+ * Invert the hash, such that the values become the keys and vice versa. Where there are multiple keys
+ * mapping to the same value, only the first encountered key is stored.
+ */
+stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
+        int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *));
+
 #ifdef __cplusplus
 }
 #endif
