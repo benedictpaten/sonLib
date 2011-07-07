@@ -76,7 +76,7 @@ void listResize(struct List *list, int32_t newMaxSize) {
 void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
     assert(*currentSize <= newSize);
     void *new;
-    new = memcpy(st_malloc(base*newSize), current, base*(*currentSize));
+    new = memcpy(st_malloc(((int64_t)base)*newSize), current, ((int64_t)base)*(*currentSize));
     if (current != NULL) {
         free(current);
     }
