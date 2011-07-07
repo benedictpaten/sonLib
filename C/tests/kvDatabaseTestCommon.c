@@ -56,6 +56,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
         {"timeout", required_argument, NULL, 'i'},
         {"user", required_argument, NULL, 'u'},
         {"pass", required_argument, NULL, 'p'},
+        {"name", required_argument, NULL, 'n'},
         {"help", no_argument,       NULL, 'h'},
         {NULL, 0, NULL, '\0'}
     };
@@ -66,6 +67,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
     int optTimeout = -1;
     const char *optUser = NULL;
     const char *optPass = NULL;
+    const char *optName = NULL;
     int optKey, optIndex;
     while ((optKey = getopt_long(argc, argv, "t:d:H:P:i:u:p:h", longOptions, &optIndex)) >= 0) {
         switch (optKey) {
@@ -90,6 +92,8 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
         case 'p':
             optPass = optarg;
             break;
+        case 'n':
+        	optName = optarg;
         case 'h':
             usage(desc);
             break;
@@ -120,7 +124,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
         conf = stKVDatabaseConf_constructTokyoCabinet(optDb);
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeKyotoTycoon) {
-        conf = stKVDatabaseConf_constructKyotoTycoon(optHost, optPort, optTimeout, optDb);
+        conf = stKVDatabaseConf_constructKyotoTycoon(optHost, optPort, optTimeout, optDb, optName);
         fprintf(stderr, "running Kyoto Tycoon sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeMySql) {
         conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");

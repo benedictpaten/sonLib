@@ -36,7 +36,7 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     // we actually do need a local DB dir for Kyoto Tycoon to store the sequences file
     const char *dbDir = stKVDatabaseConf_getDir(conf);
     mkdir(dbDir, S_IRWXU); // just let open of database generate error (FIXME: would be better to make this report errors)
-    char *databaseName = stString_print("%s/%s", dbDir, "data");
+
 
     const char *dbRemote_Host = stKVDatabaseConf_getHost(conf);
     unsigned dbRemote_Port = stKVDatabaseConf_getPort(conf);
@@ -45,11 +45,19 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     // create the database object
     RemoteDB *rdb = new RemoteDB();
 
+    // set the target (if specified)
+    // used for the case when a single server is operating on multiple databases
+    // dbName is from the optional database_name attribute in the kyoto_tycoon xml element
+    const char *dbName = stKVDatabaseConf_getDatabaseName(conf);
+    if (dbName) {
+    	rdb->set_target(dbName);
+    }
+
     // tcrdb open sets the host and port for the rdb object
     if (!rdb->open(dbRemote_Host, dbRemote_Port, timeout)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Opening connection to host: %s with error: %s", dbRemote_Host, rdb->error().name());
     }
-    free(databaseName);
+
     return rdb;
 }
 

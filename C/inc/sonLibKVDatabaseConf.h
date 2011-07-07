@@ -28,7 +28,8 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
  * Construct a new database configuration object for a Kyoto Tycoon
  * database remote object.
  */
-stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir);
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir,
+														const char* databaseName);
 
 /* 
  * Construct a new database configuration object for a MySql database.

@@ -38,13 +38,15 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
     return conf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir) {
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir,
+														const char* databaseName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
     conf->type = stKVDatabaseTypeKyotoTycoon;
     conf->databaseDir = stString_copy(databaseDir);
     conf->host = stString_copy(host);
     conf->port = port;
     conf->timeout = timeout;
+    conf->databaseName = stString_copy(databaseName);
     return conf;
 }
 
@@ -174,7 +176,8 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
         databaseConf = stKVDatabaseConf_constructKyotoTycoon(getXmlValueRequired(hash, "host"), 
                                                         getXmlPort(hash), 
                                                         getXmlTimeout(hash), 
-                                                        getXmlValueRequired(hash, "database_dir"));
+                                                        getXmlValueRequired(hash, "database_dir"),
+                                                        stHash_search(hash, "database_name"));
     } else if (stString_eq(type, "mysql")) {
         databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
                                                        getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
