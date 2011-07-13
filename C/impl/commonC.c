@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 #include <stdlib.h> // per IEEE Std 1003.1, 2004
 #include <unistd.h> // for "legacy" systems
+#include <fcntl.h>
+#include <errno.h>
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
     if (exitValue != 0) {
@@ -865,7 +867,6 @@ char *getTempFile(void) {
         return tempFileTree_getTempFile(tempFileTree);
     }
 
-    char *tag = "stTempXXXXXX";
     char *tmpdir = NULL;
     if ((getuid() == geteuid()) && (getgid() == getegid())) {
         if (!((tmpdir = getenv("TMPDIR")))) {
@@ -875,18 +876,22 @@ char *getTempFile(void) {
     if (!tmpdir) {
         tmpdir = "/tmp";
     }
-    assert(strlen(tmpdir)-1 >= 0);
-    char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%s%s" : "%s/%s", tmpdir, tag);
-    int result = mkstemp(pattern);
-    if (result == -1) {
-       st_errAbort("Couldn't get temporary file");
+
+    static int32_t counter = 0;
+    while(counter < INT32_MAX) {
+        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%i_%i" : "%s/stTmp%i", tmpdir, getpid(), counter++);
+        int fd = open(pattern, O_CREAT|O_EXCL, 0600);
+        if(fd >= 0) {
+            close(fd);
+            return pattern;
+        }
+        else if(errno != EEXIST){
+            st_errnoAbort("Couldn't create temporary file's file descriptor");
+        }
+        free(pattern);
     }
-    FILE *fileHandle;
-    if (!(fileHandle = fdopen(result, "w"))) {
-        st_errAbort("Couldn't create temporary file's file descriptor");
-    }
-    fclose(fileHandle);
-    return pattern;
+    st_errnoAbort("Exhausted temporary file patterns");
+    return NULL;
 }
 
 void removeTempFile(char *tempFile) {
