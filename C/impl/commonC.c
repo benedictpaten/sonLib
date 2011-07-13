@@ -14,10 +14,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <stdlib.h> // per IEEE Std 1003.1, 2004
+#include <unistd.h> // for "legacy" systems
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
     if (exitValue != 0) {
@@ -875,11 +875,17 @@ char *getTempFile(void) {
     if (!tmpdir) {
         tmpdir = "/tmp";
     }
-    char *pattern = stString_print("%s/%s", tmpdir, tag);
+    assert(strlen(tmpdir)-1 >= 0);
+    char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%s%s" : "%s/%s", tmpdir, tag);
     int result = mkstemp(pattern);
     if (result == -1) {
        st_errAbort("Couldn't get temporary file");
     }
+    FILE *fileHandle;
+    if (!(fileHandle = fdopen(result, "w"))) {
+        st_errAbort("Couldn't create temporary file's file descriptor");
+    }
+    fclose(fileHandle);
     return pattern;
 }
 
