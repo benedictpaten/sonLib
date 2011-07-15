@@ -879,7 +879,7 @@ char *getTempFile(void) {
 
     static int32_t counter = 0;
     while(counter < INT32_MAX) {
-        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%i_%i" : "%s/stTmp%i", tmpdir, getpid(), counter++);
+        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%i_%i" : "%s/stTmp%i_%i", tmpdir, getpid(), counter++);
         int fd = open(pattern, O_CREAT|O_EXCL, 0600);
         if(fd >= 0) {
             close(fd);
