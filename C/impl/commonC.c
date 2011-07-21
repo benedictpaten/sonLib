@@ -886,7 +886,7 @@ char *getTempFile(void) {
             return pattern;
         }
         else if(errno != EEXIST){
-            st_errnoAbort("Couldn't create temporary file's file descriptor");
+            st_errnoAbort("Couldn't create temporary file's file descriptor for %s", pattern);
         }
         free(pattern);
     }
