@@ -868,11 +868,14 @@ char *getTempFile(void) {
     }
 
     char *tmpdir = NULL;
+    /*
+     * Whatever security gained by this line more trouble than it's worth.
     if ((getuid() == geteuid()) && (getgid() == getegid())) {
+    */
         if (!((tmpdir = getenv("TMPDIR")))) {
             tmpdir = getenv("TMP");
         }
-    }
+    /*}*/
     if (!tmpdir) {
         tmpdir = "/tmp";
     }
