@@ -224,6 +224,15 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
     qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
 }
 
+void stList_shuffle(stList *list) {
+    for(int32_t i=0; i<stList_length(list); i++) {
+        int32_t j = st_randomInt(0, stList_length(list));
+        void *o = stList_get(list, i);
+        stList_set(list, i, stList_get(list, j));
+        stList_set(list, j, o);
+    }
+}
+
 stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b)) {
     stSortedSet *sortedSet = stSortedSet_construct3(cmpFn, NULL);
     int32_t i;
