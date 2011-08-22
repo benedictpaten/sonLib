@@ -148,6 +148,11 @@ stListIterator *stList_copyIterator(stListIterator *iterator);
 void stList_sort(stList *list, int cmpFn(const void *a, const void *b));
 
 /*
+ * Permutes the list, by iterating over each element and swapping it randomly with a new location.
+ */
+void stList_shuffle(stList *list);
+
+/*
  * Returns a new list, either containing the intersection with set if include is non-zero,
  * or containing the set difference if include is zero.
  */
