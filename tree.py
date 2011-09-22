@@ -11,7 +11,7 @@ import math
 import random
 
 from sonLib.misc import close
-import bioio
+#import bioio
 
 #########################################################
 #########################################################
@@ -252,7 +252,6 @@ class DistancePair:
 def correctTreeDistances(tree):
     if tree is not None:
         if tree.distance < MIN_TREE_DISTANCE:
-            bioio.logger.info(" Correcting tree distance : %i ", tree.distance)
             tree.distance = MIN_TREE_DISTANCE
         correctTreeDistances(tree.left)
         correctTreeDistances(tree.right)
@@ -597,6 +596,7 @@ def remodelTreeRemovingRoot(root, node):
     """
     Node is mid order number
     """
+    import bioio
     assert root.traversalID.mid != node
     hash = {}
     def fn(bT):
@@ -632,6 +632,7 @@ def moveRoot(root, branch):
     """
     Removes the old root and places the new root at the mid point along the given branch
     """
+    import bioio
     if root.traversalID.mid == branch:
         return bioio.newickTreeParser(bioio.printBinaryTree(root, True))
     def fn2(tree, seq):
@@ -747,7 +748,6 @@ def calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID):
     ancestor = fn6(speciesTree, sys.maxint, b[geneTree.traversalID.mid])
     assert ancestorHolder[0] is not None
     fn5(geneTree, ancestorHolder[0])
-    #print "hi", bioio.printBinaryTree(speciesTree, True), len(dups)
     return len(dups), losses[0]
 
 def calculateProbableRootOfGeneTree(speciesTree, geneTree, processID=lambda x : x):
