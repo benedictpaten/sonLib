@@ -14,6 +14,10 @@
 #ifndef SONLIBFILE_H_
 #define SONLIBFILE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Reads a line from a file (which may be terminated by a newline char or EOF),
  * returning the line excluding the newline character.
@@ -21,4 +25,7 @@
  */
 char *stFile_getLineFromFile(FILE *fileHandle);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBFILE_H_ */

@@ -227,6 +227,23 @@ void test_stList_getSortedSet(CuTest *testCase) {
     teardown();
 }
 
+void test_stList_filter(CuTest *testCase) {
+    setup();
+    stSortedSet *set = stSortedSet_construct();
+    stSortedSet_insert(set, strings[0]);
+    stSortedSet_insert(set, strings[4]);
+    stList *list2 = stList_filterToExclude(list, set);
+    stList *list3 = stList_filterToInclude(list, set);
+    assert(stList_length(list2) == 3);
+    assert(stList_length(list3) == 2);
+    assert(stList_get(list2, 0) == strings[1]);
+    assert(stList_get(list2, 1) == strings[2]);
+    assert(stList_get(list2, 2) == strings[3]);
+    assert(stList_get(list3, 0) == strings[0]);
+    assert(stList_get(list3, 1) == strings[4]);
+    teardown();
+}
+
 CuSuite* sonLib_stListTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stList_construct);
@@ -246,5 +263,6 @@ CuSuite* sonLib_stListTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stList_nullList);
     SUITE_ADD_TEST(suite, test_stList_sort);
     SUITE_ADD_TEST(suite, test_stList_getSortedSet);
+    SUITE_ADD_TEST(suite, test_stList_filter);
     return suite;
 }

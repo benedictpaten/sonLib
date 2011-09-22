@@ -14,6 +14,10 @@
 #ifndef SONLIBRANDOM_H_
 #define SONLIBRANDOM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //The exception string
 extern const char *RANDOM_EXCEPTION_ID;
 
@@ -41,4 +45,7 @@ double st_random();
  */
 void *st_randomChoice(stList *list);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBRANDOM_H_ */

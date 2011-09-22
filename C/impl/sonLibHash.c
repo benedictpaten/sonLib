@@ -139,3 +139,22 @@ uint32_t stHash_stringKey(const void *k) {
 int stHash_stringEqualKey( const void *key1, const  void *key2 ) {
     return strcmp(key1, key2) == 0;
 }
+
+stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
+        int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *)) {
+    /*
+     * Inverts the hash.
+     */
+    stHash *invertedHash = stHash_construct3(hashKey, equalsFn, destructKeys, destructValues);
+    stHashIterator *hashIt = stHash_getIterator(hash);
+    void *key;
+    while ((key = stHash_getNext(hashIt)) != NULL) {
+        void *value = stHash_search(hash, key);
+        assert(value != NULL);
+        if(stHash_search(invertedHash, value) == NULL) {
+            stHash_insert(invertedHash, value, key);
+        }
+    }
+    stHash_destructIterator(hashIt);
+    return invertedHash;
+}

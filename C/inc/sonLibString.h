@@ -18,6 +18,10 @@
 #include <string.h>
 #include <strings.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Copies a string, if string is NULL, NULL is returned
  */
@@ -80,4 +84,7 @@ char *stString_join(const char *pad, const char **strings, int32_t length);
  */
 stList *stString_split(const char *string);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBSTRING_H_ */

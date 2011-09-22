@@ -12,11 +12,14 @@ CuSuite *sonLibHashTestSuite(void);
 CuSuite *sonLibSortedSetTestSuite(void);
 CuSuite *sonLib_stListTestSuite(void);
 CuSuite *sonLib_stCommonTestSuite(void);
-CuSuite* sonLib_stTuplesTestSuite(void);
+CuSuite* sonLib_stIntTuplesTestSuite(void);
+CuSuite* sonLib_stInt64TuplesTestSuite(void);
+CuSuite* sonLib_stDoubleTuplesTestSuite(void);
 CuSuite* sonLib_stExceptTestSuite(void);
 CuSuite* sonLib_stRandomTestSuite(void);
 CuSuite* sonLib_stCompressionTestSuite(void);
 CuSuite* sonLibFileTestSuite(void);
+CuSuite* stCacheSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
@@ -24,7 +27,9 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
     CuSuiteAddSuite(suite, sonLibETreeTestSuite());
     CuSuiteAddSuite(suite, sonLibStringTestSuite());
-    CuSuiteAddSuite(suite, sonLib_stTuplesTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stIntTuplesTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stInt64TuplesTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stDoubleTuplesTestSuite());
     CuSuiteAddSuite(suite, sonLibHashTestSuite());
     CuSuiteAddSuite(suite, sonLib_stListTestSuite());
     CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
@@ -32,6 +37,7 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());
     CuSuiteAddSuite(suite, sonLibFileTestSuite());
+    CuSuiteAddSuite(suite, stCacheSuite());
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, output);
@@ -40,6 +46,9 @@ int sonLibRunAllTests(void) {
     return suite->failCount > 0;
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
+    if(argc == 2) {
+        st_setLogLevelFromString(argv[1]);
+    }
     return sonLibRunAllTests();
 }

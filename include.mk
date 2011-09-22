@@ -8,10 +8,13 @@ ifeq (${SYS},FreeBSD)
     # default FreeBSD gcc (4.2.1) has warning bug
     #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
+    cpp = g++
 else
     cxx = gcc -std=c99
+    cpp = g++ 
 # -Wno-unused-result
 endif
+
 
 
 #Release compiler flags
@@ -26,9 +29,11 @@ cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 
+#  for cpp code: don't use pedantic, or Werror
+cppflags = -g -Wall -funroll-loops -lm 
+
 #Flags to use
 cflags = ${cflags_opt} 
-#cflags = ${cflags_dbg}
 
 # location of Tokyo cabinet
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
@@ -46,39 +51,36 @@ else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
    tcPrefix = /usr/local
    tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
+else ifneq ($(wildcard /usr/include/tcbdb.h),)
+   # /usr install (Ubuntu, and probably most Debain-based systems)
+   tcPrefix = /usr
+   tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
+   tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
 
-# location of Tokyo Tyrant
-ifneq ($(wildcard /hive/groups/recon/local/include/tcrdb.h),)
+# location of Kyoto Tycoon
+ifneq ($(wildcard /hive/groups/recon/local/include/ktcommon.h),)
    # hgwdev hive install
    ttPrefix = /hive/groups/recon/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /opt/local/include/tcrdb.h),)
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
+else ifneq ($(wildcard /opt/local/include/ktcommon.h),)
    # OS/X with TC installed from MacPorts
    ttPrefix = /opt/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
-else ifneq ($(wildcard /usr/local/include/tcrdb.h),)
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
+else ifneq ($(wildcard /usr/local/include/ktcommon.h),)
    # /usr/local install (FreeBSD, etc)
    ttPrefix = /usr/local
-   tokyoTyrantIncl = -I${ttPrefix}/include -DHAVE_TOKYO_TYRANT=1
-   tokyoTyrantLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -ltokyotyrant -lz -lbz2 -lpthread -lm
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
 endif
 
 # location of mysql
-#ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
-#    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
-#    mysqlLibs = $(shell mysql_config --libs)
-#endif
+ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
+    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
+    mysqlLibs = $(shell mysql_config --libs)
+endif
 
-# location of PostgreSQL
-#### just disable this for now, since we are having problems with not
-#### having postgres share libraries on the cluster.
-# ifeq ($(shell pg_config --version >/dev/null 2>&1 && echo ok),ok)
-#     #pgsqlIncl = -I$(shell pg_config --includedir) -DHAVE_POSTGRESQL=1
-#     #pgsqlLibs = $(shell pg_config --ldflags) -lpq
-# endif
-
-dblibs = ${tokyoCabinetLib} ${tokyoTyrantLib} ${mysqlLibs} ${pgsqlLibs} -lz
+dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz
 

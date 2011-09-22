@@ -83,6 +83,17 @@ static void insertRecord(stKVDatabase *database, int64_t key, const void *value,
     }
 }
 
+static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    TCBDB *dbImpl = database->dbImpl;
+    
+    if (recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to insert a key in the database that already exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), (const void *)&value, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
     TCBDB *dbImpl = database->dbImpl;
     if (!recordExists(dbImpl, key)) {
@@ -91,6 +102,73 @@ static void updateRecord(stKVDatabase *database, int64_t key, const void *value,
     if (!tcbdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
     }
+}
+
+static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!recordExists(dbImpl, key)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Attempt to update a key in the database that doesn't exists: %lld", (long long)key);
+    }
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), (const void *)&value, sizeof(int64_t))) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void setRecord(stKVDatabase *database, int64_t key,
+        const void *value, int64_t sizeOfRecord) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbput(dbImpl, &key, sizeof(int64_t), value, sizeOfRecord)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Set key/value to database error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void startTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbtranbegin(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to start a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void commitTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    //Commit the transaction..
+    if (!tcbdbtrancommit(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to commit a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void abortTransaction(stKVDatabase *database) {
+    TCBDB *dbImpl = database->dbImpl;
+    if (!tcbdbtranabort(dbImpl)) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to abort a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
+    }
+}
+
+static void bulkSetRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stKVDatabaseBulkRequest *request = stList_get(records, i);
+            switch(request->type) {
+                case UPDATE:
+                updateRecord(database, request->key, request->value, request->size);
+                break;
+                case INSERT:
+                insertRecord(database, request->key, request->value, request->size);
+                break;
+                case SET:
+                setRecord(database, request->key, request->value, request->size);
+                break;
+            }
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "tokyo cabinet bulk set records failed");
+    }stTryEnd;
 }
 
 static int64_t numberOfRecords(stKVDatabase *database) {
@@ -107,9 +185,44 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
     return record;
 }
 
+static int64_t getInt64(stKVDatabase *database, int64_t key) {
+    TCBDB *dbImpl = database->dbImpl;
+    //Return value must be freed.
+    int32_t i;
+    void *record = tcbdbget(dbImpl, &key, sizeof(int64_t), &i);
+
+    if (record == NULL) {
+        return -1;
+    } else {
+        return *((int64_t*)record);
+    }
+}
+
 static void *getRecord(stKVDatabase *database, int64_t key) {
     int64_t i;
     return getRecord2(database, key, &i);
+}
+
+static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incrementAmount) {
+    startTransaction(database);
+    int64_t returnValue = INT64_MIN;
+    stTry {
+        int64_t recordSize;
+        int64_t *record = getRecord2(database, key, &recordSize);
+        assert(recordSize >= sizeof(int64_t));
+        record[0] += incrementAmount;
+        returnValue = record[0];
+        updateRecord(database, key, record, recordSize);
+        free(record);
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "tokyo cabinet increment record failed");
+    }stTryEnd;
+    return returnValue;
 }
 
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
@@ -136,26 +249,21 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
     }
 }
 
-static void startTransaction(stKVDatabase *database) {
-    TCBDB *dbImpl = database->dbImpl;
-    if (!tcbdbtranbegin(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to start a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
-    }
-}
-
-static void commitTransaction(stKVDatabase *database) {
-    TCBDB *dbImpl = database->dbImpl;
-    //Commit the transaction..
-    if (!tcbdbtrancommit(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to commit a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
-    }
-}
-
-static void abortTransaction(stKVDatabase *database) {
-    TCBDB *dbImpl = database->dbImpl;
-    if (!tcbdbtranabort(dbImpl)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Tried to abort a transaction but got error: %s", tcbdberrmsg(tcbdbecode(dbImpl)));
-    }
+static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
+    startTransaction(database);
+    stTry {
+        for(int32_t i=0; i<stList_length(records); i++) {
+            stInt64Tuple *j = stList_get(records, i);
+            removeRecord(database, stInt64Tuple_getPosition(j, 0));
+        }
+        commitTransaction(database);
+    }stCatch(ex) {
+        abortTransaction(database);
+        stThrowNewCause(
+                ex,
+                ST_KV_DATABASE_EXCEPTION_ID,
+                "tokyo cabinet bulk remove records failed");
+    }stTryEnd;
 }
 
 //initialisation function
@@ -163,18 +271,22 @@ static void abortTransaction(stKVDatabase *database) {
 void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
-    database->delete = deleteDB;
+    database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
     database->insertRecord = insertRecord;
+    database->insertInt64 = insertInt64;
     database->updateRecord = updateRecord;
+    database->updateInt64 = updateInt64;
+    database->setRecord = setRecord;
+    database->incrementInt64 = incrementInt64;
+    database->bulkSetRecords = bulkSetRecords;
+    database->bulkRemoveRecords = bulkRemoveRecords;
     database->numberOfRecords = numberOfRecords;
     database->getRecord = getRecord;
+    database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
     database->removeRecord = removeRecord;
-    database->startTransaction = startTransaction;
-    database->commitTransaction = commitTransaction;
-    database->abortTransaction = abortTransaction;
 }
 
 #endif

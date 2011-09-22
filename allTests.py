@@ -11,15 +11,14 @@ import treeTest
 import kvdbTest
 import socket
 from sonLib.bioio import system
-
 from sonLib.bioio import parseSuiteTestOptions
-
+from sonLib.bioio import getLogLevelString
 
 class TestCase(unittest.TestCase):        
     def testSonLibCTests(self):
         """Run m,ost the sonLib CuTests, fail if any of them fail.
         """
-        system("sonLibTests")
+        system("sonLibTests %s" % getLogLevelString())
 
 def allSuites():
     bioioSuite = unittest.makeSuite(bioioTest.TestCase, 'test')
@@ -37,6 +36,9 @@ def main():
     suite = allSuites()
     runner = unittest.TextTestRunner()
     runner.run(suite)
+    i = runner.run(suite)
+    return len(i.failures) + len(i.errors)
         
 if __name__ == '__main__':
-    main()
+    import sys
+    sys.exit(main())

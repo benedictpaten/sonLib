@@ -14,6 +14,12 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h> // per IEEE Std 1003.1, 2004
+#include <unistd.h> // for "legacy" systems
+#include <fcntl.h>
+#include <errno.h>
 
 void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
     if (exitValue != 0) {
@@ -53,7 +59,8 @@ void *mallocChunk(struct Chunks *chunk) {
     }
 }
 
-void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
+void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize,
+        int32_t base) {
     assert(*currentSize <= newSize);
     if (current != NULL) {
         free(current);
@@ -62,7 +69,8 @@ void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, 
     return st_malloc(base * ((int64_t) newSize));
 }
 
-void *arrayResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
+void *arrayResize(void *current, int32_t *currentSize, int32_t newSize,
+        int32_t base) {
     if (*currentSize < newSize) {
         return arrayResize_NoCheck(current, currentSize, newSize, base);
     }
@@ -70,13 +78,16 @@ void *arrayResize(void *current, int32_t *currentSize, int32_t newSize, int32_t 
 }
 
 void listResize(struct List *list, int32_t newMaxSize) {
-    list->list = arrayResize(list->list, &list->maxLength, newMaxSize, sizeof(void *));
+    list->list = arrayResize(list->list, &list->maxLength, newMaxSize,
+            sizeof(void *));
 }
 
-void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
+void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize,
+        int32_t newSize, int32_t base) {
     assert(*currentSize <= newSize);
     void *new;
-    new = memcpy(st_malloc(base*newSize), current, base*(*currentSize));
+    new = memcpy(st_malloc(((int64_t) base) * newSize), current,
+            ((int64_t) base) * (*currentSize));
     if (current != NULL) {
         free(current);
     }
@@ -84,16 +95,19 @@ void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize, int32_t newSi
     return new;
 }
 
-void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
+void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize,
+        int32_t base) {
     if (*currentSize < newSize) {
         return arrayCopyResize_NoCheck(current, currentSize, newSize, base);
     }
     return current;
 }
 
-void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t newLength, int32_t base) {
+void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t newLength,
+        int32_t base) {
     if (newLength >= *maxLength) {
-        return arrayCopyResize_NoCheck(current, maxLength, (*maxLength) * 2 + newLength + SMALL_CHUNK_SIZE, base);
+        return arrayCopyResize_NoCheck(current, maxLength,
+                (*maxLength) * 2 + newLength + SMALL_CHUNK_SIZE, base);
     }
     return current;
 }
@@ -119,7 +133,8 @@ void listIntersection(struct List *list, struct List *list2, struct List *list3)
     int32_t k;
     static void **scratch;
     static int32_t scratchSize;
-    scratch = arrayResize(scratch, &scratchSize, list->length + 1, sizeof(void *));
+    scratch = arrayResize(scratch, &scratchSize, list->length + 1,
+            sizeof(void *));
     k = 0;
     for (i = 0; i < list->length; i++) {
         for (j = 0; j < list2->length; j++) {
@@ -136,7 +151,8 @@ void listIntersection(struct List *list, struct List *list2, struct List *list3)
 }
 
 void listCopyResize(struct List *list, int32_t newMaxSize) {
-    list->list = arrayCopyResize(list->list, &list->maxLength, newMaxSize, sizeof(void *));
+    list->list = arrayCopyResize(list->list, &list->maxLength, newMaxSize,
+            sizeof(void *));
 }
 
 struct hashtable *intListToHash(struct List *list, int32_t *(*getKey)(void *)) {
@@ -144,7 +160,8 @@ struct hashtable *intListToHash(struct List *list, int32_t *(*getKey)(void *)) {
     void *key;
     struct hashtable *hT;
 
-    hT = create_hashtable(list->length, hashtable_intHashKey, hashtable_intEqualKey, NULL, NULL);
+    hT = create_hashtable(list->length, hashtable_intHashKey,
+            hashtable_intEqualKey, NULL, NULL);
     for (i = 0; i < list->length; i++) {
         key = getKey(list->list[i]);
         hashtable_insert(hT, key, list->list[i]);
@@ -213,8 +230,8 @@ void copyList(struct List *from, struct List *to) {
 
 void listAppend(struct List *list, void *item) {
     if (list->length >= list->maxLength) {
-        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength * 2 + TINY_CHUNK_SIZE,
-                sizeof(void *));
+        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength,
+                list->maxLength * 2 + TINY_CHUNK_SIZE, sizeof(void *));
     }
     list->list[list->length++] = item;
 }
@@ -235,8 +252,8 @@ void listAppendArray(struct List *list, void **array, int32_t length) {
     int32_t i;
 
     if (list->length + length > list->maxLength) {
-        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength * 2 + length
-                + TINY_CHUNK_SIZE, sizeof(void *));
+        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength,
+                list->maxLength * 2 + length + TINY_CHUNK_SIZE, sizeof(void *));
     }
     for (i = 0; i < length; i++) {
         list->list[list->length++] = array[i];
@@ -321,7 +338,8 @@ int32_t listContainsDuplicates(struct List *list) {
 }
 
 //list functions
-struct List *copyConstructList(void **list, int32_t length, void(*destructElement)(void *)) {
+struct List *copyConstructList(void **list, int32_t length,
+        void(*destructElement)(void *)) {
     struct List *i;
     int32_t j;
 
@@ -335,7 +353,8 @@ struct List *copyConstructList(void **list, int32_t length, void(*destructElemen
     return i;
 }
 
-struct List *constructZeroLengthList(int32_t length, void(*destructElement)(void *)) {
+struct List *constructZeroLengthList(int32_t length,
+        void(*destructElement)(void *)) {
     struct List *l;
     l = constructEmptyList(length, destructElement);
     l->length = 0;
@@ -411,8 +430,8 @@ struct IntList *intListCopy(struct IntList *intList) {
 
 void intListAppend(struct IntList *list, int32_t item) {
     if (list->length >= list->maxLength) {
-        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength, list->maxLength * 2 + TINY_CHUNK_SIZE,
-                sizeof(int32_t));
+        list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength,
+                list->maxLength * 2 + TINY_CHUNK_SIZE, sizeof(int32_t));
     }
     list->list[list->length++] = item;
 }
@@ -453,7 +472,8 @@ int hashtable_intPairEqualKey(const void *key1, const void *key2) {
     const int32_t *iA2;
     iA = key1;
     iA2 = key2;
-    return (iA[0] == iA2[0] && iA[1] == iA2[1]) || (iA[0] == iA2[1] && iA[1] == iA2[0]);
+    return (iA[0] == iA2[0] && iA[1] == iA2[1]) || (iA[0] == iA2[1] && iA[1]
+            == iA2[0]);
 }
 
 uint32_t hashtable_orderedIntPairHashKey(const void *k) {
@@ -516,7 +536,7 @@ uint32_t hashtable_stringHashKey(const void *k) {
     uint32_t hash = 0; //5381;
     int c;
     char *cA;
-    cA = (char *)k;
+    cA = (char *) k;
     while ((c = *cA++) != '\0') {
         hash = c + (hash << 6) + (hash << 16) - hash;
         //hash = ((hash << 5) + hash) + c; // hash*33 + c
@@ -595,7 +615,8 @@ int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
     return 0;
 }
 
-struct TraversalID *constructTraversalID(int32_t midStart, int32_t mid, int32_t midEnd, int32_t leafNo) {
+struct TraversalID *constructTraversalID(int32_t midStart, int32_t mid,
+        int32_t midEnd, int32_t leafNo) {
     struct TraversalID *traversalID;
 
     traversalID = st_malloc(sizeof(struct TraversalID));
@@ -610,8 +631,8 @@ void destructTraversalID(struct TraversalID *traversalID) {
     free(traversalID);
 }
 
-struct BinaryTree *constructBinaryTree(float distance, int32_t internal, const char *label, struct BinaryTree *left,
-        struct BinaryTree *right) {
+struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+        const char *label, struct BinaryTree *left, struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
 
     binaryTree = st_malloc(sizeof(struct BinaryTree));
@@ -650,7 +671,8 @@ int32_t leafNoInSubtree(struct TraversalID *traversalID) {
     return rightMostLeafNo(traversalID) - leftMostLeafNo(traversalID) + 1;
 }
 
-static void binaryTree_depthFirstNumbers_Traverse(struct BinaryTree *binaryTree, int32_t *mid, int32_t *leafNo) {
+static void binaryTree_depthFirstNumbers_Traverse(
+        struct BinaryTree *binaryTree, int32_t *mid, int32_t *leafNo) {
     int32_t i;
     int32_t j;
 
@@ -667,7 +689,8 @@ static void binaryTree_depthFirstNumbers_Traverse(struct BinaryTree *binaryTree,
     }
 }
 
-void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree, struct List *leafStrings) {
+void binaryTree_getOrderedLeafStringsP(struct BinaryTree *binaryTree,
+        struct List *leafStrings) {
     if (binaryTree->internal) {
         binaryTree_getOrderedLeafStringsP(binaryTree->left, leafStrings);
         binaryTree_getOrderedLeafStringsP(binaryTree->right, leafStrings);
@@ -709,7 +732,8 @@ void printBinaryTree(FILE *file, struct BinaryTree *binaryTree) {
     fprintf(file, ";\n");
 }
 
-void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list) {
+void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i),
+        struct List *list) {
     list->list[bT->traversalID->mid] = fn(bT);
     if (bT->internal) {
         annotateTree_Fn(bT->left, fn, list);
@@ -717,7 +741,8 @@ void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), s
     }
 }
 
-void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), struct List *list) {
+void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i),
+        struct List *list) {
     int32_t i;
 
     list->length = 0;
@@ -727,7 +752,8 @@ void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i), stru
     annotateTree_Fn(bT, fn, list);
 }
 
-void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree, struct BinaryTree **labels) {
+void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree,
+        struct BinaryTree **labels) {
     labels[binaryTree->traversalID->mid] = binaryTree;
     if (binaryTree->internal) {
         getBinaryTreeNodesInMidOrder(binaryTree->left, labels);
@@ -756,7 +782,8 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
 char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
     char *fullPath;
 
-    fullPath = st_malloc(sizeof(char) * (strlen(pathPrefix) + strlen(pathSuffix) + 2));
+    fullPath = st_malloc(
+            sizeof(char) * (strlen(pathPrefix) + strlen(pathSuffix) + 2));
     if (strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix) - 1] == '/') {
         sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
     } else {
@@ -766,7 +793,8 @@ char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
 }
 
 int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
-    return (valueOne - valueTwo <= precision) || (valueTwo - valueOne <= precision);
+    return (valueOne - valueTwo <= precision) || (valueTwo - valueOne
+            <= precision);
 }
 
 /////////////////////////////////////////////////////////
@@ -797,7 +825,8 @@ int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
     i = mkdir(cA, S_IRWXU);
     if (i != 0) {
         free(cA);
-        st_logDebug("Something went wrong making temp dir in constructRandomDir\n");
+        st_logDebug(
+                "Something went wrong making temp dir in constructRandomDir\n");
         return i;
     }
     *tempDir = cA;
@@ -825,7 +854,8 @@ int32_t destructRandomDir(char *tempDir) {
 
 struct TempFileTree *tempFileTree = NULL;
 
-void initialiseTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber) {
+void initialiseTempFileTree(char *rootDir, int32_t filesPerDir,
+        int32_t levelNumber) {
     tempFileTree = constructTempFileTree(rootDir, filesPerDir, levelNumber);
 }
 
@@ -837,10 +867,34 @@ char *getTempFile(void) {
         return tempFileTree_getTempFile(tempFileTree);
     }
 
-    char *fileName;
-    fileName = st_malloc(sizeof(char) * (1 + L_tmpnam));
-    tmpnam(fileName);
-    return fileName;
+    char *tmpdir = NULL;
+    /*
+     * Whatever security gained by this line more trouble than it's worth.
+    if ((getuid() == geteuid()) && (getgid() == getegid())) {
+    */
+        if (!((tmpdir = getenv("TMPDIR")))) {
+            tmpdir = getenv("TMP");
+        }
+    /*}*/
+    if (!tmpdir) {
+        tmpdir = "/tmp";
+    }
+
+    static int32_t counter = 0;
+    while(counter < INT32_MAX) {
+        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%i_%i" : "%s/stTmp%i_%i", tmpdir, getpid(), counter++);
+        int fd = open(pattern, O_CREAT|O_EXCL, 0600);
+        if(fd >= 0) {
+            close(fd);
+            return pattern;
+        }
+        else if(errno != EEXIST){
+            st_errnoAbort("Couldn't create temporary file's file descriptor for %s", pattern);
+        }
+        free(pattern);
+    }
+    st_errnoAbort("Exhausted temporary file patterns");
+    return NULL;
 }
 
 void removeTempFile(char *tempFile) {
@@ -861,7 +915,8 @@ void removeAllTempFiles(void) {
     tempFileTree = NULL;
 }
 
-struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber) {
+struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir,
+        int32_t levelNumber) {
     struct TempFileTree *tempFileTree;
     int32_t i, j;
     char *cA;
@@ -908,8 +963,8 @@ void destructTempFileTree(struct TempFileTree *tempFileTree) {
     char cA[1000];
     int32_t i;
 
-    st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n", tempFileTree->tempFilesCreated,
-            tempFileTree->tempFilesDestroyed);
+    st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
+            tempFileTree->tempFilesCreated, tempFileTree->tempFilesDestroyed);
 
     sprintf(cA, "rm -rf %s", tempFileTree->rootDir);
     i = system(cA);
@@ -929,7 +984,8 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
     char *cA4;
     FILE *fileHandle;
 
-    i = sizeof(char) * (strlen(tempFileTree->rootDir) + 30 * tempFileTree->levelNumber + 1);
+    i = sizeof(char) * (strlen(tempFileTree->rootDir) + 30
+            * tempFileTree->levelNumber + 1);
     cA = st_malloc(i); //generous safety space.
     cA2 = st_malloc(i);
     cA4 = NULL;
@@ -946,7 +1002,8 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
                 for (j = i; j < tempFileTree->levelNumber - 1; j++) {
                     sprintf(cA, "%s", tempFileTree->rootDir);
                     for (k = 0; k <= j; k++) {
-                        sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[k]);
+                        sprintf(cA2, "%s/c" INT_STRING, cA,
+                                tempFileTree->levelsArray[k]);
                         cA3 = cA;
                         cA = cA2;
                         cA2 = cA3;
@@ -956,13 +1013,14 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
             }
             sprintf(cA, "%s", tempFileTree->rootDir);
             for (j = 0; j < tempFileTree->levelNumber; j++) {
-                sprintf(cA2, "%s/c" INT_STRING, cA, tempFileTree->levelsArray[j]);
+                sprintf(cA2, "%s/c" INT_STRING, cA,
+                        tempFileTree->levelsArray[j]);
                 cA3 = cA;
                 cA = cA2;
                 cA2 = cA3;
             }
             cA4 = st_malloc(sizeof(char) * (strlen(cA) + 1));
-            strcpy(cA4,cA);
+            strcpy(cA4, cA);
             break;
         }
     }
@@ -979,23 +1037,28 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
  * Graphviz functions.
  */
 
-void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label, double width,
-        double height, const char *shape, const char *colour, int32_t fontsize) {
+void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle,
+        const char *label, double width, double height, const char *shape,
+        const char *colour, int32_t fontsize) {
     /*
      * Adds a node to the graph.
      */
-    fprintf(graphFileHandle, "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%i];\n", width, height, shape,
-            colour, fontsize);
+    fprintf(graphFileHandle,
+            "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%i];\n",
+            width, height, shape, colour, fontsize);
     fprintf(graphFileHandle, "n%sn [label=\"%s\"];\n", nodeName, label);
 }
 
-void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
-        const char *label, const char *colour, double length, double weight, const char *direction) {
+void graphViz_addEdgeToGraph(const char *parentNodeName,
+        const char *childNodeName, FILE *graphFileHandle, const char *label,
+        const char *colour, double length, double weight, const char *direction) {
     /*
      * Links two nodes in the graph together.
      */
-    fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n", colour, length, weight, direction);
-    fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName, childNodeName, label);
+    fprintf(graphFileHandle, "edge[color=%s,len=%f,weight=%f,dir=%s];\n",
+            colour, length, weight, direction);
+    fprintf(graphFileHandle, "n%sn -- n%sn [label=\"%s\"];\n", parentNodeName,
+            childNodeName, label);
 }
 
 void graphViz_setupGraphFile(FILE *graphFileHandle) {
@@ -1019,8 +1082,8 @@ const char *graphViz_getColour(void) {
      * Returns a valid colour.
      */
     getColour_Index++;
-    static char *colours[] = { "red", "blue", "green", "yellow", "cyan", "magenta", "orange", "purple", "brown",
-            "black", "grey" };
+    static char *colours[] = { "red", "blue", "green", "yellow", "cyan",
+            "magenta", "orange", "purple", "brown", "black", "grey" };
     return colours[getColour_Index % 11];
 }
 

@@ -38,10 +38,24 @@ def __setDefaultLogger():
             return l
     handler = logging.StreamHandler(sys.stderr)
     l.addHandler(handler) 
+    l.setLevel(logging.CRITICAL)
     return l
 
 logger = __setDefaultLogger()
 logLevelString = "CRITICAL"
+
+def redirectLoggerStreamHandlers(oldStream, newStream):
+    """Redirect the stream of a stream handler to a different stream
+    """
+    for handler in list(logger.handlers): #Remove old handlers
+        if handler.stream == oldStream:
+            handler.close()
+            logger.removeHandler(handler)
+    for handler in logger.handlers: #Do not add a duplicate handler 
+        if handler.stream == newStream:
+           return
+    logger.addHandler(logging.StreamHandler(newStream))
+    
 
 def getLogLevelString():
     return logLevelString
@@ -54,10 +68,13 @@ def addLoggingFileHandler(fileName, rotatingLogging=False):
     logger.addHandler(handler)
     
 def setLogLevel(logLevel):
-    assert logLevel in [ "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
+    logLevel = logLevel.upper()
+    assert logLevel in [ "OFF", "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
     global logLevelString
     logLevelString = logLevel
-    if logLevel == "INFO":
+    if logLevel == "OFF":
+        logger.setLevel(logging.FATAL)
+    elif logLevel == "INFO":
         logger.setLevel(logging.INFO)
     elif logLevel == "DEBUG":
         logger.setLevel(logging.DEBUG)
@@ -81,42 +98,50 @@ def logFile(fileName, printFunction=logger.info):
 def addLoggingOptions(parser):
     """Adds logging options to an optparse.OptionsParser
     """
+    
+    parser.add_option("--logOff", dest="logOff", action="store_true",
+                     help="Turn of logging. (default is CRITICAL)",
+                     default=False)
+    
     parser.add_option("--logInfo", dest="logInfo", action="store_true",
-                     help="Turn on logging at INFO level",
+                     help="Turn on logging at INFO level. (default is CRITICAL)",
                      default=False)
     
     parser.add_option("--logDebug", dest="logDebug", action="store_true",
-                     help="Turn on logging at DEBUG level",
+                     help="Turn on logging at DEBUG level. (default is CRITICAL)",
                      default=False)
     
     parser.add_option("--logLevel", dest="logLevel", type="string",
-                      help="Log at level (may be either INFO/DEBUG/CRITICAL)")
+                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). By default it is CRITICAL")
     
     parser.add_option("--logFile", dest="logFile", type="string",
                       help="File to log in")
     
     parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false",
-                     help="Turn off rotating logging, which prevents log files getting too big",
+                     help="Turn off rotating logging, which prevents log files getting too big. default=%default",
                      default=True)
 
 def setLoggingFromOptions(options):
     """Sets the logging from a dictionary of name/value options.
     """
     #We can now set up the logging info.
-    if options.logLevel != None:
+    if options.logLevel is not None:
         setLogLevel(options.logLevel) #Use log level, unless flags are set..   
-     
-    if options.logInfo:
+    
+    if options.logOff:
+        setLogLevel("OFF")
+    elif options.logInfo:
         setLogLevel("INFO")
     elif options.logDebug:
         setLogLevel("DEBUG")
         
     logger.info("Logging set at level: %s" % logLevelString)  
     
-    if options.logFile != None:
+    if options.logFile is not None:
         addLoggingFileHandler(options.logFile, options.logRotating)
     
     logger.info("Logging to file: %s" % options.logFile)  
+    
 
 #########################################################
 #########################################################
@@ -147,6 +172,17 @@ def popen(command, tempFile):
     if i != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
     return i
+
+def popenCatch(command):
+    """Runs a command and return standard out.
+    """
+    logger.debug("Running the command: %s" % command)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    sts = os.waitpid(process.pid, 0)
+    i = sts[1]
+    if i != 0:
+        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
+    return process.stdout.read().strip()
 
 def getTotalCpuTime():
     """Gives the total cpu time, including the children. 
@@ -245,13 +281,13 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 #########################################################
 
 def getBasicOptionParser(usage="usage: %prog [options]", version="%prog 0.1", parser=None):
-    if parser == None:
+    if parser is None:
         parser = OptionParser(usage=usage, version=version)
     
     addLoggingOptions(parser)
     
     parser.add_option("--tempDirRoot", dest="tempDirRoot", type="string",
-                      help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base",
+                      help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base.",
                       default=os.getcwd())
     
     return parser
@@ -270,11 +306,11 @@ def parseBasicOptions(parser):
     return options, args
 
 def parseSuiteTestOptions(parser=None):
-    if parser == None:
+    if parser is None:
         parser = getBasicOptionParser()
     
     parser.add_option("--testLength", dest="testLength", type="string",
-                     help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG",
+                     help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG. default=%default",
                      default="SHORT")
     
     parser.add_option("--saveError", dest="saveError", type="string",
@@ -289,11 +325,13 @@ def parseSuiteTestOptions(parser=None):
         TestStatus.setTestStatus(TestStatus.TEST_MEDIUM)
     elif options.testLength == "LONG":
         TestStatus.setTestStatus(TestStatus.TEST_LONG)
-    else: 
-        assert options.testLength == "VERY_LONG" #Otherwise an unrecognised option
+    elif options.testLength == "VERY_LONG":
         TestStatus.setTestStatus(TestStatus.TEST_VERY_LONG)
+    else:
+        parser.error('Unrecognised option for --testLength, %s. Options are SHORT, MEDIUM, LONG, VERY_LONG.' % 
+                     options.testLength)
     
-    if options.saveError != None:
+    if options.saveError is not None:
         TestStatus.setSaveErrorLocation(options.saveError)
         
     return options, args
@@ -305,7 +343,7 @@ def nameValue(name, value, valueType=str):
         if value:
             return "--%s" % name
         return ""
-    if value == None:
+    if value is None:
         return ""
     return "--%s %s" % (name, valueType(value))    
 
@@ -325,7 +363,7 @@ def getRandomAlphaNumericString(length=10):
 def getTempFile(suffix="", rootDir=None):
     """Returns a string representing a temporary file, that must be manually deleted
     """
-    if rootDir == None:
+    if rootDir is None:
         handle, tmpFile = tempfile.mkstemp(suffix)
         os.close(handle)
         return tmpFile
@@ -339,7 +377,7 @@ def getTempDirectory(rootDir=None):
     """
     returns a temporary directory that must be manually deleted
     """
-    if rootDir == None:
+    if rootDir is None:
         return tempfile.mkdtemp()
     else:
         while True:
@@ -469,7 +507,7 @@ class TempFileTree:
         """Destroys all temp temp file hierarchy, getting rid of all files.
         """
         os.system("rm -rf %s" % self.rootDir)
-        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))     
+        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))  
 
 #########################################################
 #########################################################
@@ -594,7 +632,7 @@ def fastaAlignmentRead(fasta, mapFn=(lambda x : x), l=None):
     """
     reads in columns of multiple alignment and returns them iteratively
     """
-    if l == None:
+    if l is None:
         l = _getMultiFastaOffsets(fasta)
     else:
         l = l[:]
@@ -759,12 +797,12 @@ def newickTreeParser(newickTree, defaultDistance=DEFAULT_DISTANCE, \
 def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePrintFn=(lambda f : "%f" % f)):
     def fn(binaryTree):
         #print " tree Node ", binaryTree.left, binaryTree.right, binaryTree.distance, binaryTree.internal, binaryTree.iD 
-        if binaryTree.iD != None:
+        if binaryTree.iD is not None:
             iD = str(binaryTree.iD)
         else:
             iD = ''
-        if binaryTree.internal and (dontStopAtID or binaryTree.iD == None):
-            if binaryTree.right != None:
+        if binaryTree.internal and (dontStopAtID or binaryTree.iD is None):
+            if binaryTree.right is not None:
                 s = '(' + fn(binaryTree.left) + ',' + fn(binaryTree.right) + ')' + iD
             else:
                 s = '(' + fn(binaryTree.left) + ')' + iD 
@@ -832,7 +870,7 @@ class AlignmentOperation:
         self.score = score
     
     def __eq__(self, op):
-        if op == None:
+        if op is None:
             return False
         return self.type == op.type and self.length == op.length and close(self.score, op.score, 0.0001)
     
@@ -873,7 +911,7 @@ class PairwiseAlignment:
         assert i == abs(end2 - start2) #Check alignment is of right length with respect to the target
         
     def __eq__(self, pairwiseAlignment):
-        if pairwiseAlignment == None:
+        if pairwiseAlignment is None:
             return False
         return self.contig1 == pairwiseAlignment.contig1 and \
         self.start1 == pairwiseAlignment.start1 and \
@@ -896,7 +934,7 @@ def cigarRead(fileHandle):
     line = fileHandle.readline()
     while line != '':
         i = p.match(line)
-        if i != None:
+        if i is not None:
             m = i.groups()
             if len(m) == 11:
                 l = m[10].split(" ")

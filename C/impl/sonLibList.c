@@ -97,7 +97,7 @@ void stList_set(stList *list, int32_t index, void *item) {
 static void *st_list_appendP(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
     assert(*currentSize <= newSize);
     void *new;
-    new = memcpy(st_malloc(base*newSize), current, base*(*currentSize));
+    new = memcpy(st_malloc(((int64_t)base)*newSize), current, ((int64_t)base)*(*currentSize));
     if(current != NULL) {
         free(current);
     }
@@ -224,6 +224,15 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
     qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
 }
 
+void stList_shuffle(stList *list) {
+    for(int32_t i=0; i<stList_length(list); i++) {
+        int32_t j = st_randomInt(0, stList_length(list));
+        void *o = stList_get(list, i);
+        stList_set(list, i, stList_get(list, j));
+        stList_set(list, j, o);
+    }
+}
+
 stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b)) {
     stSortedSet *sortedSet = stSortedSet_construct3(cmpFn, NULL);
     int32_t i;
@@ -235,4 +244,48 @@ stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const
 
 void stList_setDestructor(stList *list, void (*destructElement)(void *)) {
     list->destructElement = destructElement;
+}
+
+
+stList *stList_filter(stList *list, bool(*fn)(void *)) {
+    stList *list2 = stList_construct();
+    for (int32_t i = 0; i < stList_length(list); i++) {
+        void *o = stList_get(list, i);
+        if (fn(o)) {
+            stList_append(list2, o);
+        }
+    }
+    return list2;
+}
+
+static stList *filterP(stList *list, stSortedSet *set, bool include) {
+    /*
+     * Returns a new list, either containing the intersection with set if include is non-zero,
+     * or containing the set difference if include is zero.
+     */
+    stList *list2 = stList_construct();
+    for (int32_t i = 0; i < stList_length(list); i++) {
+        void *o = stList_get(list, i);
+        if ((stSortedSet_search(set, o) != NULL && include)
+                || (stSortedSet_search(set, o) == NULL && !include)) {
+            stList_append(list2, o);
+        }
+    }
+    return list2;
+}
+
+stList *stList_filterToExclude(stList *list, stSortedSet *set) {
+    return filterP(list, set, 0);
+}
+
+stList *stList_filterToInclude(stList *list, stSortedSet *set) {
+    return filterP(list, set, 1);
+}
+
+stList *stList_join(stList *listOfLists) {
+    stList *joinedList = stList_construct();
+    for (int32_t i = 0; i < stList_length(listOfLists); i++) {
+        stList_appendAll(joinedList, stList_get(listOfLists, i));
+    }
+    return joinedList;
 }

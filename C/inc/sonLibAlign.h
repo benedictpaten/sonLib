@@ -16,6 +16,10 @@
 
 #include "sonLibTypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Constructs a multiple sequence alignment. Each sequence is a 'row' in the alignment,
  * and has a given string identifying it, a start coordinate and a strand.
@@ -189,4 +193,7 @@ void stAlign_writeMFA(stAlign *align, FILE *fileHandle);
 
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -17,14 +17,13 @@ class TestCase(unittest.TestCase):
     def testSonLibKVTokyoCabinet(self):
         system("sonLib_kvDatabaseTest --type=tokyocabinet")
 
-    def testSonLibKVTokyoTyrant(self):
-        if socket.gethostname() == "hgwdev":
-            system("sonLib_kvDatabaseTest --type=tokyotyrant --host=kolossus-10.kilokluster.ucsc.edu --port=1978 --user=cactus --pass=cactus  --db=cactus")
+    def testSonLibKVKyotoTycoon(self):
+            #Needs a ktserver process running on the local machine, we need to add a check for this condition to stop the test failing
+            system("sonLib_kvDatabaseTest --type=kyototycoon --host=localhost --port=1978")
 
-    def testSonLibKVSQLTest(self):
-        if socket.gethostname() == "hgwdev":
+    def testSonLibKVMySQLTest(self):
+        if socket.gethostname() == "hgwdev": 
             system("sonLib_kvDatabaseTest --type=mysql --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
-
 
 if __name__ == '__main__':
     unittest.main()

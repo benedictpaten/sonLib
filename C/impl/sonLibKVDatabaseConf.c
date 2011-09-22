@@ -24,6 +24,7 @@ struct stKVDatabaseConf {
     char *databaseDir;
     char *host;
     unsigned port;
+    int timeout;
     char *user;
     char *password;
     char *databaseName;
@@ -37,12 +38,15 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
     return conf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructTokyoTyrant(const char *host, unsigned port, const char *databaseDir) {
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir,
+														const char* databaseName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
-    conf->type = stKVDatabaseTypeTokyoTyrant;
+    conf->type = stKVDatabaseTypeKyotoTycoon;
     conf->databaseDir = stString_copy(databaseDir);
     conf->host = stString_copy(host);
     conf->port = port;
+    conf->timeout = timeout;
+    conf->databaseName = stString_copy(databaseName);
     return conf;
 }
 
@@ -66,15 +70,6 @@ stKVDatabaseConf *stKVDatabaseConf_constructMySql(const char *host, unsigned por
             "requested MySQL database, however sonlib is not compiled with MySql support");
 #endif
     return constructSql(stKVDatabaseTypeMySql, host, port, user, password, databaseName, tableName);
-}
-
-stKVDatabaseConf *stKVDatabaseConf_constructPostgreSql(const char *host, unsigned port, const char *user, const char *password,
-                                                       const char *databaseName, const char *tableName) {
-#ifndef HAVE_POSTGRESQL
-    stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
-            "requested PostgreSql database, however sonlib is not compiled with MySql support");
-#endif
-    return constructSql(stKVDatabaseTypePostgreSql, host, port, user, password, databaseName, tableName);
 }
 
 char *getNextToken(char **tokenStream) {
@@ -132,6 +127,11 @@ static stHash *hackParseXmlString(const char *xmlString) {
         }
         stHash_insert(hash, key, value);
     }
+    if(!stString_eq(key, "st_kv_database_conf")) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "got an unexpected final entry \"%s\"", key);
+    }
+    free(key);
+    free(cA);
     return hash;
 }
 
@@ -152,6 +152,16 @@ static int getXmlPort(stHash *hash) {
     }
 }
 
+static int getXmlTimeout(stHash *hash) {
+    const char *value = stHash_search(hash, "timeout");
+    if (value == NULL) {
+        // default to -1 -- meaning no timeout
+        return -1;
+    } else {
+        return stSafeStrToUInt32(value);
+    }
+}
+
 static stKVDatabaseConf *constructFromString(const char *xmlString) {
     stHash *hash = hackParseXmlString(xmlString);
     stKVDatabaseConf *databaseConf = NULL;
@@ -162,18 +172,16 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
     }
     if (stString_eq(type, "tokyo_cabinet")) {
         databaseConf = stKVDatabaseConf_constructTokyoCabinet(getXmlValueRequired(hash, "database_dir"));
-    } else if (stString_eq(type, "tokyo_tyrant")) {
-        databaseConf = stKVDatabaseConf_constructTokyoTyrant(getXmlValueRequired(hash, "host"), 
+    } else if (stString_eq(type, "kyoto_tycoon")) {
+        databaseConf = stKVDatabaseConf_constructKyotoTycoon(getXmlValueRequired(hash, "host"), 
                                                         getXmlPort(hash), 
-                                                        getXmlValueRequired(hash, "database_dir"));
+                                                        getXmlTimeout(hash), 
+                                                        getXmlValueRequired(hash, "database_dir"),
+                                                        stHash_search(hash, "database_name"));
     } else if (stString_eq(type, "mysql")) {
         databaseConf = stKVDatabaseConf_constructMySql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
                                                        getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
                                                        getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
-    } else if (stString_eq(type, "postgresql")) {
-        databaseConf = stKVDatabaseConf_constructPostgreSql(getXmlValueRequired(hash, "host"), getXmlPort(hash),
-                                                            getXmlValueRequired(hash, "user"), getXmlValueRequired(hash, "password"),
-                                                            getXmlValueRequired(hash, "database_name"), getXmlValueRequired(hash, "table_name"));
     } else {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "invalid database type \"%s\"", type);
     }
@@ -198,6 +206,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
     conf->databaseDir = stString_copy(srcConf->databaseDir);
     conf->host = stString_copy(srcConf->host);
     conf->port = srcConf->port;
+    conf->timeout = srcConf->timeout;
     conf->user = stString_copy(srcConf->user);
     conf->password = stString_copy(srcConf->password);
     conf->databaseName = stString_copy(srcConf->databaseName);
@@ -231,6 +240,10 @@ const char *stKVDatabaseConf_getHost(stKVDatabaseConf *conf) {
 
 unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf) {
     return conf->port;
+}
+
+int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf) {
+    return conf->timeout;
 }
 
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf) {

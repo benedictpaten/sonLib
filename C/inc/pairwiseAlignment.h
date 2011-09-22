@@ -10,6 +10,10 @@
 #include <inttypes.h>
 #include "commonC.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PAIRWISE_MATCH 0
 #define PAIRWISE_INDEL_X 1
 #define PAIRWISE_INDEL_Y 2
@@ -54,4 +58,7 @@ void cigarWrite(FILE *fileHandle, struct PairwiseAlignment *pA, int32_t writePro
 
 struct PairwiseAlignment *cigarRead(FILE *fileHandle);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

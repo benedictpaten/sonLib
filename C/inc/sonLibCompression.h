@@ -15,6 +15,9 @@
 #define SONLIBCOMPRESSION_H_
 
 #include "sonLibTypes.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //The exception string
 extern const char *ST_COMPRESSION_EXCEPTION_ID;
@@ -33,4 +36,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
 void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SONLIBCOMPRESSION_H_ */

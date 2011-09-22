@@ -104,10 +104,9 @@ void destructPairwiseAlignment(struct PairwiseAlignment *pA) {
 
 void logPairwiseAlignment(struct PairwiseAlignment *pA) {
     st_logDebug("Pairwise alignment:");
-    if(st_getLogLevel() == ST_LOGGING_DEBUG) {
+    if(st_getLogLevel() == debug) {
         cigarWrite(stderr, pA, TRUE);
     }
-    //logDebug("\n");
 }
 
 char cigarReadFn(char type, int32_t *withProb) {

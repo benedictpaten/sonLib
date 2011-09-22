@@ -29,6 +29,7 @@
 #include <string.h>
 #include "avl.h"
 #include "fastCMaths.h"
+#include "sonLibGlobalsInternal.h"
 
 /* Creates and returns a new table
  with comparison function |compare| using parameter |param|
@@ -45,6 +46,7 @@ avl_create(avl_comparison_func *compare, void *param,
         allocator = &avl_allocator_default;
 
     tree = allocator->libavl_malloc(allocator, sizeof *tree);
+    assert(tree != NULL);
     if (tree == NULL)
         return NULL;
 
@@ -848,7 +850,7 @@ void avl_destroy(struct avl_table *tree, avl_item_func *destroy) {
 void *
 avl_malloc(struct libavl_allocator *allocator, size_t size) {
     assert (allocator != NULL && size> 0);
-    return malloc(size);
+    return st_malloc(size);
 }
 
 /* Frees |block|. */

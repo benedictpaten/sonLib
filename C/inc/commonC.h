@@ -12,6 +12,10 @@
 #include "hashTableC.h"
 #include "sonLib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //utils functions
 
 //logging and debugging
@@ -291,4 +295,7 @@ void graphViz_finishGraphFile(FILE *graphFileHandle);
 
 const char *graphViz_getColour(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*COMMONC_H_*/

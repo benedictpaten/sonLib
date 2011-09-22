@@ -64,7 +64,7 @@ def getCoordinateRangeOverlap(uStart1, uEnd1, uStart2, uEnd2):
         else:
             rangeOverlap = getPositiveCoordinateRangeOverlap(-uEnd1, -uStart1, 
                                                              uStart2, uEnd2)
-        if rangeOverlap != None:
+        if rangeOverlap is not None:
             x, y = rangeOverlap
             return -y, -x
         return None
@@ -92,13 +92,13 @@ def filterOverlappingAlignments(alignments):
     alignments.reverse()
     for pA1 in alignments:
         for pA2 in l:
-            if pA1.contig1 == pA2.contig1 and getPositiveCoordinateRangeOverlap(pA1.start1+1, pA1.end1, pA2.start1+1, pA2.end1) != None: #One offset, inclusive coordinates
+            if pA1.contig1 == pA2.contig1 and getPositiveCoordinateRangeOverlap(pA1.start1+1, pA1.end1, pA2.start1+1, pA2.end1) is not None: #One offset, inclusive coordinates
                 break
-            if pA1.contig2 == pA2.contig2 and getPositiveCoordinateRangeOverlap(pA1.start2+1, pA1.end2, pA2.start2+1, pA2.end2) != None: #One offset, inclusive coordinates
+            if pA1.contig2 == pA2.contig2 and getPositiveCoordinateRangeOverlap(pA1.start2+1, pA1.end2, pA2.start2+1, pA2.end2) is not None: #One offset, inclusive coordinates
                 break
-            if pA1.contig2 == pA2.contig1 and getPositiveCoordinateRangeOverlap(pA1.start2+1, pA1.end2, pA2.start1+1, pA2.end1) != None: #One offset, inclusive coordinates
+            if pA1.contig2 == pA2.contig1 and getPositiveCoordinateRangeOverlap(pA1.start2+1, pA1.end2, pA2.start1+1, pA2.end1) is not None: #One offset, inclusive coordinates
                 break
-            if pA1.contig1 == pA2.contig2 and getPositiveCoordinateRangeOverlap(pA1.start1+1, pA1.end1, pA2.start2+1, pA2.end2) != None: #One offset, inclusive coordinates
+            if pA1.contig1 == pA2.contig2 and getPositiveCoordinateRangeOverlap(pA1.start1+1, pA1.end1, pA2.start2+1, pA2.end2) is not None: #One offset, inclusive coordinates
                 break
         else:
             l.append(pA1)

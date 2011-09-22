@@ -29,6 +29,10 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Function types. */
 typedef int32_t avl_comparison_func (const void *avl_a, const void *avl_b,
                                  void *avl_param);
@@ -52,7 +56,7 @@ void avl_free (struct libavl_allocator *, void *);
 
 /* Maximum AVL height. */
 #ifndef AVL_MAX_HEIGHT
-#define AVL_MAX_HEIGHT 32
+#define AVL_MAX_HEIGHT 64
 #endif
 
 /* Tree data structure. */
@@ -117,4 +121,7 @@ void *avl_t_prev (struct avl_traverser *);
 void *avl_t_cur (struct avl_traverser *);
 void *avl_t_replace (struct avl_traverser *, void *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* avl.h */
