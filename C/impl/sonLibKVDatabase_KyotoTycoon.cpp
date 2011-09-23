@@ -196,6 +196,8 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
      
     int retVal; 
     if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
+        assert(rdb->error().name() != NULL);
+        fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
     }
 
