@@ -51,6 +51,11 @@ else ifneq ($(wildcard /usr/local/include/tcbdb.h),)
    tcPrefix = /usr/local
    tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
+else ifneq ($(wildcard /usr/include/tcbdb.h),)
+   # /usr install (Ubuntu, and probably most Debain-based systems)
+   tcPrefix = /usr
+   tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
+   tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
 
 # location of Kyoto Tycoon
