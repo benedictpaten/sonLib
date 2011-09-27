@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+
+#Copyright (C) 011 by Glenn Hickey
+#
+#Released under the MIT license, see LICENSE.txt
+
+import unittest
+import random
+from string import whitespace as ws
+
+from sonLib.nxnewick import NXNewick
+from sonLib.bioio import TestStatus
+    
+
+class TestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.testNo = TestStatus.getTestSetup()
+        unittest.TestCase.setUp(self)
+    
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+    
+    def testNewickIO(self):
+        # feslenstein's own... (http://evolution.genetics.washington.edu/phylip/newicktree.html)
+        tree1 = '((raccoon:19.19959,bear:6.80041):0.84600,((sea_lion:11.99700, seal:12.00300):7.52973,((monkey:100.85930,cat:47.14069):20.59201, weasel:18.87953):2.09460):3.87382,dog:25.46154);'
+        tree2 = '(Bovine:0.69395,(Gibbon:0.36079,(Orang:0.33636,(Gorilla:0.17147,(Chimp:0.19268, Human:0.11927):0.08386):0.06124):0.15057):0.54939,Mouse:1.21460):0.10;'
+        tree3 = '(Bovine:0.69395,(Hylobates:0.36079,(Pongo:0.33636,(G._Gorilla:0.17147, (P._paniscus:0.19268,H._sapiens:0.11927):0.08386):0.06124):0.15057):0.54939, Rodent:1.21460);'
+        tree4 = 'A;'
+        tree5 = '((A,B),(C,D));'
+        tree6 = '(Alpha,Beta,Gamma,Delta,,Epsilon,,,);'
+        
+        trees = [tree1, tree2, tree3, tree4, tree5, tree6]        
+        newickParser = NXNewick()
+        
+        for tree in trees:
+            newickParser.parseString(tree)
+            answer = self.__cleanTree(tree)
+            outputString = newickParser.writeString()
+            print " ***************** "
+            print outputString
+            print answer
+            assert outputString == answer
+    
+    # remove whitespace
+    # change trees of form (blabla):123; to ((blabla):123);
+    def __cleanTree(self, tree):
+        result = ""
+        for c in tree:
+            if c not in ws: 
+                result += c
+        if result[len(result) -2 ] != ')' and result[0] == '(':
+                result = "(%s);" % result[:len(result) - 2]
+        return result
+    
+if __name__ == '__main__':
+    unittest.main()

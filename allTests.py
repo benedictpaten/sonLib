@@ -10,9 +10,18 @@ import cigarsTest
 import treeTest
 import kvdbTest
 import socket
+try:
+    import networkx as NX
+    networkx_installed = True
+    import nxtreeTest
+    import nxnewickTest
+except ImportError:
+    networkx_installed = False
+
 from sonLib.bioio import system
 from sonLib.bioio import parseSuiteTestOptions
 from sonLib.bioio import getLogLevelString
+
 
 class TestCase(unittest.TestCase):        
     def testSonLibCTests(self):
@@ -26,8 +35,13 @@ def allSuites():
     treeSuite = unittest.makeSuite(treeTest.TestCase, 'test')
     kvdbSuite = unittest.makeSuite(kvdbTest.TestCase, 'test')
     cuTestsSuite = unittest.makeSuite(TestCase, 'test')
-    
-    allTests = unittest.TestSuite((bioioSuite, cigarsSuite, treeSuite, kvdbSuite, cuTestsSuite))
+    if not networkx_installed:
+        allTests = unittest.TestSuite((bioioSuite, cigarsSuite, treeSuite, kvdbSuite, cuTestsSuite))
+    else:
+        nxtreeSuite = unittest.makeSuite(nxtreeTest.TestCase, 'test')
+        nxnewickSuite = unittest.makeSuite(nxnewickTest.TestCase, 'test')
+        allTests = unittest.TestSuite((bioioSuite, cigarsSuite, treeSuite, kvdbSuite, cuTestsSuite,
+                                       nxtreeSuite, nxnewickSuite))
     return allTests
         
 def main():
