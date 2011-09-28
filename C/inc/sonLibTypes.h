@@ -30,7 +30,7 @@ extern "C" {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-typedef struct _eTree ETree;
+typedef struct _stTree stTree;
 typedef struct _stHash stHash;
 typedef struct hashtable_itr stHashIterator;
 typedef struct _stSortedSet stSortedSet;
