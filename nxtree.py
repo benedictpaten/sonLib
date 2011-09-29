@@ -17,15 +17,15 @@ import os
 import networkx as NX
 from optparse import OptionParser
 
-class NXTree:
+class NXTree:    
     def __init__(self, nxDg = None):
         self.nxDg = nxDg
         if self.nxDg is None:
             self.nxDg = NX.DiGraph()
+        self.isTree()    
         self.rootId = None
-        self.isTree()
         self.computeRootId()
-    
+        
     def isTree(self):
         assert NX.is_directed_acyclic_graph(self.nxDg)
         for node in self.nxDg.nodes():
@@ -47,6 +47,16 @@ class NXTree:
         assert id in self.nxDg
         return sorted([x[1] for x in self.nxDg.out_edges(id)])
     
+    def isLeaf(self, id):
+        return len(self.getChildren(id)) == 0
+    
+    def getLeaves(self):
+        leaves = []
+        for i in self.breadthFirstTraversal():
+            if self.isLeaf(i):
+                leaves.append(i)
+        return leaves
+    
     def getParent(self, id):
         assert id in self.nxDg
         edges = self.nxDg.in_edges(id)
@@ -66,6 +76,11 @@ class NXTree:
     def setName(self, id, name):
         assert id in self.nxDg
         self.nxDg.node[id]['name'] = name
+    
+    def hasName(self, id):
+        assert id in self.nxDg
+        node = self.nxDg.node[id]
+        return 'name' in node
         
     def getWeight(self, parentId, childId, defaultValue=None):
         assert parentId in self.nxDg and childId in self.nxDg
@@ -80,6 +95,9 @@ class NXTree:
     
     def getRootId(self):
         return self.rootId
+    
+    def getRootName(self):
+        return self.getName(self.getRootId())
         
     def preOrderTraversal(self, root = None):
         if root is None:

@@ -155,7 +155,7 @@ class NXNewick:
         if parent is not None:
             self.nxTree.nxDg.add_edge(parent, id)
             if len(weight) > 0:
-                self.nxTree.nxDg[parent][id]['weight'] = weight
+                self.nxTree.nxDg[parent][id]['weight'] = float(weight)
        
         #update the root (implied roots are added as a new node)
         if self.nxTree.getRootId() is None:
