@@ -14,7 +14,7 @@
 #ifndef SONLIB_H_
 #define SONLIB_H_
 
-#include "sonLibETree.h"
+#include "sonLibTree.h"
 #include "sonLibString.h"
 #include "sonLibHash.h"
 #include "sonLibSortedSet.h"
