@@ -17,6 +17,7 @@ from bioio import cigarWrite
 from bioio import getRandomPairwiseAlignment
 from bioio import system
 from sonLib.bioio import TestStatus
+from sonLib.bioio import logger
 
 class TestCase(unittest.TestCase):
     
@@ -52,7 +53,6 @@ class TestCase(unittest.TestCase):
 
             #Now call sonLib_cigarsTest and read and write chains
             command = "sonLib_cigarTest %s %s" % (tempFile, keepProbs)
-            print "Running command: %s" % command
             #return
             system(command)
             
@@ -61,7 +61,6 @@ class TestCase(unittest.TestCase):
             l.reverse()
             
             for pairwiseAlignment in cigarRead(fileHandle):
-                print "Got alignment"
                 pairwiseAlignment2 = l.pop()
                 cigarWrite(sys.stdout, pairwiseAlignment, keepProbs)
                 cigarWrite(sys.stdout, pairwiseAlignment2, keepProbs)

@@ -10,7 +10,7 @@ from string import whitespace as ws
 
 from sonLib.nxnewick import NXNewick
 from sonLib.bioio import TestStatus
-    
+from sonLib.bioio import logger
 
 class TestCase(unittest.TestCase):
     
@@ -37,9 +37,9 @@ class TestCase(unittest.TestCase):
             newickParser.parseString(tree)
             answer = self.__cleanTree(tree)
             outputString = newickParser.writeString()
-            print " ***************** "
-            print outputString
-            print answer
+            logger.debug(" ***************** ")
+            logger.debug(outputString)
+            logger.debug(answer)
             assert outputString == answer
     
     # remove whitespace
