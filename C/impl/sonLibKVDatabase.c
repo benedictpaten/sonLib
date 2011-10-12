@@ -251,6 +251,7 @@ int64_t stKVDatabase_incrementInt64(stKVDatabase *database, int64_t key,
                 }
             }stTryEnd;
     assert(0);
+    return 0;
 }
 
 static stKVDatabaseBulkRequest *stKVDatabaseBulkRequest_construct(int64_t key,

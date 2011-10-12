@@ -19,4 +19,4 @@ externalToolsP.clean :
 	cd externalTools && make clean
 
 test :
-	PYTHONPATH=.. PATH=../../bin:$$PATH python allTests.py --testLength=SHORT --logDebug
+	PYTHONPATH=.. PATH=../../bin:$$PATH python allTests.py --testLength=SHORT --logLevel=CRITICAL

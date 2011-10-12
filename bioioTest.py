@@ -34,6 +34,7 @@ from bioio import getRandomPairwiseAlignment
 from sonLib.bioio import TestStatus
 
 from bioio import system
+from bioio import logger
 
 class TestCase(unittest.TestCase):
     
@@ -63,7 +64,7 @@ class TestCase(unittest.TestCase):
             fileNo = random.choice(xrange(1, 6))
             maxTempFiles = int(math.pow(fileNo, levels))
             
-            print "Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles)
+            logger.debug("Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles))
             
             tempFileTreeRootDir = os.path.join(self.tempDir, getRandomAlphaNumericString())
             tempFileTree = TempFileTree(tempFileTreeRootDir, fileNo, levels)
@@ -86,7 +87,7 @@ class TestCase(unittest.TestCase):
                 tempFileTree.getTempFile()
                 assert False
             except RuntimeError:
-                print "Got expected error message"
+                logger.debug("Got expected error message")
         
             #Now remove a few temp files
             while random.random() > 0.1 and len(tempFiles) > 0:
@@ -168,8 +169,6 @@ class TestCase(unittest.TestCase):
             l.reverse()
             for i in fastaRead(fileHandle):
                 name, seq = i
-                print "hello", i
-                print "goodbye", l[-1]
                 assert i == l.pop()
                 fastaWrite(sys.stdout, name, seq)
             fileHandle.close()
@@ -194,10 +193,10 @@ class TestCase(unittest.TestCase):
         #tests with unary nodes 
         for test in xrange(0, self.testNo):
             tree = getRandomTreeString()
-            print "tree to try\t", tree
+            logger.debug("tree to try\t", tree)
             tree2 = newickTreeParser(tree, reportUnaryNodes=True)
             tree3 = printBinaryTree(tree2, True) 
-            print "tree found\t", tree3
+            logger.debug("tree found\t", tree3)
             assert tree == tree3
             
     #########################################################

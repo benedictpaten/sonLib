@@ -58,4 +58,4 @@ ${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${
 	mv sonLib.a ${libPath}/
 
 test :
-	python allTests.py --testLength=SHORT --logDebug
+	python allTests.py --testLength=SHORT --logLevel CRITICAL
