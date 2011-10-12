@@ -118,12 +118,12 @@ static char **queryNextRequired(MySqlDb *dbImpl, MYSQL_RES *rs) {
     return row;
 }
 
-static size_t *queryLengths(MySqlDb *dbImpl, MYSQL_RES *rs) {
-    size_t *lens = mysql_fetch_lengths(rs);
+static size_t queryLength(MySqlDb *dbImpl, MYSQL_RES *rs) {
+    unsigned long *lens = mysql_fetch_lengths(rs);
     if (mysql_errno(dbImpl->conn) != 0) {
         throwMySqlExcept(dbImpl, "mysql_fetch_lengths failed");
     }
-    return lens;
+    return lens[0];
 }
 
 // collect warnings into an array
@@ -298,7 +298,7 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *sizeOfReco
     void *data = NULL;
     int64_t readLen = 0;
     if (row != NULL) {
-        readLen = queryLengths(dbImpl, rs)[0];
+        readLen = queryLength(dbImpl, rs);
         data = stSafeCCopyMem(row[0], readLen);
     }
     queryEnd(dbImpl, rs);
@@ -333,7 +333,7 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
     void *data = NULL;
     int64_t readLen = 0;
     if (row != NULL) {
-        readLen = queryLengths(dbImpl, rs)[0];
+        readLen = queryLength(dbImpl, rs);
         data = stSafeCCopyMem(row[0], readLen);
     }
     queryEnd(dbImpl, rs);
