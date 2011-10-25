@@ -53,7 +53,8 @@ static char* createRecordPath(stKVDatabaseConf* conf, int64_t key)
 	int32_t size = strlen(basePath) + strlen(name) +
 			strlen(RECORD_FILE_TAG) + 65;
 	char* recordPath = (char*)malloc(size * sizeof(char));
-	sprintf(recordPath, "%s/%s.%s%lld", basePath, name, RECORD_FILE_TAG, key);
+	sprintf(recordPath, "%s/%s.%s%lld", basePath, name, RECORD_FILE_TAG,
+			(long long int)key);
 	return recordPath;
 }
 
