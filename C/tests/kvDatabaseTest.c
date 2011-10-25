@@ -41,12 +41,12 @@ static void readWriteAndUpdateIntRecords(CuTest *testCase) {
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
     //Write some int64 records
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
-    stKVDatabase_insertInt64(database, 1, (int64_t)50);
-    stKVDatabase_insertInt64(database, 2, (int64_t)100);
-    stKVDatabase_insertInt64(database, 3, (int64_t)150);
-    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 1) == 50);
-    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 2) == 100);
-    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 3) == 150);
+    stKVDatabase_insertInt64(database, -10000, (int64_t)50);
+    stKVDatabase_insertInt64(database, 4297559944418269136, (int64_t)100);
+    stKVDatabase_insertInt64(database, 8457478625225021883, (int64_t)150);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, -10000) == 50);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 4297559944418269136) == 100);
+    CuAssertTrue(testCase, stKVDatabase_getInt64(database, 8457478625225021883) == 150);
 
     // test update
     stKVDatabase_insertInt64(database, 4, (int64_t)100);
@@ -67,13 +67,13 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
     setup();
     CuAssertIntEquals(testCase, 0, stKVDatabase_getNumberOfRecords(database));
     //Write some records
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
-    stKVDatabase_insertRecord(database, 1, "Red", sizeof(char) * 4);
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, -10000));
+    stKVDatabase_insertRecord(database, -10000, "Red", sizeof(char) * 4);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, -10000));
 
-    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 2));
-    stKVDatabase_insertRecord(database, 2, "Green", sizeof(char) * 6);
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
+    CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 4297559944418269136));
+    stKVDatabase_insertRecord(database, 4297559944418269136, "Green", sizeof(char) * 6);
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 4297559944418269136));
 
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 0));
     stKVDatabase_insertRecord(database, 0, "Black", sizeof(char) * 6);
@@ -81,17 +81,17 @@ static void readWriteAndRemoveRecords(CuTest *testCase) {
 
     //Now read and check the records exist
     CuAssertIntEquals(testCase, 3, stKVDatabase_getNumberOfRecords(database));
-    CuAssertStrEquals(testCase, "Red", stKVDatabase_getRecord(database, 1));
-    CuAssertStrEquals(testCase, "Green", stKVDatabase_getRecord(database, 2));
+    CuAssertStrEquals(testCase, "Red", stKVDatabase_getRecord(database, -10000));
+    CuAssertStrEquals(testCase, "Green", stKVDatabase_getRecord(database, 4297559944418269136));
     CuAssertStrEquals(testCase, "Black", stKVDatabase_getRecord(database, 0));
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 1));
-    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 2));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, -10000));
+    CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 4297559944418269136));
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 0));
 
     //Now check we can retrieve records partially
-    CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, 1, 2, 2, sizeof(char) * 4));
-    CuAssertStrEquals(testCase, "ed", stKVDatabase_getPartialRecord(database, 1, 1, 3, sizeof(char) * 4));
-    CuAssertStrEquals(testCase, "Red", stKVDatabase_getPartialRecord(database, 1, 0, 4, sizeof(char) * 4));
+    CuAssertStrEquals(testCase, "d", stKVDatabase_getPartialRecord(database, -10000, 2, 2, sizeof(char) * 4));
+    CuAssertStrEquals(testCase, "ed", stKVDatabase_getPartialRecord(database, -10000, 1, 3, sizeof(char) * 4));
+    CuAssertStrEquals(testCase, "Red", stKVDatabase_getPartialRecord(database, -10000, 0, 4, sizeof(char) * 4));
     char *record = stKVDatabase_getPartialRecord(database, 0, 2, 3, sizeof(char) * 6);
     record[2] = '\0';
     CuAssertStrEquals(testCase, "ac", record);
