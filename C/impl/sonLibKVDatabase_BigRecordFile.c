@@ -39,6 +39,7 @@
  */
 #define MAX_NUMBER_ENTRIES 2048
 
+#define MAXIMUM_PATH_LENGTH 4096
 /*
  * Get the full path of the file corresponding to the record
  * with the given key.  NEEDS TO BE FREED!!
@@ -66,7 +67,7 @@ static size_t visitRecords(const char* basePath,
 {
 	DIR *dp;
 	struct dirent *ep;
-	char filePathBuffer[PATH_MAX];
+	char filePathBuffer[MAXIMUM_PATH_LENGTH];
 	dp = opendir(basePath);
 	int64_t numRecords = 0;
 	if (dp != NULL)
