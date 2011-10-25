@@ -17,6 +17,7 @@
 struct stKVDatabase {
     stKVDatabaseConf *conf;
     void *dbImpl;
+    struct stKVDatabase* secondaryDB;
     bool deleted;
     void (*destruct)(stKVDatabase *);
     void (*deleteDatabase)(stKVDatabase *);
@@ -62,8 +63,14 @@ void stKVDatabase_initialise_MySql(stKVDatabase *database, stKVDatabaseConf *con
 extern "C" {
 #endif
 void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+/*
+ * Function initialises the pointers of the stKVDatabase object with functions for Big Record File.
+ */
+void stKVDatabase_initialise_bigRecordFile(stKVDatabase *database, stKVDatabaseConf *conf, bool create);
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif /* SONLIBKVDATABASEPRIVATE_H_ */
