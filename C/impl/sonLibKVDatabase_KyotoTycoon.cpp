@@ -71,7 +71,7 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 }
 
 static stKVDatabase* constructBigRecordDB(stKVDatabaseConf *conf, bool create) {
-	if (stKVDatabaseConf_getMaxKTRecordSize(conf) != INT64_MAX) {
+	if (stKVDatabaseConf_getMaxKTRecordSize(conf) != kc::INT64MAX) {
 		// warning: bypassing stKVDatabase_construct()
 		stKVDatabase *database = (stKVDatabase *)st_calloc(1, sizeof(struct stKVDatabase));
 		database->conf = stKVDatabaseConf_constructClone(conf);
