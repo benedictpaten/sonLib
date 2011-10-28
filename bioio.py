@@ -153,36 +153,32 @@ def setLoggingFromOptions(options):
 
 def system(command):
     logger.debug("Running the command: %s" % command)
-    process = subprocess.Popen(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
-    sts = os.waitpid(process.pid, 0)
-    i = sts[1]
-    if i != 0:
-        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
-    return i
+    sts = subprocess.call(command, shell=True, bufsize=-1)
+    if sts != 0:
+        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
+    return sts
 
 def popen(command, tempFile):
     """Runs a command and captures standard out in the given temp file.
     """
     fileHandle = open(tempFile, 'w')
     logger.debug("Running the command: %s" % command)
-    process = subprocess.Popen(command, shell=True, stdout=fileHandle)
-    sts = os.waitpid(process.pid, 0)
+    sts = subprocess.call(command, shell=True, stdout=fileHandle)
     fileHandle.close()
-    i = sts[1]
-    if i != 0:
-        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
-    return i
+    if sts != 0:
+        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
+    return sts
 
 def popenCatch(command):
     """Runs a command and return standard out.
     """
     logger.debug("Running the command: %s" % command)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    sts = os.waitpid(process.pid, 0)
-    i = sts[1]
-    if i != 0:
-        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, i))
+    sts = process.wait()
+    if sts != 0:
+        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return process.stdout.read().strip()
+
 
 def getTotalCpuTime():
     """Gives the total cpu time, including the children. 
