@@ -163,7 +163,7 @@ def popen(command, tempFile):
     """
     fileHandle = open(tempFile, 'w')
     logger.debug("Running the command: %s" % command)
-    sts = subprocess.call(command, shell=True, stdout=fileHandle)
+    sts = subprocess.call(command, shell=True, stdout=fileHandle, bufsize=-1)
     fileHandle.close()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
@@ -173,12 +173,16 @@ def popenCatch(command):
     """Runs a command and return standard out.
     """
     logger.debug("Running the command: %s" % command)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, bufsize=-1)
     sts = process.wait()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return process.stdout.read().strip()
 
+def spawnDaemon(command):
+    """Launches a command as a daemon.  It will need to be explicitly killed
+    """
+    return system("sonLib_daemonize.py \'%s\'" % command)
 
 def getTotalCpuTime():
     """Gives the total cpu time, including the children. 
