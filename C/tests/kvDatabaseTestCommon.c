@@ -69,6 +69,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
     int optTimeout = -1;
     int64_t optMaxKTRecordSize = (int64_t) 1U << 27;
     int64_t optMaxKTBulkSetSize = (int64_t) 1U << 27;
+    int64_t optMaxKTBulkSetNumRecords = (int64_t) 1U << 27;
     const char *optUser = NULL;
     const char *optPass = NULL;
     const char *optName = NULL;
@@ -135,7 +136,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
         fprintf(stderr, "running Tokyo Cabinet sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeKyotoTycoon) {
         conf = stKVDatabaseConf_constructKyotoTycoon(optHost, optPort, optTimeout,
-        		optMaxKTRecordSize, optMaxKTBulkSetSize, optDb, optName);
+        		optMaxKTRecordSize, optMaxKTBulkSetSize, optMaxKTBulkSetNumRecords, optDb, optName);
         fprintf(stderr, "running Kyoto Tycoon sonLibKVDatabase tests\n");
     } else if (optType == stKVDatabaseTypeMySql) {
         conf = stKVDatabaseConf_constructMySql(optHost, 0, optUser, optPass, optDb, "cactusDbTest");
