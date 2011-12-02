@@ -28,6 +28,7 @@ struct stKVDatabaseConf {
     int timeout;
     int64_t maxKTRecordSize;
     int64_t maxKTBulkSetSize;
+    int64_t maxKTBulkSetNumRecords;
     char *user;
     char *password;
     char *databaseName;
@@ -43,6 +44,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
 
 stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout,
 														int64_t maxRecordSize, int64_t maxBulkSetSize,
+														int64_t maxBulkSetNumRecords,
 														const char *databaseDir, const char* databaseName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
     conf->type = stKVDatabaseTypeKyotoTycoon;
@@ -52,6 +54,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsign
     conf->timeout = timeout;
     conf->maxKTRecordSize = maxRecordSize;
     conf->maxKTBulkSetSize = maxBulkSetSize;
+    conf->maxKTBulkSetNumRecords = maxBulkSetNumRecords;
     conf->databaseName = stString_copy(databaseName);
     return conf;
 }
@@ -192,6 +195,17 @@ static int64_t getXMLMaxKTBulkSetSize(stHash *hash) {
     }
 }
 
+/* Default to tried-and-true value of 10000
+ */
+static int64_t getXMLMaxKTBulkSetNumRecords(stHash *hash) {
+    const char *value = stHash_search(hash, "max_bulkset_num_records");
+    if (value == NULL) {
+        return (int64_t) 10000;
+    } else {
+        return stSafeStrToInt64(value);
+    }
+}
+
 static stKVDatabaseConf *constructFromString(const char *xmlString) {
     stHash *hash = hackParseXmlString(xmlString);
     stKVDatabaseConf *databaseConf = NULL;
@@ -208,6 +222,7 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
                                                         getXmlTimeout(hash), 
                                                         getXMLMaxKTRecordSize(hash),
                                                         getXMLMaxKTBulkSetSize(hash),
+                                                        getXMLMaxKTBulkSetNumRecords(hash),
                                                         getXmlValueRequired(hash, "database_dir"),
                                                         stHash_search(hash, "database_name"));
     } else if (stString_eq(type, "mysql")) {
@@ -286,6 +301,10 @@ int64_t stKVDatabaseConf_getMaxKTRecordSize(stKVDatabaseConf *conf) {
 
 int64_t stKVDatabaseConf_getMaxKTBulkSetSize(stKVDatabaseConf *conf) {
     return conf->maxKTBulkSetSize;
+}
+
+int64_t stKVDatabaseConf_getMaxKTBulkSetNumRecords(stKVDatabaseConf *conf) {
+    return conf->maxKTBulkSetNumRecords;
 }
 
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf) {

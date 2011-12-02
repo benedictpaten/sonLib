@@ -278,6 +278,7 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
 	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
 	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
 	int64_t maxBulkSetSize = stKVDatabaseConf_getMaxKTBulkSetSize(conf);
+	int64_t maxBulkSetNumRecords = stKVDatabaseConf_getMaxKTBulkSetNumRecords(conf);
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     map<string,string> recs;
     int64_t runningSize = 0;
@@ -287,7 +288,8 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
 
         // current batch can't get any bigger so we write and clear it
-        if (runningSize + request->size > maxBulkSetSize && recs.empty() == false) {
+        if ((runningSize + request->size > maxBulkSetSize ||
+        	 (int64_t)recs.size() >= maxBulkSetNumRecords) && recs.empty() == false) {
         	int retVal;
 			if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
 				assert(rdb->error().name() != NULL);
