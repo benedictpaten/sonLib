@@ -28,8 +28,10 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
  * Construct a new database configuration object for a Kyoto Tycoon
  * database remote object.
  */
-stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir,
-														const char* databaseName);
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout,
+														int64_t maxRecordSize, int64_t maxBulkSetSize,
+														int64_t maxBulkSetNumRecords,
+														const char *databaseDir, const char* databaseName);
 
 /* 
  * Construct a new database configuration object for a MySql database.
@@ -80,6 +82,15 @@ unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf);
 
 /* get the remote server timeout for server based databases */
 int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf);
+
+/* get the maximum size in bytes of a kyoto tycoon record */
+int64_t stKVDatabaseConf_getMaxKTRecordSize(stKVDatabaseConf *conf);
+
+/* get the maximum size in bytes of a kyoto tycoon bulk set */
+int64_t stKVDatabaseConf_getMaxKTBulkSetSize(stKVDatabaseConf *conf);
+
+/* get the maximum number of records in  kyoto tycoon bulk set */
+int64_t stKVDatabaseConf_getMaxKTBulkSetNumRecords(stKVDatabaseConf *conf);
 
 /* get the user for server based databases */
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf);

@@ -57,6 +57,9 @@ class NXTree:
                 leaves.append(i)
         return leaves
     
+    def hasParent(self, id):
+        return self.getParent() is not None
+
     def getParent(self, id):
         assert id in self.nxDg
         edges = self.nxDg.in_edges(id)

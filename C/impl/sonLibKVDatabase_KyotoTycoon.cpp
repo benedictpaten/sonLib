@@ -12,6 +12,15 @@
  * 
  * Note: all the KT methods seem to have a C and a CPP version (in terms of the arguments) , 
  * and for this implementation we're using the plain C versions as much as we can.
+ *
+ * Update October 24, 2011 by Glenn Hickey:
+ * Added "secondaryDB" which points to instance of BigRecordFile type database
+ * as a fallback for big records.  Now records of a certain size (from conf)
+ * don't get added to the kyoto tycoon but go into this new database instead.
+ * The whole thing should be transparent to the client, and hopefully prevent
+ * the dreaded network errors in the kyoto tycoon API.
+ * Note that all operations that can change a record's size must check to make
+ * sure that it does not get duplicated across the two db's!
  */
 
 //Database functions
@@ -61,6 +70,18 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
     return rdb;
 }
 
+static stKVDatabase* constructBigRecordDB(stKVDatabaseConf *conf, bool create) {
+	if (stKVDatabaseConf_getMaxKTRecordSize(conf) != kc::INT64MAX) {
+		// warning: bypassing stKVDatabase_construct()
+		stKVDatabase *database = (stKVDatabase *)st_calloc(1, sizeof(struct stKVDatabase));
+		database->conf = stKVDatabaseConf_constructClone(conf);
+		database->deleted = false;
+		stKVDatabase_initialise_bigRecordFile(database, conf, create);
+		return database;
+	}
+	return NULL;
+}
+
 /* closes the remote DB connection and deletes the rdb object, but does not destroy the 
 remote database */
 static void destructDB(stKVDatabase *database) {
@@ -77,6 +98,9 @@ static void destructDB(stKVDatabase *database) {
         delete rdb; 
         database->dbImpl = NULL;
     }
+    if (database->secondaryDB != NULL) {
+    	stKVDatabase_destruct(database->secondaryDB);
+    }
 }
 
 /* WARNING: removes all records from the remote database */
@@ -85,13 +109,17 @@ static void deleteDB(stKVDatabase *database) {
     if (rdb != NULL) {
         rdb->clear();
     }
+    if (database->secondaryDB != NULL) {
+    	database->secondaryDB->deleteDatabase(database->secondaryDB);
+    }
     destructDB(database);
     // this removes all records from the remove database object
 }
 
 
-/* check if a record already exists */
-static bool recordExists(RemoteDB *rdb, int64_t key) {
+/* check if a record already exists in the kt database*/
+static bool recordInTycoon(stKVDatabase *database, int64_t key) {
+	RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     size_t sp;
     char *cA;
     if ((cA = rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL)) == NULL) {
@@ -102,18 +130,69 @@ static bool recordExists(RemoteDB *rdb, int64_t key) {
     }
 }
 
+/* check if a record already exists in the kt database*/
+static bool recordOnDisk(stKVDatabase *database, int64_t key)
+{
+	if (database->secondaryDB != NULL)
+	{
+		return database->secondaryDB->containsRecord(database->secondaryDB, key);
+	}
+	return false;
+}
+
+/* remove a record from the disk cache if it exists.  must be called before
+ * adding a record with this key to the tycoon.
+ */
+static void removeRecordFromTycoonIfPresent(stKVDatabase *database, int64_t key)
+{
+	if (recordInTycoon(database, key) == true) {
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		if (!rdb->remove((char *)&key, (size_t)sizeof(int64_t))) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb->error().name());
+		}
+	}
+}
+
+/* remove a record from the tycoon if it exists.  must be called before
+ * adding a record with this key to the disk cache.
+ */
+static void removeRecordFromDiskIfPresent(stKVDatabase *database, int64_t key)
+{
+	if (recordOnDisk(database, key) == true) {
+		database->secondaryDB->removeRecord(database->secondaryDB, key);
+	}
+}
+
+
 static bool containsRecord(stKVDatabase *database, int64_t key) {
-    return recordExists((RemoteDB *)database->dbImpl, key);
+    bool found = recordInTycoon(database, key);
+    if (found == false && database->secondaryDB != NULL)
+    {
+    	found = recordOnDisk(database, key);
+    }
+    return found;
 }
 
 static void insertRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
+	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	if (sizeOfRecord > maxRecordSize)
+	{
+		assert(database->secondaryDB != NULL);
+		removeRecordFromTycoonIfPresent(database, key);
+		database->secondaryDB->insertRecord(database->secondaryDB, key, value, sizeOfRecord);
+	}
+	else
+	{
+		removeRecordFromDiskIfPresent(database, key);
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 
-    size_t sizeOfKey = sizeof(int64_t);
-    // add method: If the key already exists the record will not be modified and it'll return false 
-    if (!rdb->add((char *)&key, sizeOfKey, (const char *)value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
-    }
+		size_t sizeOfKey = sizeof(int64_t);
+		// add method: If the key already exists the record will not be modified and it'll return false
+		if (!rdb->add((char *)&key, sizeOfKey, (const char *)value, sizeOfRecord)) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Inserting key/value to database error: %s", rdb->error().name());
+		}
+	}
 }
 
 static void insertInt64(stKVDatabase *database, int64_t key, int64_t value) {
@@ -141,18 +220,42 @@ static void updateInt64(stKVDatabase *database, int64_t key, int64_t value) {
 }
 
 static void updateRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    // replace method: If the key doesn't already exist it won't be created, and we'll get an error
-    if (!rdb->replace((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb->error().name());
-    }
+	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
+	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	if (sizeOfRecord > maxRecordSize)
+	{
+		assert(database->secondaryDB != NULL);
+		removeRecordFromTycoonIfPresent(database, key);
+		database->secondaryDB->updateRecord(database->secondaryDB, key, value, sizeOfRecord);
+	}
+	else
+	{
+		removeRecordFromDiskIfPresent(database, key);
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		// replace method: If the key doesn't already exist it won't be created, and we'll get an error
+		if (!rdb->replace((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Updating key/value to database error: %s", rdb->error().name());
+		}
+	}
 }
 
 static void setRecord(stKVDatabase *database, int64_t key, const void *value, int64_t sizeOfRecord) {
-    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    if (!rdb->set((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon setting key/value failed: %s", rdb->error().name());
-    }
+	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
+	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	if (sizeOfRecord > maxRecordSize)
+	{
+		assert(database->secondaryDB != NULL);
+		removeRecordFromTycoonIfPresent(database, key);
+		database->secondaryDB->setRecord(database->secondaryDB, key, value, sizeOfRecord);
+	}
+	else
+	{
+		removeRecordFromDiskIfPresent(database, key);
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		if (!rdb->set((char *)&key, (size_t)sizeof(int64_t), (const char *)value, sizeOfRecord)) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon setting key/value failed: %s", rdb->error().name());
+		}
+	}
 }
 
 /* increment a record by the specified numerical value: atomic operation */
@@ -172,53 +275,79 @@ static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incre
 
 // sets a bulk list of records atomically 
 static void bulkSetRecords(stKVDatabase *database, stList *records) {
-
+	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
+	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	int64_t maxBulkSetSize = stKVDatabaseConf_getMaxKTBulkSetSize(conf);
+	int64_t maxBulkSetNumRecords = stKVDatabaseConf_getMaxKTBulkSetNumRecords(conf);
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     map<string,string> recs;
-
+    int64_t runningSize = 0;
 
     // copy the records from our C data structure to the CPP map needed for the Tycoon API
     for(int32_t i=0; i<stList_length(records); i++) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
-        recs.insert(pair<string,string>(
-           string((const char *)&(request->key), sizeof(int64_t)), 
-           string((const char *)request->value, request->size))
-        );
+
+        // current batch can't get any bigger so we write and clear it
+        if ((runningSize + request->size > maxBulkSetSize ||
+        	 (int64_t)recs.size() >= maxBulkSetNumRecords) && recs.empty() == false) {
+        	int retVal;
+			if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
+				assert(rdb->error().name() != NULL);
+				fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
+				stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
+			}
+			recs.clear();
+			runningSize = 0;
+        }
+        // record too big for kt, we put in the secondary
+        if (request->size > maxRecordSize) {
+        	assert(database->secondaryDB != NULL);
+        	removeRecordFromTycoonIfPresent(database, request->key);
+        	database->secondaryDB->setRecord(database->secondaryDB, request->key, request->value, request->size);
+        }
+        else
+        {
+        	removeRecordFromDiskIfPresent(database, request->key);
+			recs.insert(pair<string,string>(
+			   string((const char *)&(request->key), sizeof(int64_t)),
+			   string((const char *)request->value, request->size))
+			);
+			runningSize += request->size;
+        }
     }
 
     // test for empty list   
-    if (recs.empty()) {
-        return;
-    } 
-
-    // set values, atomic = true
-
-     
-    int retVal; 
-    if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
-        assert(rdb->error().name() != NULL);
-        fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
+    if (recs.empty() == false) {
+		// set values, atomic = true
+		int retVal;
+		if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
+			assert(rdb->error().name() != NULL);
+			fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
+		}
     }
-
     //printf("size of insert: %d\n", retVal);
 }
 
 // remove a bulk list atomically 
 static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
-
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     vector<string> keys;
 
-    for(int32_t i=0; i<stList_length(records); i++) {
-        int64_t key = stInt64Tuple_getPosition((stInt64Tuple *)stList_get(records, i), 0);
-        keys.push_back(string((const char *)&key, sizeof(int64_t)));
-    }
+	for(int32_t i=0; i<stList_length(records); i++) {
+		int64_t key = stInt64Tuple_getPosition((stInt64Tuple *)stList_get(records, i), 0);
+		if (recordOnDisk(database, key) == true) {
+			database->secondaryDB->removeRecord(database->secondaryDB, key);
+		}
+		else {
+			keys.push_back(string((const char *)&key, sizeof(int64_t)));
+		}
+	}
+
     // test for empty list   
     if (keys.empty()) {
         return;
     } 
-
 
     if (rdb->remove_bulk(keys, true) < 1) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon bulk remove record failed: %s", rdb->error().name());
@@ -227,15 +356,27 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
 
 static int64_t numberOfRecords(stKVDatabase *database) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    return rdb->count();
+    int64_t count = rdb->count();
+    if (database->secondaryDB != NULL) {
+    	count += database->secondaryDB->numberOfRecords(database->secondaryDB);
+    }
+    return count;
 }
 
 static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize) {
-    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    //Return value must be freed.
-    size_t i;
-    char *record = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
-    *recordSize = (int64_t)i;
+	char* record = NULL;
+	if (recordOnDisk(database, key) == true)
+	{
+    	record = (char*)database->secondaryDB->getRecord2(database->secondaryDB, key, recordSize);
+	}
+	else if (recordInTycoon(database, key) == true)
+	{
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		//Return value must be freed.
+		size_t i;
+		record = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
+		*recordSize = (int64_t)i;
+	}
     return record;
 }
 
@@ -258,32 +399,53 @@ static int64_t getInt64(stKVDatabase *database, int64_t key) {
 
 /* get part of a string record */
 static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize) {
-    int64_t recordSize2;
-    char *record = (char *)getRecord2(database, key, &recordSize2);
-    if(recordSize2 != recordSize) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The given record size is incorrect: %lld, should be %lld", (long long)recordSize, recordSize2);
-    }
-    if(record == NULL) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The record does not exist: %lld for partial retrieval", (long long)key);
-    }
-    if(zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset + sizeInBytes > recordSize) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, record size: %lld, requested start: %lld, requested size: %lld", (long long)recordSize, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
-    }
-    void *partialRecord = memcpy(st_malloc(sizeInBytes), record + zeroBasedByteOffset, sizeInBytes);
-    free(record);
-    return partialRecord;
+	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
+	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	if (recordSize > maxRecordSize)
+	{
+		assert (database->secondaryDB != NULL);
+		if (recordOnDisk(database, key) == false)
+		{
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The record does not exist: %lld for partial retrieval", (long long)key);
+		}
+		return database->secondaryDB->getPartialRecord(database->secondaryDB, key, zeroBasedByteOffset, sizeInBytes, recordSize);
+	}
+	else
+	{
+		int64_t recordSize2;
+		char *record = (char *)getRecord2(database, key, &recordSize2);
+		if(recordSize2 != recordSize) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The given record size is incorrect: %lld, should be %lld", (long long)recordSize, recordSize2);
+		}
+		if(record == NULL) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "The record does not exist: %lld for partial retrieval", (long long)key);
+		}
+		if(zeroBasedByteOffset < 0 || sizeInBytes < 0 || zeroBasedByteOffset + sizeInBytes > recordSize) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Partial record retrieval to out of bounds memory, record size: %lld, requested start: %lld, requested size: %lld", (long long)recordSize, (long long)zeroBasedByteOffset, (long long)sizeInBytes);
+		}
+		void *partialRecord = memcpy(st_malloc(sizeInBytes), record + zeroBasedByteOffset, sizeInBytes);
+		free(record);
+		return partialRecord;
+	}
 }
 
 static void removeRecord(stKVDatabase *database, int64_t key) {
-    RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    if (!rdb->remove((char *)&key, (size_t)sizeof(int64_t))) {
-        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb->error().name());
-    }
+	if (recordOnDisk(database, key) == true) {
+		database->secondaryDB->removeRecord(database->secondaryDB, key);
+	}
+	else
+	{
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		if (!rdb->remove((char *)&key, (size_t)sizeof(int64_t))) {
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Removing key/value to database error: %s", rdb->error().name());
+		}
+	}
 }
 
 
 void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
+    database->secondaryDB = constructBigRecordDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
     database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;

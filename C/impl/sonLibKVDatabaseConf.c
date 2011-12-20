@@ -10,6 +10,7 @@
  *  Created on: 2010-08-23
  *      Author: Mark Diekhans
  */
+
 #include "sonLibKVDatabaseConf.h"
 #include "sonLibKVDatabase.h"
 #include "sonLibExcept.h"
@@ -25,6 +26,9 @@ struct stKVDatabaseConf {
     char *host;
     unsigned port;
     int timeout;
+    int64_t maxKTRecordSize;
+    int64_t maxKTBulkSetSize;
+    int64_t maxKTBulkSetNumRecords;
     char *user;
     char *password;
     char *databaseName;
@@ -38,14 +42,19 @@ stKVDatabaseConf *stKVDatabaseConf_constructTokyoCabinet(const char *databaseDir
     return conf;
 }
 
-stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout, const char *databaseDir,
-														const char* databaseName) {
+stKVDatabaseConf *stKVDatabaseConf_constructKyotoTycoon(const char *host, unsigned port, int timeout,
+														int64_t maxRecordSize, int64_t maxBulkSetSize,
+														int64_t maxBulkSetNumRecords,
+														const char *databaseDir, const char* databaseName) {
     stKVDatabaseConf *conf = stSafeCCalloc(sizeof(stKVDatabaseConf));
     conf->type = stKVDatabaseTypeKyotoTycoon;
     conf->databaseDir = stString_copy(databaseDir);
     conf->host = stString_copy(host);
     conf->port = port;
     conf->timeout = timeout;
+    conf->maxKTRecordSize = maxRecordSize;
+    conf->maxKTBulkSetSize = maxBulkSetSize;
+    conf->maxKTBulkSetNumRecords = maxBulkSetNumRecords;
     conf->databaseName = stString_copy(databaseName);
     return conf;
 }
@@ -162,6 +171,41 @@ static int getXmlTimeout(stHash *hash) {
     }
 }
 
+/* Default to 175M which seems to be about where the
+ * kyoto tycoon network error danger zone starts
+ */
+static int64_t getXMLMaxKTRecordSize(stHash *hash) {
+    const char *value = stHash_search(hash, "max_record_size");
+    if (value == NULL) {
+        return (int64_t) 183500800;
+    } else {
+        return stSafeStrToInt64(value);
+    }
+}
+
+/* Default to 175M which seems to be about where the
+ * kyoto tycoon network error danger zone starts
+ */
+static int64_t getXMLMaxKTBulkSetSize(stHash *hash) {
+    const char *value = stHash_search(hash, "max_bulkset_size");
+    if (value == NULL) {
+        return (int64_t) 183500800;
+    } else {
+        return stSafeStrToInt64(value);
+    }
+}
+
+/* Default to tried-and-true value of 10000
+ */
+static int64_t getXMLMaxKTBulkSetNumRecords(stHash *hash) {
+    const char *value = stHash_search(hash, "max_bulkset_num_records");
+    if (value == NULL) {
+        return (int64_t) 10000;
+    } else {
+        return stSafeStrToInt64(value);
+    }
+}
+
 static stKVDatabaseConf *constructFromString(const char *xmlString) {
     stHash *hash = hackParseXmlString(xmlString);
     stKVDatabaseConf *databaseConf = NULL;
@@ -176,6 +220,9 @@ static stKVDatabaseConf *constructFromString(const char *xmlString) {
         databaseConf = stKVDatabaseConf_constructKyotoTycoon(getXmlValueRequired(hash, "host"), 
                                                         getXmlPort(hash), 
                                                         getXmlTimeout(hash), 
+                                                        getXMLMaxKTRecordSize(hash),
+                                                        getXMLMaxKTBulkSetSize(hash),
+                                                        getXMLMaxKTBulkSetNumRecords(hash),
                                                         getXmlValueRequired(hash, "database_dir"),
                                                         stHash_search(hash, "database_name"));
     } else if (stString_eq(type, "mysql")) {
@@ -207,6 +254,8 @@ stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
     conf->host = stString_copy(srcConf->host);
     conf->port = srcConf->port;
     conf->timeout = srcConf->timeout;
+    conf->maxKTRecordSize = srcConf->maxKTRecordSize;
+    conf->maxKTBulkSetSize = srcConf->maxKTBulkSetSize;
     conf->user = stString_copy(srcConf->user);
     conf->password = stString_copy(srcConf->password);
     conf->databaseName = stString_copy(srcConf->databaseName);
@@ -244,6 +293,18 @@ unsigned stKVDatabaseConf_getPort(stKVDatabaseConf *conf) {
 
 int stKVDatabaseConf_getTimeout(stKVDatabaseConf *conf) {
     return conf->timeout;
+}
+
+int64_t stKVDatabaseConf_getMaxKTRecordSize(stKVDatabaseConf *conf) {
+    return conf->maxKTRecordSize;
+}
+
+int64_t stKVDatabaseConf_getMaxKTBulkSetSize(stKVDatabaseConf *conf) {
+    return conf->maxKTBulkSetSize;
+}
+
+int64_t stKVDatabaseConf_getMaxKTBulkSetNumRecords(stKVDatabaseConf *conf) {
+    return conf->maxKTBulkSetNumRecords;
 }
 
 const char *stKVDatabaseConf_getUser(stKVDatabaseConf *conf) {
