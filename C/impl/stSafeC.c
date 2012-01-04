@@ -23,8 +23,10 @@ void stSafeCErr(const char *msg, ...)  {
     va_start(args, msg);
     vsnprintf(buf, sizeof(buf), msg, args);
     va_end(args);
-    write(2, buf, strlen(buf));
-    write(2, "\n", 1);
+    // n.b.: check number of bytes here is a hack around not being able
+    // to turn off gcc -Wunused-result for this special case
+    int nbytes = write(2, buf, strlen(buf));
+    nbytes += write(2, "\n", 1);
     _exit(128);
 }
 
