@@ -60,7 +60,11 @@ def redirectLoggerStreamHandlers(oldStream, newStream):
 def getLogLevelString():
     return logLevelString
 
+__loggingFiles = []
 def addLoggingFileHandler(fileName, rotatingLogging=False):
+    if fileName in __loggingFiles:
+        return
+    __loggingFiles.append(fileName)
     if rotatingLogging:
         handler = logging.handlers.RotatingFileHandler(fileName, maxBytes=1000000, backupCount=1)
     else:
@@ -174,10 +178,11 @@ def popenCatch(command):
     """
     logger.debug("Running the command: %s" % command)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, bufsize=-1)
+    output, nothing = process.communicate() #process.stdout.read().strip()
     sts = process.wait()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
-    return process.stdout.read().strip()
+    return output #process.stdout.read().strip()
 
 def spawnDaemon(command):
     """Launches a command as a daemon.  It will need to be explicitly killed
