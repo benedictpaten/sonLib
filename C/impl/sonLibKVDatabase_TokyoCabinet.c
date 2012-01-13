@@ -242,6 +242,49 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
     return partialRecord;
 }
 
+static stList *bulkGetRecords(stKVDatabase *database, stList* keys) {
+	int32_t n = stList_length(keys);
+	stList* results = stList_construct3(n, (void(*)(void *))stKVDatabaseBulkResult_destruct);
+	startTransaction(database);
+	stTry {
+		for (int32_t i = 0; i < n; ++i)
+		{
+			int64_t key = *(int64_t*)stList_get(keys, i);
+			int64_t recordSize;
+			void* record = getRecord2(database, key, &recordSize);
+			stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+			stList_set(results, i, result);
+		}
+		commitTransaction(database);
+	}stCatch(ex) {
+		abortTransaction(database);
+		stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "tokyo cabinet bulk get records failed");
+	}stTryEnd;
+
+	return results;
+}
+
+static stList *bulkGetRecordsRange(stKVDatabase *database, int64_t firstKey, int64_t numRecords) {
+	stList* results = stList_construct3(numRecords, (void(*)(void *))stKVDatabaseBulkResult_destruct);
+	startTransaction(database);
+	stTry {
+		for (int32_t i = 0; i < numRecords; ++i)
+		{
+			int64_t key = firstKey + i;
+			int64_t recordSize;
+			void* record = getRecord2(database, key, &recordSize);
+			stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+			stList_set(results, i, result);
+		}
+		commitTransaction(database);
+	}stCatch(ex) {
+		abortTransaction(database);
+		stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID, "tokyo cabinet bulk get records failed");
+	}stTryEnd;
+
+	return results;
+}
+
 static void removeRecord(stKVDatabase *database, int64_t key) {
     TCBDB *dbImpl = database->dbImpl;
     if (!tcbdbout(dbImpl, &key, sizeof(int64_t))) {
@@ -286,6 +329,8 @@ void stKVDatabase_initialise_tokyoCabinet(stKVDatabase *database, stKVDatabaseCo
     database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
+    database->bulkGetRecords = bulkGetRecords;
+    database->bulkGetRecordsRange = bulkGetRecordsRange;
     database->removeRecord = removeRecord;
 }
 

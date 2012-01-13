@@ -280,6 +280,107 @@ static void testBulkSetRecords(CuTest *testCase) {
     teardown();
 }
 
+static void testBulkGetRecords(CuTest* testCase) {
+	/*
+	 * Tests the new bulk get functions
+	 */
+	setup();
+    int64_t i = 100, j = 110, k = 120, l = 130;
+    int64_t bigRecSize = 184500800;
+    int64_t* m = (int64_t*)st_malloc(bigRecSize);
+
+    int64_t ki = 4, kj = 5, kk = 3, kl = 1, km = 2;
+    stKVDatabase_insertRecord(database, 1, &i, sizeof(int64_t));
+
+    stList *requests = stList_construct3(0, (void(*)(void *)) stKVDatabaseBulkRequest_destruct);
+    stList_append(requests, stKVDatabaseBulkRequest_constructInsertRequest(ki, &i, sizeof(int64_t)));
+    stList_append(requests, stKVDatabaseBulkRequest_constructInsertRequest(kj, &j, sizeof(int64_t)));
+    stList_append(requests, stKVDatabaseBulkRequest_constructSetRequest(kk, &k, sizeof(int64_t)));
+    stList_append(requests, stKVDatabaseBulkRequest_constructUpdateRequest(kl, &l, sizeof(int64_t)));
+
+    stKVDatabase_bulkSetRecords(database, requests);
+
+    stList_destruct(requests);
+
+    stKVDatabase_setRecord(database, km, m, bigRecSize);
+
+    stList* keys = stList_construct2(5);
+    stList_set(keys, 0, &ki);
+    stList_set(keys, 1, &kj);
+    stList_set(keys, 2, &kk);
+    stList_set(keys, 3, &kl);
+    stList_set(keys, 4, &km);
+
+    stList* results = stKVDatabase_bulkGetRecords(database, keys);
+    CuAssertTrue(testCase, stList_length(results) == 5);
+
+    void* record;
+    int64_t size;
+
+    stKVDatabaseBulkResult* res0 = (stKVDatabaseBulkResult*)stList_get(results, 0);
+    record = stKVDatabaseBulkResult_getRecord(res0, &size);
+    CuAssertTrue(testCase, record != NULL);
+    CuAssertTrue(testCase, *(int64_t*)record == i && size == sizeof(int64_t));
+
+    stKVDatabaseBulkResult* res1 = (stKVDatabaseBulkResult*)stList_get(results, 1);
+	record = stKVDatabaseBulkResult_getRecord(res1, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == j && size == sizeof(int64_t));
+
+	stKVDatabaseBulkResult* res2 = (stKVDatabaseBulkResult*)stList_get(results, 2);
+	record = stKVDatabaseBulkResult_getRecord(res2, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == k && size == sizeof(int64_t));
+
+	stKVDatabaseBulkResult* res3 = (stKVDatabaseBulkResult*)stList_get(results, 3);
+	record = stKVDatabaseBulkResult_getRecord(res3, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == l && size == sizeof(int64_t));
+
+	stKVDatabaseBulkResult* res4 = (stKVDatabaseBulkResult*)stList_get(results, 4);
+	record = stKVDatabaseBulkResult_getRecord(res4, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, size == bigRecSize);
+
+    stList_destruct(results);
+
+    results = stKVDatabase_bulkGetRecordsRange(database, 1, 6);
+    CuAssertTrue(testCase, stList_length(results) == 6);
+
+    res0 = (stKVDatabaseBulkResult*)stList_get(results, 0);
+	record = stKVDatabaseBulkResult_getRecord(res0, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == l && size == sizeof(int64_t));
+
+	res1 = (stKVDatabaseBulkResult*)stList_get(results, 1);
+	record = stKVDatabaseBulkResult_getRecord(res1, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, size == bigRecSize);
+
+	res2 = (stKVDatabaseBulkResult*)stList_get(results, 2);
+	record = stKVDatabaseBulkResult_getRecord(res2, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == k && size == sizeof(int64_t));
+
+	res3 = (stKVDatabaseBulkResult*)stList_get(results, 3);
+	record = stKVDatabaseBulkResult_getRecord(res3, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == i && size == sizeof(int64_t));
+
+	res4 = (stKVDatabaseBulkResult*)stList_get(results, 4);
+	record = stKVDatabaseBulkResult_getRecord(res4, &size);
+	CuAssertTrue(testCase, record != NULL);
+	CuAssertTrue(testCase, *(int64_t*)record == j && size == sizeof(int64_t));
+
+	stKVDatabaseBulkResult* res5 = (stKVDatabaseBulkResult*)stList_get(results, 5);
+	record = stKVDatabaseBulkResult_getRecord(res5, &size);
+	CuAssertTrue(testCase, record == NULL);
+
+    stList_destruct(results);
+    free(m);
+    teardown();
+}
+
 static void testBulkRemoveRecords(CuTest *testCase) {
     /*
      * Tests doing a bulk update of a set of records.
@@ -477,6 +578,7 @@ static CuSuite* stKVDatabaseTestSuite(void) {
     SUITE_ADD_TEST(suite, testSetRecord);
     SUITE_ADD_TEST(suite, testBulkRemoveRecords);
     SUITE_ADD_TEST(suite, testBulkSetRecords);
+    SUITE_ADD_TEST(suite, testBulkGetRecords);
     SUITE_ADD_TEST(suite, constructDestructAndDelete);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_tokyoCabinet);
     SUITE_ADD_TEST(suite, test_stKVDatabaseConf_constructFromString_mysql);

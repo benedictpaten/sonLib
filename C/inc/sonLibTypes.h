@@ -50,6 +50,7 @@ typedef struct stAlignSegment stAlignSegment;
 typedef struct stKVDatabase stKVDatabase;
 typedef struct stKVDatabaseConf stKVDatabaseConf;
 typedef struct stKVDatabaseBulkRequest stKVDatabaseBulkRequest;
+typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
 
 #ifdef __cplusplus
 }

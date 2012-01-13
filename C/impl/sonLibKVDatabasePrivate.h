@@ -35,6 +35,8 @@ struct stKVDatabase {
     int64_t (*getInt64)(stKVDatabase *, int64_t key);
     void *(*getRecord2)(stKVDatabase *database, int64_t key, int64_t *recordSize);
     void *(*getPartialRecord)(stKVDatabase *database, int64_t key, int64_t zeroBasedByteOffset, int64_t sizeInBytes, int64_t recordSize);
+    stList *(*bulkGetRecords)(stKVDatabase *database, stList* keys);
+    stList *(*bulkGetRecordsRange)(stKVDatabase *database, int64_t firstKey, int64_t numRecords);
     void (*removeRecord)(stKVDatabase *, int64_t key);
 };
 
@@ -47,6 +49,11 @@ struct stKVDatabaseBulkRequest {
     void *value;
     int64_t size;
     enum stKVDatabaseBulkRequestType type;
+};
+
+struct stKVDatabaseBulkResult {
+	void *value;
+	int64_t size;
 };
 
 /*
