@@ -5,3 +5,4 @@ lib/
 *.pyc
 *.o
 *.a
+include.mk
