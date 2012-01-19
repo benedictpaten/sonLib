@@ -1,4 +1,4 @@
--include include.mk
+include include.mk
 binPath = ./bin
 
 .PHONY: all clean cP cP.clean externalToolsP.clean test 
@@ -6,7 +6,7 @@ binPath = ./bin
 all : cP ${binPath}/sonLib_daemonize.py
 
 clean : cP.clean externalToolsP.clean
-	rm -f include.mk ${binPath}/sonLib_daemonize.py
+	rm -f ${binPath}/sonLib_daemonize.py
 
 cP: externalToolsP
 	cd C && make all
@@ -24,10 +24,5 @@ test :
 	PYTHONPATH=.. PATH=../../bin:$$PATH python allTests.py --testLength=SHORT --logLevel=CRITICAL
 
 ${binPath}/sonLib_daemonize.py : sonLib_daemonize.py
-	cp $^ $@.tmp
-	chmod +x $@.tmp
-	mv $@.tmp $@
-
-include.mk: include.mk.tmpl
-	cp $^ $@.tmp
-	mv $@.tmp $@
+	cp sonLib_daemonize.py ${binPath}/sonLib_daemonize.py
+	chmod +x ${binPath}/sonLib_daemonize.py
