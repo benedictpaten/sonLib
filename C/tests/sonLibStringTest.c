@@ -72,6 +72,17 @@ static void testString_join(CuTest* testCase) {
     free(cA2);
 }
 
+static void testString_join2(CuTest* testCase) {
+    stList *list = stList_construct3(0, free);
+    stList_append(list, stString_copy("Hello world wo"));
+    stList_append(list, stString_copy("wo"));
+    stList_append(list, stString_copy(" foo "));
+    char *cA2 = stString_join2("\n", list);
+    CuAssertStrEquals(testCase, "Hello world wo\nwo\n foo ", cA2);
+    free(cA2);
+    stList_destruct(list);
+}
+
 static void testString_split(CuTest *testCase) {
     const char *input = " Hello world\ttwo\nwo\n foo ";
     stList *tokens = stString_split(input);
@@ -91,6 +102,7 @@ CuSuite* sonLibStringTestSuite(void) {
     SUITE_ADD_TEST(suite, testString_getNextWord);
     SUITE_ADD_TEST(suite, testString_replace);
     SUITE_ADD_TEST(suite, testString_join);
+    SUITE_ADD_TEST(suite, testString_join2);
     SUITE_ADD_TEST(suite, testString_split);
     return suite;
 }

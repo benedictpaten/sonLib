@@ -130,6 +130,16 @@ char *stString_join(const char *pad, const char **strings, int32_t length) {
     return cA;
 }
 
+char *stString_join2(const char *pad, stList *strings) {
+    char **cAA = st_malloc(sizeof(char *)*stList_length(strings));
+    for(int32_t i=0; i<stList_length(strings); i++) {
+        cAA[i] = stList_get(strings, i);
+    }
+    char *cA = stString_join(pad, (const char **)cAA, stList_length(strings));
+    free(cAA);
+    return cA;
+}
+
 stList *stString_split(const char *string) {
     char *cA = stString_copy(string);
     char *cA2 = cA;
