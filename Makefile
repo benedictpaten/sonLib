@@ -6,7 +6,7 @@ binPath = ./bin
 all : cP ${binPath}/sonLib_daemonize.py
 
 clean : cP.clean externalToolsP.clean
-	rm include.mk ${binPath}/sonLib_daemonize.py
+	rm -f include.mk ${binPath}/sonLib_daemonize.py
 
 cP: externalToolsP
 	cd C && make all
