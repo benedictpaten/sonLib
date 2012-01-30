@@ -173,16 +173,32 @@ def popen(command, tempFile):
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return sts
 
-def popenCatch(command):
+def popenCatch(command, stdinString=None):
     """Runs a command and return standard out.
     """
     logger.debug("Running the command: %s" % command)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, bufsize=-1)
-    output, nothing = process.communicate() #process.stdout.read().strip()
+    if stdinString != None:
+        process = subprocess.Popen(command, shell=True, 
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=-1)
+        output, nothing = process.communicate(stdinString)
+    else:
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, bufsize=-1)
+        output, nothing = process.communicate() #process.stdout.read().strip()
     sts = process.wait()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return output #process.stdout.read().strip()
+
+def popenPush(command, stdinString=None):
+    if stdinString == None:
+        system(command)
+    else:
+        process = subprocess.Popen(command, shell=True, 
+                                   stdin=subprocess.PIPE, bufsize=-1)
+        process.communicate(stdinString)
+        sts = process.wait()
+        if sts != 0:
+            raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
 
 def spawnDaemon(command):
     """Launches a command as a daemon.  It will need to be explicitly killed

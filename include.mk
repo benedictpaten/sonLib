@@ -18,7 +18,8 @@ endif
 
 
 #Release compiler flags
-cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm -fopenmp
+cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm 
+#-fopenmp
 
 #Debug flags (slow)
 cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -lm
