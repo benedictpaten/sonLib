@@ -357,7 +357,7 @@ def parseSuiteTestOptions(parser=None):
         
     return options, args
     
-def nameValue(name, value, valueType=str):
+def nameValue(name, value, valueType=str, quotes=False):
     """Little function to make it easier to make name value strings for commands.
     """
     if valueType == bool:
@@ -366,6 +366,8 @@ def nameValue(name, value, valueType=str):
         return ""
     if value is None:
         return ""
+    if quotes:
+        return "--%s '%s'" % (name, valueType(value))  
     return "--%s %s" % (name, valueType(value))    
 
 #########################################################
