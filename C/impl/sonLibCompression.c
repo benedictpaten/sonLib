@@ -21,7 +21,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
     uLongf bufferSize = compressBound(sizeInBytes);
     void *buffer = st_malloc(bufferSize);
     if(level == -1) {
-        level = 8;
+        level = Z_DEFAULT_COMPRESSION;
     }
     int32_t i = compress2(buffer, &bufferSize, data, sizeInBytes, level);
     if(i != Z_OK) {
