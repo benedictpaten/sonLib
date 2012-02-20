@@ -205,13 +205,25 @@ def spawnDaemon(command):
     """
     return system("sonLib_daemonize.py \'%s\'" % command)
 
-def getTotalCpuTime():
-    """Gives the total cpu time, including the children. 
+def getTotalCpuTimeAndMemoryUsage():
+    """Gives the total cpu time and memory usage of itself and its children. 
     """
     me = resource.getrusage(resource.RUSAGE_SELF)
     childs = resource.getrusage(resource.RUSAGE_CHILDREN)
     totalCpuTime = me.ru_utime+me.ru_stime+childs.ru_utime+childs.ru_stime
-    return totalCpuTime
+    totalMemoryUsage = me.ru_maxrss+ me.ru_maxrss
+    return totalCpuTime, totalMemoryUsage
+
+def getTotalCpuTime():
+    """Gives the total cpu time, including the children. 
+    """
+    return getTotalCpuTimeAndMemoryUsage()[0]
+
+def getTotalMemoryUsage():
+    """Gets the amount of memory used by the process and its children.
+    """
+    return getTotalCpuTimeAndMemoryUsage()[1]
+
  
 #########################################################
 #########################################################
