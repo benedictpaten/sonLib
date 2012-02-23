@@ -67,6 +67,10 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
     return sortedSet;
 }
 
+void stSortedSet_setDestructor(stSortedSet *set, void (*destructElement)(void *)) {
+    set->destructElementFn = destructElement;
+}
+
 static struct _stSortedSet_construct3Fn *stSortedSet_getComparator(stSortedSet *sortedSet) {
     return (struct _stSortedSet_construct3Fn *)sortedSet->sortedSet->avl_param;
 }
