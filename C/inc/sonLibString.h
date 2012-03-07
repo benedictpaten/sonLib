@@ -89,6 +89,11 @@ char *stString_join2(const char *pad, stList *strings);
  */
 stList *stString_split(const char *string);
 
+/*
+ * Gets a substring of a given string.
+ */
+char *stString_getSubString(const char *cA, int32_t start, int32_t length);
+
 #ifdef __cplusplus
 }
 #endif

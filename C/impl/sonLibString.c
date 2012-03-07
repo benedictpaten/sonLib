@@ -151,3 +151,9 @@ stList *stString_split(const char *string) {
     free(cA2);
     return tokens;
 }
+
+char *stString_getSubString(const char *cA, int32_t start, int32_t length) {
+    char *cA2 = memcpy(st_malloc(sizeof(char) * (length + 1)), cA + start, length);
+    cA2[length] = '\0';
+    return cA2;
+}

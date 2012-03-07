@@ -95,6 +95,19 @@ static void testString_split(CuTest *testCase) {
     stList_destruct(tokens);
 }
 
+static void testString_getSubString(CuTest *testCase) {
+    const char *input = "Hello world";
+    char *cA = stString_getSubString(input, 1, 4);
+    CuAssertStrEquals(testCase, "ello", cA);
+    free(cA);
+    cA = stString_getSubString(input, 1, 0);
+    CuAssertStrEquals(testCase, "", cA);
+    free(cA);
+    cA = stString_getSubString(input, 1, 9);
+    CuAssertStrEquals(testCase, "ello world", cA);
+    free(cA);
+}
+
 CuSuite* sonLibStringTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testString_copy);
@@ -104,6 +117,7 @@ CuSuite* sonLibStringTestSuite(void) {
     SUITE_ADD_TEST(suite, testString_join);
     SUITE_ADD_TEST(suite, testString_join2);
     SUITE_ADD_TEST(suite, testString_split);
+    SUITE_ADD_TEST(suite, testString_getSubString);
     return suite;
 }
 
