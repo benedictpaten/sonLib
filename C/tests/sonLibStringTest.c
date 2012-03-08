@@ -103,7 +103,7 @@ static void testString_getSubString(CuTest *testCase) {
     cA = stString_getSubString(input, 1, 0);
     CuAssertStrEquals(testCase, "", cA);
     free(cA);
-    cA = stString_getSubString(input, 1, 9);
+    cA = stString_getSubString(input, 1, 10);
     CuAssertStrEquals(testCase, "ello world", cA);
     free(cA);
 }

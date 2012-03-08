@@ -186,7 +186,7 @@ def popenCatch(command, stdinString=None):
         output, nothing = process.communicate() #process.stdout.read().strip()
     sts = process.wait()
     if sts != 0:
-        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
+        raise RuntimeError("Command: %s with stdin string '%s' exited with non-zero status %i" % (command, stdinString, sts))
     return output #process.stdout.read().strip()
 
 def popenPush(command, stdinString=None):
@@ -198,7 +198,7 @@ def popenPush(command, stdinString=None):
         process.communicate(stdinString)
         sts = process.wait()
         if sts != 0:
-            raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
+            raise RuntimeError("Command: %s with stdin string '%s' exited with non-zero status %i" % (command, stdinString, sts))
 
 def spawnDaemon(command):
     """Launches a command as a daemon.  It will need to be explicitly killed
