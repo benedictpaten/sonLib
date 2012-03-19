@@ -11,6 +11,9 @@
  *      Author: benedictpaten
  */
 #include "sonLibGlobalsInternal.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <inttypes.h>
 
 static int32_t stFile_getLineFromFileP(char **s, int32_t *n, FILE *f) {
     register int32_t nMinus1= ((*n)-1), i= 0;
@@ -54,4 +57,43 @@ char *stFile_getLineFromFile(FILE *fileHandle) {
     char *cA2 = stString_copy(cA);
     free(cA);
     return cA2;
+}
+
+char *stFile_pathJoin(const char *pathPrefix, const char *pathSuffix) {
+    char *fullPath;
+
+    fullPath = st_malloc(
+            sizeof(char) * (strlen(pathPrefix) + strlen(pathSuffix) + 2));
+    if (strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix) - 1] == '/') {
+        sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
+    } else {
+        sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
+    }
+    return fullPath;
+}
+
+stList *stFile_getFileNamesInDirectory(const char *dir) {
+    stList *files = stList_construct3(0, free);
+    DIR *dh = opendir(dir);
+    struct dirent *file;//a 'directory entity' AKA file
+    while ((file = readdir(dh)) != NULL) {
+        if (file->d_name[0] != '.') {
+            struct stat info;
+            char *cA = stFile_pathJoin(dir, file->d_name);
+            //ascertain if complete or not
+            if(!stat(cA, &info)) {
+                st_errAbort(
+                        "Failed to get information about the file: %s\n",
+                        file->d_name);
+            }
+            if (!S_ISDIR(info.st_mode)) {
+                st_logInfo("Processing file: %s\n", cA);
+                stList_append(files, cA);
+            } else {
+                free(cA);
+            }
+        }
+    }
+    closedir(dh);
+    return files;
 }

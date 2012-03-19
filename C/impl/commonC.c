@@ -779,19 +779,6 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
     return 1.0;
 }
 
-char *pathJoin(const char *pathPrefix, const char *pathSuffix) {
-    char *fullPath;
-
-    fullPath = st_malloc(
-            sizeof(char) * (strlen(pathPrefix) + strlen(pathSuffix) + 2));
-    if (strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix) - 1] == '/') {
-        sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
-    } else {
-        sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
-    }
-    return fullPath;
-}
-
 int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
     return (valueOne - valueTwo <= precision) || (valueTwo - valueOne
             <= precision);

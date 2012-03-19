@@ -25,6 +25,16 @@ extern "C" {
  */
 char *stFile_getLineFromFile(FILE *fileHandle);
 
+/*
+ * Joins together two strings.
+ */
+char *stFile_pathJoin(const char *pathPrefix, const char *pathSuffix);
+
+/*
+ * Get list of file names (as strings) in a directory.
+ */
+stList *stFile_getFileNamesInDirectory(const char *dir);
+
 #ifdef __cplusplus
 }
 #endif
