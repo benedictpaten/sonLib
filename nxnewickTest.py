@@ -27,7 +27,7 @@ class TestCase(unittest.TestCase):
         tree2 = '(Bovine:0.69395,(Gibbon:0.36079,(Orang:0.33636,(Gorilla:0.17147,(Chimp:0.19268, Human:0.11927):0.08386):0.06124):0.15057):0.54939,Mouse:1.2146):0.1;'
         tree3 = '(Bovine:0.69395,(Hylobates:0.36079,(Pongo:0.33636,(G._Gorilla:0.17147, (P._paniscus:0.19268,H._sapiens:0.11927):0.08386):0.06124):0.15057):0.54939, Rodent:1.2146);'
         tree4 = 'A;'
-        tree5 = '((A,B),(C,D));'
+        tree5 = '((A,B):0.0,(C,D));'
         tree6 = '(Alpha,Beta,Gamma,Delta,,Epsilon,,,);'
         
         trees = [tree1, tree2, tree3, tree4, tree5, tree6]        
