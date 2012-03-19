@@ -15,30 +15,31 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 
+const char *ST_FILE_EXCEPTION = "ST_FILE_EXCEPTION";
+
 static int32_t stFile_getLineFromFileP(char **s, int32_t *n, FILE *f) {
-    register int32_t nMinus1= ((*n)-1), i= 0;
+    register int32_t nMinus1 = ((*n) - 1), i = 0;
 
     char *s2 = *s;
-    while(1) {
-        register int32_t ch= (char)getc(f);
+    while (1) {
+        register int32_t ch = (char) getc(f);
 
-        if(ch == '\r') {
-            ch= getc(f);
+        if (ch == '\r') {
+            ch = getc(f);
         }
 
-        if(i == nMinus1) {
-            *n = 2*(*n) + 1;
-            *s = realloc(*s, (*n + 1)*sizeof(char));
+        if (i == nMinus1) {
+            *n = 2 * (*n) + 1;
+            *s = realloc(*s, (*n + 1) * sizeof(char));
             assert(*s != NULL);
             s2 = *s + i;
-            nMinus1 = ((*n)-1);
+            nMinus1 = ((*n) - 1);
         }
 
-        if((ch == '\n') || (ch == EOF)) {
+        if ((ch == '\n') || (ch == EOF)) {
             *s2 = '\0';
-            return(feof(f) ? -1 : i);
-        }
-        else {
+            return (feof(f) ? -1 : i);
+        } else {
             *s2 = ch;
             s2++;
         }
@@ -48,9 +49,9 @@ static int32_t stFile_getLineFromFileP(char **s, int32_t *n, FILE *f) {
 
 char *stFile_getLineFromFile(FILE *fileHandle) {
     int32_t length = 100;
-    char *cA = st_malloc(length*sizeof(char));
+    char *cA = st_malloc(length * sizeof(char));
     int32_t i = stFile_getLineFromFileP(&cA, &length, fileHandle);
-    if(i == -1 && strlen(cA) == 0) {
+    if (i == -1 && strlen(cA) == 0) {
         free(cA);
         return NULL;
     }
@@ -60,40 +61,66 @@ char *stFile_getLineFromFile(FILE *fileHandle) {
 }
 
 char *stFile_pathJoin(const char *pathPrefix, const char *pathSuffix) {
-    char *fullPath;
+    return strlen(pathPrefix) == 0 || pathPrefix[strlen(pathPrefix) - 1] == '/' ? stString_print(
+            "%s%s", pathPrefix, pathSuffix)
+            : stString_print("%s/%s", pathPrefix, pathSuffix);
+}
 
-    fullPath = st_malloc(
-            sizeof(char) * (strlen(pathPrefix) + strlen(pathSuffix) + 2));
-    if (strlen(pathPrefix) > 0 && pathPrefix[strlen(pathPrefix) - 1] == '/') {
-        sprintf(fullPath, "%s%s", pathPrefix, pathSuffix);
-    } else {
-        sprintf(fullPath, "%s/%s", pathPrefix, pathSuffix);
+bool stFile_exists(const char *fileName) {
+    struct stat info;
+    return !stat(fileName, &info);
+}
+
+bool stFile_isDir(const char *fileName) {
+    if (!stFile_exists(fileName)) {
+        stExcept_new(ST_FILE_EXCEPTION, "File does not exist exist: %s\n",
+                fileName);
     }
-    return fullPath;
+    struct stat info;
+    if (stat(fileName, &info)) {
+        stThrowNew(ST_FILE_EXCEPTION,
+                "Failed to get information about the file: %s\n", fileName);
+    }
+    return S_ISDIR(info.st_mode);
+}
+
+void stFile_mkdir(const char *dirName) {
+    if (stFile_exists(dirName)) {
+        stThrowNew(ST_FILE_EXCEPTION,
+                "Directory already appears to exist: %s\n", dirName);
+    }
+    int i = mkdir(dirName, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (i) {
+        stThrowNew(ST_FILE_EXCEPTION, "Error code from mkdir function: %i\n",
+                i);
+    }
 }
 
 stList *stFile_getFileNamesInDirectory(const char *dir) {
+    if (!stFile_exists(dir)) {
+        stThrowNew(ST_FILE_EXCEPTION, "Directory does not exist exist: %s\n",
+                dir);
+    }
+    if (!stFile_isDir(dir)) {
+        stThrowNew(ST_FILE_EXCEPTION,
+                "Specified file is not a directory: %s\n", dir);
+    }
     stList *files = stList_construct3(0, free);
     DIR *dh = opendir(dir);
     struct dirent *file;//a 'directory entity' AKA file
     while ((file = readdir(dh)) != NULL) {
         if (file->d_name[0] != '.') {
-            struct stat info;
-            char *cA = stFile_pathJoin(dir, file->d_name);
-            //ascertain if complete or not
-            if(!stat(cA, &info)) {
-                st_errAbort(
-                        "Failed to get information about the file: %s\n",
-                        file->d_name);
-            }
-            if (!S_ISDIR(info.st_mode)) {
-                st_logInfo("Processing file: %s\n", cA);
-                stList_append(files, cA);
-            } else {
-                free(cA);
-            }
+            stList_append(files, stString_copy(file->d_name));
         }
     }
     closedir(dh);
     return files;
+}
+
+void stFile_rmrf(const char *fileName) {
+    if (!stFile_exists(fileName)) {
+        stThrowNew(ST_FILE_EXCEPTION, "File to remove does not exist: %s\n",
+                fileName);
+    }
+    st_system("rm -rf %s", fileName);
 }
