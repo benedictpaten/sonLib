@@ -81,7 +81,7 @@ class NXNewick:
                 self.outString += "\""
         if parent is not None:
             weight = self.nxTree.getWeight(parent, node, defaultValue=None)
-            if weight:
+            if weight is not None:
                 self.outString += ":%s" % str(weight)      
         
     #### PRIVATE READING FUNCTIONS ####       
