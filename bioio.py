@@ -857,8 +857,7 @@ def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePri
 #########################################################
 
 def pWMRead(fileHandle, alphabetSize=4):
-    """
-    reads in standard position weight matrix format,
+    """reads in standard position weight matrix format,
     rows are different types of base, columns are individual residues
     """
     lines = fileHandle.readlines()
@@ -875,8 +874,7 @@ def pWMRead(fileHandle, alphabetSize=4):
     return l
 
 def pWMWrite(fileHandle, pWM, alphabetSize=4):
-    """
-    Writes file in standard PWM format, is reverse of pWMParser
+    """Writes file in standard PWM format, is reverse of pWMParser
     """
     for i in xrange(0, alphabetSize):
         fileHandle.write("%s\n" % ' '.join([ str(pWM[j][i]) for j in xrange(0, len(pWM)) ]))
