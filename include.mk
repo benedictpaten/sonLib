@@ -18,9 +18,11 @@ endif
 #Release compiler flags
 cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm 
 #-fopenmp
+cppflags_opt = -O3 -g -Wall -funroll-loops -lm
 
 #Debug flags (slow)
 cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -lm
+cppflags_dbg = -Wall -g -fno-inline -DBEN_DEBUG -lm
 
 #Ultra Debug flags (really slow)
 cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA_DEBUG -lm
@@ -28,8 +30,8 @@ cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 
-#  for cpp code: don't use pedantic, or Werror
-cppflags = -g -Wall -funroll-loops -lm 
+#for cpp code: don't use pedantic, or Werror
+cppflags = ${cppflags_opt} 
 
 #Flags to use
 cflags = ${cflags_opt} 
