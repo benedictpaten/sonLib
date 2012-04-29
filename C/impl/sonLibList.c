@@ -289,3 +289,11 @@ stList *stList_join(stList *listOfLists) {
     }
     return joinedList;
 }
+
+stSortedSet *stList_convertToSortedSet(stList *list) {
+    stSortedSet *set = stList_getSortedSet(list, NULL);
+    stSortedSet_setDestructor(set, list->destructElement);
+    stList_setDestructor(list, NULL);
+    stList_destruct(list);
+    return set;
+}
