@@ -59,6 +59,11 @@ void *stHash_search(stHash *hash, void *key);
 void *stHash_remove(stHash *hash, void *key);
 
 /*
+ * Removes element, returning removed element and freeing key (using supplied function).
+ */
+void *stHash_removeAndFreeKey(stHash *hash, void *key);
+
+/*
  * Returns the number of key/value pairs in the hash.
  */
 int32_t stHash_size(stHash *hash);

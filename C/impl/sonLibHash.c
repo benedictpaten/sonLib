@@ -64,6 +64,10 @@ void *stHash_remove(stHash *hash, void *key) {
     return hashtable_remove(hash->hash, key, 0);
 }
 
+void *stHash_removeAndFreeKey(stHash *hash, void *key) {
+    return hashtable_remove(hash->hash, key, 1);
+}
+
 int32_t stHash_size(stHash *hash) {
     return hashtable_count(hash->hash);
 }
