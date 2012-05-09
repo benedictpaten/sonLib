@@ -14,10 +14,8 @@ static void testSetup() {
     //compare by value of memory address
     hash = stHash_construct();
     //compare by value of ints.
-    hash2 = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey,
-            (int (*)(const void *, const void *))stIntTuple_equalsFn,
-            (void (*)(void *))stIntTuple_destruct,
-            (void (*)(void *))stIntTuple_destruct);
+    hash2 = stHash_construct3((uint32_t(*)(const void *)) stIntTuple_hashKey, (int(*)(const void *, const void *)) stIntTuple_equalsFn,
+            (void(*)(void *)) stIntTuple_destruct, (void(*)(void *)) stIntTuple_destruct);
     one = stIntTuple_construct(1, 0);
     two = stIntTuple_construct(1, 1);
     three = stIntTuple_construct(1, 2);
@@ -88,6 +86,32 @@ static void testHash_remove(CuTest* testCase) {
     testTeardown();
 }
 
+static void testHash_removeAndFreeKey(CuTest* testCase) {
+    stHash *hash3 = stHash_construct2(free, free);
+    stList *keys = stList_construct();
+    stList *values = stList_construct();
+    int32_t keyNumber = 1000;
+    for (int32_t i = 0; i < keyNumber; i++) {
+        int32_t *key = st_malloc(sizeof(int32_t));
+        int32_t *value = st_malloc(sizeof(int32_t));
+        stList_append(keys, key);
+        stList_append(values, value);
+        stHash_insert(hash3, key, value);
+    }
+
+    for (int32_t i = 0; i < keyNumber; i++) {
+        int32_t *key = stList_get(keys, i);
+        int32_t *value = stList_get(values, i);
+        CuAssertPtrEquals(testCase, value, stHash_removeAndFreeKey(hash3, key));
+        free(value);
+    }
+    CuAssertIntEquals(testCase, 0, stHash_size(hash3));
+
+    stHash_destruct(hash3);
+    stList_destruct(keys);
+    stList_destruct(values);
+}
+
 static void testHash_insert(CuTest* testCase) {
     /*
      * Tests inserting already present keys.
@@ -125,9 +149,9 @@ static void testHash_testIterator(CuTest *testCase) {
 
     stHashIterator *iterator = stHash_getIterator(hash);
     stHashIterator *iteratorCopy = stHash_copyIterator(iterator);
-    int32_t i=0;
+    int32_t i = 0;
     stHash *seen = stHash_construct();
-    for(i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
         void *o = stHash_getNext(iterator);
         CuAssertTrue(testCase, o != NULL);
         CuAssertTrue(testCase, stHash_search(hash, o) != NULL);
@@ -171,6 +195,7 @@ CuSuite* sonLibHashTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testHash_search);
     SUITE_ADD_TEST(suite, testHash_remove);
+    SUITE_ADD_TEST(suite, testHash_removeAndFreeKey);
     SUITE_ADD_TEST(suite, testHash_insert);
     SUITE_ADD_TEST(suite, testHash_size);
     SUITE_ADD_TEST(suite, testHash_testIterator);
