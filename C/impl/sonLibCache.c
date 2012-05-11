@@ -54,11 +54,9 @@ static stCacheRecord getTempRecord(int64_t key, int64_t start, int64_t size) {
 
 static stCacheRecord *cacheRecord_construct(int64_t key,
         const void *value, int64_t start, int64_t size, bool copyMemory) {
-#ifdef BEN_DEBUG
     assert(value != NULL);
     assert(size >= 0);
     assert(start >= 0);
-#endif
     stCacheRecord *record = st_malloc(sizeof(stCacheRecord));
     record->key = key;
     record->start = start;
@@ -107,11 +105,9 @@ static bool recordsAdjacent(stCacheRecord *record1, stCacheRecord *record2) {
     /*
      * Returns non-zero if the records abut with record1 immediately before record2.
      */
-#if BEN_DEBUG //Check the records do not overlap
     assert(cacheRecord_cmp(record1, record2) <= 0);
     assert(!recordOverlapsWith(record1, record2->key, record2->start, record2->size));
     assert(!recordContainedIn(record1, record2->key, record2->start, record2->size));
-#endif
     return record1->key == record2->key && record1->start + record1->size
             == record2->start;
 }
@@ -121,9 +117,7 @@ static stCacheRecord *mergeRecords(stCacheRecord *record1,
     /*
      * Merges two adjacenct records.
      */
-//#ifdef BEN_DEBUG
     assert(recordsAdjacent(record1, record2));
-//#endif
     int64_t i = record1->size + record2->size;
     char *j = memcpy(st_malloc(i), record1->record, record1->size);
     memcpy(j + record1->size, record2->record, record2->size);
@@ -203,12 +197,10 @@ void stCache_setRecord(stCache *cache, int64_t key,
     if (stCache_containsRecord(cache, key, start, size)) {
         stCacheRecord *record = getLessThanOrEqualRecord(cache, key,
                 start, size);
-#ifdef BEN_DEBUG
         assert(record != NULL);
         assert(record->key == key);
         assert(record->start <= start);
         assert(record->start + record->size >= start + size);
-#endif
         memcpy(record->record + start - record->start, value, size);
         return;
     }
@@ -241,10 +233,8 @@ void stCache_setRecord(stCache *cache, int64_t key,
 
 bool stCache_containsRecord(stCache *cache, int64_t key,
         int64_t start, int64_t size) {
-#ifdef BEN_DEBUG
     assert(start >= 0);
     assert(size >= 0);
-#endif
     stCacheRecord *record = getLessThanOrEqualRecord(cache, key, start,
             size);
     if (record == NULL) {
@@ -268,13 +258,11 @@ void *stCache_getRecord(stCache *cache, int64_t key,
         assert(record != NULL);
         int64_t j = start - record->start;
         int64_t i = size == INT64_MAX ? (record->size - j) : size;
-#ifdef BEN_DEBUG
         assert(record->start <= start);
         assert(j >= 0);
         assert(j <= record->size);
         assert(i >= 0);
         assert(j + i <= record->size);
-#endif
         *sizeRead = i;
         char *cA = st_malloc(i);
         memcpy(cA, record->record + j, i);

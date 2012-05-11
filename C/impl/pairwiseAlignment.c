@@ -162,9 +162,13 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
             while(parseString(&cA4, cA2) == 1) {
                 assert(strlen(cA2) == 1);
                 type = cigarReadFn(cA2[0], &withProb);
-                assert(parseInt(&cA4, &length) == 1);
+                int32_t j = parseInt(&cA4, &length);
+                (void)j;
+                assert(j == 1);
                 if(withProb == TRUE) {
-                    assert(parseFloat(&cA4, &score) == 1);
+                    j = parseFloat(&cA4, &score);
+                    (void)j;
+                    assert(j == 1);
                 }
                 else {
                     score = 0.0;

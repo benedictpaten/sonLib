@@ -16,16 +16,16 @@ else
 endif
 
 #Release compiler flags
-cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm 
+cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm -DNDEBUG
 #-fopenmp
 cppflags_opt = -O3 -g -Wall -funroll-loops -lm -DNDEBUG
 
 #Debug flags (slow)
-cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -lm
-cppflags_dbg = -Wall -g -O0 -fno-inline -DBEN_DEBUG -lm
+cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -lm
+cppflags_dbg = -Wall -g -O0 -fno-inline  -lm
 
 #Ultra Debug flags (really slow)
-cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA_DEBUG -lm
+cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -lm
 
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm

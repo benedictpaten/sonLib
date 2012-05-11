@@ -26,7 +26,9 @@ void readIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
     int32_t i;
 
     for(i=0; i<intNumber; i++) {
-        assert(fscanf(file, INT_STRING, iA + i) == 1);
+        int j = fscanf(file, INT_STRING, iA + i);
+        (void)j;
+        assert(j == 1);
     }
 }
 
@@ -57,7 +59,9 @@ void readDoubles(const char *string, int32_t number, double *dA) {
     fclose(fileHandle);
     fileHandle = fopen(tempFile, "r");
     for(i=0; i<number; i++) {
-        assert(fscanf(fileHandle, "%lf", &(dA[i])) == 1);
+        int j = fscanf(fileHandle, "%lf", &(dA[i]));
+        (void)j;
+        assert(j == 1);
     }
     fclose(fileHandle);
     removeTempFile(tempFile);
@@ -345,7 +349,9 @@ char *_parseFloat(char *string, float *f) {
     float f2;
 
     f2 = FLT_MIN;
-    assert(sscanf(string, "%g", &f2) == 1);
+    int j = sscanf(string, "%g", &f2);
+    (void)j;
+    assert(j == 1);
     assert(f2 != FLT_MIN);
     *f = f2;
     while(*string != '\0' && !isspace(*string)) {

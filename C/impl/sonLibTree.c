@@ -175,7 +175,9 @@ static void tree_parseNewickString_getBranchLength(char **token, char **newickTr
     if (**token == ':') {
         tree_parseNewickTreeString_getNextToken(token, newickTreeString);
         double distance;
-        assert(sscanf(*token, "%lf", &distance) == 1);
+        int j = sscanf(*token, "%lf", &distance);
+        (void)j;
+        assert(j == 1);
         stTree_setBranchLength(tree, distance);
         tree_parseNewickTreeString_getNextToken(token, newickTreeString);
     }
