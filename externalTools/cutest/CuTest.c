@@ -47,6 +47,13 @@ CuString* CuStringNew(void)
 	return str;
 }
 
+void CuStringDelete(CuString *str)
+{
+        if (!str) return;
+        free(str->buffer);
+        free(str);
+}
+
 void CuStringResize(CuString* str, int newSize)
 {
 	str->buffer = (char*) realloc(str->buffer, sizeof(char) * newSize);
@@ -117,6 +124,13 @@ CuTest* CuTestNew(const char* name, TestFunction function)
 	CuTest* tc = CU_ALLOC(CuTest);
 	CuTestInit(tc, name, function);
 	return tc;
+}
+
+void CuTestDelete(CuTest *t)
+{
+        if (!t) return;
+        free(t->name);
+        free(t);
 }
 
 void CuTestRun(CuTest* tc)
@@ -202,7 +216,8 @@ void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 {
 	char buf[STRING_MAX];
 	if (fabs(expected - actual) <= delta) return;
-	sprintf(buf, "expected <%lf> but was <%lf>", expected, actual);
+	sprintf(buf, "expected <%f> but was <%f>", expected, actual); 
+
 	CuFail_Line(tc, file, line, message, buf);
 }
 
@@ -224,6 +239,7 @@ void CuSuiteInit(CuSuite* testSuite)
 {
 	testSuite->count = 0;
 	testSuite->failCount = 0;
+        memset(testSuite->list, 0, sizeof(testSuite->list));
 }
 
 CuSuite* CuSuiteNew(void)
@@ -231,6 +247,20 @@ CuSuite* CuSuiteNew(void)
 	CuSuite* testSuite = CU_ALLOC(CuSuite);
 	CuSuiteInit(testSuite);
 	return testSuite;
+}
+
+void CuSuiteDelete(CuSuite *testSuite)
+{
+        unsigned int n;
+        for (n=0; n < MAX_TEST_CASES; n++)
+        {
+                if (testSuite->list[n])
+                {
+                        CuTestDelete(testSuite->list[n]);
+                }
+        }
+        free(testSuite);
+
 }
 
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase)
@@ -256,7 +286,6 @@ void CuSuiteRun(CuSuite* testSuite)
 	for (i = 0 ; i < testSuite->count ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
-		printf("Running test case %s \n", testCase->name);
 		CuTestRun(testCase);
 		if (testCase->failed) { testSuite->failCount += 1; }
 	}
