@@ -23,6 +23,11 @@ extern "C" {
 // FIXME: passing key as non-const is causing unnecessary casts
 
 /*
+ * Function which generates hash key from pointer, should work well regardless of pointer size.
+ */
+uint32_t stHash_pointer( const void *k );
+
+/*
  * Constructs hash, with no destructors for keys or values.
  */
 stHash *stHash_construct(void);
