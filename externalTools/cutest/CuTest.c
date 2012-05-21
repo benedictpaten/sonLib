@@ -286,6 +286,7 @@ void CuSuiteRun(CuSuite* testSuite)
 	for (i = 0 ; i < testSuite->count ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
+		printf("Running test case %s\n", testCase->name);
 		CuTestRun(testCase);
 		if (testCase->failed) { testSuite->failCount += 1; }
 	}
