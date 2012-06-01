@@ -55,7 +55,6 @@ def redirectLoggerStreamHandlers(oldStream, newStream):
         if handler.stream == newStream:
            return
     logger.addHandler(logging.StreamHandler(newStream))
-    
 
 def getLogLevelString():
     return logLevelString
@@ -70,6 +69,7 @@ def addLoggingFileHandler(fileName, rotatingLogging=False):
     else:
         handler = logging.FileHandler(fileName)
     logger.addHandler(handler)
+    return handler
     
 def setLogLevel(logLevel):
     logLevel = logLevel.upper()
