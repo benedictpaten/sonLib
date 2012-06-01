@@ -432,7 +432,7 @@ class TempFileTree:
     if files exist in the dirs of levels 0 ... level-1 then they must be dirs,
     which will be indexed the by tempfile tree.
     """
-    def __init__(self, rootDir, filesPerDir=100, levels=4, ):
+    def __init__(self, rootDir, filesPerDir=500, levels=3, ):
         #Do basic checks of input
         assert(filesPerDir) >= 1
         assert(levels) >= 1
@@ -457,9 +457,10 @@ class TempFileTree:
         (len(currentFiles), len(currentFiles)/math.pow(filesPerDir, levels)))
     
     def getTempFile(self, suffix="", makeDir=False):
-        while self.level < self.levelNo:
+        while 1:
             #Basic checks for start of loop
             assert self.level >= 0
+            assert self.level < self.levelNo
             assert os.path.isdir(self.tempDir)
             fileNames = os.listdir(self.tempDir)
             #If tempDir contains max file number then:
