@@ -447,6 +447,7 @@ class TempFileTree:
         #Dynamic variables
         self.tempDir = rootDir
         self.level = 0
+        self.filesInDir = 0
         #These two variables will only refer to the existance of this class instance.
         self.tempFilesCreated = 0
         self.tempFilesDestroyed = 0
@@ -462,17 +463,18 @@ class TempFileTree:
             assert self.level >= 0
             assert self.level < self.levelNo
             assert os.path.isdir(self.tempDir)
-            fileNames = os.listdir(self.tempDir)
             #If tempDir contains max file number then:
-            if len(fileNames) >= self.filesPerDir:
+            if self.filesInDir + 1 >= self.filesPerDir:
                 #if level number is already 0 raise an exception
                 if self.level == 0:
                     raise RuntimeError("We ran out of space to make temp files")
                 #reduce level number by one, chop off top of tempDir.
                 self.level -= 1
                 self.tempDir = os.path.split(self.tempDir)[0]
+                self.filesInDir = 0
             else:
                 if self.level == self.levelNo-1:
+                    self.filesInDir += 1
                     #make temporary file in dir and return it.
                     if makeDir:
                         return getTempDirectory(rootDir=self.tempDir)
@@ -491,10 +493,12 @@ class TempFileTree:
         baseDir = os.path.split(tempFile)[0]
         if baseDir != self.tempDir:
             while True: #Now remove any parent dirs that are empty.
-                if os.listdir(baseDir) == [] and baseDir != self.rootDir:
+                try:
                     os.rmdir(baseDir)
-                    baseDir = os.path.split(baseDir)[0]
-                else:
+                except OSError:
+                    break
+                baseDir = os.path.split(baseDir)[0]
+                if baseDir != self.rootDir:
                     break
     
     def destroyTempFile(self, tempFile):
