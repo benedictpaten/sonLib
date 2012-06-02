@@ -503,7 +503,7 @@ class TempFileTree:
                 except OSError:
                     break
                 baseDir = os.path.split(baseDir)[0]
-                if baseDir != self.rootDir:
+                if baseDir == self.rootDir:
                     break
     
     def destroyTempFile(self, tempFile):

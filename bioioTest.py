@@ -113,7 +113,8 @@ class TestCase(unittest.TestCase):
                     tempFileTree.destroyTempFile(tempFile)
                 for tempDir in tempDirs:
                     tempFileTree.destroyTempDir(tempDir)
-                os.system("rm -rf %s" % tempFileTreeRootDir)
+                os.remove(os.path.join(tempFileTreeRootDir, "lock"))
+                os.rmdir(tempFileTreeRootDir)
             else:
                 tempFileTree.destroyTempFiles()
                 assert not os.path.isdir(tempFileTreeRootDir)
