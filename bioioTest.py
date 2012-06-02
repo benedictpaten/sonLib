@@ -64,7 +64,7 @@ class TestCase(unittest.TestCase):
             fileNo = random.choice(xrange(1, 6))
             maxTempFiles = int(math.pow(fileNo, levels))
             
-            logger.debug("Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles))
+            print "Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles)
             
             tempFileTreeRootDir = os.path.join(self.tempDir, getRandomAlphaNumericString())
             tempFileTree = TempFileTree(tempFileTreeRootDir, fileNo, levels)
@@ -96,7 +96,7 @@ class TestCase(unittest.TestCase):
                 tempFileTree.destroyTempFile(tempFile)
                 assert not os.path.isfile(tempFile)
             
-            #Now remove a few temp files
+            #Now remove a few temp dirs
             while random.random() > 0.1 and len(tempDirs) > 0:
                 tempDir = tempDirs.pop()
                 assert os.path.isdir(tempDir)
@@ -113,7 +113,7 @@ class TestCase(unittest.TestCase):
                     tempFileTree.destroyTempFile(tempFile)
                 for tempDir in tempDirs:
                     tempFileTree.destroyTempDir(tempDir)
-                os.rmdir(tempFileTreeRootDir)
+                os.system("rm -rf %s" % tempFileTreeRootDir)
             else:
                 tempFileTree.destroyTempFiles()
                 assert not os.path.isdir(tempFileTreeRootDir)

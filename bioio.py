@@ -432,13 +432,14 @@ class TempFileTree:
     if files exist in the dirs of levels 0 ... level-1 then they must be dirs,
     which will be indexed the by tempfile tree.
     """
-    def __init__(self, rootDir, filesPerDir=500, levels=3, ):
+    def __init__(self, rootDir, filesPerDir=500, levels=3):
         #Do basic checks of input
         assert(filesPerDir) >= 1
         assert(levels) >= 1
         if not os.path.isdir(rootDir):
             #Make the root dir
             os.mkdir(rootDir)
+            open(os.path.join(rootDir, "lock"), 'w').close() #Add the lock file
         
         #Basic attributes of system at start up.
         self.levelNo = levels
@@ -447,7 +448,7 @@ class TempFileTree:
         #Dynamic variables
         self.tempDir = rootDir
         self.level = 0
-        self.filesInDir = 0
+        self.filesInDir = 1
         #These two variables will only refer to the existance of this class instance.
         self.tempFilesCreated = 0
         self.tempFilesDestroyed = 0
@@ -464,14 +465,16 @@ class TempFileTree:
             assert self.level < self.levelNo
             assert os.path.isdir(self.tempDir)
             #If tempDir contains max file number then:
-            if self.filesInDir + 1 >= self.filesPerDir:
+            if self.filesInDir > self.filesPerDir:
                 #if level number is already 0 raise an exception
                 if self.level == 0:
                     raise RuntimeError("We ran out of space to make temp files")
+                #Remove the lock file
+                os.remove(os.path.join(self.tempDir, "lock"))
                 #reduce level number by one, chop off top of tempDir.
                 self.level -= 1
                 self.tempDir = os.path.split(self.tempDir)[0]
-                self.filesInDir = 0
+                self.filesInDir = len(os.listdir(self.tempDir))
             else:
                 if self.level == self.levelNo-1:
                     self.filesInDir += 1
@@ -483,7 +486,9 @@ class TempFileTree:
                 else:
                     #mk new dir, and add to tempDir path, inc the level buy one.
                     self.tempDir = getTempDirectory(rootDir=self.tempDir)
+                    open(os.path.join(self.tempDir, "lock"), 'w').close() #Add the lock file
                     self.level += 1
+                    self.filesInDir = 1
     
     def getTempDirectory(self):
         return self.getTempFile(makeDir=True)
@@ -535,13 +540,15 @@ class TempFileTree:
         def fn(dirName, level, files):
             if level == self.levelNo-1:
                 for fileName in os.listdir(dirName):
-                    absFileName = os.path.join(dirName, fileName)
-                    files.append(absFileName)
+                    if fileName != "lock":
+                        absFileName = os.path.join(dirName, fileName)
+                        files.append(absFileName)
             else:
                 for subDir in os.listdir(dirName):
-                    absDirName = os.path.join(dirName, subDir)
-                    assert os.path.isdir(absDirName)
-                    fn(absDirName, level+1, files)
+                    if subDir != "lock":
+                        absDirName = os.path.join(dirName, subDir)
+                        assert os.path.isdir(absDirName)
+                        fn(absDirName, level+1, files)
         files = []
         fn(self.rootDir, 0, files)
         return files
