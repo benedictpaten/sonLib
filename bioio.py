@@ -523,7 +523,10 @@ class TempFileTree:
         #Update stats.
         self.tempFilesDestroyed += 1
         #Do the actual removal
-        system("rm -rf %s" % tempDir)
+        try:
+            os.rmdir(tempDir)
+        except OSError:
+            system("rm -rf %s" % tempDir)
         self.__destroyFile(tempDir)
    
     def listFiles(self):
