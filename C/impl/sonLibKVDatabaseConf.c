@@ -256,6 +256,7 @@ stKVDatabaseConf *stKVDatabaseConf_constructClone(stKVDatabaseConf *srcConf) {
     conf->timeout = srcConf->timeout;
     conf->maxKTRecordSize = srcConf->maxKTRecordSize;
     conf->maxKTBulkSetSize = srcConf->maxKTBulkSetSize;
+    conf->maxKTBulkSetNumRecords = srcConf->maxKTBulkSetNumRecords;
     conf->user = stString_copy(srcConf->user);
     conf->password = stString_copy(srcConf->password);
     conf->databaseName = stString_copy(srcConf->databaseName);
