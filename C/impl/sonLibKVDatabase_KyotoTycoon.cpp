@@ -273,9 +273,9 @@ static int64_t incrementInt64(stKVDatabase *database, int64_t key, int64_t incre
 // sets a bulk list of records atomically 
 static void bulkSetRecords(stKVDatabase *database, stList *records) {
 	stKVDatabaseConf* conf = stKVDatabase_getConf(database);
-	int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
-	int64_t maxBulkSetSize = stKVDatabaseConf_getMaxKTBulkSetSize(conf);
-	int64_t maxBulkSetNumRecords = stKVDatabaseConf_getMaxKTBulkSetNumRecords(conf);
+	//int64_t maxRecordSize = stKVDatabaseConf_getMaxKTRecordSize(conf);
+	//int64_t maxBulkSetSize = stKVDatabaseConf_getMaxKTBulkSetSize(conf);
+	//int64_t maxBulkSetNumRecords = stKVDatabaseConf_getMaxKTBulkSetNumRecords(conf);
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
     vector<RemoteDB::BulkRecord> recs;
     recs.reserve(stList_length(records));
@@ -289,7 +289,7 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
         stKVDatabaseBulkRequest *request = (stKVDatabaseBulkRequest *)stList_get(records, i);
 
         // current batch can't get any bigger so we write and clear it
-        if ((runningSize + request->size > maxBulkSetSize ||
+        /*if ((runningSize + request->size > maxBulkSetSize ||
         	 (int64_t)recs.size() >= maxBulkSetNumRecords) && recs.empty() == false) {
         	int64_t retVal = rdb->set_bulk_binary(recs);
 			if (retVal < 1) {
@@ -307,13 +307,13 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
         	database->secondaryDB->setRecord(database->secondaryDB, request->key, request->value, request->size);
         }
         else
-        {
+        {*/
         	removeRecordFromDiskIfPresent(database, request->key);
         	templateRec.key = string((const char *)&(request->key), sizeof(int64_t));
         	templateRec.value = string((const char *)request->value, request->size);
         	recs.push_back(templateRec);
 			runningSize += request->size;
-        }
+        //}
     }
 
     // test for empty list   
@@ -548,7 +548,7 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
 
 void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseConf *conf, bool create) {
     database->dbImpl = constructDB(stKVDatabase_getConf(database), create);
-    database->secondaryDB = constructBigRecordDB(stKVDatabase_getConf(database), create);
+    database->secondaryDB = NULL; //constructBigRecordDB(stKVDatabase_getConf(database), create);
     database->destruct = destructDB;
     database->deleteDatabase = deleteDB;
     database->containsRecord = containsRecord;
