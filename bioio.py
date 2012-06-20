@@ -13,6 +13,7 @@ import logging.handlers
 import tempfile
 import random
 import math
+import shutil
 from optparse import OptionParser
 from tree import BinaryTree
 from misc import close
@@ -531,7 +532,8 @@ class TempFileTree:
         try:
             os.rmdir(tempDir)
         except OSError:
-            system("rm -rf %s" % tempDir)
+            shutil.rmtree(tempDir)
+            #system("rm -rf %s" % tempDir)
         self.__destroyFile(tempDir)
    
     def listFiles(self):
