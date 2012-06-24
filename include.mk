@@ -16,7 +16,7 @@ else
 endif
 
 #Release compiler flags
-cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm -DNDEBUG
+cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -lm -DNDEBUG
 #-fopenmp
 cppflags_opt = -O3 -g -Wall -funroll-loops -lm -DNDEBUG
 
