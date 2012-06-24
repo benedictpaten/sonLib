@@ -30,6 +30,7 @@
 
 //Database functions
 #ifdef HAVE_KYOTO_TYCOON
+#include <unistd.h>
 #include <ktremotedb.h>
 #include <kclangc.h>
 #include "sonLibGlobalsInternal.h"
