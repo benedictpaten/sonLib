@@ -36,7 +36,7 @@ static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
 static void checkModifiable(stSortedSet *sortedSet) {
     if (sortedSet->numberOfLiveIterators > 0) {
         //assert(0);
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify stSortSet while iterators are active");
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify an stSortedSet while iterators are active");
     }
 }
 
