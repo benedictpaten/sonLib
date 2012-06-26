@@ -123,7 +123,7 @@ static bool recordInTycoon(stKVDatabase *database, int64_t key) {
     if ((cA = rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL)) == NULL) {
         return false;
     } else {
-        free(cA);
+        delete cA;
         return true;
     }
 }
@@ -375,9 +375,12 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
 		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 		//Return value must be freed.
 		size_t i;
-		record = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
+		char* newRecord = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
 		*recordSize = (int64_t)i;
+		record = (char*)memcpy(st_malloc(*recordSize), newRecord, *recordSize);
+		delete newRecord;
 	}
+        
     return record;
 }
 
@@ -392,7 +395,9 @@ static int64_t getInt64(stKVDatabase *database, int64_t key) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 
     size_t sp;
-    char *record = rdb->get((char *)&key, sizeof(int64_t), &sp, NULL);
+    char *newRecord = rdb->get((char *)&key, sizeof(int64_t), &sp, NULL);
+    char* record = (char*)memcpy(st_malloc( sizeof(int64_t)), newRecord,  sizeof(int64_t));
+    delete newRecord;
 
     // convert from KC native big-endian back to little-endian Intel...
     return kyotocabinet::ntoh64(*((int64_t*)record));
