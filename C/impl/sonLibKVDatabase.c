@@ -483,7 +483,10 @@ stList *stKVDatabase_bulkGetRecords(stKVDatabase *database, stList* keys) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to get records from a database that has already been deleted");
     }
-    assert(keys != NULL && stList_length(keys) > 0);
+    assert(keys != NULL);
+    if(stList_length(keys) == 0) {
+        return stList_construct();
+    }
     stList *resultsList = NULL;
     stTry {
     	resultsList = database->bulkGetRecords(database, keys);

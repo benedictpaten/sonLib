@@ -65,7 +65,6 @@ void checkPairwiseAlignment(struct PairwiseAlignment *pA) {
             k += pA->strand2 ? op->length : -op->length;
         }
     }
-    //uglyf("boo %i %i %i %i\n", pA->end1 - pA->start1, j, pA->end2 - pA->start2, k);
 
     assert(j == pA->end1);
     assert(k == pA->end2);
