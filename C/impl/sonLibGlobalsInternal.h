@@ -31,6 +31,7 @@
 
 #include "CuTest.h"
 #include "sonLib.h"
+#include "sonLibListPrivate.h"
 
 
 

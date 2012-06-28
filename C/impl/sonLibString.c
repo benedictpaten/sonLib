@@ -107,23 +107,28 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
 }
 
 char *stString_join(const char *pad, const char **strings, int32_t length) {
-    int32_t i, j, k;
+    int32_t padLength = strlen(pad);
     assert(length >= 0);
-    j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
-    for(i=0; i<length; i++) {
+    int32_t j = padLength * (length > 0 ? length - 1 : 0) + 1;
+    for(int32_t i=0; i<length; i++) {
         j += strlen(strings[i]);
     }
     char *cA = st_malloc(sizeof(char) * j);
     j = 0;
-    for(i=0; i<length; i++) {
+    for(int32_t i=0; i<length; i++) {
         const char *cA2 = strings[i];
-        for(k=0; k<(int32_t)strlen(cA2); k++) {
-            cA[j++] = cA2[k];
-        }
+        int32_t k = (int32_t)strlen(cA2);
+        memcpy(cA + j, cA2, k);
+        j += k;
+        //for(k=0; k<l; k++) {
+        //    cA[j++] = cA2[k];
+        //}
         if(i+1 < length) {
-            for(k=0; k<(int32_t)strlen(pad); k++) {
-                cA[j++] = pad[k];
-            }
+            memcpy(cA + j, pad, padLength);
+            j += padLength;
+            //for(k=0; k<padLength; k++) {
+            //    cA[j++] = pad[k];
+            //}
         }
     }
     cA[j] = '\0';
@@ -131,13 +136,7 @@ char *stString_join(const char *pad, const char **strings, int32_t length) {
 }
 
 char *stString_join2(const char *pad, stList *strings) {
-    char **cAA = st_malloc(sizeof(char *)*stList_length(strings));
-    for(int32_t i=0; i<stList_length(strings); i++) {
-        cAA[i] = stList_get(strings, i);
-    }
-    char *cA = stString_join(pad, (const char **)cAA, stList_length(strings));
-    free(cAA);
-    return cA;
+    return stString_join(pad, (const char **)strings->list, stList_length(strings));
 }
 
 stList *stString_split(const char *string) {
