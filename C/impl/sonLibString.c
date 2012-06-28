@@ -120,15 +120,9 @@ char *stString_join(const char *pad, const char **strings, int32_t length) {
         int32_t k = (int32_t)strlen(cA2);
         memcpy(cA + j, cA2, k);
         j += k;
-        //for(k=0; k<l; k++) {
-        //    cA[j++] = cA2[k];
-        //}
         if(i+1 < length) {
             memcpy(cA + j, pad, padLength);
             j += padLength;
-            //for(k=0; k<padLength; k++) {
-            //    cA[j++] = pad[k];
-            //}
         }
     }
     cA[j] = '\0';
