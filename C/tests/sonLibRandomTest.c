@@ -13,6 +13,84 @@
 
 #include "sonLibGlobalsTest.h"
 
+static int cmp32(const void *a, const void *b) {
+    const int32_t *ua = (const int32_t *)a;
+    const int32_t *ub = (const int32_t *)b;
+    if (*ua < *ub) {
+        return -1;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+static int cmp64(const void *a, const void *b) {
+    const int64_t *ua = (const int64_t *)a;
+    const int64_t *ub = (const int64_t *)b;
+    if (*ua < *ub) {
+        return -1;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+static double median32(int32_t *array, uint32_t n) {
+    qsort(array, n, sizeof(int32_t), cmp32);
+    if (n % 2) {
+        return (double) array[(n + 1) / 2 - 1];
+    } else {
+        return (double) ((array[n / 2 - 1] + array[(n / 2)]) / 2.0);
+    }
+}
+static double median64(int64_t *array, uint64_t n) {
+    qsort(array, n, sizeof(int64_t), cmp64);
+    if (n % 2) {
+        return (double) array[(n + 1) / 2 - 1];
+    } else {
+        return (double) ((array[n / 2 - 1] + array[(n / 2)]) / 2.0);
+    }
+}
+static double runningMean32(double m, int32_t x, uint32_t i) {
+    m += (x - m) / (i + 1);
+    return m;
+}
+static double runningMean64(double m, int64_t x, uint64_t i) {
+    m += (x - m) / (i + 1);
+    return m;
+}
+static double mean32(int32_t *array, uint32_t n) {
+    double mu = 0.0;
+    for (uint32_t i = 0; i < n; ++i) {
+        mu += array[i];
+    }
+    return mu / n;
+}
+static double mean64(int64_t *array, uint64_t n) {
+    double mu = 0.0;
+    for (uint64_t i = 0; i < n; ++i) {
+        mu += array[i];
+    }
+    return mu / n;
+}
+static double sv32(int32_t *array, uint32_t n, double mu) {
+    // sample variance.
+    double sv = 0.0;
+    assert(n > 1);
+    for (uint64_t i = 0; i < n; ++i) {
+        sv += (array[i] - mu) * (array[i] - mu);
+    }
+    sv /= (n - 1);
+    return sv;
+}
+static double sv64(int64_t *array, uint64_t n, double mu) {
+    // sample variance.
+    double sv = 0.0;
+    assert(n > 1);
+    for (uint64_t i = 0; i < n; ++i) {
+        sv += (array[i] - mu) * (array[i] - mu);
+    }
+    sv /= (n - 1);
+    return sv;
+}
 static void test_st_randomInt(CuTest *testCase) {
     /*
      * Excercies the random int function.
@@ -41,45 +119,42 @@ static void test_st_randomInt(CuTest *testCase) {
         CuAssertTrue(testCase, stExcept_getId(except) == RANDOM_EXCEPTION_ID);
     } stTryEnd
 }
-static int cmp64(const void *a, const void *b) {
-    const int64_t *ua = (const int64_t *)a;
-    const int64_t *ub = (const int64_t *)b;
-    if (*ua < *ub) {
-        return -1;
-    } else {
-        return 1;
+static void test_st_randomInt_distribution_0(CuTest *testCase) {
+    /*
+     * check the distribution of the randomInt function
+     */
+    double med, var, mu = 0.0;
+    uint32_t n = 1000000;
+    uint32_t reps = 100;
+    int32_t min = 0;
+    int32_t max = 101;
+    int32_t *array = NULL;
+    for (uint32_t j = 0; j < reps; ++j) {
+        array = (int32_t *) st_malloc(sizeof(*array) * n);
+        for (int32_t i = 0; i < n; i++) {
+            array[i] = st_randomInt32(min, max);
+            mu = runningMean32(mu, array[i], i);
+        }
+        var = sv32(array, n, mu);
+        med = median32(array, n); // median() will sort array
+        CuAssertTrue(testCase, array[0] <= array[n - 1]);
+        CuAssertTrue(testCase, array[0] < max);
+        CuAssertTrue(testCase, array[n - 1] < max);
+        // median of discrete uniform is
+        // median = (a + b) / 2
+        CuAssertTrue(testCase, med == 50.0);
+        // mean of discrete uniform is
+        // mu = (a + b) / 2
+        CuAssertTrue(testCase, mu > 0.9 * (max - 1) / 2.0);
+        CuAssertTrue(testCase, mu < 1.1 * (max - 1) / 2.0);
+        // variance of discrete uniform is
+        // var = (n^2 - 1) / 12
+        CuAssertTrue(testCase, var < 1.1 * ((n * n) - 1.0) / 12.0);
+        CuAssertTrue(testCase, var > 0.9 * ((n * n) - 1.0) / 12.0);
+        free(array);
     }
-    return 0;
 }
-static double median64(int64_t *array, uint64_t n) {
-    qsort(array, n, sizeof(int64_t), cmp64);
-    if (n % 2) {
-        return (double) array[(n + 1) / 2 - 1];
-    } else {
-        return (double) ((array[n / 2 - 1] + array[(n / 2)]) / 2.0);
-    }
-}
-static double runningMean64(double m, int64_t x, uint64_t i) {
-    m += (x - m) / (i + 1);
-    return m;
-}
-static double mean64(int64_t *array, uint64_t n) {
-    double mu = 0.0;
-    for (uint64_t i = 0; i < n; ++i) {
-        mu += array[i];
-    }
-    return mu / n;
-}
-static double sv64(int64_t *array, uint64_t n, double mu) {
-    // sample variance.
-    double sv = 0.0;
-    assert(n > 1);
-    for (uint64_t i = 0; i < n; ++i) {
-        sv += (array[i] - mu) * (array[i] - mu);
-    }
-    sv /= (n - 1);
-    return sv;
-}
+
 static void test_st_randomInt64_range_0(CuTest *testCase) {
     /*
      * Excercies the randomInt64 function.
@@ -171,6 +246,7 @@ CuSuite* sonLib_stRandomTestSuite(void) {
     (void) sv64;
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_st_randomInt);
+    SUITE_ADD_TEST(suite, test_st_randomInt_distribution_0);
     SUITE_ADD_TEST(suite, test_st_randomInt64_range_0);
     SUITE_ADD_TEST(suite, test_st_randomInt64_distribution_0);
     SUITE_ADD_TEST(suite, test_st_random);
