@@ -57,13 +57,7 @@ static double runningMean64(double m, int64_t x, uint64_t i) {
     m += (x - m) / (i + 1);
     return m;
 }
-static double mean32(int32_t *array, uint32_t n) {
-    double mu = 0.0;
-    for (uint32_t i = 0; i < n; ++i) {
-        mu += array[i];
-    }
-    return mu / n;
-}
+
 static double mean64(int64_t *array, uint64_t n) {
     double mu = 0.0;
     for (uint64_t i = 0; i < n; ++i) {
@@ -132,7 +126,7 @@ static void test_st_randomInt_distribution_0(CuTest *testCase) {
     for (uint32_t j = 0; j < reps; ++j) {
         array = (int32_t *) st_malloc(sizeof(*array) * n);
         for (int32_t i = 0; i < n; i++) {
-            array[i] = st_randomInt32(min, max);
+            array[i] = st_randomInt(min, max);
             mu = runningMean32(mu, array[i], i);
         }
         var = sv32(array, n, mu);

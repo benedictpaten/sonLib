@@ -36,6 +36,11 @@ void st_randomSeed(int32_t seed);
 int32_t st_randomInt(int32_t min, int32_t max);
 
 /*
+ * Like st_randomInt, but for 64 bit integers.
+ */
+int64_t st_randomInt64(int64_t min, int64_t max);
+
+/*
  * Returns a random value between 0.0 (inclusive) and 1.0 (exclusive).
  */
 double st_random();
