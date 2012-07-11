@@ -14,7 +14,7 @@ void st_randomSeed(int32_t seed) {
 
 int64_t st_randomInt64(int64_t min, int64_t max) {
     int64_t i;
-    if (min < 0 && max > 0) { //Possible overflow condition, deal with by switching to doubles
+    if (min < INT32_MIN && max > INT32_MAX) { //Possible overflow condition, deal with by switching to doubles
         i = min + (((double)max) - ((double)min)) * st_random();
     }
     else {
@@ -22,6 +22,10 @@ int64_t st_randomInt64(int64_t min, int64_t max) {
             stThrowNew(RANDOM_EXCEPTION_ID, "Range for random int is not positive, min: %" PRIi64 ", max %" PRIi64 "\n", min, max);
         }
         i = min + (max - min) * st_random();
+    }
+    if(i >= max) {
+        //return st_randomInt64(min, max);
+        i = max-1;
     }
     assert(i >= min);
     assert(i < max);

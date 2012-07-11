@@ -87,7 +87,7 @@ static double sv64(int64_t *array, uint64_t n, double mu) {
 }
 static void test_st_randomInt(CuTest *testCase) {
     /*
-     * Excercies the random int function.
+     * Exercises the random int function.
      */
 	int32_t min = INT32_MIN;
 	int32_t max = INT32_MAX;
