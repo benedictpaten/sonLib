@@ -39,14 +39,14 @@ static void setup() {
     stTree_setBranchLength(internal, 0.5);
 }
 
-static void testETree_construct(CuTest* testCase) {
+static void test_stTree_construct(CuTest* testCase) {
     setup();
     //tested by setup and teardown.
     CuAssertTrue(testCase, root != NULL);
     teardown();
 }
 
-static void testETree_getSetParent(CuTest* testCase) {
+static void test_stTree_getSetParent(CuTest* testCase) {
     setup();
     CuAssertTrue(testCase, stTree_getParent(child1) == internal);
     CuAssertTrue(testCase, stTree_getParent(child1) == internal);
@@ -58,7 +58,7 @@ static void testETree_getSetParent(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_getChildNumber(CuTest* testCase) {
+static void test_stTree_getChildNumber(CuTest* testCase) {
     setup();
     CuAssertTrue(testCase, stTree_getChildNumber(child1) == 0);
     CuAssertTrue(testCase, stTree_getChildNumber(child1) == 0);
@@ -70,7 +70,7 @@ static void testETree_getChildNumber(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_getChild(CuTest* testCase) {
+static void test_stTree_getChild(CuTest* testCase) {
     setup();
     CuAssertTrue(testCase, stTree_getChild(internal, 0) == child1);
     CuAssertTrue(testCase, stTree_getChild(internal, 1) == child2);
@@ -87,7 +87,7 @@ static void testETree_getChild(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_getSetBranchLength(CuTest* testCase) {
+static void test_stTree_getSetBranchLength(CuTest* testCase) {
     setup();
     CuAssertTrue(testCase, stTree_getBranchLength(child1) == 1.1);
     CuAssertTrue(testCase, stTree_getBranchLength(child2) == INFINITY);
@@ -98,7 +98,7 @@ static void testETree_getSetBranchLength(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_getSetClientData(CuTest* testCase) {
+static void test_stTree_getSetClientData(CuTest* testCase) {
     setup();
     int data = 1010;
     CuAssertTrue(testCase, stTree_getClientData(child1) == NULL);
@@ -107,7 +107,7 @@ static void testETree_getSetClientData(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_label(CuTest* testCase) {
+static void test_stTree_label(CuTest* testCase) {
     setup();
     CuAssertStrEquals(testCase, "CHILD1", stTree_getLabel(child1));
     CuAssertTrue(testCase, stTree_getLabel(child2) == NULL);
@@ -122,7 +122,7 @@ static void testETree_label(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_newickTreeParser(CuTest *testCase) {
+static void test_stTree_newickTreeParser(CuTest *testCase) {
     setup();
     char *testNewickStrings[4] =  { "(((a,b,(c,))d),e)f;",  ";", "f;", "();" };
     int32_t i;
@@ -137,13 +137,13 @@ static void testETree_newickTreeParser(CuTest *testCase) {
     teardown();
 }
 
-static void testETree_getNumNodes(CuTest* testCase) {
+static void test_stTree_getNumNodes(CuTest* testCase) {
     setup();
     CuAssertTrue(testCase, stTree_getNumNodes(root) == 4);
     teardown();
 }
 
-static void testETree_equals(CuTest* testCase) {
+static void test_stTree_equals(CuTest* testCase) {
     setup();
     stTree *root0 = root;
     setup();
@@ -166,7 +166,7 @@ static void testETree_equals(CuTest* testCase) {
     teardown();
 }
 
-static void testETree_clone(CuTest* testCase) {
+static void test_stTree_clone(CuTest* testCase) {
     setup();
     int data = 1010;
     stTree_setClientData(child1, &data);
@@ -176,18 +176,18 @@ static void testETree_clone(CuTest* testCase) {
     teardown();
 }
 
-CuSuite* sonLibETreeTestSuite(void) {
+CuSuite* sonLib_ETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testETree_construct);
-    SUITE_ADD_TEST(suite, testETree_getSetParent);
-    SUITE_ADD_TEST(suite, testETree_getChildNumber);
-    SUITE_ADD_TEST(suite, testETree_getChild);
-    SUITE_ADD_TEST(suite, testETree_getSetBranchLength);
-    SUITE_ADD_TEST(suite, testETree_getSetClientData);
-    SUITE_ADD_TEST(suite, testETree_newickTreeParser);
-    SUITE_ADD_TEST(suite, testETree_label);
-    SUITE_ADD_TEST(suite, testETree_getNumNodes);
-    SUITE_ADD_TEST(suite, testETree_equals);
-    SUITE_ADD_TEST(suite, testETree_clone);
+    SUITE_ADD_TEST(suite, test_stTree_construct);
+    SUITE_ADD_TEST(suite, test_stTree_getSetParent);
+    SUITE_ADD_TEST(suite, test_stTree_getChildNumber);
+    SUITE_ADD_TEST(suite, test_stTree_getChild);
+    SUITE_ADD_TEST(suite, test_stTree_getSetBranchLength);
+    SUITE_ADD_TEST(suite, test_stTree_getSetClientData);
+    SUITE_ADD_TEST(suite, test_stTree_newickTreeParser);
+    SUITE_ADD_TEST(suite, test_stTree_label);
+    SUITE_ADD_TEST(suite, test_stTree_getNumNodes);
+    SUITE_ADD_TEST(suite, test_stTree_equals);
+    SUITE_ADD_TEST(suite, test_stTree_clone);
     return suite;
 }

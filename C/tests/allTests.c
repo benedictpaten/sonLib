@@ -6,13 +6,13 @@
 
 #include "sonLibGlobalsTest.h"
 
-CuSuite *sonLibETreeTestSuite(void);
-CuSuite *sonLibStringTestSuite(void);
-CuSuite *sonLibHashTestSuite(void);
-CuSuite *sonLibSetTestSuite(void);
-CuSuite *sonLibSortedSetTestSuite(void);
-CuSuite *sonLib_stListTestSuite(void);
-CuSuite *sonLib_stCommonTestSuite(void);
+CuSuite* sonLib_ETreeTestSuite(void);
+CuSuite* sonLib_stStringTestSuite(void);
+CuSuite* sonLib_stHashTestSuite(void);
+CuSuite* sonLib_stSetTestSuite(void);
+CuSuite* sonLib_stSortedSetTestSuite(void);
+CuSuite* sonLib_stListTestSuite(void);
+CuSuite* sonLib_stCommonTestSuite(void);
 CuSuite* sonLib_stIntTuplesTestSuite(void);
 CuSuite* sonLib_stInt64TuplesTestSuite(void);
 CuSuite* sonLib_stDoubleTuplesTestSuite(void);
@@ -26,15 +26,15 @@ int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
-    CuSuiteAddSuite(suite, sonLibETreeTestSuite());
-    CuSuiteAddSuite(suite, sonLibStringTestSuite());
+    CuSuiteAddSuite(suite, sonLib_ETreeTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stStringTestSuite());
     CuSuiteAddSuite(suite, sonLib_stIntTuplesTestSuite());
     CuSuiteAddSuite(suite, sonLib_stInt64TuplesTestSuite());
     CuSuiteAddSuite(suite, sonLib_stDoubleTuplesTestSuite());
-    CuSuiteAddSuite(suite, sonLibHashTestSuite());
-    CuSuiteAddSuite(suite, sonLibSetTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stHashTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stSetTestSuite());
     CuSuiteAddSuite(suite, sonLib_stListTestSuite());
-    CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stSortedSetTestSuite());
     CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());

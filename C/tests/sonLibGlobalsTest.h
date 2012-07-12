@@ -30,4 +30,4 @@
 #include "CuTest.h"
 #include "sonLib.h"
 
-#endif /* SONLIBPRIVATE_H_ */
+#endif // SONLIB_GLOBALS_TEST_H_

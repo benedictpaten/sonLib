@@ -40,13 +40,13 @@ static void testTeardown() {
     stSet_destruct(set0);
     stSet_destruct(set1);
 }
-static void testSet_construct(CuTest* testCase) {
+static void test_stSet_construct(CuTest* testCase) {
     assert(testCase != NULL);
     testSetup();
     /* Do nothing */
     testTeardown();
 }
-static void testSet_search(CuTest* testCase) {
+static void test_stSet_search(CuTest* testCase) {
     testSetup();
     stIntTuple *i = stIntTuple_construct(1, 0);
     stIntTuple *j = stIntTuple_construct(10, 0);
@@ -79,7 +79,7 @@ static void testSet_search(CuTest* testCase) {
     stIntTuple_destruct(k);
     testTeardown();
 }
-static void testSet_remove(CuTest* testCase) {
+static void test_stSet_remove(CuTest* testCase) {
     testSetup();
     CuAssertTrue(testCase, stSet_remove(set0, one) == one);
     CuAssertTrue(testCase, stSet_search(set0, one) == NULL);
@@ -89,7 +89,7 @@ static void testSet_remove(CuTest* testCase) {
     CuAssertTrue(testCase, stSet_search(set1, one) == one);
     testTeardown();
 }
-static void testSet_removeAndFreeKey(CuTest* testCase) {
+static void test_stSet_removeAndFreeKey(CuTest* testCase) {
     stSet *set2 = stSet_construct2(free);
     stList *keys = stList_construct();
     int32_t keyNumber = 1000;
@@ -106,7 +106,7 @@ static void testSet_removeAndFreeKey(CuTest* testCase) {
     stSet_destruct(set2);
     stList_destruct(keys);
 }
-static void testSet_insert(CuTest* testCase) {
+static void test_stSet_insert(CuTest* testCase) {
     /*
      * Tests inserting already present keys.
      */
@@ -123,7 +123,7 @@ static void testSet_insert(CuTest* testCase) {
     stIntTuple_destruct(seven);
     testTeardown();
 }
-static void testSet_size(CuTest *testCase) {
+static void test_stSet_size(CuTest *testCase) {
     /*
      * Tests the size function of the hash.
      */
@@ -135,7 +135,7 @@ static void testSet_size(CuTest *testCase) {
     stSet_destruct(set2);
     testTeardown();
 }
-static void testSet_testIterator(CuTest *testCase) {
+static void test_stSet_testIterator(CuTest *testCase) {
     testSetup();
     stSetIterator *iterator = stSet_getIterator(set0);
     stSetIterator *iteratorCopy = stSet_copyIterator(iterator);
@@ -157,7 +157,7 @@ static void testSet_testIterator(CuTest *testCase) {
     stSet_destructIterator(iteratorCopy);
     testTeardown();
 }
-static void testSet_testGetKeys(CuTest *testCase) {
+static void test_stSet_testGetKeys(CuTest *testCase) {
     testSetup();
     stList *list = stSet_getKeys(set1);
     CuAssertTrue(testCase, stList_length(list) == 6);
@@ -170,15 +170,15 @@ static void testSet_testGetKeys(CuTest *testCase) {
     stList_destruct(list);
     testTeardown();
 }
-CuSuite* sonLibSetTestSuite(void) {
+CuSuite* sonLib_stSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testSet_search);
-    SUITE_ADD_TEST(suite, testSet_remove);
-    SUITE_ADD_TEST(suite, testSet_removeAndFreeKey);
-    SUITE_ADD_TEST(suite, testSet_insert);
-    SUITE_ADD_TEST(suite, testSet_size);
-    SUITE_ADD_TEST(suite, testSet_testIterator);
-    SUITE_ADD_TEST(suite, testSet_construct);
-    SUITE_ADD_TEST(suite, testSet_testGetKeys);
+    SUITE_ADD_TEST(suite, test_stSet_search);
+    SUITE_ADD_TEST(suite, test_stSet_remove);
+    SUITE_ADD_TEST(suite, test_stSet_removeAndFreeKey);
+    SUITE_ADD_TEST(suite, test_stSet_insert);
+    SUITE_ADD_TEST(suite, test_stSet_size);
+    SUITE_ADD_TEST(suite, test_stSet_testIterator);
+    SUITE_ADD_TEST(suite, test_stSet_construct);
+    SUITE_ADD_TEST(suite, test_stSet_testGetKeys);
     return suite;
 }

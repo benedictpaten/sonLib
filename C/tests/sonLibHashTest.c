@@ -37,14 +37,14 @@ static void testTeardown() {
     stHash_destruct(hash2);
 }
 
-static void testHash_construct(CuTest* testCase) {
+static void test_stHash_construct(CuTest* testCase) {
     assert(testCase != NULL);
     testSetup();
     /* Do nothing */
     testTeardown();
 }
 
-static void testHash_search(CuTest* testCase) {
+static void test_stHash_search(CuTest* testCase) {
     testSetup();
 
     stIntTuple *i = stIntTuple_construct(1, 0);
@@ -71,7 +71,7 @@ static void testHash_search(CuTest* testCase) {
     testTeardown();
 }
 
-static void testHash_remove(CuTest* testCase) {
+static void test_stHash_remove(CuTest* testCase) {
     testSetup();
 
     CuAssertTrue(testCase, stHash_remove(hash, one) == two);
@@ -86,7 +86,7 @@ static void testHash_remove(CuTest* testCase) {
     testTeardown();
 }
 
-static void testHash_removeAndFreeKey(CuTest* testCase) {
+static void test_stHash_removeAndFreeKey(CuTest* testCase) {
     stHash *hash3 = stHash_construct2(free, free);
     stList *keys = stList_construct();
     stList *values = stList_construct();
@@ -112,7 +112,7 @@ static void testHash_removeAndFreeKey(CuTest* testCase) {
     stList_destruct(values);
 }
 
-static void testHash_insert(CuTest* testCase) {
+static void test_stHash_insert(CuTest* testCase) {
     /*
      * Tests inserting already present keys.
      */
@@ -129,7 +129,7 @@ static void testHash_insert(CuTest* testCase) {
     testTeardown();
 }
 
-static void testHash_size(CuTest *testCase) {
+static void test_stHash_size(CuTest *testCase) {
     /*
      * Tests the size function of the hash.
      */
@@ -144,7 +144,7 @@ static void testHash_size(CuTest *testCase) {
     testTeardown();
 }
 
-static void testHash_testIterator(CuTest *testCase) {
+static void test_stHash_testIterator(CuTest *testCase) {
     testSetup();
 
     stHashIterator *iterator = stHash_getIterator(hash);
@@ -169,7 +169,7 @@ static void testHash_testIterator(CuTest *testCase) {
     testTeardown();
 }
 
-static void testHash_testGetKeys(CuTest *testCase) {
+static void test_stHash_testGetKeys(CuTest *testCase) {
     testSetup();
     stList *list = stHash_getKeys(hash2);
     CuAssertTrue(testCase, stList_length(list) == 3);
@@ -180,7 +180,7 @@ static void testHash_testGetKeys(CuTest *testCase) {
     testTeardown();
 }
 
-static void testHash_testGetValues(CuTest *testCase) {
+static void test_stHash_testGetValues(CuTest *testCase) {
     testSetup();
     stList *list = stHash_getValues(hash2);
     CuAssertTrue(testCase, stList_length(list) == 3);
@@ -191,16 +191,16 @@ static void testHash_testGetValues(CuTest *testCase) {
     testTeardown();
 }
 
-CuSuite* sonLibHashTestSuite(void) {
+CuSuite* sonLib_stHashTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testHash_search);
-    SUITE_ADD_TEST(suite, testHash_remove);
-    SUITE_ADD_TEST(suite, testHash_removeAndFreeKey);
-    SUITE_ADD_TEST(suite, testHash_insert);
-    SUITE_ADD_TEST(suite, testHash_size);
-    SUITE_ADD_TEST(suite, testHash_testIterator);
-    SUITE_ADD_TEST(suite, testHash_construct);
-    SUITE_ADD_TEST(suite, testHash_testGetKeys);
-    SUITE_ADD_TEST(suite, testHash_testGetValues);
+    SUITE_ADD_TEST(suite, test_stHash_search);
+    SUITE_ADD_TEST(suite, test_stHash_remove);
+    SUITE_ADD_TEST(suite, test_stHash_removeAndFreeKey);
+    SUITE_ADD_TEST(suite, test_stHash_insert);
+    SUITE_ADD_TEST(suite, test_stHash_size);
+    SUITE_ADD_TEST(suite, test_stHash_testIterator);
+    SUITE_ADD_TEST(suite, test_stHash_construct);
+    SUITE_ADD_TEST(suite, test_stHash_testGetKeys);
+    SUITE_ADD_TEST(suite, test_stHash_testGetValues);
     return suite;
 }
