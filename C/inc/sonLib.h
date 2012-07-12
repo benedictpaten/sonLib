@@ -17,6 +17,7 @@
 #include "sonLibTree.h"
 #include "sonLibString.h"
 #include "sonLibHash.h"
+#include "sonLibSet.h"
 #include "sonLibSortedSet.h"
 #include "sonLibList.h"
 #include "sonLibCommon.h"

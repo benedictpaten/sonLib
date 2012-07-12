@@ -9,6 +9,7 @@
 CuSuite *sonLibETreeTestSuite(void);
 CuSuite *sonLibStringTestSuite(void);
 CuSuite *sonLibHashTestSuite(void);
+CuSuite *sonLibSetTestSuite(void);
 CuSuite *sonLibSortedSetTestSuite(void);
 CuSuite *sonLib_stListTestSuite(void);
 CuSuite *sonLib_stCommonTestSuite(void);
@@ -31,6 +32,7 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stInt64TuplesTestSuite());
     CuSuiteAddSuite(suite, sonLib_stDoubleTuplesTestSuite());
     CuSuiteAddSuite(suite, sonLibHashTestSuite());
+    CuSuiteAddSuite(suite, sonLibSetTestSuite());
     CuSuiteAddSuite(suite, sonLib_stListTestSuite());
     CuSuiteAddSuite(suite, sonLibSortedSetTestSuite());
     CuSuiteAddSuite(suite, sonLib_stExceptTestSuite());
