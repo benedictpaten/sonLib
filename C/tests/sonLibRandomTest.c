@@ -58,13 +58,6 @@ static double runningMean64(double m, int64_t x, uint64_t i) {
     return m;
 }
 
-static double mean64(int64_t *array, uint64_t n) {
-    double mu = 0.0;
-    for (uint64_t i = 0; i < n; ++i) {
-        mu += array[i];
-    }
-    return mu / n;
-}
 static double sv32(int32_t *array, uint32_t n, double mu) {
     // sample variance.
     double sv = 0.0;
@@ -235,9 +228,6 @@ static void test_st_randomChoice(CuTest *testCase) {
     stList_destruct(list);
 }
 CuSuite* sonLib_stRandomTestSuite(void) {
-    (void) mean64;
-    (void) median64;
-    (void) sv64;
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_st_randomInt);
     SUITE_ADD_TEST(suite, test_st_randomInt_distribution_0);
