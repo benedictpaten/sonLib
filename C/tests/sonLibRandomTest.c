@@ -141,7 +141,6 @@ static void test_st_randomInt_distribution_0(CuTest *testCase) {
         free(array);
     }
 }
-
 static void test_st_randomInt64_range_0(CuTest *testCase) {
     /*
      * Excercies the randomInt64 function.
