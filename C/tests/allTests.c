@@ -40,14 +40,15 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());
     CuSuiteAddSuite(suite, sonLibFileTestSuite());
     CuSuiteAddSuite(suite, stCacheSuite());
-
     CuSuiteRun(suite);
     CuSuiteSummary(suite, output);
     CuSuiteDetails(suite, output);
     printf("%s\n", output->buffer);
-    return suite->failCount > 0;
+    CuStringDelete(output);
+    int status = suite->failCount > 0;
+    CuSuiteDelete(suite);
+    return status;
 }
-
 int main(int argc, char *argv[]) {
     if(argc == 2) {
         st_setLogLevelFromString(argv[1]);
