@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 20 by Dent Earl dentearl (a) gmail com
+ * Copyright (C) 2012 by Dent Earl dentearl (a) gmail com
  *
  * Released under the MIT license, see LICENSE.txt
  */
