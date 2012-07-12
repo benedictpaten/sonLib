@@ -119,7 +119,7 @@ static void test_st_randomInt_distribution_0(CuTest *testCase) {
      */
     double med, var, mu = 0.0;
     uint32_t n = 1000000;
-    uint32_t reps = 100;
+    uint32_t reps = 50;
     int32_t min = 0;
     int32_t max = 101;
     int32_t *array = NULL;
@@ -142,9 +142,9 @@ static void test_st_randomInt_distribution_0(CuTest *testCase) {
         CuAssertTrue(testCase, mu > 0.9 * (max - 1) / 2.0);
         CuAssertTrue(testCase, mu < 1.1 * (max - 1) / 2.0);
         // variance of discrete uniform is
-        // var = (n^2 - 1) / 12
-        CuAssertTrue(testCase, var < 1.1 * ((n * n) - 1.0) / 12.0);
-        CuAssertTrue(testCase, var > 0.9 * ((n * n) - 1.0) / 12.0);
+        // var = ((b - a + 1)^2 - 1) / 12
+        CuAssertTrue(testCase, var < 1.1 * (((max - min + 1) * (max - min + 1) - 1) / 12.0));
+        CuAssertTrue(testCase, var > 0.9 * (((max - min + 1) * (max - min + 1) - 1) / 12.0));
         free(array);
     }
 }
@@ -176,7 +176,7 @@ static void test_st_randomInt64_distribution_0(CuTest *testCase) {
      */
     double med, var, mu = 0.0;
     uint64_t n = 1000000;
-    uint64_t reps = 100;
+    uint64_t reps = 50;
     int64_t min = 0;
     int64_t max = 101;
     int64_t *array = NULL;
@@ -199,9 +199,9 @@ static void test_st_randomInt64_distribution_0(CuTest *testCase) {
         CuAssertTrue(testCase, mu > 0.9 * (max - 1) / 2.0);
         CuAssertTrue(testCase, mu < 1.1 * (max - 1) / 2.0);
         // variance of discrete uniform is
-        // var = (n^2 - 1) / 12
-        CuAssertTrue(testCase, var < 1.1 * ((n * n) - 1.0) / 12.0);
-        CuAssertTrue(testCase, var > 0.9 * ((n * n) - 1.0) / 12.0);
+        // var = ((b - a + 1)^2 - 1) / 12
+        CuAssertTrue(testCase, var < 1.1 * (((max - min + 1) * (max - min + 1) - 1) / 12.0));
+        CuAssertTrue(testCase, var > 0.9 * (((max - min + 1) * (max - min + 1) - 1) / 12.0));
         free(array);
     }
 }
