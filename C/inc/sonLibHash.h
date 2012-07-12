@@ -124,6 +124,12 @@ int stHash_stringEqualKey( const void *key1, const  void *key2 );
 stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
         int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *));
 
+// access to the underlying functions:
+uint32_t (*stHash_getHashFunction(stHash *hash))(const void *);
+int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *);
+void (*stHash_getKeyDestructorFunction(stHash *hash))(void *);
+void (*stHash_getValueDestructorFunction(stHash *hash))(void *);
+
 #ifdef __cplusplus
 }
 #endif

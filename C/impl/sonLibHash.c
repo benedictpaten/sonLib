@@ -172,3 +172,16 @@ stHash *stHash_invert(stHash *hash, uint32_t(*hashKey)(const void *), int(*equal
     stHash_destructIterator(hashIt);
     return invertedHash;
 }
+// interface to underlying functions
+uint32_t (*stHash_getHashFunction(stHash *hash))(const void *) {
+    return hash->hash->hashfn;
+}
+int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *) {
+    return hash->hash->eqfn;
+}
+void (*stHash_getKeyDestructorFunction(stHash *hash))(void *) {
+    return hash->hash->keyFree;
+}
+void (*stHash_getValueDestructorFunction(stHash *hash))(void *) {
+    return hash->hash->valueFree;
+}

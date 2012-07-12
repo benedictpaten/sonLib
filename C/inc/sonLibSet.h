@@ -20,6 +20,9 @@
 extern "C" {
 #endif // __cplusplus
 
+// exception string
+extern const char *SET_EXCEPTION_ID;
+
 /*
  * Function which generates hash key from pointer, should work well regardless of pointer size.
  */
@@ -95,6 +98,14 @@ void stSet_destructIterator(stSetIterator *iterator);
  * Gets the keys in the set as list.
  */
 stList *stSet_getKeys(stSet *set);
+
+// get intersection
+stSet *stSet_getIntersection(stSet *set1, stSet *set2);
+
+// Get access to the underlying functions
+uint32_t (*stSet_getHashFunction(stSet *set))(const void *);
+int (*stSet_getEqualityFunction(stSet *set))(const void *, const void *);
+void (*stSet_getDestructorFunction(stSet *set))(void *);
 
 #ifdef __cplusplus
 }

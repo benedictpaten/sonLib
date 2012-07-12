@@ -14,6 +14,8 @@
 #include "sonLibHash.h"
 #include "sonLibSet.h"
 
+const char *SET_EXCEPTION_ID = "SET_EXCEPTION";
+
 struct _stSet {
     stHash *hash;
 };
@@ -86,4 +88,49 @@ stList *stSet_getKeys(stSet *set) {
     }
     stSet_destructIterator(iterator);
     return list;
+}
+uint32_t (*stSet_getHashFunction(stSet *set))(const void *) {
+    return stHash_getHashFunction(set->hash);
+}
+int (*stSet_getEqualityFunction(stSet *set))(const void *, const void *) {
+    return stHash_getEqualityFunction(set->hash);
+}
+void (*stSet_getDestructorFunction(stSet *set))(void *) {
+    return stHash_getKeyDestructorFunction(set->hash);
+}
+static int stSet_hashersEqual(stSet *set1, stSet *set2) {
+    return stSet_getHashFunction(set1) == stSet_getHashFunction(set2);
+}
+static int stSet_equalitiesEqual(stSet *set1, stSet *set2) {
+    return stSet_getEqualityFunction(set1) == stSet_getEqualityFunction(set2);
+}
+static int stSet_destructorsEqual(stSet *set1, stSet *set2) {
+    return stSet_getDestructorFunction(set1) == stSet_getDestructorFunction(set2);
+}
+stSet *stSet_getIntersection(stSet *set1, stSet *set2) {
+    if(!stSet_hashersEqual(set1, set2)) {
+        stThrowNew(SET_EXCEPTION_ID, "Comparator functions are not equal for "
+                   "creating an intersection of two sets.");
+    }
+    if(!stSet_equalitiesEqual(set1, set2)) {
+        stThrowNew(SET_EXCEPTION_ID, "Hash functions are not equal for "
+                   "creating an intersection of two sets.");
+    }
+    if(!stSet_destructorsEqual(set1, set2)) {
+        stThrowNew(SET_EXCEPTION_ID, "Destructor functions are not equal for "
+                   "creating an intersection of two sets.");
+    }
+    stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
+                                   stSet_getEqualityFunction(set1),
+                                   stSet_getDestructorFunction(set1));
+    // Add those from set1 only if they are also in set2
+    stSetIterator *sit= stSet_getIterator(set1);
+    void *o;
+    while((o = stSet_getNext(sit)) != NULL) {
+        if(stSet_search(set2, o) != NULL) {
+            stSet_insert(set3, o);
+        }
+    }
+    stSet_destructIterator(sit);
+    return set3;
 }

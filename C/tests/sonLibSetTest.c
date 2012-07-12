@@ -170,6 +170,67 @@ static void test_stSet_testGetKeys(CuTest *testCase) {
     stList_destruct(list);
     testTeardown();
 }
+static void test_stSet_getIntersection(CuTest* testCase) {
+    testSetup();
+    // Check intersection of empty sets is empty
+    stSet *set2 = stSet_construct();
+    stSet *set3 = stSet_construct();
+    stSet *set4 = stSet_getIntersection(set2, set3);
+    CuAssertTrue(testCase, stSet_size(set4) == 0);
+    stSet_destruct(set2);
+    stSet_destruct(set3);
+    stSet_destruct(set4);
+    // Check intersection of non empty set and empty set is empy
+    set2 = stSet_construct();
+    set3 = stSet_getIntersection(set0, set2);
+    CuAssertTrue(testCase, stSet_size(set3) == 0);
+    stSet_destruct(set2);
+    stSet_destruct(set3);
+    // Check exception of two non-empty overlapping sets is correct
+    set2 = stSet_construct();
+    set3 = stSet_construct();
+    stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
+    uniqs[0] = stIntTuple_construct(9, 0);
+    uniqs[1] = stIntTuple_construct(9, 1);
+    uniqs[2] = stIntTuple_construct(9, 2);
+    uniqs[3] = stIntTuple_construct(9, 3);
+    stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
+    common[0] = stIntTuple_construct(5, 0);
+    common[1] = stIntTuple_construct(5, 1);
+    common[2] = stIntTuple_construct(5, 2);
+    common[3] = stIntTuple_construct(5, 3);
+    common[4] = stIntTuple_construct(5, 4);
+    for (int i = 0; i < 5; ++i) {
+        stSet_insert(set2, common[i]);
+        stSet_insert(set3, common[i]);
+    }
+    stSet_insert(set2, uniqs[0]);
+    stSet_insert(set2, uniqs[1]);
+    stSet_insert(set3, uniqs[2]);
+    stSet_insert(set3, uniqs[3]);
+    set4 = stSet_getIntersection(set2, set3);
+    CuAssertTrue(testCase, stSet_size(set4) == 5);
+    stSetIterator *sit = stSet_getIterator(set4);
+    stIntTuple *itup;
+    while ((itup = stSet_getNext(sit)) != NULL) {
+        CuAssertTrue(testCase, stSet_search(set2, itup) != NULL);
+        CuAssertTrue(testCase, stSet_search(set3, itup) != NULL);
+    }
+    for (int i = 0; i < 4; ++i) {
+        CuAssertTrue(testCase, stSet_search(set4, uniqs[i]) == NULL);
+    }
+    stSet_destructIterator(sit);
+    stSet_destruct(set2);
+    stSet_destruct(set3);
+    stSet_destruct(set4);
+    // Check we get an exception with sets with different functions.
+    stTry {
+        stSet_getIntersection(set0, set1);
+    } stCatch(except) {
+        CuAssertTrue(testCase, stExcept_getId(except) == SET_EXCEPTION_ID);
+    } stTryEnd
+    testTeardown();
+}
 CuSuite* sonLib_stSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stSet_search);
@@ -180,5 +241,6 @@ CuSuite* sonLib_stSetTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stSet_testIterator);
     SUITE_ADD_TEST(suite, test_stSet_construct);
     SUITE_ADD_TEST(suite, test_stSet_testGetKeys);
+    SUITE_ADD_TEST(suite, test_stSet_getIntersection);
     return suite;
 }
