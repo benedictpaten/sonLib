@@ -24,7 +24,7 @@ struct _stSetIterator {
 };
 
 uint32_t stSet_pointer(const void *k) {
-    return (uint32_t) (size_t) k; // Just use the low order bits
+    return (uint32_t) (size_t) k; // Use the low order bits
 }
 static int stSet_equalKey(const void *key1, const void *key2) {
     return key1 == key2;
@@ -48,7 +48,7 @@ void stSet_insert(stSet *set, void *key) {
     if (stSet_search(set, key) != NULL) { // This will ensure we don't end up with duplicate keys..
         stSet_remove(set, key);
     }
-    stHash_insert(set->hash, key, key);
+    stHash_insert(set->hash, key, key); 
 }
 void *stSet_search(stSet *set, void *key) {
     return stHash_search(set->hash, key);
@@ -122,7 +122,7 @@ stSet *stSet_getIntersection(stSet *set1, stSet *set2) {
     }
     stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
                                    stSet_getEqualityFunction(set1),
-                                   stSet_getDestructorFunction(set1));
+                                   NULL);
     // Add those from set1 only if they are also in set2
     stSetIterator *sit= stSet_getIterator(set1);
     void *o;

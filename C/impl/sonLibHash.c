@@ -45,8 +45,7 @@ stHash *stHash_construct2(void(*destructKeys)(void *), void(*destructValues)(voi
     return stHash_construct3(stHash_pointer, stHash_equalKey, destructKeys, destructValues);
 }
 
-stHash *stHash_construct3(uint32_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *),
-        void(*destructValues)(void *)) {
+stHash *stHash_construct3(uint32_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *), void(*destructValues)(void *)) {
     stHash *hash = st_malloc(sizeof(stHash));
     hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
     hash->destructKeys = destructKeys != NULL;
