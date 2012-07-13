@@ -49,7 +49,6 @@ def main():
     
     suite = allSuites()
     runner = unittest.TextTestRunner()
-    runner.run(suite)
     i = runner.run(suite)
     return len(i.failures) + len(i.errors)
         
