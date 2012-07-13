@@ -98,9 +98,12 @@ void stSet_destructIterator(stSetIterator *iterator);
  * Gets the keys in the set as list.
  */
 stList *stSet_getKeys(stSet *set);
+stList *stSet_getList(stSet *set);
 
-// get intersection
+// Set Functions
+stSet *stSet_getUnion(stSet *set1, stSet *set2);
 stSet *stSet_getIntersection(stSet *set1, stSet *set2);
+stSet *stSet_getDifference(stSet *set1, stSet *set2);
 
 // Get access to the underlying functions
 uint32_t (*stSet_getHashFunction(stSet *set))(const void *);

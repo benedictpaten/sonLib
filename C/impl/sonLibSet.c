@@ -89,6 +89,9 @@ stList *stSet_getKeys(stSet *set) {
     stSet_destructIterator(iterator);
     return list;
 }
+stList *stSet_getList(stSet *set) {
+    return stSet_getKeys(set);
+}
 uint32_t (*stSet_getHashFunction(stSet *set))(const void *) {
     return stHash_getHashFunction(set->hash);
 }
@@ -104,30 +107,61 @@ static int stSet_hashersEqual(stSet *set1, stSet *set2) {
 static int stSet_equalitiesEqual(stSet *set1, stSet *set2) {
     return stSet_getEqualityFunction(set1) == stSet_getEqualityFunction(set2);
 }
-static int stSet_destructorsEqual(stSet *set1, stSet *set2) {
-    return stSet_getDestructorFunction(set1) == stSet_getDestructorFunction(set2);
+static void stSet_verifySetsHaveSameFunctions(stSet *set1, stSet *set2) {
+    if (!stSet_hashersEqual(set1, set2)) {
+        stThrowNew(SET_EXCEPTION_ID, "Comparator functions are not equal for "
+                   "two sets.");
+    }
+    if (!stSet_equalitiesEqual(set1, set2)) {
+        stThrowNew(SET_EXCEPTION_ID, "Hash functions are not equal for "
+                   "two sets.");
+    }
+}
+stSet *stSet_getUnion(stSet *set1, stSet *set2) {
+    stSet_verifySetsHaveSameFunctions(set1, set2);
+    stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
+                                   stSet_getEqualityFunction(set1),
+                                   NULL);
+    // Add everything
+    stSetIterator *sit= stSet_getIterator(set1);
+    void *o;
+    while ((o = stSet_getNext(sit)) != NULL) {
+        stSet_insert(set3, o);
+    }
+    stSet_destructIterator(sit);
+    sit = stSet_getIterator(set2);
+    while ((o = stSet_getNext(sit)) != NULL) {
+        stSet_insert(set3, o);
+    }
+    stSet_destructIterator(sit);
+    return set3;
 }
 stSet *stSet_getIntersection(stSet *set1, stSet *set2) {
-    if(!stSet_hashersEqual(set1, set2)) {
-        stThrowNew(SET_EXCEPTION_ID, "Comparator functions are not equal for "
-                   "creating an intersection of two sets.");
-    }
-    if(!stSet_equalitiesEqual(set1, set2)) {
-        stThrowNew(SET_EXCEPTION_ID, "Hash functions are not equal for "
-                   "creating an intersection of two sets.");
-    }
-    if(!stSet_destructorsEqual(set1, set2)) {
-        stThrowNew(SET_EXCEPTION_ID, "Destructor functions are not equal for "
-                   "creating an intersection of two sets.");
-    }
+    stSet_verifySetsHaveSameFunctions(set1, set2);
     stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
                                    stSet_getEqualityFunction(set1),
                                    NULL);
     // Add those from set1 only if they are also in set2
     stSetIterator *sit= stSet_getIterator(set1);
     void *o;
-    while((o = stSet_getNext(sit)) != NULL) {
-        if(stSet_search(set2, o) != NULL) {
+    while ((o = stSet_getNext(sit)) != NULL) {
+        if (stSet_search(set2, o) != NULL) {
+            stSet_insert(set3, o);
+        }
+    }
+    stSet_destructIterator(sit);
+    return set3;
+}
+stSet *stSet_getDifference(stSet *set1, stSet *set2) {
+    stSet_verifySetsHaveSameFunctions(set1, set2);
+    stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
+                                   stSet_getEqualityFunction(set1),
+                                   NULL);
+    // Add those from set1 only if they are not in set2
+    stSetIterator *sit= stSet_getIterator(set1);
+    void *o;
+    while ((o = stSet_getNext(sit)) != NULL) {
+        if (stSet_search(set2, o) == NULL) {
             stSet_insert(set3, o);
         }
     }
