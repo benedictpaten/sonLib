@@ -25,7 +25,7 @@ extern "C" {
  *
  * Create an empty cache.
  */
-stCache *stCache_construct();
+stCache *stCache_construct(void);
 
 /*
  * Destructs the cache.

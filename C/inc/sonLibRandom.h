@@ -43,7 +43,7 @@ int64_t st_randomInt64(int64_t min, int64_t max);
 /*
  * Returns a random value between 0.0 (inclusive) and 1.0 (exclusive).
  */
-double st_random();
+double st_random(void);
 
 /*
  * Returns a random value from a list.
