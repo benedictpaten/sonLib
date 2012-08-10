@@ -172,7 +172,7 @@ void deleteRecord(stCache *cache, int64_t key,
  * Public functions
  */
 
-stCache *stCache_construct() {
+stCache *stCache_construct(void) {
     stCache *cache = st_malloc(sizeof(stCache));
     cache->cache = stSortedSet_construct3(cacheRecord_cmp,
             (void(*)(void *)) cacheRecord_destruct);

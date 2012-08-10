@@ -36,7 +36,7 @@ int32_t st_randomInt(int32_t min, int32_t max) {
     return st_randomInt64(min, max);
 }
 
-double st_random() {
+double st_random(void) {
     static const double i = RAND_MAX+1.0;
     double d = rand()/i;
     return d >= 1.0 ? 0.9999 : (d < 0.0 ? 0.0 : d);
