@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -13,7 +13,7 @@
 
 #include "sonLibGlobalsTest.h"
 
-static void testString_copy(CuTest* testCase) {
+static void test_stString_copy(CuTest* testCase) {
     const char *test[3] = { "hello this is a test", "", "BOO\nTOO\n" };
     int32_t i;
     for(i=0; i<3; i++) {
@@ -24,7 +24,7 @@ static void testString_copy(CuTest* testCase) {
     }
 }
 
-static void testString_print(CuTest* testCase) {
+static void test_stString_print(CuTest* testCase) {
     char *cA = stString_print("Hello %s, foo %i %.1f", "world", 5, 7.0);
     CuAssertStrEquals(testCase, "Hello world, foo 5 7.0", cA);
     free(cA);
@@ -33,7 +33,7 @@ static void testString_print(CuTest* testCase) {
     free(cA);
 }
 
-static void testString_getNextWord(CuTest* testCase) {
+static void test_stString_getNextWord(CuTest* testCase) {
     const char *cA = "Hello    world \n 5 \t6.0 ( )";
     char **pointer = (char **)&cA;
     char *cA2;
@@ -59,20 +59,31 @@ static void testString_getNextWord(CuTest* testCase) {
     CuAssertTrue(testCase, stString_getNextWord(pointer) == NULL);
 }
 
-static void testString_replace(CuTest* testCase) {
+static void test_stString_replace(CuTest* testCase) {
     char *cA = stString_replace("Hello world wowo", "wo", " foo ");
     CuAssertStrEquals(testCase, "Hello  foo rld  foo  foo ", cA);
     free(cA);
 }
 
-static void testString_join(CuTest* testCase) {
+static void test_stString_join(CuTest* testCase) {
     const char *cA[3] = { "Hello world wo", "wo", " foo " };
     char *cA2 = stString_join("\n", cA, 3);
     CuAssertStrEquals(testCase, "Hello world wo\nwo\n foo ", cA2);
     free(cA2);
 }
 
-static void testString_split(CuTest *testCase) {
+static void test_stString_join2(CuTest* testCase) {
+    stList *list = stList_construct3(0, free);
+    stList_append(list, stString_copy("Hello world wo"));
+    stList_append(list, stString_copy("wo"));
+    stList_append(list, stString_copy(" foo "));
+    char *cA2 = stString_join2("\n", list);
+    CuAssertStrEquals(testCase, "Hello world wo\nwo\n foo ", cA2);
+    free(cA2);
+    stList_destruct(list);
+}
+
+static void test_stString_split(CuTest *testCase) {
     const char *input = " Hello world\ttwo\nwo\n foo ";
     stList *tokens = stString_split(input);
     CuAssertIntEquals(testCase, 5, stList_length(tokens));
@@ -84,14 +95,29 @@ static void testString_split(CuTest *testCase) {
     stList_destruct(tokens);
 }
 
-CuSuite* sonLibStringTestSuite(void) {
+static void test_stString_getSubString(CuTest *testCase) {
+    const char *input = "Hello world";
+    char *cA = stString_getSubString(input, 1, 4);
+    CuAssertStrEquals(testCase, "ello", cA);
+    free(cA);
+    cA = stString_getSubString(input, 1, 0);
+    CuAssertStrEquals(testCase, "", cA);
+    free(cA);
+    cA = stString_getSubString(input, 1, 10);
+    CuAssertStrEquals(testCase, "ello world", cA);
+    free(cA);
+}
+
+CuSuite* sonLib_stStringTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testString_copy);
-    SUITE_ADD_TEST(suite, testString_print);
-    SUITE_ADD_TEST(suite, testString_getNextWord);
-    SUITE_ADD_TEST(suite, testString_replace);
-    SUITE_ADD_TEST(suite, testString_join);
-    SUITE_ADD_TEST(suite, testString_split);
+    SUITE_ADD_TEST(suite, test_stString_copy);
+    SUITE_ADD_TEST(suite, test_stString_print);
+    SUITE_ADD_TEST(suite, test_stString_getNextWord);
+    SUITE_ADD_TEST(suite, test_stString_replace);
+    SUITE_ADD_TEST(suite, test_stString_join);
+    SUITE_ADD_TEST(suite, test_stString_join2);
+    SUITE_ADD_TEST(suite, test_stString_split);
+    SUITE_ADD_TEST(suite, test_stString_getSubString);
     return suite;
 }
 

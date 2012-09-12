@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+#Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
 #
 #Released under the MIT license, see LICENSE.txt
 
@@ -13,6 +13,7 @@ import logging.handlers
 import tempfile
 import random
 import math
+import shutil
 from optparse import OptionParser
 from tree import BinaryTree
 from misc import close
@@ -55,17 +56,21 @@ def redirectLoggerStreamHandlers(oldStream, newStream):
         if handler.stream == newStream:
            return
     logger.addHandler(logging.StreamHandler(newStream))
-    
 
 def getLogLevelString():
     return logLevelString
 
+__loggingFiles = []
 def addLoggingFileHandler(fileName, rotatingLogging=False):
+    if fileName in __loggingFiles:
+        return
+    __loggingFiles.append(fileName)
     if rotatingLogging:
         handler = logging.handlers.RotatingFileHandler(fileName, maxBytes=1000000, backupCount=1)
     else:
         handler = logging.FileHandler(fileName)
     logger.addHandler(handler)
+    return handler
     
 def setLogLevel(logLevel):
     logLevel = logLevel.upper()
@@ -153,7 +158,7 @@ def setLoggingFromOptions(options):
 
 def system(command):
     logger.debug("Running the command: %s" % command)
-    sts = subprocess.call(command, shell=True, bufsize=-1)
+    sts = subprocess.call(command, shell=True, bufsize=-1, stdout=sys.stdout, stderr=sys.stderr)
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return sts
@@ -163,34 +168,63 @@ def popen(command, tempFile):
     """
     fileHandle = open(tempFile, 'w')
     logger.debug("Running the command: %s" % command)
-    sts = subprocess.call(command, shell=True, stdout=fileHandle, bufsize=-1)
+    sts = subprocess.call(command, shell=True, stdout=fileHandle, stderr=sys.stderr, bufsize=-1)
     fileHandle.close()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return sts
 
-def popenCatch(command):
+def popenCatch(command, stdinString=None):
     """Runs a command and return standard out.
     """
     logger.debug("Running the command: %s" % command)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, bufsize=-1)
+    if stdinString != None:
+        process = subprocess.Popen(command, shell=True, 
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
+        output, nothing = process.communicate(stdinString)
+    else:
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
+        output, nothing = process.communicate() #process.stdout.read().strip()
     sts = process.wait()
     if sts != 0:
-        raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
-    return process.stdout.read().strip()
+        raise RuntimeError("Command: %s with stdin string '%s' exited with non-zero status %i" % (command, stdinString, sts))
+    return output #process.stdout.read().strip()
+
+def popenPush(command, stdinString=None):
+    if stdinString == None:
+        system(command)
+    else:
+        process = subprocess.Popen(command, shell=True, 
+                                   stdin=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
+        process.communicate(stdinString)
+        sts = process.wait()
+        if sts != 0:
+            raise RuntimeError("Command: %s with stdin string '%s' exited with non-zero status %i" % (command, stdinString, sts))
 
 def spawnDaemon(command):
     """Launches a command as a daemon.  It will need to be explicitly killed
     """
     return system("sonLib_daemonize.py \'%s\'" % command)
 
-def getTotalCpuTime():
-    """Gives the total cpu time, including the children. 
+def getTotalCpuTimeAndMemoryUsage():
+    """Gives the total cpu time and memory usage of itself and its children. 
     """
     me = resource.getrusage(resource.RUSAGE_SELF)
     childs = resource.getrusage(resource.RUSAGE_CHILDREN)
     totalCpuTime = me.ru_utime+me.ru_stime+childs.ru_utime+childs.ru_stime
-    return totalCpuTime
+    totalMemoryUsage = me.ru_maxrss+ me.ru_maxrss
+    return totalCpuTime, totalMemoryUsage
+
+def getTotalCpuTime():
+    """Gives the total cpu time, including the children. 
+    """
+    return getTotalCpuTimeAndMemoryUsage()[0]
+
+def getTotalMemoryUsage():
+    """Gets the amount of memory used by the process and its children.
+    """
+    return getTotalCpuTimeAndMemoryUsage()[1]
+
  
 #########################################################
 #########################################################
@@ -336,7 +370,7 @@ def parseSuiteTestOptions(parser=None):
         
     return options, args
     
-def nameValue(name, value, valueType=str):
+def nameValue(name, value, valueType=str, quotes=False):
     """Little function to make it easier to make name value strings for commands.
     """
     if valueType == bool:
@@ -345,6 +379,8 @@ def nameValue(name, value, valueType=str):
         return ""
     if value is None:
         return ""
+    if quotes:
+        return "--%s '%s'" % (name, valueType(value))  
     return "--%s %s" % (name, valueType(value))    
 
 #########################################################
@@ -397,13 +433,14 @@ class TempFileTree:
     if files exist in the dirs of levels 0 ... level-1 then they must be dirs,
     which will be indexed the by tempfile tree.
     """
-    def __init__(self, rootDir, filesPerDir=100, levels=4, ):
+    def __init__(self, rootDir, filesPerDir=500, levels=3):
         #Do basic checks of input
         assert(filesPerDir) >= 1
         assert(levels) >= 1
         if not os.path.isdir(rootDir):
             #Make the root dir
             os.mkdir(rootDir)
+            open(os.path.join(rootDir, "lock"), 'w').close() #Add the lock file
         
         #Basic attributes of system at start up.
         self.levelNo = levels
@@ -412,6 +449,7 @@ class TempFileTree:
         #Dynamic variables
         self.tempDir = rootDir
         self.level = 0
+        self.filesInDir = 1
         #These two variables will only refer to the existance of this class instance.
         self.tempFilesCreated = 0
         self.tempFilesDestroyed = 0
@@ -422,21 +460,25 @@ class TempFileTree:
         (len(currentFiles), len(currentFiles)/math.pow(filesPerDir, levels)))
     
     def getTempFile(self, suffix="", makeDir=False):
-        while self.level < self.levelNo:
+        while 1:
             #Basic checks for start of loop
             assert self.level >= 0
+            assert self.level < self.levelNo
             assert os.path.isdir(self.tempDir)
-            fileNames = os.listdir(self.tempDir)
             #If tempDir contains max file number then:
-            if len(fileNames) >= self.filesPerDir:
+            if self.filesInDir > self.filesPerDir:
                 #if level number is already 0 raise an exception
                 if self.level == 0:
                     raise RuntimeError("We ran out of space to make temp files")
+                #Remove the lock file
+                os.remove(os.path.join(self.tempDir, "lock"))
                 #reduce level number by one, chop off top of tempDir.
                 self.level -= 1
                 self.tempDir = os.path.split(self.tempDir)[0]
+                self.filesInDir = len(os.listdir(self.tempDir))
             else:
                 if self.level == self.levelNo-1:
+                    self.filesInDir += 1
                     #make temporary file in dir and return it.
                     if makeDir:
                         return getTempDirectory(rootDir=self.tempDir)
@@ -445,7 +487,9 @@ class TempFileTree:
                 else:
                     #mk new dir, and add to tempDir path, inc the level buy one.
                     self.tempDir = getTempDirectory(rootDir=self.tempDir)
+                    open(os.path.join(self.tempDir, "lock"), 'w').close() #Add the lock file
                     self.level += 1
+                    self.filesInDir = 1
     
     def getTempDirectory(self):
         return self.getTempFile(makeDir=True)
@@ -455,10 +499,12 @@ class TempFileTree:
         baseDir = os.path.split(tempFile)[0]
         if baseDir != self.tempDir:
             while True: #Now remove any parent dirs that are empty.
-                if os.listdir(baseDir) == [] and baseDir != self.rootDir:
+                try:
                     os.rmdir(baseDir)
-                    baseDir = os.path.split(baseDir)[0]
-                else:
+                except OSError:
+                    break
+                baseDir = os.path.split(baseDir)[0]
+                if baseDir == self.rootDir:
                     break
     
     def destroyTempFile(self, tempFile):
@@ -483,7 +529,11 @@ class TempFileTree:
         #Update stats.
         self.tempFilesDestroyed += 1
         #Do the actual removal
-        system("rm -rf %s" % tempDir)
+        try:
+            os.rmdir(tempDir)
+        except OSError:
+            shutil.rmtree(tempDir)
+            #system("rm -rf %s" % tempDir)
         self.__destroyFile(tempDir)
    
     def listFiles(self):
@@ -492,13 +542,15 @@ class TempFileTree:
         def fn(dirName, level, files):
             if level == self.levelNo-1:
                 for fileName in os.listdir(dirName):
-                    absFileName = os.path.join(dirName, fileName)
-                    files.append(absFileName)
+                    if fileName != "lock":
+                        absFileName = os.path.join(dirName, fileName)
+                        files.append(absFileName)
             else:
                 for subDir in os.listdir(dirName):
-                    absDirName = os.path.join(dirName, subDir)
-                    assert os.path.isdir(absDirName)
-                    fn(absDirName, level+1, files)
+                    if subDir != "lock":
+                        absDirName = os.path.join(dirName, subDir)
+                        assert os.path.isdir(absDirName)
+                        fn(absDirName, level+1, files)
         files = []
         fn(self.rootDir, 0, files)
         return files
@@ -822,8 +874,7 @@ def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePri
 #########################################################
 
 def pWMRead(fileHandle, alphabetSize=4):
-    """
-    reads in standard position weight matrix format,
+    """reads in standard position weight matrix format,
     rows are different types of base, columns are individual residues
     """
     lines = fileHandle.readlines()
@@ -840,8 +891,7 @@ def pWMRead(fileHandle, alphabetSize=4):
     return l
 
 def pWMWrite(fileHandle, pWM, alphabetSize=4):
-    """
-    Writes file in standard PWM format, is reverse of pWMParser
+    """Writes file in standard PWM format, is reverse of pWMParser
     """
     for i in xrange(0, alphabetSize):
         fileHandle.write("%s\n" % ' '.join([ str(pWM[j][i]) for j in xrange(0, len(pWM)) ]))

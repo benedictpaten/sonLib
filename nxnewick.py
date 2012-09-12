@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#Copyright (C) 2006-2011 by Glenn Hickey
+#Copyright (C) 2006-2012 by Glenn Hickey
 #
 #Released under the MIT license, see LICENSE.txt
 #!/usr/bin/env python
@@ -81,7 +81,7 @@ class NXNewick:
                 self.outString += "\""
         if parent is not None:
             weight = self.nxTree.getWeight(parent, node, defaultValue=None)
-            if weight:
+            if weight is not None:
                 self.outString += ":%s" % str(weight)      
         
     #### PRIVATE READING FUNCTIONS ####       

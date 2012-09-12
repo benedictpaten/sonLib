@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -21,10 +21,16 @@
  * the dreaded network errors in the kyoto tycoon API.
  * Note that all operations that can change a record's size must check to make
  * sure that it does not get duplicated across the two db's!
+ *
+ * Feb 16, 2012:  Multiple database on one server deprecated to implement
+ * the binary bulk functions (which require an index).  This functionality
+ * could be reintroduced if we keep a name / index mapping externally (or find
+ * a way to pry it out of the api)
  */
 
 //Database functions
 #ifdef HAVE_KYOTO_TYCOON
+#include <unistd.h>
 #include <ktremotedb.h>
 #include <kclangc.h>
 #include "sonLibGlobalsInternal.h"
@@ -53,14 +59,6 @@ static RemoteDB *constructDB(stKVDatabaseConf *conf, bool create) {
 
     // create the database object
     RemoteDB *rdb = new RemoteDB();
-
-    // set the target (if specified)
-    // used for the case when a single server is operating on multiple databases
-    // dbName is from the optional database_name attribute in the kyoto_tycoon xml element
-    const char *dbName = stKVDatabaseConf_getDatabaseName(conf);
-    if (dbName) {
-    	rdb->set_target(dbName);
-    }
 
     // tcrdb open sets the host and port for the rdb object
     if (!rdb->open(dbRemote_Host, dbRemote_Port, timeout)) {
@@ -125,7 +123,7 @@ static bool recordInTycoon(stKVDatabase *database, int64_t key) {
     if ((cA = rdb->get((char *)&key, (size_t)sizeof(key), &sp, NULL)) == NULL) {
         return false;
     } else {
-        free(cA);
+        delete cA;
         return true;
     }
 }
@@ -280,7 +278,11 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
 	int64_t maxBulkSetSize = stKVDatabaseConf_getMaxKTBulkSetSize(conf);
 	int64_t maxBulkSetNumRecords = stKVDatabaseConf_getMaxKTBulkSetNumRecords(conf);
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
-    map<string,string> recs;
+    vector<RemoteDB::BulkRecord> recs;
+    recs.reserve(stList_length(records));
+    RemoteDB::BulkRecord templateRec;
+    templateRec.dbidx = 0;
+    templateRec.xt = XT;
     int64_t runningSize = 0;
 
     // copy the records from our C data structure to the CPP map needed for the Tycoon API
@@ -290,8 +292,8 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
         // current batch can't get any bigger so we write and clear it
         if ((runningSize + request->size > maxBulkSetSize ||
         	 (int64_t)recs.size() >= maxBulkSetNumRecords) && recs.empty() == false) {
-        	int retVal;
-			if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
+        	int64_t retVal = rdb->set_bulk_binary(recs);
+			if (retVal < 1) {
 				assert(rdb->error().name() != NULL);
 				fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
 				stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
@@ -308,10 +310,9 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
         else
         {
         	removeRecordFromDiskIfPresent(database, request->key);
-			recs.insert(pair<string,string>(
-			   string((const char *)&(request->key), sizeof(int64_t)),
-			   string((const char *)request->value, request->size))
-			);
+        	templateRec.key = string((const char *)&(request->key), sizeof(int64_t));
+        	templateRec.value = string((const char *)request->value, request->size);
+        	recs.push_back(templateRec);
 			runningSize += request->size;
         }
     }
@@ -319,8 +320,8 @@ static void bulkSetRecords(stKVDatabase *database, stList *records) {
     // test for empty list   
     if (recs.empty() == false) {
 		// set values, atomic = true
-		int retVal;
-		if ((retVal = rdb->set_bulk(recs, XT, true)) < 1) {
+		int64_t retVal = rdb->set_bulk_binary(recs);
+		if (retVal < 1) {
 			assert(rdb->error().name() != NULL);
 			fprintf(stderr, "Throwing an exception with the string %s\n", rdb->error().name());
 			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon set bulk record failed: %s", rdb->error().name());
@@ -374,9 +375,12 @@ static void *getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize
 		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 		//Return value must be freed.
 		size_t i;
-		record = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
+		char* newRecord = rdb->get((char *)&key, (size_t)sizeof(int64_t), &i, NULL);
 		*recordSize = (int64_t)i;
+		record = (char*)memcpy(st_malloc(*recordSize), newRecord, *recordSize);
+		delete newRecord;
 	}
+        
     return record;
 }
 
@@ -391,7 +395,9 @@ static int64_t getInt64(stKVDatabase *database, int64_t key) {
     RemoteDB *rdb = (RemoteDB *)database->dbImpl;
 
     size_t sp;
-    char *record = rdb->get((char *)&key, sizeof(int64_t), &sp, NULL);
+    char *newRecord = rdb->get((char *)&key, sizeof(int64_t), &sp, NULL);
+    char* record = (char*)memcpy(st_malloc( sizeof(int64_t)), newRecord,  sizeof(int64_t));
+    delete newRecord;
 
     // convert from KC native big-endian back to little-endian Intel...
     return kyotocabinet::ntoh64(*((int64_t*)record));
@@ -429,6 +435,109 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 	}
 }
 
+/* do a bulk get based on a list of keys.  */
+static stList *bulkGetRecords(stKVDatabase *database, stList* keys) {
+	int32_t n = stList_length(keys);
+	RemoteDB::BulkRecord templateRec;
+	templateRec.dbidx = 0;
+	templateRec.xt = XT;
+	vector<RemoteDB::BulkRecord> recs;
+	recs.reserve(n);
+	stList* results = stList_construct3(n, (void(*)(void *))stKVDatabaseBulkResult_destruct);
+	for (int32_t i = 0; i < n; ++i) {
+		int64_t key = *(int64_t*)stList_get(keys, i);
+		if (recordOnDisk(database, key) == true)
+		{
+			int64_t recordSize;
+			void *record = database->secondaryDB->getRecord2(database->secondaryDB, key, &recordSize);
+			stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+			stList_set(results, i, result);
+		}
+		else
+		{
+			templateRec.key = string((char*)stList_get(keys, i), (size_t)sizeof(int64_t));
+			recs.push_back(templateRec);
+		}
+	}
+	if (recs.empty() == false)
+	{
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		int64_t retVal = rdb->get_bulk_binary(&recs);
+		if (retVal < 0)
+		{
+			assert(rdb->error().name() != NULL);
+			fprintf(stderr, "Throwing a KT exception with the string %s\n", rdb->error().name());
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon get bulk record failed: %s", rdb->error().name());
+		}
+		int32_t recIdx = 0;
+		for (int32_t i = 0; i < n; ++i)
+		{
+			if (stList_get(results, i) == NULL)
+			{
+				RemoteDB::BulkRecord& curRecord = recs.at(recIdx++);
+				int64_t recordSize = curRecord.value.length() * sizeof(char);
+				void* record = st_malloc(recordSize);
+				memcpy(record, curRecord.value.data(), recordSize);
+				stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+				stList_set(results, i, result);
+			}
+		}
+	}
+	return results;
+}
+
+static stList *bulkGetRecordsRange(stKVDatabase *database, int64_t firstKey, int64_t numRecords) {
+	vector<string> keysVec;
+	keysVec.reserve(numRecords);
+	stList* results = stList_construct3(numRecords, (void(*)(void *))stKVDatabaseBulkResult_destruct);
+	for (int64_t i = 0; i < numRecords; ++i) {
+		int64_t key = firstKey + i;
+		if (recordOnDisk(database, key) == true)
+		{
+			int64_t recordSize;
+			void *record = database->secondaryDB->getRecord2(database->secondaryDB, key, &recordSize);
+			stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+			stList_set(results, (int32_t)i, result);
+		}
+		else
+		{
+			keysVec.push_back(string((char*)&key, (size_t)sizeof(int64_t)));
+		}
+	}
+	if (keysVec.empty() == false)
+	{
+		RemoteDB *rdb = (RemoteDB *)database->dbImpl;
+		map<string, string> recs;
+		int64_t retVal = rdb->get_bulk(keysVec, &recs);
+		if (retVal < 0)
+		{
+			assert(rdb->error().name() != NULL);
+			fprintf(stderr, "Throwing a KT exception with the string %s\n", rdb->error().name());
+			stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "kyoto tycoon get bulk record failed: %s", rdb->error().name());
+		}
+		for (int64_t i = 0; i < numRecords; ++i)
+		{
+			if (stList_get(results, (int32_t)i) == NULL)
+			{
+				int64_t key = firstKey + i;
+				string keyString = string((char*)&key, (size_t)sizeof(int64_t));
+				map<string,string>::iterator mapIt = recs.find(keyString);
+				void* record = NULL;
+				int64_t recordSize = 0;
+				if (mapIt != recs.end())
+				{
+					recordSize = mapIt->second.length() * sizeof(char);
+					record = st_malloc(recordSize);
+					memcpy(record, mapIt->second.data(), recordSize);
+				}
+				stKVDatabaseBulkResult* result = stKVDatabaseBulkResult_construct(record, recordSize);
+				stList_set(results, (int32_t)i, result);
+			}
+		}
+	}
+	return results;
+}
+
 static void removeRecord(stKVDatabase *database, int64_t key) {
 	if (recordOnDisk(database, key) == true) {
 		database->secondaryDB->removeRecord(database->secondaryDB, key);
@@ -462,6 +571,8 @@ void stKVDatabase_initialise_kyotoTycoon(stKVDatabase *database, stKVDatabaseCon
     database->getInt64 = getInt64;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
+    database->bulkGetRecords = bulkGetRecords;
+    database->bulkGetRecordsRange = bulkGetRecordsRange;
     database->removeRecord = removeRecord;
 }
 

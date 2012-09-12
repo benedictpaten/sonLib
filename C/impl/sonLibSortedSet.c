@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -36,7 +36,7 @@ static int st_sortedSet_cmpFn( const void *key1, const void *key2 ) {
 static void checkModifiable(stSortedSet *sortedSet) {
     if (sortedSet->numberOfLiveIterators > 0) {
         //assert(0);
-        stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify stSortSet while iterators are active");
+        stThrowNew(SORTED_SET_EXCEPTION_ID, "attempt to modify an stSortedSet while iterators are active");
     }
 }
 
@@ -65,6 +65,10 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
     sortedSet->destructElementFn = destructElementFn;
     sortedSet->numberOfLiveIterators = 0;
     return sortedSet;
+}
+
+void stSortedSet_setDestructor(stSortedSet *set, void (*destructElement)(void *)) {
+    set->destructElementFn = destructElement;
 }
 
 static struct _stSortedSet_construct3Fn *stSortedSet_getComparator(stSortedSet *sortedSet) {

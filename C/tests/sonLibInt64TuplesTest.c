@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -36,13 +36,13 @@ static void setup() {
     int64Tuple5 = stInt64Tuple_construct(4, 1, 3, 2, 7);
 }
 
-static void testStInt64Tuple_construct(CuTest *testCase) {
+static void test_stInt64Tuple_construct(CuTest *testCase) {
     assert(testCase != NULL);
     setup(); //we don't do anything, this just checks that everything can construct and destruct okay.
     teardown();
 }
 
-static void testStInt64Tuple_hashKey(CuTest *testCase) {
+static void test_stInt64Tuple_hashKey(CuTest *testCase) {
     setup();
     stHash *hash = stHash_construct3((uint32_t (*)(const void *))stInt64Tuple_hashKey, (int (*)(const void *, const void *))stInt64Tuple_equalsFn, NULL, NULL);
     stHash_insert(hash, int64Tuple1, int64Tuple1);
@@ -55,7 +55,7 @@ static void testStInt64Tuple_hashKey(CuTest *testCase) {
     teardown();
 }
 
-static void testStInt64Tuple_cmpFn(CuTest *testCase) {
+static void test_stInt64Tuple_cmpFn(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stInt64Tuple_cmpFn(int64Tuple1, int64Tuple1) == 0);
     CuAssertTrue(testCase, stInt64Tuple_cmpFn(int64Tuple1, int64Tuple2) < 0);
@@ -73,7 +73,7 @@ static void testStInt64Tuple_cmpFn(CuTest *testCase) {
     teardown();
 }
 
-static void testStInt64Tuple_equalsFn(CuTest *testCase) {
+static void test_stInt64Tuple_equalsFn(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stInt64Tuple_equalsFn(int64Tuple1, int64Tuple1));
     CuAssertTrue(testCase, !stInt64Tuple_equalsFn(int64Tuple1, int64Tuple2));
@@ -84,7 +84,7 @@ static void testStInt64Tuple_equalsFn(CuTest *testCase) {
     teardown();
 }
 
-static void testStInt64Tuple_length(CuTest *testCase) {
+static void test_stInt64Tuple_length(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stInt64Tuple_length(int64Tuple1) == 3);
     CuAssertTrue(testCase, stInt64Tuple_length(int64Tuple2) == 4);
@@ -94,7 +94,7 @@ static void testStInt64Tuple_length(CuTest *testCase) {
     teardown();
 }
 
-static void testStInt64Tuple_getPosition(CuTest *testCase) {
+static void test_stInt64Tuple_getPosition(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stInt64Tuple_getPosition(int64Tuple1, 0) == 1);
     CuAssertTrue(testCase, stInt64Tuple_getPosition(int64Tuple1, 1) == 3);
@@ -104,11 +104,11 @@ static void testStInt64Tuple_getPosition(CuTest *testCase) {
 
 CuSuite* sonLib_stInt64TuplesTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testStInt64Tuple_construct);
-    SUITE_ADD_TEST(suite, testStInt64Tuple_hashKey);
-    SUITE_ADD_TEST(suite, testStInt64Tuple_cmpFn);
-    SUITE_ADD_TEST(suite, testStInt64Tuple_equalsFn);
-    SUITE_ADD_TEST(suite, testStInt64Tuple_length);
-    SUITE_ADD_TEST(suite, testStInt64Tuple_getPosition);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_construct);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_hashKey);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_cmpFn);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_equalsFn);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_length);
+    SUITE_ADD_TEST(suite, test_stInt64Tuple_getPosition);
     return suite;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -65,7 +65,6 @@ void checkPairwiseAlignment(struct PairwiseAlignment *pA) {
             k += pA->strand2 ? op->length : -op->length;
         }
     }
-    //uglyf("boo %i %i %i %i\n", pA->end1 - pA->start1, j, pA->end2 - pA->start2, k);
 
     assert(j == pA->end1);
     assert(k == pA->end2);
@@ -162,9 +161,13 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
             while(parseString(&cA4, cA2) == 1) {
                 assert(strlen(cA2) == 1);
                 type = cigarReadFn(cA2[0], &withProb);
-                assert(parseInt(&cA4, &length) == 1);
+                int32_t j = parseInt(&cA4, &length);
+                (void)j;
+                assert(j == 1);
                 if(withProb == TRUE) {
-                    assert(parseFloat(&cA4, &score) == 1);
+                    j = parseFloat(&cA4, &score);
+                    (void)j;
+                    assert(j == 1);
                 }
                 else {
                     score = 0.0;

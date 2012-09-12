@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -36,13 +36,13 @@ static void setup() {
     intTuple5 = stIntTuple_construct(4, 1, 3, 2, 7);
 }
 
-static void testStIntTuple_construct(CuTest *testCase) {
+static void test_stIntTuple_construct(CuTest *testCase) {
     assert(testCase != NULL);
     setup(); //we don't do anything, this just checks that everything can construct and destruct okay.
     teardown();
 }
 
-static void testStIntTuple_hashKey(CuTest *testCase) {
+static void test_stIntTuple_hashKey(CuTest *testCase) {
     setup();
     stHash *hash = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey, (int (*)(const void *, const void *))stIntTuple_equalsFn, NULL, NULL);
     stHash_insert(hash, intTuple1, intTuple1);
@@ -55,7 +55,7 @@ static void testStIntTuple_hashKey(CuTest *testCase) {
     teardown();
 }
 
-static void testStIntTuple_cmpFn(CuTest *testCase) {
+static void test_stIntTuple_cmpFn(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stIntTuple_cmpFn(intTuple1, intTuple1) == 0);
     CuAssertTrue(testCase, stIntTuple_cmpFn(intTuple1, intTuple2) < 0);
@@ -73,7 +73,7 @@ static void testStIntTuple_cmpFn(CuTest *testCase) {
     teardown();
 }
 
-static void testStIntTuple_equalsFn(CuTest *testCase) {
+static void test_stIntTuple_equalsFn(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stIntTuple_equalsFn(intTuple1, intTuple1));
     CuAssertTrue(testCase, !stIntTuple_equalsFn(intTuple1, intTuple2));
@@ -84,7 +84,7 @@ static void testStIntTuple_equalsFn(CuTest *testCase) {
     teardown();
 }
 
-static void testStIntTuple_length(CuTest *testCase) {
+static void test_stIntTuple_length(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stIntTuple_length(intTuple1) == 3);
     CuAssertTrue(testCase, stIntTuple_length(intTuple2) == 4);
@@ -94,7 +94,7 @@ static void testStIntTuple_length(CuTest *testCase) {
     teardown();
 }
 
-static void testStIntTuple_getPosition(CuTest *testCase) {
+static void test_stIntTuple_getPosition(CuTest *testCase) {
     setup();
     CuAssertTrue(testCase, stIntTuple_getPosition(intTuple1, 0) == 1);
     CuAssertTrue(testCase, stIntTuple_getPosition(intTuple1, 1) == 3);
@@ -104,11 +104,11 @@ static void testStIntTuple_getPosition(CuTest *testCase) {
 
 CuSuite* sonLib_stIntTuplesTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testStIntTuple_construct);
-    SUITE_ADD_TEST(suite, testStIntTuple_hashKey);
-    SUITE_ADD_TEST(suite, testStIntTuple_cmpFn);
-    SUITE_ADD_TEST(suite, testStIntTuple_equalsFn);
-    SUITE_ADD_TEST(suite, testStIntTuple_length);
-    SUITE_ADD_TEST(suite, testStIntTuple_getPosition);
+    SUITE_ADD_TEST(suite, test_stIntTuple_construct);
+    SUITE_ADD_TEST(suite, test_stIntTuple_hashKey);
+    SUITE_ADD_TEST(suite, test_stIntTuple_cmpFn);
+    SUITE_ADD_TEST(suite, test_stIntTuple_equalsFn);
+    SUITE_ADD_TEST(suite, test_stIntTuple_length);
+    SUITE_ADD_TEST(suite, test_stIntTuple_getPosition);
     return suite;
 }

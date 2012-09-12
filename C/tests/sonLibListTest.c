@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -234,13 +234,13 @@ void test_stList_filter(CuTest *testCase) {
     stSortedSet_insert(set, strings[4]);
     stList *list2 = stList_filterToExclude(list, set);
     stList *list3 = stList_filterToInclude(list, set);
-    assert(stList_length(list2) == 3);
-    assert(stList_length(list3) == 2);
-    assert(stList_get(list2, 0) == strings[1]);
-    assert(stList_get(list2, 1) == strings[2]);
-    assert(stList_get(list2, 2) == strings[3]);
-    assert(stList_get(list3, 0) == strings[0]);
-    assert(stList_get(list3, 1) == strings[4]);
+    CuAssertTrue(testCase,stList_length(list2) == 3);
+    CuAssertTrue(testCase,stList_length(list3) == 2);
+    CuAssertTrue(testCase,stList_get(list2, 0) == strings[1]);
+    CuAssertTrue(testCase,stList_get(list2, 1) == strings[2]);
+    CuAssertTrue(testCase,stList_get(list2, 2) == strings[3]);
+    CuAssertTrue(testCase,stList_get(list3, 0) == strings[0]);
+    CuAssertTrue(testCase,stList_get(list3, 1) == strings[4]);
     teardown();
 }
 

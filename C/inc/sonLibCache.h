@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -25,7 +25,7 @@ extern "C" {
  *
  * Create an empty cache.
  */
-stCache *stCache_construct();
+stCache *stCache_construct(void);
 
 /*
  * Destructs the cache.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -16,8 +16,8 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
+#endif // __cplusplus
+    
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -29,10 +29,12 @@ extern "C" {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-
+    
 typedef struct _stTree stTree;
 typedef struct _stHash stHash;
+typedef struct _stSet stSet;
 typedef struct hashtable_itr stHashIterator;
+typedef struct _stSetIterator stSetIterator;
 typedef struct _stSortedSet stSortedSet;
 typedef struct _stSortedSetIterator stSortedSetIterator;
 typedef struct _stList stList;
@@ -50,8 +52,9 @@ typedef struct stAlignSegment stAlignSegment;
 typedef struct stKVDatabase stKVDatabase;
 typedef struct stKVDatabaseConf stKVDatabaseConf;
 typedef struct stKVDatabaseBulkRequest stKVDatabaseBulkRequest;
+typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
 
 #ifdef __cplusplus
 }
-#endif
-#endif /* SONLIBGLOBALS_H_ */
+#endif // __cplusplus
+#endif // SONLIBGLOBALS_H_

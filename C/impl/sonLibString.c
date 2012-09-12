@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -107,27 +107,30 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
 }
 
 char *stString_join(const char *pad, const char **strings, int32_t length) {
-    int32_t i, j, k;
+    int32_t padLength = strlen(pad);
     assert(length >= 0);
-    j = strlen(pad) * (length > 0 ? length - 1 : 0) + 1;
-    for(i=0; i<length; i++) {
+    int32_t j = padLength * (length > 0 ? length - 1 : 0) + 1;
+    for(int32_t i=0; i<length; i++) {
         j += strlen(strings[i]);
     }
     char *cA = st_malloc(sizeof(char) * j);
     j = 0;
-    for(i=0; i<length; i++) {
+    for(int32_t i=0; i<length; i++) {
         const char *cA2 = strings[i];
-        for(k=0; k<(int32_t)strlen(cA2); k++) {
-            cA[j++] = cA2[k];
-        }
+        int32_t k = (int32_t)strlen(cA2);
+        memcpy(cA + j, cA2, k);
+        j += k;
         if(i+1 < length) {
-            for(k=0; k<(int32_t)strlen(pad); k++) {
-                cA[j++] = pad[k];
-            }
+            memcpy(cA + j, pad, padLength);
+            j += padLength;
         }
     }
     cA[j] = '\0';
     return cA;
+}
+
+char *stString_join2(const char *pad, stList *strings) {
+    return stString_join(pad, (const char **)strings->list, stList_length(strings));
 }
 
 stList *stString_split(const char *string) {
@@ -140,4 +143,10 @@ stList *stString_split(const char *string) {
     }
     free(cA2);
     return tokens;
+}
+
+char *stString_getSubString(const char *cA, int32_t start, int32_t length) {
+    char *cA2 = memcpy(st_malloc(sizeof(char) * (length + 1)), cA + start, length);
+    cA2[length] = '\0';
+    return cA2;
 }

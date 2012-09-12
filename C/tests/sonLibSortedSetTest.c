@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -29,13 +29,13 @@ static void sonLibSortedSetTestSetup() {
                 (void (*)(void *))stIntTuple_destruct);
 }
 
-static void testSortedSet_construct(CuTest* testCase) {
+static void test_stSortedSet_construct(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     CuAssertTrue(testCase, sortedSet != NULL);
     sonLibSortedSetTestTeardown();
 }
 
-static void testSortedSet_copyConstruct(CuTest* testCase) {
+static void test_stSortedSet_copyConstruct(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     CuAssertTrue(testCase, sortedSet != NULL);
     int32_t i;
@@ -49,7 +49,7 @@ static void testSortedSet_copyConstruct(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testSortedSet(CuTest* testCase) {
+static void test_stSortedSet(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     int32_t i;
     CuAssertIntEquals(testCase, 0, stSortedSet_size(sortedSet));
@@ -70,7 +70,7 @@ static void testSortedSet(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testIterator(CuTest* testCase) {
+static void test_stSortedSetIterator(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     int32_t i;
     for(i=0; i<size; i++) {
@@ -96,7 +96,7 @@ static void testIterator(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testIterator_getIteratorFrom(CuTest* testCase) {
+static void test_stSortedSetIterator_getIteratorFrom(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     int32_t i;
     for(i=0; i<size; i++) {
@@ -123,7 +123,7 @@ static void testIterator_getIteratorFrom(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testEquals(CuTest* testCase) {
+static void test_stSortedSetEquals(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     CuAssertTrue(testCase, stSortedSet_equals(sortedSet, sortedSet));
     int32_t i;
@@ -152,7 +152,7 @@ static void testEquals(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testIntersection(CuTest* testCase) {
+static void test_stSortedSetIntersection(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     //Check intersection of empty sets is okay..
     stSortedSet *sortedSet3 = stSortedSet_getIntersection(sortedSet, sortedSet2);
@@ -196,7 +196,7 @@ static void testIntersection(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testUnion(CuTest* testCase) {
+static void test_stSortedSetUnion(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     //Check intersection of empty sets is okay..
     stSortedSet *sortedSet3 = stSortedSet_getUnion(sortedSet, sortedSet2);
@@ -239,7 +239,7 @@ static void testUnion(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void testDifference(CuTest* testCase) {
+static void test_stSortedSetDifference(CuTest* testCase) {
     sonLibSortedSetTestSetup();
 
     //Check difference of empty sets is okay..
@@ -283,7 +283,7 @@ static void testDifference(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void test_searchLessThanOrEqual(CuTest* testCase) {
+static void test_stSortedSet_searchLessThanOrEqual(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     for(int32_t i=0; i<size; i++) {
         stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
@@ -318,7 +318,7 @@ static void test_searchLessThanOrEqual(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void test_searchLessThan(CuTest* testCase) {
+static void test_stSortedSet_searchLessThan(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     for(int32_t i=0; i<size; i++) {
         stSortedSet_insert(sortedSet, stIntTuple_construct(1, input[i]));
@@ -355,7 +355,7 @@ static void test_searchLessThan(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void test_searchGreaterThanOrEqual(CuTest* testCase) {
+static void test_stSortedSet_searchGreaterThanOrEqual(CuTest* testCase) {
     sonLibSortedSetTestSetup();
 
     for(int32_t i=0; i<size; i++) {
@@ -391,7 +391,7 @@ static void test_searchGreaterThanOrEqual(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-static void test_searchGreaterThan(CuTest* testCase) {
+static void test_stSortedSet_searchGreaterThan(CuTest* testCase) {
     sonLibSortedSetTestSetup();
 
     for(int32_t i=0; i<size; i++) {
@@ -427,20 +427,20 @@ static void test_searchGreaterThan(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
-CuSuite* sonLibSortedSetTestSuite(void) {
+CuSuite* sonLib_stSortedSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testSortedSet_construct);
-    SUITE_ADD_TEST(suite, testSortedSet_copyConstruct);
-    SUITE_ADD_TEST(suite, testSortedSet);
-    SUITE_ADD_TEST(suite, testIterator);
-    SUITE_ADD_TEST(suite, testIterator_getIteratorFrom);
-    SUITE_ADD_TEST(suite, testEquals);
-    SUITE_ADD_TEST(suite, testIntersection);
-    SUITE_ADD_TEST(suite, testUnion);
-    SUITE_ADD_TEST(suite, testDifference);
-    SUITE_ADD_TEST(suite, test_searchLessThanOrEqual);
-    SUITE_ADD_TEST(suite, test_searchLessThan);
-    SUITE_ADD_TEST(suite, test_searchGreaterThanOrEqual);
-    SUITE_ADD_TEST(suite, test_searchGreaterThan);
+    SUITE_ADD_TEST(suite, test_stSortedSet_construct);
+    SUITE_ADD_TEST(suite, test_stSortedSet_copyConstruct);
+    SUITE_ADD_TEST(suite, test_stSortedSet);
+    SUITE_ADD_TEST(suite, test_stSortedSetIterator);
+    SUITE_ADD_TEST(suite, test_stSortedSetIterator_getIteratorFrom);
+    SUITE_ADD_TEST(suite, test_stSortedSetEquals);
+    SUITE_ADD_TEST(suite, test_stSortedSetIntersection);
+    SUITE_ADD_TEST(suite, test_stSortedSetUnion);
+    SUITE_ADD_TEST(suite, test_stSortedSetDifference);
+    SUITE_ADD_TEST(suite, test_stSortedSet_searchLessThanOrEqual);
+    SUITE_ADD_TEST(suite, test_stSortedSet_searchLessThan);
+    SUITE_ADD_TEST(suite, test_stSortedSet_searchGreaterThanOrEqual);
+    SUITE_ADD_TEST(suite, test_stSortedSet_searchGreaterThan);
     return suite;
 }

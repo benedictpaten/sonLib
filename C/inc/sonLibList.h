@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -165,6 +165,11 @@ stList *stList_filter(stList *list, bool(*fn)(void *));
  */
 stSortedSet *stList_getSortedSet(stList *list,
         int(*cmpFn)(const void *a, const void *b));
+
+/*
+ * Converts list to sorted set, destroying old list in process, but transferring the destructor to the set.
+ */
+stSortedSet *stList_convertToSortedSet(stList *list);
 
 /*
  * Returns a new list, identical to list, but with any elements contained in set removed.

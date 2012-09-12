@@ -15,25 +15,26 @@ else
 # -Wno-unused-result
 endif
 
-
-
 #Release compiler flags
-cflags_opt = -O3 -g -Wall -Werror --pedantic -funroll-loops -lm -fopenmp
+cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -lm -DNDEBUG
+#-fopenmp
+cppflags_opt = -O3 -g -Wall -funroll-loops -lm -DNDEBUG
 
 #Debug flags (slow)
-cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -lm
+cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -lm
+cppflags_dbg = -Wall -g -O0 -fno-inline  -lm
 
 #Ultra Debug flags (really slow)
-cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -DBEN_DEBUG -BEN_ULTRA_DEBUG -lm
+cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -lm
 
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 
-#  for cpp code: don't use pedantic, or Werror
-cppflags = -g -Wall -funroll-loops -lm 
+#for cpp code: don't use pedantic, or Werror
+cppflags = ${cppflags_opt} 
 
 #Flags to use
-cflags = ${cflags_opt} 
+cflags = ${cflags_opt}  
 
 # location of Tokyo cabinet
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)

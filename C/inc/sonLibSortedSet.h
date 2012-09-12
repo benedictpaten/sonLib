@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -47,6 +47,11 @@ stSortedSet *stSortedSet_construct3(int (*compareFn)(const void *, const void *)
  * Clones the given sorted set, setting the element destructor to the given function.
  */
 stSortedSet *stSortedSet_copyConstruct(stSortedSet *sortedSet, void (*destructElementFn)(void *));
+
+/*
+ * Set the destructor for the set.
+ */
+void stSortedSet_setDestructor(stSortedSet *set, void (*destructElement)(void *));
 
 /*
  * Destructs the sorted set.

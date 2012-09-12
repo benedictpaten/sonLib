@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -18,18 +18,6 @@
 /*
  * The actual datastructures backing the list
  */
-
-struct _stList {
-    void **list;
-    int32_t length;
-    int32_t maxLength;
-    void (*destructElement)(void *);
-};
-
-struct _stListIterator {
-    stList *list;
-    int32_t index;
-};
 
 /*
  * The functions..
@@ -288,4 +276,12 @@ stList *stList_join(stList *listOfLists) {
         stList_appendAll(joinedList, stList_get(listOfLists, i));
     }
     return joinedList;
+}
+
+stSortedSet *stList_convertToSortedSet(stList *list) {
+    stSortedSet *set = stList_getSortedSet(list, NULL);
+    stSortedSet_setDestructor(set, list->destructElement);
+    stList_setDestructor(list, NULL);
+    stList_destruct(list);
+    return set;
 }

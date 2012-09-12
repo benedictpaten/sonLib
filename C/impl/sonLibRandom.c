@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -12,17 +12,31 @@ void st_randomSeed(int32_t seed) {
     srand(seed);
 }
 
-int32_t st_randomInt(int32_t min, int32_t max) {
-    if((int64_t)max - min < 1) {
-        stThrowNew(RANDOM_EXCEPTION_ID, "Range for random int is not positive, min: %i, max %i\n", min, max);
+int64_t st_randomInt64(int64_t min, int64_t max) {
+    int64_t i;
+    if (min < INT32_MIN && max > INT32_MAX) { //Possible overflow condition, deal with by switching to doubles
+        i = min + (((double)max) - ((double)min)) * st_random();
     }
-    int32_t i = min + (int32_t)(((int64_t)max - min) * st_random());
+    else {
+        if (max - min < 1) {
+            stThrowNew(RANDOM_EXCEPTION_ID, "Range for random int is not positive, min: %" PRIi64 ", max %" PRIi64 "\n", min, max);
+        }
+        i = min + (max - min) * st_random();
+    }
+    if(i >= max) {
+        //return st_randomInt64(min, max);
+        i = max-1;
+    }
     assert(i >= min);
     assert(i < max);
     return i;
 }
 
-double st_random() {
+int32_t st_randomInt(int32_t min, int32_t max) {
+    return st_randomInt64(min, max);
+}
+
+double st_random(void) {
     static const double i = RAND_MAX+1.0;
     double d = rand()/i;
     return d >= 1.0 ? 0.9999 : (d < 0.0 ? 0.0 : d);

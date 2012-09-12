@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -19,24 +19,33 @@ struct _stHash {
     bool destructKeys, destructValues;
 };
 
-static uint32_t stHash_key( const void *k ) {
-    return (uint32_t)(size_t)k;
+uint32_t stHash_pointer(const void *k) {
+    /*if (sizeof(const void *) > 4) {
+        int64_t key = (int64_t) (size_t) k;
+        key = (~key) + (key << 18); // key = (key << 18) - key - 1;
+        key = key ^ (key >> 31);
+        key = key * 21; // key = (key + (key << 2)) + (key << 4);
+        key = key ^ (key >> 11);
+        key = key + (key << 6);
+        key = key ^ (key >> 22);
+        return (uint32_t) key;
+    }*/
+    return (uint32_t) (size_t) k; //Just use the low order bits
 }
 
-static int stHash_equalKey( const void *key1, const void *key2 ) {
+static int stHash_equalKey(const void *key1, const void *key2) {
     return key1 == key2;
 }
 
 stHash *stHash_construct(void) {
-    return stHash_construct3(stHash_key, stHash_equalKey, NULL, NULL);
+    return stHash_construct3(stHash_pointer, stHash_equalKey, NULL, NULL);
 }
 
-stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(void *)) {
-    return stHash_construct3(stHash_key, stHash_equalKey, destructKeys, destructValues);
+stHash *stHash_construct2(void(*destructKeys)(void *), void(*destructValues)(void *)) {
+    return stHash_construct3(stHash_pointer, stHash_equalKey, destructKeys, destructValues);
 }
 
-stHash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
-        void (*destructKeys)(void *), void (*destructValues)(void *)) {
+stHash *stHash_construct3(uint32_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *), void(*destructValues)(void *)) {
     stHash *hash = st_malloc(sizeof(stHash));
     hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
     hash->destructKeys = destructKeys != NULL;
@@ -50,7 +59,7 @@ void stHash_destruct(stHash *hash) {
 }
 
 void stHash_insert(stHash *hash, void *key, void *value) {
-    if(stHash_search(hash, key) != NULL) { //This will ensure we don't end up with duplicate keys..
+    if (stHash_search(hash, key) != NULL) { //This will ensure we don't end up with duplicate keys..
         stHash_remove(hash, key);
     }
     hashtable_insert(hash->hash, key, value);
@@ -64,6 +73,10 @@ void *stHash_remove(stHash *hash, void *key) {
     return hashtable_remove(hash->hash, key, 0);
 }
 
+void *stHash_removeAndFreeKey(stHash *hash, void *key) {
+    return hashtable_remove(hash->hash, key, 1);
+}
+
 int32_t stHash_size(stHash *hash) {
     return hashtable_count(hash->hash);
 }
@@ -73,7 +86,7 @@ stHashIterator *stHash_getIterator(stHash *hash) {
 }
 
 void *stHash_getNext(stHashIterator *iterator) {
-    if(iterator->e != NULL) {
+    if (iterator->e != NULL) {
         void *o = hashtable_iterator_key(iterator);
         hashtable_iterator_advance(iterator);
         return o;
@@ -98,7 +111,7 @@ stList *stHash_getKeys(stHash *hash) {
     stList *list = stList_construct();
     stHashIterator *iterator = stHash_getIterator(hash);
     void *item;
-    while((item = stHash_getNext(iterator)) != NULL) {
+    while ((item = stHash_getNext(iterator)) != NULL) {
         stList_append(list, item);
     }
     stHash_destructIterator(iterator);
@@ -109,7 +122,7 @@ stList *stHash_getValues(stHash *hash) {
     stList *list = stList_construct();
     stHashIterator *iterator = stHash_getIterator(hash);
     void *item;
-    while((item = stHash_getNext(iterator)) != NULL) {
+    while ((item = stHash_getNext(iterator)) != NULL) {
         stList_append(list, stHash_search(hash, item));
     }
     stHash_destructIterator(iterator);
@@ -128,7 +141,7 @@ uint32_t stHash_stringKey(const void *k) {
     uint32_t hash = 0; //5381;
     int c;
     char *cA;
-    cA = (char *)k;
+    cA = (char *) k;
     while ((c = *cA++) != '\0') {
         hash = c + (hash << 6) + (hash << 16) - hash;
         //hash = ((hash << 5) + hash) + c; // hash*33 + c
@@ -136,12 +149,12 @@ uint32_t stHash_stringKey(const void *k) {
     return hash;
 }
 
-int stHash_stringEqualKey( const void *key1, const  void *key2 ) {
+int stHash_stringEqualKey(const void *key1, const void *key2) {
     return strcmp(key1, key2) == 0;
 }
 
-stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
-        int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *)) {
+stHash *stHash_invert(stHash *hash, uint32_t(*hashKey)(const void *), int(*equalsFn)(const void *, const void *),
+        void(*destructKeys)(void *), void(*destructValues)(void *)) {
     /*
      * Inverts the hash.
      */
@@ -151,10 +164,23 @@ stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
     while ((key = stHash_getNext(hashIt)) != NULL) {
         void *value = stHash_search(hash, key);
         assert(value != NULL);
-        if(stHash_search(invertedHash, value) == NULL) {
+        if (stHash_search(invertedHash, value) == NULL) {
             stHash_insert(invertedHash, value, key);
         }
     }
     stHash_destructIterator(hashIt);
     return invertedHash;
+}
+// interface to underlying functions
+uint32_t (*stHash_getHashFunction(stHash *hash))(const void *) {
+    return hash->hash->hashfn;
+}
+int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *) {
+    return hash->hash->eqfn;
+}
+void (*stHash_getKeyDestructorFunction(stHash *hash))(void *) {
+    return hash->hash->keyFree;
+}
+void (*stHash_getValueDestructorFunction(stHash *hash))(void *) {
+    return hash->hash->valueFree;
 }

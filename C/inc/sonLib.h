@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -17,6 +17,7 @@
 #include "sonLibTree.h"
 #include "sonLibString.h"
 #include "sonLibHash.h"
+#include "sonLibSet.h"
 #include "sonLibSortedSet.h"
 #include "sonLibList.h"
 #include "sonLibCommon.h"

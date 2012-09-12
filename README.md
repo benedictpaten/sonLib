@@ -1,12 +1,17 @@
-#sonLib
+# sonLib
+**sonLib** is a compact C/Python library for sequence analysis in bioinformatics. 
 
-This is the README for **sonLib**, a (very) compact C/Python library 
-for sequence analysis in bioinformatics.
+(c) 2006 - 2012 The Author(s). See <code>LICENSE.txt</code> for details.
 
+## Author
+[Benedict Paten](https://github.com/benedictpaten/)
+
+## Description
 For basic data-structures in C it contains: 
 
  * array lists (automatically resizing) 
  * hashes
+ * sets (backed by hashes)
  * sorted sets (backed by an AVL tree)
  * containers (for putting primitives into the above data-structures)
  * better string functions

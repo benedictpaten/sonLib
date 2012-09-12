@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -455,6 +455,74 @@ void *stKVDatabase_getPartialRecord(stKVDatabase *database, int64_t key,
                 }
             }stTryEnd;
     return data;
+}
+
+stKVDatabaseBulkResult *stKVDatabaseBulkResult_construct(void* value, int64_t sizeOfRecord)
+{
+	/* convention is to not bother creating a result for NULL values */
+	stKVDatabaseBulkResult* result = st_malloc(sizeof(stKVDatabaseBulkResult));
+	result->value = value;
+	result->size = sizeOfRecord;
+	return result;
+}
+
+void* stKVDatabaseBulkResult_getRecord(stKVDatabaseBulkResult* bulkResult, int64_t *sizeOfRecord)
+{
+	*sizeOfRecord = bulkResult->size;
+	return bulkResult->value;
+}
+
+void stKVDatabaseBulkResult_destruct(stKVDatabaseBulkResult* bulkResult)
+{
+	free(bulkResult->value);
+	free(bulkResult);
+}
+
+stList *stKVDatabase_bulkGetRecords(stKVDatabase *database, stList* keys) {
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get records from a database that has already been deleted");
+    }
+    assert(keys != NULL);
+    if(stList_length(keys) == 0) {
+        return stList_construct();
+    }
+    stList *resultsList = NULL;
+    stTry {
+    	resultsList = database->bulkGetRecords(database, keys);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_BulkGetRecords with %d records failed",
+                            stList_length(keys));
+                }
+            }stTryEnd;
+    return resultsList;
+}
+
+stList *stKVDatabase_bulkGetRecordsRange(stKVDatabase *database, int64_t firstKey, int64_t numRecords){
+    if (database->deleted) {
+        stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
+                "Trying to get records from a database that has already been deleted");
+    }
+    assert(numRecords > 0);
+    stList *resultsList = NULL;
+    stTry {
+    	resultsList = database->bulkGetRecordsRange(database, firstKey, numRecords);
+        }stCatch(ex)
+            {
+                if (isRetryExcept(ex)) {
+                    stThrow(ex);
+                } else {
+                    stThrowNewCause(ex, ST_KV_DATABASE_EXCEPTION_ID,
+                            "stKVDatabase_BulkGetRecords2 with %lld records failed",
+                            (long long int)numRecords);
+                }
+            }stTryEnd;
+    return resultsList;
 }
 
 void stKVDatabase_removeRecord(stKVDatabase *database, int64_t key) {

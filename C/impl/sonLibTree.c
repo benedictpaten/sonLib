@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -175,7 +175,9 @@ static void tree_parseNewickString_getBranchLength(char **token, char **newickTr
     if (**token == ':') {
         tree_parseNewickTreeString_getNextToken(token, newickTreeString);
         double distance;
-        assert(sscanf(*token, "%lf", &distance) == 1);
+        int j = sscanf(*token, "%lf", &distance);
+        (void)j;
+        assert(j == 1);
         stTree_setBranchLength(tree, distance);
         tree_parseNewickTreeString_getNextToken(token, newickTreeString);
     }

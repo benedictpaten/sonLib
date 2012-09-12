@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Glenn Hickey
+ * Copyright (C) 2006-2012 by Glenn Hickey
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -322,6 +322,8 @@ void stKVDatabase_initialise_bigRecordFile(stKVDatabase *database,
     database->getInt64 = NULL;
     database->getRecord2 = getRecord2;
     database->getPartialRecord = getPartialRecord;
+    database->bulkGetRecords = NULL;
+    database->bulkGetRecordsRange = NULL;
     database->removeRecord = removeRecord;
 }
 

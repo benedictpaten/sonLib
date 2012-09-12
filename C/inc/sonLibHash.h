@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -21,6 +21,11 @@ extern "C" {
 #endif
 
 // FIXME: passing key as non-const is causing unnecessary casts
+
+/*
+ * Function which generates hash key from pointer, should work well regardless of pointer size.
+ */
+uint32_t stHash_pointer( const void *k );
 
 /*
  * Constructs hash, with no destructors for keys or values.
@@ -57,6 +62,11 @@ void *stHash_search(stHash *hash, void *key);
  * Removes element, returning removed element.
  */
 void *stHash_remove(stHash *hash, void *key);
+
+/*
+ * Removes element, returning removed element and freeing key (using supplied function).
+ */
+void *stHash_removeAndFreeKey(stHash *hash, void *key);
 
 /*
  * Returns the number of key/value pairs in the hash.
@@ -113,6 +123,12 @@ int stHash_stringEqualKey( const void *key1, const  void *key2 );
  */
 stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
         int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *));
+
+// access to the underlying functions:
+uint32_t (*stHash_getHashFunction(stHash *hash))(const void *);
+int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *);
+void (*stHash_getKeyDestructorFunction(stHash *hash))(void *);
+void (*stHash_getValueDestructorFunction(stHash *hash))(void *);
 
 #ifdef __cplusplus
 }

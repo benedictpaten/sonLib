@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 by Benedict Paten (benedictpaten@gmail.com)
+ * Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
  *
  * Released under the MIT license, see LICENSE.txt
  */
@@ -131,6 +131,34 @@ void *stKVDatabase_getRecord(stKVDatabase *database, int64_t key);
  * Returns NULL if the database does not contain the given record. Puts the size of the record in the in the record size field.
  */
 void *stKVDatabase_getRecord2(stKVDatabase *database, int64_t key, int64_t *recordSize);
+
+
+/*
+ * Construct a bulk result (like a bulk request but keys are not stored)
+ */
+stKVDatabaseBulkResult *stKVDatabaseBulkResult_construct(void* value, int64_t sizeOfRecord);
+
+/*
+ * Get the record and size out of the bulkResult
+ */
+void* stKVDatabaseBulkResult_getRecord(stKVDatabaseBulkResult* bulkResult, int64_t *sizeOfRecord);
+
+/*
+ * Destruct the bulk result
+ */
+void stKVDatabaseBulkResult_destruct(stKVDatabaseBulkResult* bulkResult);
+
+/*
+ * Bulk get a batch of records (stored in a list of bulk results).  The nth result
+ * corresponds to the nth key from the input keys list.
+ */
+stList *stKVDatabase_bulkGetRecords(stKVDatabase *database, stList* keys);
+
+/*
+ * Bulk get a batch of records (stored in a list of bulk results) from range of keys
+ */
+stList *stKVDatabase_bulkGetRecordsRange(stKVDatabase *database, int64_t firstKey, int64_t numRecords);
+
 
 /*
  * Removes a record from the database. Throws an exception if unsuccessful.
