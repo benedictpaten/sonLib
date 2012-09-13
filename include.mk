@@ -37,6 +37,7 @@ cppflags = ${cppflags_opt}
 cflags = ${cflags_opt}  
 
 # location of Tokyo cabinet
+ifndef tokyoCabinetLib
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
    # hgwdev hive install
    tcPrefix = /hive/groups/recon/local
@@ -58,8 +59,10 @@ else ifneq ($(wildcard /usr/include/tcbdb.h),)
    tokyoCabinetIncl = -I${tcPrefix}/include -DHAVE_TOKYO_CABINET=1
    tokyoCabinetLib = -L${tcPrefix}/lib -Wl,-rpath,${tcPrefix}/lib -ltokyocabinet -lz -lbz2 -lpthread -lm
 endif
+endif
 
 # location of Kyoto Tycoon
+ifndef kyotoTycoonLib
 ifneq ($(wildcard /hive/groups/recon/local/include/ktcommon.h),)
    # hgwdev hive install
    ttPrefix = /hive/groups/recon/local
@@ -75,6 +78,7 @@ else ifneq ($(wildcard /usr/local/include/ktcommon.h),)
    ttPrefix = /usr/local
    kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
    kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
+endif
 endif
 
 # location of mysql
