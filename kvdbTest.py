@@ -18,11 +18,12 @@ class TestCase(unittest.TestCase):
         system("sonLib_kvDatabaseTest --type=tokyocabinet")
 
     def testSonLibKVKyotoTycoon(self):
-            #Needs a ktserver process running on the local machine, we need to add a check for this condition to stop the test failing
-            return #Disabled for now
-            system("sonLib_kvDatabaseTest --type=kyototycoon --host=localhost --port=1978 --maxKTRecordSize=6500000")
+        #Needs a ktserver process running on the local machine, we need to add a check for this condition to stop the test failing
+        return #Disabled for now
+        system("sonLib_kvDatabaseTest --type=kyototycoon --host=localhost --port=1978 --maxKTRecordSize=6500000")
 
     def testSonLibKVMySQLTest(self):
+        return
         if socket.gethostname() == "hgwdev": 
             system("sonLib_kvDatabaseTest --type=mysql --host=kolossus-10 --user=cactus --pass=cactus  --db=cactus")
 
