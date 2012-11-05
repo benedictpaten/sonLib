@@ -119,7 +119,7 @@ def addLoggingOptions_optparse(parser):
     # addLoggingOptions_argparse() OTHERWISE YOU WILL BREAK THINGS
     ##################################################
     parser.add_option("--logOff", dest="logOff", action="store_true", default=False,
-                     help="Turn of logging. (default is CRITICAL)")
+                     help="Turn off logging. (default is CRITICAL)")
     parser.add_option("--logInfo", dest="logInfo", action="store_true", default=False,
                      help="Turn on logging at INFO level. (default is CRITICAL)")
     parser.add_option("--logDebug", dest="logDebug", action="store_true", default=False,
@@ -137,7 +137,7 @@ def addLoggingOptions_argparse(parser):
     # addLoggingOptions_optparse() OTHERWISE YOU WILL BREAK THINGS
     ##################################################
     parser.add_argument("--logOff", dest="logOff", action="store_true", default=False,
-                        help="Turn of logging. (default is CRITICAL)")
+                        help="Turn off logging. (default is CRITICAL)")
     parser.add_argument("--logInfo", dest="logInfo", action="store_true", default=False,
                         help="Turn on logging at INFO level. (default is CRITICAL)")
     parser.add_argument("--logDebug", dest="logDebug", action="store_true", default=False,
