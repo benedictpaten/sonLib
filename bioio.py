@@ -125,7 +125,7 @@ def addLoggingOptions_optparse(parser):
     parser.add_option("--logDebug", dest="logDebug", action="store_true", default=False,
                      help="Turn on logging at DEBUG level. (default is CRITICAL)")
     parser.add_option("--logLevel", dest="logLevel", type="string", default='CRITICAL',
-                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). By default it is %default")
+                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). default=%default")
     parser.add_option("--logFile", dest="logFile", type="string", help="File to log in")
     parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false", default=True,
                      help="Turn off rotating logging, which prevents log files getting too big. default=%default")
@@ -143,7 +143,7 @@ def addLoggingOptions_argparse(parser):
     parser.add_option("--logDebug", dest="logDebug", action="store_true", default=False,
                      help="Turn on logging at DEBUG level. (default is CRITICAL)")
     parser.add_option("--logLevel", dest="logLevel", type=str, default='CRITICAL',
-                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). By default it is %(default)s")
+                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). default=%(default)s")
     parser.add_option("--logFile", dest="logFile", type=str, help="File to log in")
     parser.add_option("--noRotatingLogging", dest="logRotating", action="store_false", default=True,
                      help=("Turn off rotating logging, which prevents log files getting "
