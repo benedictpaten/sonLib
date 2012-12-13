@@ -15,7 +15,7 @@ import random
 import math
 import shutil
 from argparse import ArgumentParser
-from optparse import OptionParser
+from optparse import OptionParser, OptionContainer
 from tree import BinaryTree
 from misc import close
 import subprocess
@@ -104,7 +104,7 @@ def logFile(fileName, printFunction=logger.info):
 def addLoggingOptions(parser):
     # Wrapper function that allows jobTree to be used with both the optparse and 
     # argparse option parsing modules
-    if isinstance(parser, OptionParser):
+    if isinstance(parser, OptionContainer):
         addLoggingOptions_optparse(parser)
     elif isinstance(parser, ArgumentParser):
         addLoggingOptions_argparse(parser)
