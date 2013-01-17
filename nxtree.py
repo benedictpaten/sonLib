@@ -10,7 +10,8 @@ in sonLib.tree.py.  Implemented as a lightweight wrapper over a
 networkx digraph.  nodes are accessed using unique ids.    
 
 for now, there is no interface (beyond directly working the 
-networkx graph or reading from newick) to modify the structure of the tree.  
+networkx graph or reading from newick) to modify the structure of the tree.
+update -- added function to remove leaves (and their parents if deg. 2)
 """
 import sys
 import os
@@ -58,7 +59,7 @@ class NXTree:
         return leaves
     
     def hasParent(self, id):
-        return self.getParent() is not None
+        return self.getParent(id) is not None
 
     def getParent(self, id):
         assert id in self.nxDg
@@ -127,6 +128,38 @@ class NXTree:
             yield node
             for child in self.getChildren(node):
                 bfQueue.append(child)
+
+    def removeDegree2Vertex(self, nodeId):
+        if self.hasParent(nodeId) is True:
+            parentId = self.getParent(nodeId)
+            topWeight = self.getWeight(parentId, nodeId)
+            children = self.getChildren(nodeId)
+            if len(children) == 1:
+                childId = children[0]
+                botWeight = self.getWeight(nodeId, childId)
+                if topWeight is None and botWeight is None:
+                    newWeight = None
+                elif topWeight is None:
+                    newWeight = botWeight
+                elif botWeight is None:
+                    newWeight = topWeight
+                else:                    
+                    newWeight = topWeight + botWeight
+                self.nxDg.remove_node(nodeId)
+                self.nxDg.add_edge(parentId, childId)
+                self.nxDg[parentId][childId]['weight'] = float(newWeight)
+
+    def removeLeaf(self, leafId):
+        assert self.isLeaf(leafId)
+        parentId = self.getParent(leafId)
+        self.nxDg.remove_node(leafId)
+        if len(self.getChildren(parentId)) == 1 and \
+           self.hasParent(parentId) is True:
+            self.removeDegree2Vertex(parentId)
+            
+                
+                
+        
         
     
     
