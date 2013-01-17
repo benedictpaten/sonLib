@@ -212,6 +212,23 @@ void test_stList_sort(CuTest *testCase) {
     teardown();
 }
 
+int test_stList_sort2P(const void *a, const void *b, const void *extraArg) {
+    assert(strcmp(extraArg, "hello") == 0);
+    return strcmp(a, b);
+}
+
+void test_stList_sort2(CuTest *testCase) {
+    setup();
+    stList_sort2(list, test_stList_sort2P, "hello");
+    CuAssertTrue(testCase, stList_length(list) == stringNumber);
+    CuAssertStrEquals(testCase, "five", stList_get(list, 0));
+    CuAssertStrEquals(testCase, "four", stList_get(list, 1));
+    CuAssertStrEquals(testCase, "one", stList_get(list, 2));
+    CuAssertStrEquals(testCase, "three", stList_get(list, 3));
+    CuAssertStrEquals(testCase, "two", stList_get(list, 4));
+    teardown();
+}
+
 void test_stList_getSortedSet(CuTest *testCase) {
     setup();
     stSortedSet *sortedSet = stList_getSortedSet(list, (int (*)(const void *, const void *))strcmp);
