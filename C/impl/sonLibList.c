@@ -212,6 +212,18 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
     qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
 }
 
+static int (*st_list_sort2_cmpFn)(const void *a, const void *b, const void *extraArg);
+static const void *st_list_sort2_extraArg;
+static int st_list_sort2P(const void *a, const void *b) {
+    return st_list_sort2_cmpFn(*((char **)a), *((char **)b), st_list_sort2_extraArg);
+}
+
+void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const void *extraArg), const void *extraArg) {
+    st_list_sort2_extraArg = extraArg;
+    st_list_sort2_cmpFn = cmpFn;
+    qsort(list->list, stList_length(list), sizeof(void *), st_list_sort2P);
+}
+
 void stList_shuffle(stList *list) {
     for(int32_t i=0; i<stList_length(list); i++) {
         int32_t j = st_randomInt(0, stList_length(list));
