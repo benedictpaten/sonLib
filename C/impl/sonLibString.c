@@ -109,7 +109,7 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
 char *stString_join(const char *pad, const char **strings, int32_t length) {
     int32_t padLength = strlen(pad);
     assert(length >= 0);
-    int32_t j = padLength * (length > 0 ? length - 1 : 0) + 1;
+    int64_t j = ((int64_t)padLength) * (length > 0 ? length - 1 : 0) + 1;
     for(int32_t i=0; i<length; i++) {
         j += strlen(strings[i]);
     }
