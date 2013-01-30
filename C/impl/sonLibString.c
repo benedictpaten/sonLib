@@ -107,9 +107,9 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
 }
 
 char *stString_join(const char *pad, const char **strings, int32_t length) {
-    int32_t padLength = strlen(pad);
+    int64_t padLength = strlen(pad);
     assert(length >= 0);
-    int64_t j = ((int64_t)padLength) * (length > 0 ? length - 1 : 0) + 1;
+    int64_t j = padLength * (length > 0 ? length - 1 : 0) + 1;
     for(int32_t i=0; i<length; i++) {
         j += strlen(strings[i]);
     }
@@ -117,7 +117,7 @@ char *stString_join(const char *pad, const char **strings, int32_t length) {
     j = 0;
     for(int32_t i=0; i<length; i++) {
         const char *cA2 = strings[i];
-        int32_t k = (int32_t)strlen(cA2);
+        int64_t k = (int64_t)strlen(cA2);
         memcpy(cA + j, cA2, k);
         j += k;
         if(i+1 < length) {
