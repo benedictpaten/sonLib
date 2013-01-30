@@ -171,13 +171,17 @@ static int getXmlTimeout(stHash *hash) {
     }
 }
 
-/* Default to 175M which seems to be about where the
- * kyoto tycoon network error danger zone starts
+/* Default to 50M.  It used to be 175M but since noticing
+ * problems in bulk *get* within cactus secondary dbs we 
+ * crank it way down.  Unlike bulk set, in the get we don't
+ * know the total size of the requested records.  To prevent
+ * big data transfers (which are problematic), we reduce max 
+ * size of individual records and hope for the best 
  */
 static int64_t getXMLMaxKTRecordSize(stHash *hash) {
     const char *value = stHash_search(hash, "max_record_size");
     if (value == NULL) {
-        return (int64_t) 183500800;
+        return (int64_t) 50000000;
     } else {
         return stSafeStrToInt64(value);
     }
