@@ -34,6 +34,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
         if (i == Z_BUF_ERROR) {
             bufferSize *= 2;
             free(buffer);
+            st_logCritical("The buffer for compression was too small, so increasing to %lld bytes for original data size of %lld bytes", (long long)bufferSize, (long long)sizeInBytes);
         } else {
             stThrowNew(ST_COMPRESSION_EXCEPTION_ID,
                     "Tried to compress a string of %lld bytes but got the Z_ERROR code %i", (long long) bufferSize, i);
