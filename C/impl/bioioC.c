@@ -97,26 +97,26 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
     return c2;
 }
 
-struct List *fastaDecodeHeader(const char *fastaHeader) {
+stList *fastaDecodeHeader(const char *fastaHeader) {
     /*
      * Decodes the fasta header
      */
-    struct List *attributes = constructEmptyList(0, free);
+    stList *attributes = stList_construct();
     char *cA = stString_copy(fastaHeader);
     char *cA2 = strtok(cA, "|");
     while(cA2 != NULL) {
-        listAppend(attributes, stString_copy(cA2));
+        stList_append(attributes, stString_copy(cA2));
         cA2 = strtok(NULL, "|");
     }
     free(cA);
     return attributes;
 }
 
-char *fastaEncodeHeader(struct List *attributes) {
+char *fastaEncodeHeader(stList *attributes) {
     /*
-     * Decodes the fasta header
+     * Encodes the fasta header
      */
-    return stString_join("|", (const char **)attributes->list, attributes->length);
+    return stString_join2("|", attributes);
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
