@@ -417,7 +417,15 @@ def getRandomAlphaNumericString(length=10):
     """Returns a random alpha numeric string of the given length.
     """
     return "".join([ random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') for i in xrange(0, length) ])
-    
+
+def makeSubDir(dirName):
+    """Makes a given subdirectory if it doesn't already exist, making sure it us public.
+    """
+    if not os.path.exists(dirName):
+        os.mkdir(dirName)
+        os.chmod(dirName, 0777)
+    return dirName
+
 def getTempFile(suffix="", rootDir=None):
     """Returns a string representing a temporary file, that must be manually deleted
     """
