@@ -30,7 +30,7 @@
 #include "sonLibCompression.h"
 #include "sonLibFile.h"
 #include "sonLibCache.h"
-
-
+#include "stGraph.h"
+#include "stPosetAlignment.h"
 
 #endif /* SONLIB_H_ */

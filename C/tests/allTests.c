@@ -21,10 +21,12 @@ CuSuite* sonLib_stRandomTestSuite(void);
 CuSuite* sonLib_stCompressionTestSuite(void);
 CuSuite* sonLibFileTestSuite(void);
 CuSuite* stCacheSuite(void);
+CuSuite* stPosetAlignmentTestSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
+    CuSuiteAddSuite(suite, stPosetAlignmentTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
     CuSuiteAddSuite(suite, sonLib_ETreeTestSuite());
     CuSuiteAddSuite(suite, sonLib_stStringTestSuite());

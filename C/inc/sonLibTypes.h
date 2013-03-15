@@ -53,6 +53,9 @@ typedef struct stKVDatabase stKVDatabase;
 typedef struct stKVDatabaseConf stKVDatabaseConf;
 typedef struct stKVDatabaseBulkRequest stKVDatabaseBulkRequest;
 typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
+typedef struct _stEdge stEdge;
+typedef struct _stGraph stGraph;
+typedef struct _stPosetAlignment stPosetAlignment;
 
 #ifdef __cplusplus
 }
