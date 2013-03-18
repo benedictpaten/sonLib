@@ -70,8 +70,12 @@ typedef struct _VDistance {
     double distance;
 } VDistance;
 
+int vDistance_cmp(VDistance *vD1, VDistance *vD2) {
+    return vD1->distance > vD2->distance ? 1 : (vD1->distance < vD2->distance ? -1 : (vD1->v > vD2->v ? 1 : (vD1->v < vD2->v ? -1 : 0)));
+}
+
 double *stGraph_shortestPaths(stGraph *g, int64_t sourceVertex) {
-    stSortedSet *orderedDistances = stSortedSet_construct();
+    stSortedSet *orderedDistances = stSortedSet_construct3((int (*)(const void *, const void *))vDistance_cmp, NULL);
     VDistance *distances = st_malloc(sizeof(VDistance) * stGraph_cardinality(g));
     for(int64_t v=0; v<stGraph_cardinality(g); v++) {
         VDistance *vD = &distances[v];
@@ -79,6 +83,7 @@ double *stGraph_shortestPaths(stGraph *g, int64_t sourceVertex) {
         vD->distance = (v == sourceVertex ? 0 : INT64_MAX);
         stSortedSet_insert(orderedDistances, vD);
     }
+    st_uglyf("\n");
     while(stSortedSet_size(orderedDistances) > 0) {
         VDistance *vD = stSortedSet_getFirst(orderedDistances);
         stSortedSet_remove(orderedDistances, vD);
@@ -87,8 +92,10 @@ double *stGraph_shortestPaths(stGraph *g, int64_t sourceVertex) {
             double d = vD->distance + e->weight;
             VDistance *vD2 = &distances[vD->v];
             if(vD2->distance > d) {
+                assert(stSortedSet_search(orderedDistances, vD2) != NULL);
                 stSortedSet_remove(orderedDistances, vD2);
                 vD2->distance = d;
+                st_uglyf("Adding in %i %f\n", (int32_t)e->to, (float)d);
                 stSortedSet_insert(orderedDistances, vD2);
             }
             e = stEdge_nextEdge(e);
@@ -98,7 +105,7 @@ double *stGraph_shortestPaths(stGraph *g, int64_t sourceVertex) {
     for(int64_t v=0; v<stGraph_cardinality(g); v++) {
         dA[v] = distances[v].distance;
     }
+    stSortedSet_destruct(orderedDistances);
     free(distances);
-    free(orderedDistances);
     return dA;
 }
