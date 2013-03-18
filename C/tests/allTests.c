@@ -28,7 +28,7 @@ int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
     CuSuiteAddSuite(suite, sonLibGraphTestSuite());
-    /*CuSuiteAddSuite(suite, stPosetAlignmentTestSuite());
+    CuSuiteAddSuite(suite, stPosetAlignmentTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());
     CuSuiteAddSuite(suite, sonLib_ETreeTestSuite());
     CuSuiteAddSuite(suite, sonLib_stStringTestSuite());
@@ -43,7 +43,7 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());
     CuSuiteAddSuite(suite, sonLibFileTestSuite());
-    CuSuiteAddSuite(suite, stCacheSuite());*/
+    CuSuiteAddSuite(suite, stCacheSuite());
     CuSuiteRun(suite);
     CuSuiteSummary(suite, output);
     CuSuiteDetails(suite, output);

@@ -83,19 +83,17 @@ double *stGraph_shortestPaths(stGraph *g, int64_t sourceVertex) {
         vD->distance = (v == sourceVertex ? 0 : INT64_MAX);
         stSortedSet_insert(orderedDistances, vD);
     }
-    st_uglyf("\n");
     while(stSortedSet_size(orderedDistances) > 0) {
         VDistance *vD = stSortedSet_getFirst(orderedDistances);
         stSortedSet_remove(orderedDistances, vD);
         stEdge *e = stGraph_getEdges(g, vD->v);
         while(e != NULL) {
             double d = vD->distance + e->weight;
-            VDistance *vD2 = &distances[vD->v];
+            VDistance *vD2 = &distances[e->to];
             if(vD2->distance > d) {
                 assert(stSortedSet_search(orderedDistances, vD2) != NULL);
                 stSortedSet_remove(orderedDistances, vD2);
                 vD2->distance = d;
-                st_uglyf("Adding in %i %f\n", (int32_t)e->to, (float)d);
                 stSortedSet_insert(orderedDistances, vD2);
             }
             e = stEdge_nextEdge(e);

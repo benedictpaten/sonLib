@@ -59,7 +59,7 @@ static void test_stGraph_shortestPaths(CuTest *testCase) {
     double *dist = stGraph_shortestPaths(g, 1);
     double exDist[] = { 0.9, 0.0, 0.3, 0.3, 0.2, 0.7, INT64_MAX };
     for(int64_t v=0; v<vertexNo; v++) {
-        CuAssertDblEquals(testCase, exDist[v], dist[v], 0.0);
+        CuAssertDblEquals(testCase, exDist[v], dist[v], 0.00001);
     }
     teardown();
     free(dist);
