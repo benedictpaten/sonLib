@@ -1,0 +1,63 @@
+G = (V, E)
+Construct T = (V, E_T subset E), by DFS, labeling each node with start and end time (makes nesting)
+Let <_T be used to denote the precedence relation given by the T and <_G be the one for the graph
+
+def dfs(w, y):
+    if w <_T y:
+
+def relabel(w, s)
+    w.s = s
+    for x in w.children:
+        s = relabel(x, s+x.pL)
+    w.e = s+x.pL
+    return w.e
+
+def relabelFromSubtrees(w, y):
+    #For each node on reverse directed path from w to y, excluding w
+    #relabel greater children than descendant path containing w 
+
+def merge(w, y):
+    if abs(w.s - y.s) > abs(y.e -  w.e):
+        w swap with y
+    x = getCommonAncestor(w, y)
+    remove (x, y) from E
+    add (x, w) to E if not in E
+    i = w.e 
+    for z in y.children:
+        remove (y, z) from E
+        add (w, z) to E if not in E
+        i = relabel(z, i)
+    w.e = i
+    relabelFromSubtree(x, w)
+
+def intervalsAreCompatible((w, sW, eW), (y, sY, eY)):
+    if (sW < sY and eW >  eY) and (sY < sW and eY >  eW): #One nests in the other, therefore they are ordered distinctly
+        return 0
+    if sW == sY: #They are the same, and so eW == eY
+        return 1
+    if dfs(w, y) or dfs(y, w): #There exists a directed path from one to the other in G
+        return 0
+
+splitEdge(e = (w, x), i):
+    #Interpolates a node at the given point along the given edge.
+    if i == 0:
+        return w
+    remove e from E
+    make vertex y with start w.s + i and end w.e - i
+    add (w, y) to E
+    add (y, x) to E
+    return y
+
+def mergeEdgesIfCompatible(eW = (w, x), i, eY = (y, z), j):
+    #If compatible, interpolates nodes along given edges and then merges them
+    if intervalsAreCompatible((w, w.s + i, w.e - i), (y, y.s + j, y.e - j)):
+        merge(splitEdge(eW, i), splitEdge(eY, j))
+        return 1
+    return 0
+
+def mergeEdgeAndVertexIfCompatible(eW = (w, x), i, y):
+    return mergeEdgesIfCompatible(eW, i, (y, NULL), 0)
+
+#For pair of vertices to be potentially merged:
+def mergeVerticesIfCompatible(w, y):
+    return mergeEdgesIfCompatible((w, NULL), 0, (y, NULL), 0)
