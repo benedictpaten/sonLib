@@ -1,63 +1,194 @@
-G = (V, E)
-Construct T = (V, E_T subset E), by DFS, labeling each node with start and end time (makes nesting)
-Let <_T be used to denote the precedence relation given by the T and <_G be the one for the graph
+#include "sonLib.h"
+
+/*
+ * Basic node structure for graph
+ */
+static typedef struct _v V;
+static struct _v {
+    V *p; //parent
+    int64_t pL; //Number of bases along parent edge
+    int64_t s; //start dfs time
+    int64_t e; //end dfs time
+    stList *c; //ordered list of outgoing edges
+    stList *strs; //list of substrings whose ends are aligned, there combined length is pL
+};
+
+static v_construct(V *p, int64_t pL, stList *strs, int64_t s, int64_t e) {
+    V *v = st_malloc(sizeof(V));
+    v->p = p;
+    v->pL = pL;
+    v->s;
+    v->e = e;
+    v->c = stList_construct();
+    v->strs = strs;
+    return v;
+}
+
+static bool nested(V *w, V*x) {
+    return w->s < x->s && w->e > x->e; //Returns true iff x is nested in w.
+}
+
+static bool edgeInTree(V *w, V*x) {
+    return nested(w, x) || nested(x, w);//Returns true iff either is nested in the other.
+}
+
+static int64_t relabel(V *w, int64_t s) {
+    int64_t k = s;
+    for (int32_t i = 0; i < stList_length(w->c); i++) {
+        V *x = stList_get(w->c, i);
+        s = edgeInTree(w, x) ? relabel(x, s + x->pL + 1) + x->pL : s + x->pL;
+    }
+    w->s = k;
+    w->e = s + 1;
+    return w->e;
+}
+
+static typedef struct _substring Substring;
+struct _substring {
+    V *v;
+    int32_t pos;
+    int32_t seq;
+    int32_t length;
+};
+
+Substring *substring_construct(V *v, int32_t seq, int32_t pos, int32_t length) {
+    Substring *s = st_malloc(sizeof(Substring));
+    s->v = v;
+    s->seq = seq;
+    s->pos = pos;
+    s->length = length;
+    return s;
+}
+
+/*
+ * Basic graph structure
+ */
+struct _stPosetAlignment {
+    stSortedSet *verticesSortedBySequence;
+    V *rV;
+};
+
+
+stPosetAlignment *stPosetAlignment_construct(int32_t sequenceNumber) {
+    stPosetAlignment *pA = st_malloc(sizeof(stPosetAlignment));
+    pA->vertices = stSortedSet_construct();
+    pA->rV = v_construct(NULL, 0, INT32_MIN, INT32_MAX);
+    for (int32_t i = 0; i < stList_length(sequenceNumber); i++) {
+        stList *strs = stList_construct();
+        Substring *s = substring_construct(i, INT32_MAX);
+        stList_append(strs, s);
+        V *v = v_construct(rV, s->length, strs, 0, 0); //Seqs are restricted to be up to 2^32 in length
+        stSortedSet_insert(pA->verticesSortedBySequence, s);
+    }
+    relabel(pA->rV);
+    return pA;
+}
+
+V *getCommonAncestor(V *w, V* y) {
+    if(w == y) {
+        return w;
+    }
+    if(nested(y, w)) {
+       return y;
+    }
+    X *x = w;
+    while(!nested(x, y)) {
+        x = x->pL;
+    }
+    return x;
+}
+
+void merge(V *w, V *y) {
+    if(abs(w->s - y->s) > abs(y->e - w->e)) {
+        V *i = w; //w is swapped with y
+        w = y;
+        y = i;
+    }
+    V *x = getCommonAncestor(w, y);
+    //Merge any duplicate edges first
+    for(int32_t i=0; i<stList_length(y->c); i++) {
+        V *z = stList_get(y->c, i);
+        z->p = w;
+        if(stList_search(w->c, z) != NULL) {
+
+        }
+        stList_append(w->c, z);
+    }
+    //Relabel and merge children of y into w
+    for(int32_t i=0; i<stList_length(y->c); i++) {
+        V *z = stList_get(y->c, i);
+        z->p = w;
+        if(stList_search(w->c, z)) {
+
+        }
+        stList_append(w->c, z);
+    }
+    while(stList_length(y->c) > 0) {
+        V *z = stList_pop(y->c);
+        z->p = w;
+        w->e = relabel(z, w->e);
+    }
+
+    //remove (y->p, y), add (w->pL, w)
+    x->
+add (x, w) to E if not in E
+i = w.e
+for z in y.children:
+remove (y, z) from E
+add (w, z) to E if not in E
+i = relabel(z, i)
+w.e = i
+relabelFromSubtree(x, w)
 
 def dfs(w, y):
-    if w <_T y:
+if w <_T y:
+}
 
-def relabel(w, s)
-    w.s = s
-    for x in w.children:
-        s = relabel(x, s+x.pL)
-    w.e = s+x.pL
-    return w.e
 
-def relabelFromSubtrees(w, y):
-    #For each node on reverse directed path from w to y, excluding w
-    #relabel greater children than descendant path containing w 
+def relabelFromSubtrees(w, x):
+#For each node on reverse directed path from w to y, excluding
+#relabel greater children than descendant path containing w
+s =
+y = w.p
+while y != w.p:
 
-def merge(w, y):
-    if abs(w.s - y.s) > abs(y.e -  w.e):
-        w swap with y
-    x = getCommonAncestor(w, y)
-    remove (x, y) from E
-    add (x, w) to E if not in E
-    i = w.e 
-    for z in y.children:
-        remove (y, z) from E
-        add (w, z) to E if not in E
-        i = relabel(z, i)
-    w.e = i
-    relabelFromSubtree(x, w)
+def getCommonAncestor(w, x):
+pass
+
+
 
 def intervalsAreCompatible((w, sW, eW), (y, sY, eY)):
-    if (sW < sY and eW >  eY) and (sY < sW and eY >  eW): #One nests in the other, therefore they are ordered distinctly
-        return 0
-    if sW == sY: #They are the same, and so eW == eY
-        return 1
-    if dfs(w, y) or dfs(y, w): #There exists a directed path from one to the other in G
-        return 0
+if (sW < sY and eW > eY) and (sY < sW and eY > eW):
+#One nests in the other, therefore they are ordered distinctly
+return 0
+if sW == sY:
+#They are the same, and so eW == eY
+return 1
+if dfs(w, y) or dfs(y, w):
+#There exists a directed path from one to the other in G
+return 0
 
 splitEdge(e = (w, x), i):
-    #Interpolates a node at the given point along the given edge.
-    if i == 0:
-        return w
-    remove e from E
-    make vertex y with start w.s + i and end w.e - i
-    add (w, y) to E
-    add (y, x) to E
-    return y
+#Interpolates a node at the given point along the given edge.
+if i == 0:
+return w
+remove e from E
+make vertex y with start w.s + i and end w.e - i
+add (w, y) to E
+add (y, x) to E
+return y
 
 def mergeEdgesIfCompatible(eW = (w, x), i, eY = (y, z), j):
-    #If compatible, interpolates nodes along given edges and then merges them
-    if intervalsAreCompatible((w, w.s + i, w.e - i), (y, y.s + j, y.e - j)):
-        merge(splitEdge(eW, i), splitEdge(eY, j))
-        return 1
-    return 0
+#If compatible, interpolates nodes along given edges and then merges them
+if intervalsAreCompatible((w, w.s + i, w.e - i), (y, y.s + j, y.e - j)):
+merge(splitEdge(eW, i), splitEdge(eY, j))
+return 1
+return 0
 
 def mergeEdgeAndVertexIfCompatible(eW = (w, x), i, y):
-    return mergeEdgesIfCompatible(eW, i, (y, NULL), 0)
+return mergeEdgesIfCompatible(eW, i, (y, NULL), 0)
 
 #For pair of vertices to be potentially merged:
 def mergeVerticesIfCompatible(w, y):
-    return mergeEdgesIfCompatible((w, NULL), 0, (y, NULL), 0)
+return mergeEdgesIfCompatible((w, NULL), 0, (y, NULL), 0)
+
