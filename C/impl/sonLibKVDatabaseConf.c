@@ -181,7 +181,7 @@ static int getXmlTimeout(stHash *hash) {
 static int64_t getXMLMaxKTRecordSize(stHash *hash) {
     const char *value = stHash_search(hash, "max_record_size");
     if (value == NULL) {
-        return (int64_t) 1000000;
+        return (int64_t) 10000000;
     } else {
         return stSafeStrToInt64(value);
     }
