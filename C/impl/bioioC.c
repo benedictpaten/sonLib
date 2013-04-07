@@ -101,7 +101,7 @@ stList *fastaDecodeHeader(const char *fastaHeader) {
     /*
      * Decodes the fasta header
      */
-    stList *attributes = stList_construct();
+    stList *attributes = stList_construct3(0, free);
     char *cA = stString_copy(fastaHeader);
     char *cA2 = strtok(cA, "|");
     while(cA2 != NULL) {
