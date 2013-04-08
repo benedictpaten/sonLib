@@ -13,15 +13,15 @@
 
 #include "sonLibGlobalsTest.h"
 
-static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t rounds, int32_t minSize, int32_t maxSize) {
+static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t rounds, int64_t minSize, int64_t maxSize) {
     /*
      * Exercises the two compression functions.
      */
     for(int32_t i=0; i<rounds; i++) {
-        int32_t size = st_randomInt(minSize, maxSize);
+        int64_t size = st_randomInt64(minSize, maxSize);
         char *randomString = st_malloc(size);
         for(int32_t j=0; j<size; j++) {
-            randomString[j] = (char)st_randomInt(0, 100);
+            randomString[j] = (char)st_randomInt(0, 250); //nearly random string
         }
         int32_t level = st_randomInt(-1, 10);
         int64_t compressedSizeInBytes;
@@ -35,7 +35,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         for(int32_t j=0; j<size; j++) {
             CuAssertIntEquals(testCase, randomString[j], randomString2[j]);
         }
-        //st_uglyf("I did a round of compression and uncompression: I got %i bytes to compress and %i bytes compressed\n", size, (int32_t)compressedSizeInBytes);
+        st_logDebug("I did a round of compression and uncompression: I got %i bytes to compress and %i bytes compressed\n", size, (int32_t)compressedSizeInBytes);
         free(randomString);
         free(randomString2);
     }
@@ -52,7 +52,7 @@ static void test_stCompression_compressAndDecompress_Lots(CuTest *testCase) {
  * Does a small number of rounds of large strings.
  */
 static void test_stCompression_compressAndDecompress_Big(CuTest *testCase) {
-    test_stCompression_compressAndDecompressP(testCase, 5, 5000000, 10000000);
+    test_stCompression_compressAndDecompressP(testCase, 5, 10000000, 50000000);
 }
 
 CuSuite* sonLib_stCompressionTestSuite(void) {

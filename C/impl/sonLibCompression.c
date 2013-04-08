@@ -17,7 +17,7 @@
 
 const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 
-#define TO_BIG 4000000000
+#define TO_BIG 1000000000
 
 void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
     if (level == -1) {
@@ -28,6 +28,9 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
         *compressedSizeInBytes = sizeInBytes;
         return notCompressedData;
     }
+    if(sizeInBytes + 100000 > TO_BIG) {
+        level = 9; //Ensure that we are compressing well when we might bump into the above hack.
+    }
     uLongf bufferSize = compressBound(sizeInBytes);
     while (1) {
         void *buffer = st_malloc(bufferSize);
@@ -37,7 +40,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
             free(buffer);
             if(bufferSize > TO_BIG) {
                 stThrowNew(ST_COMPRESSION_EXCEPTION_ID,
-                                    "Tried to compress a string of %lld bytes but the result was to big", (long long) bufferSize);
+                                    "Tried to compress a string of %lld bytes at level %i but the result of %lld bytes was to big", (long long) sizeInBytes, level, (long long) bufferSize);
             }
             *compressedSizeInBytes = bufferSize;
             return compressedData;
