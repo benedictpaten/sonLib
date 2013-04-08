@@ -17,9 +17,16 @@
 
 const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 
+#define TO_BIG 4000000000
+
 void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
     if (level == -1) {
         level = Z_DEFAULT_COMPRESSION;
+    }
+    if(sizeInBytes > TO_BIG) { //This is a terrible hack to get around 32bit bound in zlib.
+        void *notCompressedData = memcpy(st_malloc(sizeInBytes), data, sizeInBytes);
+        *compressedSizeInBytes = sizeInBytes;
+        return notCompressedData;
     }
     uLongf bufferSize = compressBound(sizeInBytes);
     while (1) {
@@ -28,6 +35,10 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
         if (i == Z_OK) {
             void *compressedData = memcpy(st_malloc(bufferSize), buffer, bufferSize);
             free(buffer);
+            if(bufferSize > TO_BIG) {
+                stThrowNew(ST_COMPRESSION_EXCEPTION_ID,
+                                    "Tried to compress a string of %lld bytes but the result was to big", (long long) bufferSize);
+            }
             *compressedSizeInBytes = bufferSize;
             return compressedData;
         }
@@ -47,6 +58,11 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
  * of the decompressed string.
  */
 void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
+    if(compressedSizeInBytes > TO_BIG) { //This is a terrible hack to get around 32bit bound in zlib.
+        void *data = memcpy(st_malloc(compressedSizeInBytes), compressedData, compressedSizeInBytes);
+        *sizeInBytes = compressedSizeInBytes;
+        return data;
+    }
     uLongf bufferSize = compressedSizeInBytes * 2 + 1; //The one just in case we had zero compressed size!
     while (1) {
         void *buffer = st_malloc(bufferSize);
