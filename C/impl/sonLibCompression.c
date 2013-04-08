@@ -11,35 +11,34 @@
  *      Author: benedictpaten
  */
 
-#include <zlib.h>
-
+#include "minilzo.h"
 #include "sonLibGlobalsInternal.h"
 
 const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 
+/* Work-memory needed for compression. Allocate memory in units
+ * of 'lzo_align_t' (instead of 'char') to make sure it is properly aligned.
+ */
+#define HEAP_ALLOC(var,size) \
+    lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
+
+static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
+
 void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
-    if (level == -1) {
-        level = Z_DEFAULT_COMPRESSION;
+    (void)level; //unused parameter
+    if (lzo_init() != LZO_E_OK) {
+        st_errAbort("lzo would not initialise\n");
     }
-    uLongf bufferSize = compressBound(sizeInBytes);
-    while (1) {
-        void *buffer = st_malloc(bufferSize);
-        int32_t i = compress2(buffer, &bufferSize, data, sizeInBytes, level);
-        if (i == Z_OK) {
-            void *compressedData = memcpy(st_malloc(bufferSize), buffer, bufferSize);
-            free(buffer);
-            *compressedSizeInBytes = bufferSize;
-            return compressedData;
-        }
-        if (i == Z_BUF_ERROR) {
-            bufferSize *= 2;
-            free(buffer);
-            st_logCritical("The buffer for compression was too small, so increasing to %lld bytes for original data size of %lld bytes", (long long)bufferSize, (long long)sizeInBytes);
-        } else {
-            stThrowNew(ST_COMPRESSION_EXCEPTION_ID,
-                    "Tried to compress a string of %lld bytes but got the Z_ERROR code %i", (long long) bufferSize, i);
-        }
+    lzo_uint bufferSize = sizeInBytes + sizeInBytes/16 + 64 + 3;
+    void *buffer = st_malloc(bufferSize); //Use space bigger than initial data, according to the test example.
+    int i = lzo1x_1_compress(data, sizeInBytes,buffer,&bufferSize,wrkmem);
+    if (i != LZO_E_OK) {
+        st_errAbort("lzo failed to compress %" PRIi64 " bytes \n", sizeInBytes);
     }
+    void *compressedData = memcpy(st_malloc(bufferSize), buffer, bufferSize);
+    free(buffer);
+    *compressedSizeInBytes = bufferSize;
+    return compressedData;
 }
 
 /*
@@ -47,22 +46,22 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
  * of the decompressed string.
  */
 void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
-    uLongf bufferSize = compressedSizeInBytes * 2 + 1; //The one just in case we had zero compressed size!
+    lzo_uint bufferSize = compressedSizeInBytes * 2 + 1; //The one just in case we had zero compressed size!
     while (1) {
         void *buffer = st_malloc(bufferSize);
-        int32_t i = uncompress(buffer, &bufferSize, compressedData, compressedSizeInBytes);
-        if (i == Z_OK) {
+        int32_t i = lzo1x_decompress_safe(compressedData, compressedSizeInBytes, buffer, &bufferSize, wrkmem);
+        if (i == LZO_E_OK) {
             void *uncompressedData = memcpy(st_malloc(bufferSize), buffer, bufferSize);
             free(buffer);
             *sizeInBytes = bufferSize;
             return uncompressedData;
-        } else if (i == Z_BUF_ERROR) {
+        } else if (i == LZO_E_OUTPUT_OVERRUN) {
             bufferSize *= 2;
             free(buffer);
         } else {
             stThrowNew(ST_COMPRESSION_EXCEPTION_ID,
-                    "Tried to decompress a string of %lld compressed bytes but got the Z_ERROR code %i",
-                    (long long) compressedSizeInBytes, i);
+                    "Tried to decompress a string of %" PRIi64 " compressed bytes but got the LZO_E_OUTPUT_OVERRUN code %i",
+                    compressedSizeInBytes, i);
         }
     }
     return compressedData;
