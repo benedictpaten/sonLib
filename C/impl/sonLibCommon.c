@@ -27,6 +27,16 @@ void *st_malloc(size_t i) {
     return j;
 }
 
+void *st_realloc(void *buffer, size_t desiredSize) {
+    void *newBuffer = realloc(buffer, desiredSize);
+    if(newBuffer == NULL) {
+        fprintf(stderr, "Realloc failed with a request for: %zu bytes\n", desiredSize);
+        assert(0);
+        exit(1);
+    }
+    return newBuffer;
+}
+
 void *st_calloc(int64_t elementNumber, size_t elementSize) {
     void *k;
     k = calloc(elementNumber, elementSize);

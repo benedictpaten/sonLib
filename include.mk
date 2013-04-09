@@ -35,7 +35,7 @@ cppflags = ${cppflags_opt}
 
 #Flags to use
 cflags = ${cflags_opt}  
-
+ 
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)

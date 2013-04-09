@@ -30,6 +30,11 @@ extern "C" {
 void *st_malloc(size_t i);
 
 /*
+ * Safe realloc.
+ */
+void *st_realloc(void *buffer, size_t desiredSize);
+
+/*
  * Safe calloc.
  */
 void *st_calloc(int64_t elementNumber, size_t elementSize);

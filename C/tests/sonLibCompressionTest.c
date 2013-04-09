@@ -21,13 +21,14 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         int64_t size = st_randomInt64(minSize, maxSize);
         char *randomString = st_malloc(size);
         for(int32_t j=0; j<size; j++) {
-            randomString[j] = (char)st_randomInt(0, 250); //nearly random string
+            randomString[j] = (char)st_randomInt(0, 4); //nearly random string
         }
         int32_t level = st_randomInt(-1, 10);
         int64_t compressedSizeInBytes;
         //Do the compression
         void *compressedString = stCompression_compress(randomString, sizeof(char)*size, &compressedSizeInBytes, level);
         CuAssertTrue(testCase, compressedSizeInBytes >= 0);
+        st_logDebug("I did a round of compression: I got %i bytes to compress and %i bytes compressed\n", size, (int32_t)compressedSizeInBytes);
         //Now decompress
         int64_t size2;
         char *randomString2 = stCompression_decompress(compressedString, compressedSizeInBytes, &size2);
@@ -35,7 +36,6 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         for(int32_t j=0; j<size; j++) {
             CuAssertIntEquals(testCase, randomString[j], randomString2[j]);
         }
-        st_logDebug("I did a round of compression and uncompression: I got %i bytes to compress and %i bytes compressed\n", size, (int32_t)compressedSizeInBytes);
         free(randomString);
         free(randomString2);
     }
@@ -45,7 +45,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
  * Does a large number of rounds of compressions and decompression of small strings.
  */
 static void test_stCompression_compressAndDecompress_Lots(CuTest *testCase) {
-    test_stCompression_compressAndDecompressP(testCase, 1000, 0, 100);
+    test_stCompression_compressAndDecompressP(testCase, 100, 0, 500000);
 }
 
 /*
