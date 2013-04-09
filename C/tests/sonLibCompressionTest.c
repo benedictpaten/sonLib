@@ -28,7 +28,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         //Do the compression
         void *compressedString = stCompression_compress(randomString, sizeof(char)*size, &compressedSizeInBytes, level);
         CuAssertTrue(testCase, compressedSizeInBytes >= 0);
-        st_logDebug("I did a round of compression: I got %i bytes to compress and %i bytes compressed\n", size, (int32_t)compressedSizeInBytes);
+        st_logDebug("I did a round of compression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed\n", size, compressedSizeInBytes);
         //Now decompress
         int64_t size2;
         char *randomString2 = stCompression_decompress(compressedString, compressedSizeInBytes, &size2);
