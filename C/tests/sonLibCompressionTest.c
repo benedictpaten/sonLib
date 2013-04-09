@@ -20,7 +20,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
     for(int32_t i=0; i<rounds; i++) {
         int64_t size = st_randomInt64(minSize, maxSize);
         char *randomString = st_malloc(size);
-        for(int32_t j=0; j<size; j++) {
+        for(int64_t j=0; j<size; j++) {
             randomString[j] = (char)st_randomInt(0, 100); //nearly random string
         }
         int32_t level = st_randomInt(-1, 10);
@@ -28,12 +28,12 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         //Do the compression
         void *compressedString = stCompression_compress(randomString, sizeof(char)*size, &compressedSizeInBytes, level);
         CuAssertTrue(testCase, compressedSizeInBytes >= 0);
-        st_logDebug("I did a round of compression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed\n", size, compressedSizeInBytes);
+        st_logDebug("I did a round of compression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed at level %i\n", size, compressedSizeInBytes, level);
         //Now decompress
         int64_t size2;
         char *randomString2 = stCompression_decompress(compressedString, compressedSizeInBytes, &size2);
         CuAssertTrue(testCase, size == size2);
-        for(int32_t j=0; j<size; j++) {
+        for(int64_t j=0; j<size; j++) {
             CuAssertIntEquals(testCase, randomString[j], randomString2[j]);
         }
         free(randomString);
