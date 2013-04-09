@@ -21,7 +21,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
         int64_t size = st_randomInt64(minSize, maxSize);
         char *randomString = st_malloc(size);
         for(int32_t j=0; j<size; j++) {
-            randomString[j] = (char)st_randomInt(0, 4); //nearly random string
+            randomString[j] = (char)st_randomInt(0, 100); //nearly random string
         }
         int32_t level = st_randomInt(-1, 10);
         int64_t compressedSizeInBytes;
