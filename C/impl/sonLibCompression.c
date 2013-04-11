@@ -12,14 +12,63 @@
  */
 
 #include <zlib.h>
+#include "lz4hc.h"
+#include "lz4.h"
 
 #include "sonLibGlobalsInternal.h"
 
 const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 
+void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
+    /*
+     * Uses the lz4 algorithm to provide very fast compression.
+     */
+    int64_t chunkSize = 1073741824; //2^30, should be safe and big enough to find good compression.
+    int64_t bufferSize = sizeInBytes + (sizeof(int32_t) + sizeInBytes/255 + 16) * (1 + sizeInBytes/chunkSize);
+    char *buffer = st_malloc(sizeof(char) * bufferSize);
+    int64_t outputOffset=0;
+    /*
+     * Breaks sequence to compress up into 1 gig chunks, to avoid overflows.
+     */
+    for(int64_t inputOffset=0; inputOffset < sizeInBytes; inputOffset += chunkSize) {
+        int64_t length = (inputOffset + chunkSize < sizeInBytes ? chunkSize : sizeInBytes - inputOffset);
+        assert(length > 0);
+        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+outputOffset+sizeof(int32_t), length);
+        *(int32_t *)(buffer+outputOffset) = bytesWritten;
+        assert(*(int32_t *)(buffer+outputOffset) == bytesWritten);
+        outputOffset += sizeof(int32_t)+bytesWritten;
+        assert(outputOffset <= bufferSize);
+    }
+    *compressedSizeInBytes = outputOffset;
+    return st_realloc(buffer, outputOffset);
+}
+
+void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
+    int64_t bufferSize = compressedSizeInBytes * 2 + 1;
+    char *buffer = st_malloc(sizeof(char) *bufferSize);
+    int64_t outputOffset=0;
+    for(int64_t inputOffset=0; inputOffset < compressedSizeInBytes;) {
+        int32_t compressedLength = *(int32_t *)(((char *)compressedData)+inputOffset);
+        inputOffset += sizeof(int32_t);
+        while(1) {
+            assert(bufferSize - outputOffset > 0);
+            int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset, buffer + outputOffset, compressedLength, bufferSize - outputOffset);
+            if(bytesWritten >= 0 && bytesWritten < bufferSize - outputOffset) {
+                outputOffset += bytesWritten;
+                break;
+            }
+            bufferSize *= 2;
+            buffer = st_realloc(buffer, bufferSize);
+        }
+        inputOffset += compressedLength;
+    }
+    *sizeInBytes = outputOffset;
+    return st_realloc(buffer, outputOffset);
+}
+
 #define Z_CHUNK 262144
 
-void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
+void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
     /*
      * The internals using the deflate command to avoid buffer overflows.
      */
@@ -27,11 +76,11 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
         level = 1;
     }
 
-    /* output buffer */
+	/* output buffer */
     int64_t bufferSize = sizeInBytes + sizeInBytes/16 + 68;
     unsigned char *buffer = st_malloc(sizeof(unsigned char) * bufferSize);
 
-    /* allocate deflate state */
+	/* allocate deflate state */
     z_stream strm;
     int flush;
     strm.zalloc = Z_NULL;
@@ -42,7 +91,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
         stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Tried to compress a string but couldn't initialise zlib");
     }
 
-    /* loop compressing */
+	/* loop compressing */
     int64_t inputOffset=0;
     int64_t outputOffset=0;
     do {
@@ -70,8 +119,8 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
             int64_t outputAvailble = strm.avail_out;
             strm.next_out = buffer + outputOffset;
             //Now do the actual compression
-            ret = deflate(&strm, flush);    /* no bad return value */
-            assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+            ret = deflate(&strm, flush); /* no bad return value */
+            assert(ret != Z_STREAM_ERROR); /* state not clobbered */
             outputOffset += outputAvailble - strm.avail_out; /*update the output buffer offset*/
         } while(strm.avail_out == 0);
         assert(strm.avail_in == 0);
@@ -80,22 +129,20 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
     assert(flush);
     //Now set the compressed size
     *compressedSizeInBytes = outputOffset;
-    void *compressedData = memcpy(st_malloc(outputOffset), buffer, sizeof(unsigned char) * outputOffset);
-    free(buffer);
     (void)deflateEnd(&strm);
-    return compressedData;
+    return st_realloc(buffer, outputOffset);
 }
 
-/*
- * Decompresses the compressed data string, which has length compressedSizeInBytes, initialises the sizeInBytes point to the size
- * of the decompressed string.
- */
-void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
+void *stCompression_decompressZlib(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
+	/*
+ 	 * Decompresses the compressed data string, which has length compressedSizeInBytes, initialises the sizeInBytes point to the size
+ 	 * of the decompressed string.
+ 	 */
     /* output buffer */
     int64_t bufferSize = compressedSizeInBytes * 2;
     unsigned char *buffer = st_malloc(sizeof(unsigned char) *bufferSize);
 
-    /* allocate deflate state */
+	/* allocate deflate state */
     z_stream strm;
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
@@ -107,7 +154,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
         stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Tried to decompress a string but couldn't initialise zlib");
     }
 
-    /* loop compressing */
+	/* loop compressing */
     int64_t inputOffset=0;
     int64_t outputOffset=0;
     do {
@@ -131,7 +178,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
             int64_t outputAvailble = strm.avail_out;
             strm.next_out = buffer + outputOffset;
             //Now do the actual compression
-            ret = inflate(&strm, Z_NO_FLUSH);    /* no bad return value */
+            ret = inflate(&strm, Z_NO_FLUSH); /* no bad return value */
             assert(ret != Z_STREAM_ERROR);
             if(ret == Z_NEED_DICT || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR) {
                 stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Error %i in decompressing string of size  %" PRIi64 " bytes\n", ret, compressedSizeInBytes);
@@ -143,8 +190,6 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
     assert(inputOffset == compressedSizeInBytes);
     //Now set the compressed size
     *sizeInBytes = outputOffset;
-    void *data = memcpy(st_malloc(outputOffset), buffer, sizeof(unsigned char) * outputOffset);
-    free(buffer);
     (void)inflateEnd(&strm);
-    return data;
+    return st_realloc(buffer, outputOffset);
 }

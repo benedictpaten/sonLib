@@ -35,6 +35,15 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
  */
 void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes);
 
+/*
+ * Uses Zlib.
+ */
+void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level);
+
+/*
+ * Uses Zlib.
+ */
+void *stCompression_decompressZlib(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes);
 
 #ifdef __cplusplus
 }
