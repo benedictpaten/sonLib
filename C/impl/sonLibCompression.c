@@ -23,6 +23,9 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
     /*
      * The internals using the deflate command to avoid buffer overflows.
      */
+    if(level == -1) { //Use fast compression by default
+        level = 1;
+    }
 
     /* output buffer */
     int64_t bufferSize = sizeInBytes + sizeInBytes/16 + 68;
