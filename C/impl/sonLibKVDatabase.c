@@ -316,14 +316,17 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
         stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                 "Trying to bulk remove records from a database that has been deleted");
     }
-    /*Removing below code as very expensive to do this check*/
-    /*for (int32_t i = 0; i < stList_length(records); i++) {
+
+#ifndef DNDEBUG
+    /*This code to check the presence of records is very expensive*/
+    for (int32_t i = 0; i < stList_length(records); i++) {
         int64_t key = stInt64Tuple_getPosition(stList_get(records, i), 0);
         if (!stKVDatabase_containsRecord(database, key)) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "The key is not in the database which we aim to remove: %lli", key);
         }
-    }*/
+    }
+#endif
     stTry {
             database->bulkRemoveRecords(database, records);
         }stCatch(ex)
