@@ -317,7 +317,7 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
                 "Trying to bulk remove records from a database that has been deleted");
     }
 
-#ifndef DNDEBUG
+#ifndef NDEBUG
     /*This code to check the presence of records is very expensive*/
     for (int32_t i = 0; i < stList_length(records); i++) {
         int64_t key = stInt64Tuple_getPosition(stList_get(records, i), 0);
