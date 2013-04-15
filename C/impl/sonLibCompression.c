@@ -33,37 +33,38 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
     for(int64_t inputOffset=0; inputOffset < sizeInBytes; inputOffset += chunkSize) {
         int64_t length = (inputOffset + chunkSize < sizeInBytes ? chunkSize : sizeInBytes - inputOffset);
         assert(length > 0);
-        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+outputOffset+sizeof(int32_t), length);
+        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+(outputOffset+sizeof(int32_t)), length);
         *(int32_t *)(buffer+outputOffset) = bytesWritten;
         assert(*(int32_t *)(buffer+outputOffset) == bytesWritten);
         outputOffset += sizeof(int32_t)+bytesWritten;
         assert(outputOffset <= bufferSize);
     }
     *compressedSizeInBytes = outputOffset;
-    return st_realloc(buffer, outputOffset);
+    return st_realloc(buffer, sizeof(char) * outputOffset);
 }
 
 void *stCompression_decompress(void *compressedData, int64_t compressedSizeInBytes, int64_t *sizeInBytes) {
     int64_t bufferSize = compressedSizeInBytes * 2 + 1;
-    char *buffer = st_malloc(sizeof(char) *bufferSize);
+    char *buffer = st_malloc(sizeof(char) * bufferSize);
     int64_t outputOffset=0;
     for(int64_t inputOffset=0; inputOffset < compressedSizeInBytes;) {
         int32_t compressedLength = *(int32_t *)(((char *)compressedData)+inputOffset);
         inputOffset += sizeof(int32_t);
         while(1) {
             assert(bufferSize - outputOffset > 0);
-            int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset, buffer + outputOffset, compressedLength, bufferSize - outputOffset);
+            int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset,
+                    buffer + outputOffset, compressedLength, bufferSize - outputOffset);
             if(bytesWritten >= 0 && bytesWritten < bufferSize - outputOffset) {
                 outputOffset += bytesWritten;
                 break;
             }
             bufferSize *= 2;
-            buffer = st_realloc(buffer, bufferSize);
+            buffer = st_realloc(buffer, sizeof(char) * bufferSize);
         }
         inputOffset += compressedLength;
     }
     *sizeInBytes = outputOffset;
-    return st_realloc(buffer, outputOffset);
+    return st_realloc(buffer, sizeof(char) * outputOffset);
 }
 
 #define Z_CHUNK 262144
