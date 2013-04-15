@@ -19,24 +19,24 @@
 
 const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 
+//2^30, should be safe and big enough to find good compression.
+#define ST_LZ4_CHUNK_SIZE 1073741824
+
 void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
     /*
      * Uses the lz4 algorithm to provide very fast compression.
      */
-    int64_t chunkSize = 1073741824; //2^30, should be safe and big enough to find good compression.
-    int64_t bufferSize = sizeInBytes + (sizeof(int32_t) + sizeInBytes/255 + 16) * (1 + sizeInBytes/chunkSize);
+    int64_t bufferSize = sizeInBytes + (1 + sizeInBytes/255 + 16) * (1 + sizeInBytes/ST_LZ4_CHUNK_SIZE);
     char *buffer = st_malloc(sizeof(char) * bufferSize);
     int64_t outputOffset=0;
     /*
      * Breaks sequence to compress up into 1 gig chunks, to avoid overflows.
      */
-    for(int64_t inputOffset=0; inputOffset < sizeInBytes; inputOffset += chunkSize) {
-        int64_t length = (inputOffset + chunkSize < sizeInBytes ? chunkSize : sizeInBytes - inputOffset);
-        assert(length > 0);
-        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+(outputOffset+sizeof(int32_t)), length);
-        *(int32_t *)(buffer+outputOffset) = bytesWritten;
-        assert(*(int32_t *)(buffer+outputOffset) == bytesWritten);
-        outputOffset += sizeof(int32_t)+bytesWritten;
+    for(int64_t inputOffset=0; inputOffset < sizeInBytes; inputOffset += ST_LZ4_CHUNK_SIZE) {
+        char subChunk = inputOffset + ST_LZ4_CHUNK_SIZE < sizeInBytes;
+        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+(outputOffset+1), subChunk ? ST_LZ4_CHUNK_SIZE : sizeInBytes - inputOffset);
+        *(buffer+outputOffset) = subChunk;
+        outputOffset += 1+bytesWritten;
         assert(outputOffset <= bufferSize);
     }
     *compressedSizeInBytes = outputOffset;
@@ -48,20 +48,40 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
     char *buffer = st_malloc(sizeof(char) * bufferSize);
     int64_t outputOffset=0;
     for(int64_t inputOffset=0; inputOffset < compressedSizeInBytes;) {
-        int32_t compressedLength = *(int32_t *)(((char *)compressedData)+inputOffset);
-        inputOffset += sizeof(int32_t);
-        while(1) {
-            assert(bufferSize - outputOffset > 0);
-            int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset,
-                    buffer + outputOffset, compressedLength, bufferSize - outputOffset);
-            if(bytesWritten >= 0 && bytesWritten < bufferSize - outputOffset) {
-                outputOffset += bytesWritten;
-                break;
+        char subChunk = *(((char *)compressedData)+inputOffset);
+        inputOffset++;
+        int64_t outputBufferRemaining = bufferSize - outputOffset;
+        assert(outputBufferRemaining >= 0);
+        if(subChunk) {
+            if(outputBufferRemaining < ST_LZ4_CHUNK_SIZE) {
+                bufferSize += ST_LZ4_CHUNK_SIZE - outputBufferRemaining;
+                buffer = st_realloc(buffer, sizeof(char) * bufferSize);
             }
-            bufferSize *= 2;
-            buffer = st_realloc(buffer, sizeof(char) * bufferSize);
+            int32_t bytesRead = LZ4_uncompress(((char *)compressedData)+inputOffset,
+                                                buffer + outputOffset, ST_LZ4_CHUNK_SIZE);
+            if(bytesRead < 0) {
+                stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Tried to uncompress a full length chunk but got a negative return value from lz4_uncompress");
+            }
+            inputOffset += bytesRead;
+            outputOffset += ST_LZ4_CHUNK_SIZE;
         }
-        inputOffset += compressedLength;
+        else {
+            int64_t compressedLength = compressedSizeInBytes - inputOffset;
+            assert(compressedLength < ST_LZ4_CHUNK_SIZE);
+            while(1) {
+                int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset,
+                        buffer + outputOffset, compressedLength, outputBufferRemaining < ST_LZ4_CHUNK_SIZE ? outputBufferRemaining : ST_LZ4_CHUNK_SIZE);
+                if(bytesWritten >= 0 && bytesWritten <= outputBufferRemaining) {
+                    outputOffset += bytesWritten;
+                    break;
+                }
+                assert(outputBufferRemaining < ST_LZ4_CHUNK_SIZE);
+                bufferSize = bufferSize < ST_LZ4_CHUNK_SIZE-outputBufferRemaining ? bufferSize*2 : bufferSize + ST_LZ4_CHUNK_SIZE-outputBufferRemaining;
+                buffer = st_realloc(buffer, sizeof(char) * bufferSize);
+                outputBufferRemaining = bufferSize - outputOffset;
+            }
+            inputOffset += compressedLength;
+        }
     }
     *sizeInBytes = outputOffset;
     return st_realloc(buffer, sizeof(char) * outputOffset);

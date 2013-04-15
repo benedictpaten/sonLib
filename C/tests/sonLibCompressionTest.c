@@ -53,7 +53,7 @@ static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t 
  * Does a large number of rounds of compressions and decompression of small strings.
  */
 static void test_stCompression_compressAndDecompress_Lots(CuTest *testCase) {
-    test_stCompression_compressAndDecompressP(testCase, 1000, 50, 100, stCompression_compress, stCompression_decompress);
+    test_stCompression_compressAndDecompressP(testCase, 1000, 50, 1000, stCompression_compress, stCompression_decompress);
 }
 
 /*
@@ -67,7 +67,6 @@ static void test_stCompression_compressAndDecompress_Big(CuTest *testCase) {
  * Does a large number of rounds of compressions and decompression of small strings.
  */
 static void test_stCompression_compressAndDecompress_Lots_Zlib(CuTest *testCase) {
-    return;
     test_stCompression_compressAndDecompressP(testCase, 1000, 50, 100, stCompression_compressZlib, stCompression_decompressZlib);
 }
 
@@ -75,7 +74,6 @@ static void test_stCompression_compressAndDecompress_Lots_Zlib(CuTest *testCase)
  * Does a small number of rounds of large strings.
  */
 static void test_stCompression_compressAndDecompress_Big_Zlib(CuTest *testCase) {
-    return;
     test_stCompression_compressAndDecompressP(testCase, 5, 10000000, 50000000, stCompression_compressZlib, stCompression_decompressZlib);
 }
 
