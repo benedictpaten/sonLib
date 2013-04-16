@@ -120,42 +120,42 @@ static void partialRecordRetrieval(CuTest *testCase) {
     //Make some number of large records
     stList *records = stList_construct3(0, free);
     stList *recordSizes = stList_construct3(0, (void(*)(void *)) stIntTuple_destruct);
-    for (int32_t i = 0; i < 300; i++) {
-        int32_t size = st_randomInt(0, 80);
+    for (int64_t i = 0; i < 300; i++) {
+        int64_t size = st_randomInt(0, 80);
         size = size * size * size; //Use cubic size distribution
         char *randomRecord = st_malloc(size * sizeof(char));
-        for (int32_t j = 0; j < size; j++) {
+        for (int64_t j = 0; j < size; j++) {
             randomRecord[j] = (char) st_randomInt(0, 100);
         }
         stList_append(records, randomRecord);
-        stList_append(recordSizes, stIntTuple_construct(1, size));
+        stList_append(recordSizes, stIntTuple_construct1( size));
         CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, i));
         stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, i));
-        //st_uglyf("I am creating the record %i %i\n", i, size);
+        //st_uglyf("I am creating the record %" PRIi64 " %" PRIi64 "\n", i, size);
     }
 
     while (st_random() > 0.001) {
-        int32_t recordKey = st_randomInt(0, stList_length(records));
+        int64_t recordKey = st_randomInt(0, stList_length(records));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, recordKey));
 
         char *record = stList_get(records, recordKey);
-        int32_t size = stIntTuple_getPosition(stList_get(recordSizes, recordKey), 0);
+        int64_t size = stIntTuple_getPosition(stList_get(recordSizes, recordKey), 0);
 
         //Get partial record
-        int32_t start = size > 0 ? st_randomInt(0, size) : 0;
-        int32_t partialSize = size - start > 0 ? st_randomInt(start, size) - start : 0;
+        int64_t start = size > 0 ? st_randomInt(0, size) : 0;
+        int64_t partialSize = size - start > 0 ? st_randomInt(start, size) - start : 0;
         assert(start >= 0);
         assert(partialSize >= 0);
         assert(partialSize + start <= size);
-        //st_uglyf("I am getting record %i %i %i %i\n", recordKey, start, partialSize, size);
+        //st_uglyf("I am getting record %" PRIi64 " %" PRIi64 " %" PRIi64 " %" PRIi64 "\n", recordKey, start, partialSize, size);
         char *partialRecord = stKVDatabase_getPartialRecord(database, recordKey, start * sizeof(char),
                 partialSize * sizeof(char), size * sizeof(char));
 
         //Check they are equivalent..
-        for (int32_t i = 0; i < partialSize; i++) {
+        for (int64_t i = 0; i < partialSize; i++) {
             if (record[start + i] != partialRecord[i]) {
-                st_uglyf("There was a difference %i %i for record %i %i\n", record[start + i], partialRecord[i], i,
+                st_uglyf("There was a difference %" PRIi64 " %" PRIi64 " for record %" PRIi64 " %" PRIi64 "\n", record[start + i], partialRecord[i], i,
                         partialSize);
             }
             //CuAssertTrue(testCase, record[start + i] == partialRecord[i]);
@@ -399,16 +399,16 @@ static void testBulkRemoveRecords(CuTest *testCase) {
     CuAssertTrue(testCase, stKVDatabase_containsRecord(database, 5));
     CuAssertTrue(testCase, stKVDatabase_getNumberOfRecords(database) == 5);
 
-    stList *requests = stList_construct3(0, (void(*)(void *)) stInt64Tuple_destruct);
+    stList *requests = stList_construct3(0, (void(*)(void *)) stIntTuple_destruct);
 
     // test empty request list
     stKVDatabase_bulkRemoveRecords(database, requests);
 
-    stList_append(requests, stInt64Tuple_construct(1, (int64_t)1));
-    stList_append(requests, stInt64Tuple_construct(1, (int64_t)2));
-    stList_append(requests, stInt64Tuple_construct(1, (int64_t)3));
-    stList_append(requests, stInt64Tuple_construct(1, (int64_t)4));
-    stList_append(requests, stInt64Tuple_construct(1, (int64_t)5));
+    stList_append(requests, stIntTuple_construct1( (int64_t)1));
+    stList_append(requests, stIntTuple_construct1( (int64_t)2));
+    stList_append(requests, stIntTuple_construct1( (int64_t)3));
+    stList_append(requests, stIntTuple_construct1( (int64_t)4));
+    stList_append(requests, stIntTuple_construct1( (int64_t)5));
     stKVDatabase_bulkRemoveRecords(database, requests);
 
     CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, 1));
@@ -428,22 +428,22 @@ static void testBulkRemoveRecords(CuTest *testCase) {
  */
 static void bigRecordRetrieval(CuTest *testCase) {
     setup();
-    for (int32_t i = 0; i < 10; i++) {
-        int32_t size = st_randomInt(5000000, 10000000);
+    for (int64_t i = 0; i < 10; i++) {
+        int64_t size = st_randomInt(5000000, 10000000);
         char *randomRecord = st_malloc(size * sizeof(char));
-        for (int32_t j = 0; j < size; j++) {
+        for (int64_t j = 0; j < size; j++) {
             randomRecord[j] = (char) st_randomInt(0, 100);
         }
 
-        //st_uglyf("I am inserting record %i %i\n", i, size);
+        //st_uglyf("I am inserting record %" PRIi64 " %" PRIi64 "\n", i, size);
         stKVDatabase_insertRecord(database, i, randomRecord, size * sizeof(char));
 
-        //st_uglyf("I am creating the record %i %i\n", i, size);
+        //st_uglyf("I am creating the record %" PRIi64 " %" PRIi64 "\n", i, size);
         //Check they are equivalent.
         int64_t size2;
         char *randomRecord2 = stKVDatabase_getRecord2(database, i, &size2);
         CuAssertTrue(testCase, size == size2);
-        for (int32_t j = 0; j < size; j++) {
+        for (int64_t j = 0; j < size; j++) {
             CuAssertTrue(testCase, randomRecord[j] == randomRecord2[j]);
         }
     }
@@ -458,7 +458,7 @@ static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase, stSortedSet *se
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int32_t *value = (int32_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
+        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         CuAssertIntEquals(testCase, valueMult*stIntTuple_getPosition(tuple, 0), *value);
         free(value);
@@ -471,12 +471,12 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numReco
     stSortedSet *set = stSortedSet_construct3((int(*)(const void *, const void *)) stIntTuple_cmpFn,
             (void(*)(void *)) stIntTuple_destruct);
     while (stSortedSet_size(set) < numRecords) {
-        int32_t key = st_randomInt(0, 100 * numRecords);
-        stIntTuple *tuple = stIntTuple_construct(1, key);
+        int64_t key = st_randomInt(0, 100 * numRecords);
+        stIntTuple *tuple = stIntTuple_construct1( key);
         if (stSortedSet_search(set, tuple) == NULL) {
             CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, key));
             stSortedSet_insert(set, tuple);
-            stKVDatabase_insertRecord(database, key, &key, sizeof(int32_t));
+            stKVDatabase_insertRecord(database, key, &key, sizeof(int64_t));
             CuAssertTrue(testCase, stKVDatabase_containsRecord(database, key));
         } else {
             CuAssertTrue(testCase, stKVDatabase_containsRecord(database, key));
@@ -490,9 +490,9 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numReco
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int32_t *value = (int32_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
+        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
         *value *= -1;
-        stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0), value, sizeof(int32_t));
+        stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0), value, sizeof(int64_t));
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
         free(value);
     }

@@ -19,7 +19,7 @@
 /*
  * Constructs a poset alignment containing the given number of sequences
  */
-stPosetAlignment *stPosetAlignment_construct(int32_t sequenceNumber);
+stPosetAlignment *stPosetAlignment_construct(int64_t sequenceNumber);
 
 /*
  * Destructs the poset alignment.
@@ -29,16 +29,16 @@ void stPosetAlignment_destruct(stPosetAlignment *posetAlignment);
 /*
  * Returns the number of sequences in the alignment.
  */
-int32_t stPosetAlignment_getSequenceNumber(stPosetAlignment *posetAlignment);
+int64_t stPosetAlignment_getSequenceNumber(stPosetAlignment *posetAlignment);
 
 /*
  * Returns non-zero if the pair can be added to the alignment, but does not actually add the pair to the alignment.
  */
-bool stPosetAlignment_isPossible(stPosetAlignment *posetAlignment, int32_t sequence1, int32_t position1, int32_t sequence2, int32_t position2);
+bool stPosetAlignment_isPossible(stPosetAlignment *posetAlignment, int64_t sequence1, int64_t position1, int64_t sequence2, int64_t position2);
 
 /*
  * List stPosetAlignment_isPossible, but if the return value is non-zero the pair is added to the alignment.
  */
-bool stPosetAlignment_add(stPosetAlignment *posetAlignment, int32_t sequence1, int32_t position1, int32_t sequence2, int32_t position2);
+bool stPosetAlignment_add(stPosetAlignment *posetAlignment, int64_t sequence1, int64_t position1, int64_t sequence2, int64_t position2);
 
 #endif /* STPOSETALIGNMENT_H_ */

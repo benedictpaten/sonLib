@@ -115,7 +115,7 @@ void stKVDatabaseBulkRequest_destruct(stKVDatabaseBulkRequest *record);
 void stKVDatabase_bulkSetRecords(stKVDatabase *database, stList *records);
 
 /*
- * Destruct a set of records, where each record is specified by a key, encoded in a stInt64Tuple.
+ * Destruct a set of records, where each record is specified by a key, encoded in a stIntTuple.
  * Throws a KV_DATABASE exception if unsuccessful.
  */
 void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records);

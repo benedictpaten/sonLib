@@ -21,19 +21,19 @@ extern "C" {
 //logging and debugging
 #define DEBUG TRUE
 
-void exitOnFailure(int32_t exitValue, const char *failureMessage, ...);
+void exitOnFailure(int64_t exitValue, const char *failureMessage, ...);
 
 //memory
 struct Chunks {
     struct List *chunkList;
     char * chunk;
     //void * chunk;
-    int32_t remaining;
-    int32_t chunkSize;
-    int32_t elementSize;
+    int64_t remaining;
+    int64_t chunkSize;
+    int64_t elementSize;
 };
 
-struct Chunks *constructChunks(int32_t chunkSize, int32_t elementSize);
+struct Chunks *constructChunks(int64_t chunkSize, int64_t elementSize);
 
 void destructChunks(struct Chunks *);
 
@@ -43,8 +43,8 @@ void *mallocChunk(struct Chunks *chunk);
 //general data structures you always need
 //lists
 struct List {
-    int32_t length;
-    int32_t maxLength;
+    int64_t length;
+    int64_t maxLength;
     void **list;
     void (*destructElement)(void *);
 };
@@ -53,33 +53,33 @@ void listAppend(struct List *list, void *i);
 
 void *listRemoveFirst(struct List *list);
 
-void *arrayResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base);
+void *arrayResize(void *current, int64_t *currentSize, int64_t newSize, int64_t base);
 
 void listIntersection(struct List *list, struct List *list2, struct List *list3);
 
-void listResize(struct List *list, int32_t newMaxSize);
+void listResize(struct List *list, int64_t newMaxSize);
 
-int32_t listGetInt(struct List *list, int32_t index);
+int64_t listGetInt(struct List *list, int64_t index);
 
-float listGetFloat(struct List *list, int32_t index);
+float listGetFloat(struct List *list, int64_t index);
 
 void listReverse(struct List *list);
 
-int32_t listContains(struct List *list, void *k);
+int64_t listContains(struct List *list, void *k);
 
 void listRemove(struct List *list, void *k);
 
 void listRemoveDuplicates(struct List *list);
 
-int32_t listContainsDuplicates(struct List *list);
+int64_t listContainsDuplicates(struct List *list);
 
-void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize, int32_t base);
+void *arrayCopyResize(void *current, int64_t *currentSize, int64_t newSize, int64_t base);
 
-void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t currentLength, int32_t base);
+void *arrayPrepareAppend(void *current, int64_t *maxLength, int64_t currentLength, int64_t base);
 
-void arrayShuffle(void **array, int32_t n);
+void arrayShuffle(void **array, int64_t n);
 
-void listCopyResize(struct List *list, int32_t newMaxSize);
+void listCopyResize(struct List *list, int64_t newMaxSize);
 
 struct List *listCopy(struct List *list);
 
@@ -89,40 +89,40 @@ struct List *cloneList(struct List *source);
 
 void copyList(struct List *from, struct List *to);
 
-struct hashtable *intListToHash(struct List *list, int32_t *(*getKey)(void *));
+struct hashtable *intListToHash(struct List *list, int64_t *(*getKey)(void *));
 
 //list functions
-struct List *copyConstructList(void **list, int32_t length, void (*destructElement)(void *));
+struct List *copyConstructList(void **list, int64_t length, void (*destructElement)(void *));
 
-struct List *constructZeroLengthList(int32_t length, void (*destructElement)(void *));
+struct List *constructZeroLengthList(int64_t length, void (*destructElement)(void *));
 
-struct List *constructEmptyList(int32_t length, void (*destructElement)(void *));
+struct List *constructEmptyList(int64_t length, void (*destructElement)(void *));
 
 void destructList(struct List *list);
 
-void listAppendArray(struct List *list, void **array, int32_t length);
+void listAppendArray(struct List *list, void **array, int64_t length);
 
 //int lists
 struct IntList {
-    int32_t length;
-    int32_t maxLength;
-    int32_t *list;
+    int64_t length;
+    int64_t maxLength;
+    int64_t *list;
 };
 
-struct IntList *constructEmptyIntList(int32_t length);
+struct IntList *constructEmptyIntList(int64_t length);
 
 void destructIntList(struct IntList *intList);
 
 struct IntList *intListCopy(struct IntList *intList);
 
-void intListAppend(struct IntList *intList, int32_t);
+void intListAppend(struct IntList *intList, int64_t);
 
 //ints
-int32_t *constructInt(int32_t i);
+int64_t *constructInt(int64_t i);
 
-void destructInt(int32_t *i);
+void destructInt(int64_t *i);
 
-int32_t *constructChunkInt(int32_t intValue, struct Chunks *chunks);
+int64_t *constructChunkInt(int64_t intValue, struct Chunks *chunks);
 
 int64_t *constructChunkLong(int64_t longValue, struct Chunks *chunks);
 //ints
@@ -134,43 +134,43 @@ float *constructFloat(float i);
 
 void destructFloat(float *i);
 
-uint32_t hashtable_stringHashKey( const void *k );
+uint64_t hashtable_stringHashKey( const void *k );
 
 int hashtable_stringEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_intHashKey( const void *k );
+uint64_t hashtable_intHashKey( const void *k );
 
 int hashtable_intEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_key( const void *k );
+uint64_t hashtable_key( const void *k );
 
 int hashtable_equalKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_intPairHashKey( const void *k );
+uint64_t hashtable_intPairHashKey( const void *k );
 
 int hashtable_intPairEqualKey( const void *key1, const void *key2 );
 
-uint32_t hashtable_orderedIntPairHashKey( const void *k );
+uint64_t hashtable_orderedIntPairHashKey( const void *k );
 
 int hashtable_orderedIntPairEqualKey(const  void *key1, const void *key2 );
 
-int32_t *constructIntPair(int32_t i, int32_t j);
+int64_t *constructIntPair(int64_t i, int64_t j);
 
-void destructIntPair(int32_t *i);
+void destructIntPair(int64_t *i);
 
-uint32_t hashtable_longHashKey( const void *k );
+uint64_t hashtable_longHashKey( const void *k );
 
 int hashtable_longEqualKey( const void *key1, const void *key2 );
 
-int32_t intComparator(int32_t *i, int32_t *j);
+int64_t intComparator(int64_t *i, int64_t *j);
 
-int32_t longComparator(int64_t *i, int64_t *j);
+int64_t longComparator(int64_t *i, int64_t *j);
 
-int intComparator_Int(int32_t *i, int32_t *j);
+int intComparator_Int(int64_t *i, int64_t *j);
 
 int longComparator_Int(int64_t *i, int64_t *j);
 
-int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length);
+int64_t intsComparator(int64_t *ints1, int64_t *ints2, int64_t length);
 
 int floatComparator(float **f, float **f2);
 
@@ -181,32 +181,32 @@ struct TraversalID {
     //preEnd == max pre index + 1 of node in subtree
     //mid == mid order (in-order) traversal number
     //def __init__(self, pre, preEnd, mid):
-    int32_t midStart;
-    int32_t mid;
-    int32_t midEnd;
-    int32_t leafNo;
+    int64_t midStart;
+    int64_t mid;
+    int64_t midEnd;
+    int64_t leafNo;
 };
 
-struct TraversalID *constructTraversalID(int32_t midStart, int32_t mid, int32_t midEnd, int32_t leafNo);
+struct TraversalID *constructTraversalID(int64_t midStart, int64_t mid, int64_t midEnd, int64_t leafNo);
 
 void destructTraversalID(struct TraversalID *traversalID);
 
 struct BinaryTree {
     float distance;
-    int32_t internal;
+    int64_t internal;
     char *label;
     struct TraversalID *traversalID;
     struct BinaryTree *left;
     struct BinaryTree *right;
 };
 
-int32_t leftMostLeafNo(struct TraversalID *traversalID);
+int64_t leftMostLeafNo(struct TraversalID *traversalID);
 
-int32_t rightMostLeafNo(struct TraversalID *traversalID);
+int64_t rightMostLeafNo(struct TraversalID *traversalID);
 
-int32_t leafNoInSubtree(struct TraversalID *traversalID);
+int64_t leafNoInSubtree(struct TraversalID *traversalID);
 
-struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+struct BinaryTree *constructBinaryTree(float distance, int64_t internal,
                                         const char *label,
                                               struct BinaryTree *left,
                                               struct BinaryTree *right);
@@ -237,7 +237,7 @@ char *pathJoin(const char *pathPrefix, const char *pathSuffix);
  * Returns non zero if the difference of the two values is within the given precision,
  * else returns zero.
  */
-int32_t floatValuesClose(double valueOne, double valueTwo, double precision);
+int64_t floatValuesClose(double valueOne, double valueTwo, double precision);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -247,11 +247,11 @@ int32_t floatValuesClose(double valueOne, double valueTwo, double precision);
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int32_t constructRandomDir(const char *tempFilePath, char **tempDir);
+int64_t constructRandomDir(const char *tempFilePath, char **tempDir);
 
-int32_t destructRandomDir(char *tempDir);
+int64_t destructRandomDir(char *tempDir);
 
-void initialiseTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber);
+void initialiseTempFileTree(char *rootDir, int64_t filesPerDir, int64_t levelNumber);
 
 char *getTempFile(void);
 
@@ -261,14 +261,14 @@ void removeAllTempFiles(void);
 
 struct TempFileTree {
     char *rootDir;
-    int32_t filesPerDir;
-    int32_t *levelsArray;
-    int32_t levelNumber;
-    int32_t tempFilesCreated;
-    int32_t tempFilesDestroyed;
+    int64_t filesPerDir;
+    int64_t *levelsArray;
+    int64_t levelNumber;
+    int64_t tempFilesCreated;
+    int64_t tempFilesDestroyed;
 };
 
-struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir, int32_t levelNumber);
+struct TempFileTree *constructTempFileTree(char *rootDir, int64_t filesPerDir, int64_t levelNumber);
 
 void destructTempFileTree(struct TempFileTree *tempFileTree);
 
@@ -284,7 +284,7 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree);
 
 void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle, const char *label,
         double width, double height, const char *shape, const char *colour,
-        int32_t fontsize);
+        int64_t fontsize);
 
 void graphViz_addEdgeToGraph(const char *parentNodeName, const char *childNodeName, FILE *graphFileHandle,
         const char *label, const char *colour, double length, double weight, const char *direction);

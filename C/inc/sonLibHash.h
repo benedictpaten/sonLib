@@ -25,7 +25,7 @@ extern "C" {
 /*
  * Function which generates hash key from pointer, should work well regardless of pointer size.
  */
-uint32_t stHash_pointer( const void *k );
+uint64_t stHash_pointer( const void *k );
 
 /*
  * Constructs hash, with no destructors for keys or values.
@@ -40,7 +40,7 @@ stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(v
 /*
  * Constructs a hash using the given comparison functions.
  */
-stHash *stHash_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
+stHash *stHash_construct3(uint64_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
         void (*destructKeys)(void *), void (*destructValues)(void *));
 
 /*
@@ -71,7 +71,7 @@ void *stHash_removeAndFreeKey(stHash *hash, void *key);
 /*
  * Returns the number of key/value pairs in the hash.
  */
-int32_t stHash_size(stHash *hash);
+int64_t stHash_size(stHash *hash);
 
 /*
  * Returns an iterator of the keys in the hash.
@@ -110,7 +110,7 @@ stList *stHash_getValues(stHash *hash);
 /*
  * A hash function for a char string.
  */
-uint32_t stHash_stringKey( const void *k );
+uint64_t stHash_stringKey( const void *k );
 
 /*
  * A hash equals function for two char strings.
@@ -121,11 +121,11 @@ int stHash_stringEqualKey( const void *key1, const  void *key2 );
  * Invert the hash, such that the values become the keys and vice versa. Where there are multiple keys
  * mapping to the same value, only the first encountered key is stored.
  */
-stHash *stHash_invert(stHash *hash, uint32_t (*hashKey)(const void *),
+stHash *stHash_invert(stHash *hash, uint64_t (*hashKey)(const void *),
         int(*equalsFn)(const void *, const void *), void (*destructKeys)(void *), void (*destructValues)(void *));
 
 // access to the underlying functions:
-uint32_t (*stHash_getHashFunction(stHash *hash))(const void *);
+uint64_t (*stHash_getHashFunction(stHash *hash))(const void *);
 int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *);
 void (*stHash_getKeyDestructorFunction(stHash *hash))(void *);
 void (*stHash_getValueDestructorFunction(stHash *hash))(void *);

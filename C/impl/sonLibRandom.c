@@ -8,7 +8,7 @@
 
 const char *RANDOM_EXCEPTION_ID = "RANDOM_EXCEPTION";
 
-void st_randomSeed(int32_t seed) {
+void st_randomSeed(int64_t seed) {
     srand(seed);
 }
 
@@ -32,7 +32,7 @@ int64_t st_randomInt64(int64_t min, int64_t max) {
     return i;
 }
 
-int32_t st_randomInt(int32_t min, int32_t max) {
+int64_t st_randomInt(int64_t min, int64_t max) {
     return st_randomInt64(min, max);
 }
 

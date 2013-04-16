@@ -58,7 +58,7 @@ static void destructDB(stKVDatabase *database) {
 static void deleteDB(stKVDatabase *database) {
     destructDB(database);
     const char *dbDir = stKVDatabaseConf_getDir(stKVDatabase_getConf(database));
-    int32_t i = st_system("rm -rf %s", dbDir);
+    int64_t i = st_system("rm -rf %s", dbDir);
     if (i != 0) {
         st_errAbort("Tried to delete the temporary cactus disk: %s with exit code %d", dbDir, i);
     }
@@ -147,7 +147,7 @@ static void abortTransaction(stKVDatabase *database) {
 static void bulkSetRecords(stKVDatabase *database, stList *records) {
     startTransaction(database);
     stTry {
-        for(int32_t i=0; i<stList_length(records); i++) {
+        for(int64_t i=0; i<stList_length(records); i++) {
             stKVDatabaseBulkRequest *request = stList_get(records, i);
             switch(request->type) {
                 case UPDATE:
@@ -243,11 +243,11 @@ static void *getPartialRecord(stKVDatabase *database, int64_t key, int64_t zeroB
 }
 
 static stList *bulkGetRecords(stKVDatabase *database, stList* keys) {
-	int32_t n = stList_length(keys);
+	int64_t n = stList_length(keys);
 	stList* results = stList_construct3(n, (void(*)(void *))stKVDatabaseBulkResult_destruct);
 	//startTransaction(database);
 	stTry {
-		for (int32_t i = 0; i < n; ++i)
+		for (int64_t i = 0; i < n; ++i)
 		{
 			int64_t key = *((int64_t*)stList_get(keys, i));
 			int64_t recordSize;
@@ -268,7 +268,7 @@ static stList *bulkGetRecordsRange(stKVDatabase *database, int64_t firstKey, int
 	stList* results = stList_construct3(numRecords, (void(*)(void *))stKVDatabaseBulkResult_destruct);
 	//startTransaction(database);
 	stTry {
-		for (int32_t i = 0; i < numRecords; ++i)
+		for (int64_t i = 0; i < numRecords; ++i)
 		{
 			int64_t key = firstKey + i;
 			int64_t recordSize;
@@ -295,9 +295,9 @@ static void removeRecord(stKVDatabase *database, int64_t key) {
 static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
     startTransaction(database);
     stTry {
-        for(int32_t i=0; i<stList_length(records); i++) {
-            stInt64Tuple *j = stList_get(records, i);
-            removeRecord(database, stInt64Tuple_getPosition(j, 0));
+        for(int64_t i=0; i<stList_length(records); i++) {
+            stIntTuple *j = stList_get(records, i);
+            removeRecord(database, stIntTuple_getPosition(j, 0));
         }
         commitTransaction(database);
     }stCatch(ex) {

@@ -22,7 +22,7 @@ const char *ST_COMPRESSION_EXCEPTION_ID = "ST_COMPRESSION_EXCEPTION";
 //2^30, should be safe and big enough to find good compression.
 #define ST_LZ4_CHUNK_SIZE 1073741824
 
-void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
+void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int64_t level) {
     /*
      * Uses the lz4 algorithm to provide very fast compression.
      */
@@ -34,7 +34,7 @@ void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compresse
      */
     for(int64_t inputOffset=0; inputOffset < sizeInBytes; inputOffset += ST_LZ4_CHUNK_SIZE) {
         char subChunk = inputOffset + ST_LZ4_CHUNK_SIZE < sizeInBytes;
-        int32_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+(outputOffset+1), subChunk ? ST_LZ4_CHUNK_SIZE : sizeInBytes - inputOffset);
+        int64_t bytesWritten = LZ4_compress(((char*)data) + inputOffset, buffer+(outputOffset+1), subChunk ? ST_LZ4_CHUNK_SIZE : sizeInBytes - inputOffset);
         *(buffer+outputOffset) = subChunk;
         outputOffset += 1+bytesWritten;
         assert(outputOffset <= bufferSize);
@@ -57,7 +57,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
                 bufferSize += ST_LZ4_CHUNK_SIZE - outputBufferRemaining;
                 buffer = st_realloc(buffer, sizeof(char) * bufferSize);
             }
-            int32_t bytesRead = LZ4_uncompress(((char *)compressedData)+inputOffset,
+            int64_t bytesRead = LZ4_uncompress(((char *)compressedData)+inputOffset,
                                                 buffer + outputOffset, ST_LZ4_CHUNK_SIZE);
             if(bytesRead < 0) {
                 stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Tried to uncompress a full length chunk but got a negative return value from lz4_uncompress");
@@ -69,7 +69,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
             int64_t compressedLength = compressedSizeInBytes - inputOffset;
             assert(compressedLength < ST_LZ4_CHUNK_SIZE);
             while(1) {
-                int32_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset,
+                int64_t bytesWritten = LZ4_uncompress_unknownOutputSize(((char *)compressedData)+inputOffset,
                         buffer + outputOffset, compressedLength, outputBufferRemaining < ST_LZ4_CHUNK_SIZE ? outputBufferRemaining : ST_LZ4_CHUNK_SIZE);
                 if(bytesWritten >= 0 && bytesWritten <= outputBufferRemaining) {
                     outputOffset += bytesWritten;
@@ -89,7 +89,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
 
 #define Z_CHUNK 262144
 
-void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level) {
+void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int64_t level) {
     /*
      * The internals using the deflate command to avoid buffer overflows.
      */
@@ -202,7 +202,7 @@ void *stCompression_decompressZlib(void *compressedData, int64_t compressedSizeI
             ret = inflate(&strm, Z_NO_FLUSH); /* no bad return value */
             assert(ret != Z_STREAM_ERROR);
             if(ret == Z_NEED_DICT || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR) {
-                stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Error %i in decompressing string of size  %" PRIi64 " bytes\n", ret, compressedSizeInBytes);
+                stThrowNew(ST_COMPRESSION_EXCEPTION_ID, "Error %" PRIi64 " in decompressing string of size  %" PRIi64 " bytes\n", ret, compressedSizeInBytes);
             }
             outputOffset += outputAvailble - strm.avail_out; /*update the output buffer offset*/
         } while(strm.avail_out == 0);

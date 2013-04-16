@@ -15,7 +15,7 @@
 
 static void test_stString_copy(CuTest* testCase) {
     const char *test[3] = { "hello this is a test", "", "BOO\nTOO\n" };
-    int32_t i;
+    int64_t i;
     for(i=0; i<3; i++) {
         char *testCopy = stString_copy(test[i]);
         CuAssertTrue(testCase, testCopy != test[i]);
@@ -25,7 +25,7 @@ static void test_stString_copy(CuTest* testCase) {
 }
 
 static void test_stString_print(CuTest* testCase) {
-    char *cA = stString_print("Hello %s, foo %i %.1f", "world", 5, 7.0);
+    char *cA = stString_print("Hello %s, foo %" PRIi64 " %.1f", "world", 5, 7.0);
     CuAssertStrEquals(testCase, "Hello world, foo 5 7.0", cA);
     free(cA);
     cA = stString_print("");

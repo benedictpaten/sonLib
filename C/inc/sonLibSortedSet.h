@@ -96,7 +96,7 @@ void stSortedSet_remove(stSortedSet *sortedSet, void *object);
 /*
  * Gets the number of elements in the sorted set.
  */
-int32_t stSortedSet_size(stSortedSet *sortedSet);
+int64_t stSortedSet_size(stSortedSet *sortedSet);
 
 /*
  * Gets the first element (with lowest value), in the sorted set.

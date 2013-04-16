@@ -27,11 +27,11 @@ stList *stList_construct(void) {
     return stList_construct3(0, NULL);
 }
 
-stList *stList_construct2(int32_t size) {
+stList *stList_construct2(int64_t size) {
     return stList_construct3(size, NULL);
 }
 
-stList *stList_construct3(int32_t length, void (*destructElement)(void *)) {
+stList *stList_construct3(int64_t length, void (*destructElement)(void *)) {
     assert(length >= 0);
     stList *list = st_malloc(sizeof(stList));
     list->length = length;
@@ -43,7 +43,7 @@ stList *stList_construct3(int32_t length, void (*destructElement)(void *)) {
 
 /* free elements in list */
 static void destructElements(stList *list) {
-    for(int32_t i=0; i<stList_length(list); i++) { //only free up to known area of list
+    for(int64_t i=0; i<stList_length(list); i++) { //only free up to known area of list
         if(stList_get(list, i) != NULL) {
             list->destructElement(stList_get(list, i));
         }
@@ -62,7 +62,7 @@ void stList_destruct(stList *list) {
     }
 }
 
-int32_t stList_length(stList *list) {
+int64_t stList_length(stList *list) {
     if (list == NULL) {
         return 0;
     } else {
@@ -70,19 +70,19 @@ int32_t stList_length(stList *list) {
     }
 }
 
-void *stList_get(stList *list, int32_t index) {
+void *stList_get(stList *list, int64_t index) {
     assert(index >= 0);
     assert(index < stList_length(list));
     return list->list[index];
 }
 
-void stList_set(stList *list, int32_t index, void *item) {
+void stList_set(stList *list, int64_t index, void *item) {
     assert(index >= 0);
     assert(index < stList_length(list));
     list->list[index] = item;
 }
 
-static void *st_list_appendP(void *current, int32_t *currentSize, int32_t newSize, int32_t base) {
+static void *st_list_appendP(void *current, int64_t *currentSize, int64_t newSize, int64_t base) {
     assert(*currentSize <= newSize);
     void *new;
     new = memcpy(st_malloc(((int64_t)base)*newSize), current, ((int64_t)base)*(*currentSize));
@@ -101,7 +101,7 @@ void stList_append(stList *list, void *item) {
 }
 
 void stList_appendAll(stList *stListToAddTo, stList *stListToAdd) {
-    int32_t i;
+    int64_t i;
     assert(stListToAdd != stListToAddTo);
     for(i=0; i<stList_length(stListToAdd); i++) {
         stList_append(stListToAddTo, stList_get(stListToAdd, i));
@@ -118,11 +118,11 @@ void *stList_pop(stList *list) {
     return stList_remove(list, stList_length(list)-1);
 }
 
-void *stList_remove(stList *list, int32_t index) {
+void *stList_remove(stList *list, int64_t index) {
     assert(index >= 0);
     assert(index < stList_length(list));
     void *o = stList_get(list, index);
-    int32_t i;
+    int64_t i;
     for(i=index+1; i<stList_length(list); i++) {
         stList_set(list, i-1, stList_get(list, i));
     }
@@ -131,7 +131,7 @@ void *stList_remove(stList *list, int32_t index) {
 }
 
 void stList_removeItem(stList *list, void *item)  {
-    int32_t i;
+    int64_t i;
     for(i=0; i<stList_length(list); i++) {
         if(stList_get(list, i) == item) {
             stList_remove(list, i);
@@ -144,8 +144,8 @@ void *stList_removeFirst(stList *list) {
     return stList_remove(list, 0);
 }
 
-int32_t stList_contains(stList *list, void *item) {
-    int32_t i;
+int64_t stList_contains(stList *list, void *item) {
+    int64_t i;
     for(i=0; i<stList_length(list); i++) {
         if(stList_get(list, i) == item) {
             return 1;
@@ -161,7 +161,7 @@ stList *stList_copy(stList *list, void (*destructItem)(void *)) {
 }
 
 void stList_reverse(stList *list) {
-    int32_t i, j = stList_length(list);
+    int64_t i, j = stList_length(list);
     for(i=0; i<j/2; i++) {
         void *o = stList_get(list, j - 1 - i);
         stList_set(list, j - 1 - i, stList_get(list, i));
@@ -225,8 +225,8 @@ void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const vo
 }
 
 void stList_shuffle(stList *list) {
-    for(int32_t i=0; i<stList_length(list); i++) {
-        int32_t j = st_randomInt(0, stList_length(list));
+    for(int64_t i=0; i<stList_length(list); i++) {
+        int64_t j = st_randomInt(0, stList_length(list));
         void *o = stList_get(list, i);
         stList_set(list, i, stList_get(list, j));
         stList_set(list, j, o);
@@ -235,7 +235,7 @@ void stList_shuffle(stList *list) {
 
 stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const void *b)) {
     stSortedSet *sortedSet = stSortedSet_construct3(cmpFn, NULL);
-    int32_t i;
+    int64_t i;
     for(i=0; i<stList_length(list); i++) {
         stSortedSet_insert(sortedSet, stList_get(list, i));
     }
@@ -249,7 +249,7 @@ void stList_setDestructor(stList *list, void (*destructElement)(void *)) {
 
 stList *stList_filter(stList *list, bool(*fn)(void *)) {
     stList *list2 = stList_construct();
-    for (int32_t i = 0; i < stList_length(list); i++) {
+    for (int64_t i = 0; i < stList_length(list); i++) {
         void *o = stList_get(list, i);
         if (fn(o)) {
             stList_append(list2, o);
@@ -264,7 +264,7 @@ static stList *filterP(stList *list, stSortedSet *set, bool include) {
      * or containing the set difference if include is zero.
      */
     stList *list2 = stList_construct();
-    for (int32_t i = 0; i < stList_length(list); i++) {
+    for (int64_t i = 0; i < stList_length(list); i++) {
         void *o = stList_get(list, i);
         if ((stSortedSet_search(set, o) != NULL && include)
                 || (stSortedSet_search(set, o) == NULL && !include)) {
@@ -284,7 +284,7 @@ stList *stList_filterToInclude(stList *list, stSortedSet *set) {
 
 stList *stList_join(stList *listOfLists) {
     stList *joinedList = stList_construct();
-    for (int32_t i = 0; i < stList_length(listOfLists); i++) {
+    for (int64_t i = 0; i < stList_length(listOfLists); i++) {
         stList_appendAll(joinedList, stList_get(listOfLists, i));
     }
     return joinedList;

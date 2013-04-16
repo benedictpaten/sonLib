@@ -14,14 +14,14 @@ static void testSetup() {
     //compare by value of memory address
     hash = stHash_construct();
     //compare by value of ints.
-    hash2 = stHash_construct3((uint32_t(*)(const void *)) stIntTuple_hashKey, (int(*)(const void *, const void *)) stIntTuple_equalsFn,
+    hash2 = stHash_construct3((uint64_t(*)(const void *)) stIntTuple_hashKey, (int(*)(const void *, const void *)) stIntTuple_equalsFn,
             (void(*)(void *)) stIntTuple_destruct, (void(*)(void *)) stIntTuple_destruct);
-    one = stIntTuple_construct(1, 0);
-    two = stIntTuple_construct(1, 1);
-    three = stIntTuple_construct(1, 2);
-    four = stIntTuple_construct(1, 3);
-    five = stIntTuple_construct(1, 4);
-    six = stIntTuple_construct(1, 5);
+    one = stIntTuple_construct1( 0);
+    two = stIntTuple_construct1( 1);
+    three = stIntTuple_construct1( 2);
+    four = stIntTuple_construct1( 3);
+    five = stIntTuple_construct1( 4);
+    six = stIntTuple_construct1( 5);
 
     stHash_insert(hash, one, two);
     stHash_insert(hash, three, four);
@@ -47,7 +47,7 @@ static void test_stHash_construct(CuTest* testCase) {
 static void test_stHash_search(CuTest* testCase) {
     testSetup();
 
-    stIntTuple *i = stIntTuple_construct(1, 0);
+    stIntTuple *i = stIntTuple_construct1( 0);
 
     //Check search by memory address
     CuAssertTrue(testCase, stHash_search(hash, one) == two);
@@ -90,18 +90,18 @@ static void test_stHash_removeAndFreeKey(CuTest* testCase) {
     stHash *hash3 = stHash_construct2(free, free);
     stList *keys = stList_construct();
     stList *values = stList_construct();
-    int32_t keyNumber = 1000;
-    for (int32_t i = 0; i < keyNumber; i++) {
-        int32_t *key = st_malloc(sizeof(int32_t));
-        int32_t *value = st_malloc(sizeof(int32_t));
+    int64_t keyNumber = 1000;
+    for (int64_t i = 0; i < keyNumber; i++) {
+        int64_t *key = st_malloc(sizeof(int64_t));
+        int64_t *value = st_malloc(sizeof(int64_t));
         stList_append(keys, key);
         stList_append(values, value);
         stHash_insert(hash3, key, value);
     }
 
-    for (int32_t i = 0; i < keyNumber; i++) {
-        int32_t *key = stList_get(keys, i);
-        int32_t *value = stList_get(values, i);
+    for (int64_t i = 0; i < keyNumber; i++) {
+        int64_t *key = stList_get(keys, i);
+        int64_t *value = stList_get(values, i);
         CuAssertPtrEquals(testCase, value, stHash_removeAndFreeKey(hash3, key));
         free(value);
     }
@@ -149,7 +149,7 @@ static void test_stHash_testIterator(CuTest *testCase) {
 
     stHashIterator *iterator = stHash_getIterator(hash);
     stHashIterator *iteratorCopy = stHash_copyIterator(iterator);
-    int32_t i = 0;
+    int64_t i = 0;
     stHash *seen = stHash_construct();
     for (i = 0; i < 3; i++) {
         void *o = stHash_getNext(iterator);

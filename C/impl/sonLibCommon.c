@@ -52,7 +52,7 @@ void *st_calloc(int64_t elementNumber, size_t elementSize) {
 void st_setLogLevelFromString(const char *string) {
     if (string != NULL) {
         char *string2 = stString_copy(string);
-        for (int32_t i = 0; i < strlen(string); i++) {
+        for (int64_t i = 0; i < strlen(string); i++) {
             string2[i] = tolower(string2[i]);
         }
         if (strcmp(string2, "off") == 0) {
@@ -115,9 +115,9 @@ void st_uglyf(const char *string, ...) {
     va_end(ap);
 }
 
-int32_t st_system(const char *string, ...) {
+int64_t st_system(const char *string, ...) {
     static char cA[100000];
-    int32_t i;
+    int64_t i;
     va_list ap;
     va_start(ap, string);
     vsprintf(cA, string, ap);

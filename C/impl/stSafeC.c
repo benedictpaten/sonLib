@@ -112,7 +112,7 @@ char *stSafeCDynFmt(const char *format, ...) {
 
 
 /* convert a string to a 32 unsigned int, exception if invalid */
-uint32_t stSafeStrToUInt32(const char *str) {
+uint64_t stSafeStrToUInt32(const char *str) {
     char *end;
     long num = strtol(str, &end, 10);
     if ((end == str) || (*end != '\0') || (num < 0)) {

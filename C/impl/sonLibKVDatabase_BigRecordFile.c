@@ -50,7 +50,7 @@ static char* createRecordPath(stKVDatabaseConf* conf, int64_t key)
 	const char *name = stKVDatabaseConf_getDatabaseName(conf);
 	if (name == NULL)
 		name = "db";
-	int32_t size = strlen(basePath) + strlen(name) +
+	int64_t size = strlen(basePath) + strlen(name) +
 			strlen(RECORD_FILE_TAG) + 65;
 	char* recordPath = (char*)malloc(size * sizeof(char));
 	sprintf(recordPath, "%s/%s.%s%lld", basePath, name, RECORD_FILE_TAG,
@@ -101,7 +101,7 @@ static void add_to_sortedSet(const char* recordPath, void* arg)
 	const char* keyString = fileName + strlen(RECORD_FILE_TAG);
 	assert (keyString != NULL);
 	int64_t key = atol(keyString);
-	stSortedSet_insert(sortedSet, stInt64Tuple_construct(1, key));
+	stSortedSet_insert(sortedSet, stIntTuple_construct1( key));
 }
 
 /* get around complicated casting
@@ -119,8 +119,8 @@ static stSortedSet* constructDB(stKVDatabaseConf *conf, bool create)
 	const char *basePath = stKVDatabaseConf_getDir(conf);
     mkdir(basePath, S_IRWXU);
     stSortedSet* sortedSet = stSortedSet_construct3(
-    		(int (*)(const void *, const void *))stInt64Tuple_cmpFn,
-    		(void (*)(void *))stInt64Tuple_destruct);
+    		(int (*)(const void *, const void *))stIntTuple_cmpFn,
+    		(void (*)(void *))stIntTuple_destruct);
     if (create == true)
     {
     	visitRecords(basePath, remove_with_arg, NULL);
@@ -161,9 +161,9 @@ static void deleteDB(stKVDatabase *database)
 static bool containsRecord(stKVDatabase *database, int64_t key)
 {
 	stSortedSet* sortedSet  = (stSortedSet*)database->dbImpl;
-	stInt64Tuple* tuple = stInt64Tuple_construct(1, key);
+	stIntTuple* tuple = stIntTuple_construct1( key);
 	void* found = stSortedSet_search(sortedSet, tuple);
-	stInt64Tuple_destruct(tuple);
+	stIntTuple_destruct(tuple);
 	return found != NULL;
 }
 
@@ -190,7 +190,7 @@ static void insertRecord(stKVDatabase *database, int64_t key, const void *value,
 	{
 		stThrowNew(ST_KV_DATABASE_EXCEPTION_ID, "Write file: %s", recordPath);
 	}
-	stSortedSet_insert(sortedSet, stInt64Tuple_construct(1, key));
+	stSortedSet_insert(sortedSet, stIntTuple_construct1( key));
 	fclose(recHandle);
 	free(recordPath);
 }
@@ -288,9 +288,9 @@ static void removeRecord(stKVDatabase *database, int64_t key)
 				"Removing key not found: %lld", key);
 	}
 	stSortedSet* sortedSet  = (stSortedSet*)database->dbImpl;
-	stInt64Tuple* tuple = stInt64Tuple_construct(1, key);
+	stIntTuple* tuple = stIntTuple_construct1( key);
 	stSortedSet_remove(sortedSet, tuple);
-	stInt64Tuple_destruct(tuple);
+	stIntTuple_destruct(tuple);
 	char* recordPath = createRecordPath(stKVDatabase_getConf(database), key);
 	int retVal = remove(recordPath);
 	if (retVal != 0)

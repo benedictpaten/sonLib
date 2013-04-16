@@ -44,7 +44,7 @@ static void test_stDoubleTuple_construct(CuTest *testCase) {
 
 static void test_stDoubleTuple_hashKey(CuTest *testCase) {
     setup();
-    stHash *hash = stHash_construct3((uint32_t (*)(const void *))stDoubleTuple_hashKey, (int (*)(const void *, const void *))stDoubleTuple_equalsFn, NULL, NULL);
+    stHash *hash = stHash_construct3((uint64_t (*)(const void *))stDoubleTuple_hashKey, (int (*)(const void *, const void *))stDoubleTuple_equalsFn, NULL, NULL);
     stHash_insert(hash, doubleTuple1, doubleTuple1);
     stHash_insert(hash, doubleTuple2, doubleTuple2);
     CuAssertTrue(testCase, stHash_search(hash, doubleTuple1) != NULL);

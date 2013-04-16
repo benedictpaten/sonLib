@@ -86,11 +86,11 @@ void stTree_setParent(stTree *tree, stTree *parent) {
     }
 }
 
-int32_t stTree_getChildNumber(stTree *tree) {
+int64_t stTree_getChildNumber(stTree *tree) {
     return stList_length(tree->nodes);
 }
 
-stTree *stTree_getChild(stTree *tree, int32_t i) {
+stTree *stTree_getChild(stTree *tree, int64_t i) {
     return stList_get(tree->nodes, i);
 }
 
@@ -238,7 +238,7 @@ stTree *stTree_parseNewickString(const char *string) {
 static char *tree_getNewickTreeStringP(stTree *tree) {
     char *cA, *cA2;
     if(stTree_getChildNumber(tree) > 0) {
-        int32_t i;
+        int64_t i;
         cA = stString_copy("(");
         for(i=0; i<stTree_getChildNumber(tree); i++) {
             cA2 = tree_getNewickTreeStringP(stTree_getChild(tree, i));

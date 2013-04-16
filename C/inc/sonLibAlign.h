@@ -24,8 +24,8 @@ extern "C" {
  * Constructs a multiple sequence alignment. Each sequence is a 'row' in the alignment,
  * and has a given string identifying it, a start coordinate and a strand.
  */
-stAlign *stAlign_construct(int32_t sequenceNumber,
-                           const char *contig1, int32_t start1, int32_t strand1, ...);
+stAlign *stAlign_construct(int64_t sequenceNumber,
+                           const char *contig1, int64_t start1, int64_t strand1, ...);
 
 /*
  * Destructs a multiple sequence alignment.
@@ -38,12 +38,12 @@ void stAlign_destruct(stAlign *align);
  * is the index of the first row in the alignment and subsequent args (whose number
  * is sequenceNumber -1) are the other rows that are part of the alignment block.
  */
-void stAlign_add(stAlign *align, int32_t length, int32_t sequenceNumber, int32_t firstSeqIndex, ...);
+void stAlign_add(stAlign *align, int64_t length, int64_t sequenceNumber, int64_t firstSeqIndex, ...);
 
 /*
  * Returns the number of alignment blocks in the alignment.
  */
-int32_t stAlign_length(stAlign *align);
+int64_t stAlign_length(stAlign *align);
 
 /*
  * Gets an iterator over the alignment blocks.
@@ -73,17 +73,17 @@ void stAlign_destructIterator(stAlignIterator *iterator);
 /*
  * Get the length of the alignment block (the block is a gap less alignment, so all segments have the same length).
  */
-int32_t stAlignBlock_getLength(stAlignBlock *alignBlock);
+int64_t stAlignBlock_getLength(stAlignBlock *alignBlock);
 
 /*
  * Get the number of alignment segments in the block.
  */
-int32_t stAlignBlock_getSequenceNumber(stAlignBlock *alignBlock);
+int64_t stAlignBlock_getSequenceNumber(stAlignBlock *alignBlock);
 
 /*
  * Get an alignment segment for the given index.
  */
-stAlignSegment *stAlignBlock_getSegment(stAlignBlock *alignBlock, int32_t);
+stAlignSegment *stAlignBlock_getSegment(stAlignBlock *alignBlock, int64_t);
 
 /*
  * Get an iterator over the alignment segments in the alignment block.
@@ -118,7 +118,7 @@ stAlign *stAlignBlock_getAlignment(stAlignBlock *alignBlock);
 /*
  * Get the index of the row of the alignment segment in the alignment (i.e. according to the order given in the construction).
  */
-int32_t stAlignSegment_getIndex(stAlignSegment *alignSegment);
+int64_t stAlignSegment_getIndex(stAlignSegment *alignSegment);
 
 /*
  * Get the string describing the sequence the alignment segment is part of.
@@ -128,12 +128,12 @@ const char *stAlignSegment_getString(stAlignSegment *alignSegment);
 /*
  * Get the start index of the alignment segment in the sequence.
  */
-int32_t stAlignSegment_getStart(stAlignSegment *alignSegment);
+int64_t stAlignSegment_getStart(stAlignSegment *alignSegment);
 
 /*
  * Get the end index of the alignment segment in the sequence.
  */
-int32_t stAlignSegment_getEnd(stAlignSegment *alignSegment);
+int64_t stAlignSegment_getEnd(stAlignSegment *alignSegment);
 
 /*
  * Get the strand of the alignment segment on the sequence.
@@ -143,7 +143,7 @@ bool stAlignSegment_getStrand(stAlignSegment *alignSegment);
 /*
  * Gets the length of the alignment segment.
  */
-int32_t stAlignSegment_getLength(stAlignSegment *alignSegment);
+int64_t stAlignSegment_getLength(stAlignSegment *alignSegment);
 
 /*
  * Gets the alignment block of the alignment segment.

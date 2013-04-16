@@ -26,7 +26,7 @@ extern const char *SET_EXCEPTION_ID;
 /*
  * Function which generates hash key from pointer, should work well regardless of pointer size.
  */
-uint32_t stSet_pointer(const void *k);
+uint64_t stSet_pointer(const void *k);
 
 /*
  * Constructs set, with no destructors for keys or values.
@@ -41,7 +41,7 @@ stSet *stSet_construct2(void (*destructKeys)(void *));
 /*
  * Constructs a set using the given comparison functions.
  */
-stSet *stSet_construct3(uint32_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
+stSet *stSet_construct3(uint64_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
         void (*destructKeys)(void *));
 
 /*
@@ -72,7 +72,7 @@ void *stSet_removeAndFreeKey(stSet *set, void *key);
 /*
  * Returns the number of keys in the set.
  */
-int32_t stSet_size(stSet *set);
+int64_t stSet_size(stSet *set);
 
 /*
  * Returns an iterator of the keys in the set.
@@ -106,7 +106,7 @@ stSet *stSet_getIntersection(stSet *set1, stSet *set2);
 stSet *stSet_getDifference(stSet *set1, stSet *set2);
 
 // Get access to the underlying functions
-uint32_t (*stSet_getHashFunction(stSet *set))(const void *);
+uint64_t (*stSet_getHashFunction(stSet *set))(const void *);
 int (*stSet_getEqualityFunction(stSet *set))(const void *, const void *);
 void (*stSet_getDestructorFunction(stSet *set))(void *);
 

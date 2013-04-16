@@ -16,11 +16,11 @@
 #include "pairwiseAlignment.h"
 
 int main(int argc, char *argv[]) {
-    int32_t i;
+    int64_t i;
     struct List *pAs;
     FILE *fileHandle;
     struct PairwiseAlignment *pA;
-    int32_t keepProbs;
+    int64_t keepProbs;
 
     assert(argc == 3);
     if(strcmp(argv[2], "True") == 0) {

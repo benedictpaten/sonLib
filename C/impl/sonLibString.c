@@ -22,12 +22,12 @@ char *stString_copy(const char *string) {
 }
 
 char *stString_print(const char *string, ...) {
-    int32_t arraySize = 0;
+    int64_t arraySize = 0;
     static char *cA = NULL;
     //return;
     va_list ap;
     va_start(ap, string);
-    int32_t i = vsnprintf(cA, arraySize, string, ap);
+    int64_t i = vsnprintf(cA, arraySize, string, ap);
     va_end(ap);
     assert(i >= 0);
     if(i >= arraySize) {
@@ -61,8 +61,8 @@ char *stString_getNextWord(char **string) {
     return NULL;
 }
 
-static int32_t string_replaceP(char *start, const char *pattern) {
-    uint32_t i;
+static int64_t string_replaceP(char *start, const char *pattern) {
+    uint64_t i;
     for(i=0; i<strlen(pattern); i++) {
         if(start[i] == '\0' || start[i] != pattern[i]) {
             return 0;
@@ -73,7 +73,7 @@ static int32_t string_replaceP(char *start, const char *pattern) {
 
 char *stString_replace(const char *originalString, const char *toReplace, const char *replacement) {
     char *i, *k;
-    uint32_t j;
+    uint64_t j;
     char *newString;
 
     assert(strlen(toReplace) > 0); //Must be non zero length replacement string.
@@ -106,16 +106,16 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
     return newString;
 }
 
-char *stString_join(const char *pad, const char **strings, int32_t length) {
+char *stString_join(const char *pad, const char **strings, int64_t length) {
     int64_t padLength = strlen(pad);
     assert(length >= 0);
     int64_t j = padLength * (length > 0 ? length - 1 : 0) + 1;
-    for(int32_t i=0; i<length; i++) {
+    for(int64_t i=0; i<length; i++) {
         j += strlen(strings[i]);
     }
     char *cA = st_malloc(sizeof(char) * j);
     j = 0;
-    for(int32_t i=0; i<length; i++) {
+    for(int64_t i=0; i<length; i++) {
         const char *cA2 = strings[i];
         int64_t k = (int64_t)strlen(cA2);
         memcpy(cA + j, cA2, k);
@@ -145,7 +145,7 @@ stList *stString_split(const char *string) {
     return tokens;
 }
 
-char *stString_getSubString(const char *cA, int32_t start, int32_t length) {
+char *stString_getSubString(const char *cA, int64_t start, int64_t length) {
     char *cA2 = memcpy(st_malloc(sizeof(char) * (length + 1)), cA + start, length);
     cA2[length] = '\0';
     return cA2;

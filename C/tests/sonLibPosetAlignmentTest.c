@@ -18,13 +18,13 @@
  * extra pair of aligned positions is added to the alignment that the alignment
  * remains partially ordered.
  */
-static const int32_t MAX_SEQUENCE_NUMBER = 10;
-static const int32_t MAX_SEQUENCE_SIZE = 100;
-static const int32_t MAX_ALIGNMENTS = 100;
-static const int32_t MAX_ALIGNED_PAIRS = 10000;
+static const int64_t MAX_SEQUENCE_NUMBER = 10;
+static const int64_t MAX_SEQUENCE_SIZE = 100;
+static const int64_t MAX_ALIGNMENTS = 100;
+static const int64_t MAX_ALIGNED_PAIRS = 10000;
 
 
-static int32_t sequenceNumber;
+static int64_t sequenceNumber;
 static stPosetAlignment *posetAlignment = NULL;
 static void teardown() {
     if(posetAlignment != NULL) {
@@ -53,13 +53,13 @@ static void test_stPosetAlignment_getSequenceNumber(CuTest *testCase) {
  * This builds an adjacency list structure for the the sequences. Every sequence-position
  * has a column in the hash with which it can be aligned with.
  */
-static stHash *buildAdjacencyList(stList *pairs, int32_t sequenceNumber) {
-    stHash *hash = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey,
+static stHash *buildAdjacencyList(stList *pairs, int64_t sequenceNumber) {
+    stHash *hash = stHash_construct3((uint64_t (*)(const void *))stIntTuple_hashKey,
             (int (*)(const void *, const void *))stIntTuple_equalsFn,
             (void (*)(void *))stIntTuple_destruct, NULL);
-    for(int32_t seq=0; seq<sequenceNumber; seq++) {
-        for(int32_t position=0; position<MAX_SEQUENCE_SIZE; position++) {
-            stIntTuple *seqPos = stIntTuple_construct(2, seq, position);
+    for(int64_t seq=0; seq<sequenceNumber; seq++) {
+        for(int64_t position=0; position<MAX_SEQUENCE_SIZE; position++) {
+            stIntTuple *seqPos = stIntTuple_construct2( seq, position);
             stSortedSet *column = stSortedSet_construct3((int (*)(const void *, const void *))stIntTuple_cmpFn, NULL);
             stSortedSet_insert(column, seqPos);
             stHash_insert(hash, seqPos, column);
@@ -68,8 +68,8 @@ static stHash *buildAdjacencyList(stList *pairs, int32_t sequenceNumber) {
     stListIterator *it = stList_getIterator(pairs);
     stIntTuple *pair;
     while((pair = stList_getNext(it)) != NULL) {
-       stIntTuple *seqPos1 = stIntTuple_construct(2, stIntTuple_getPosition(pair, 0), stIntTuple_getPosition(pair, 1));
-       stIntTuple *seqPos2 = stIntTuple_construct(2, stIntTuple_getPosition(pair, 2), stIntTuple_getPosition(pair, 3));
+       stIntTuple *seqPos1 = stIntTuple_construct2( stIntTuple_getPosition(pair, 0), stIntTuple_getPosition(pair, 1));
+       stIntTuple *seqPos2 = stIntTuple_construct2( stIntTuple_getPosition(pair, 2), stIntTuple_getPosition(pair, 3));
        stSortedSet *column1 = stHash_search(hash, seqPos1);
        assert(column1 != NULL);
        stSortedSet *column2 = stHash_search(hash, seqPos2);
@@ -98,12 +98,12 @@ static stHash *buildAdjacencyList(stList *pairs, int32_t sequenceNumber) {
 /*
  * Function does the actual depth first search to detect if the thing has an acyclic ordering.
  */
-static int32_t dfs(stHash *adjacencyList, stIntTuple *seqPos,
+static int64_t dfs(stHash *adjacencyList, stIntTuple *seqPos,
                                stSortedSet *started, stSortedSet *done) {
     if(stSortedSet_search(started, seqPos) != NULL) {
         if(stSortedSet_search(done, seqPos) == NULL) {
             //We have detected a cycle
-            //st_logInfo("I have cycle %i %i\n", stIntTuple_getPosition(seqPos, 0), stIntTuple_getPosition(seqPos, 1));
+            //st_logInfo("I have cycle %" PRIi64 " %" PRIi64 "\n", stIntTuple_getPosition(seqPos, 0), stIntTuple_getPosition(seqPos, 1));
             return 1;
         }
         //We have already explored this area, but no cycle.
@@ -111,9 +111,9 @@ static int32_t dfs(stHash *adjacencyList, stIntTuple *seqPos,
     }
     stSortedSet_insert(started, seqPos);
 
-    int32_t cycle =0;
+    int64_t cycle =0;
 
-    stIntTuple *nextSeqPos = stIntTuple_construct(2, stIntTuple_getPosition(seqPos, 0), stIntTuple_getPosition(seqPos, 1) + 1);
+    stIntTuple *nextSeqPos = stIntTuple_construct2( stIntTuple_getPosition(seqPos, 0), stIntTuple_getPosition(seqPos, 1) + 1);
     stSortedSet *column = stHash_search(adjacencyList, nextSeqPos);
     if(column != NULL) { //It is in the adjacency list, so we can do the recursion
         assert(stSortedSet_search(column, nextSeqPos) != NULL);
@@ -133,16 +133,16 @@ static int32_t dfs(stHash *adjacencyList, stIntTuple *seqPos,
  * Uses the functions above to build an adjacency list, then by DFS attempts to create
  * a valid topological sort, returning non-zero if the graph contains a cycle.
  */
-static int32_t containsACycle(stList *pairs, int32_t sequenceNumber) {
+static int64_t containsACycle(stList *pairs, int64_t sequenceNumber) {
     //Build an adjacency list structure..
     stHash *adjacencyList = buildAdjacencyList(pairs, sequenceNumber);
 
     //Do a topological sort of the adjacency list
     stSortedSet *started = stSortedSet_construct3((int (*)(const void *, const void *))stIntTuple_cmpFn, NULL);
     stSortedSet *done = stSortedSet_construct3((int (*)(const void *, const void *))stIntTuple_cmpFn, NULL);
-    int32_t cyclic = 0;
-    for(int32_t seq=0; seq<sequenceNumber; seq++) {
-        stIntTuple *seqPos = stIntTuple_construct(2, seq, 0); //The following hacks avoid memory cleanup..
+    int64_t cyclic = 0;
+    for(int64_t seq=0; seq<sequenceNumber; seq++) {
+        stIntTuple *seqPos = stIntTuple_construct2( seq, 0); //The following hacks avoid memory cleanup..
         stSortedSet *column = stHash_search(adjacencyList, seqPos);
         assert(column != NULL);
         stIntTuple *seqPos2 = stSortedSet_search(column, seqPos);
@@ -171,42 +171,42 @@ static int32_t containsACycle(stList *pairs, int32_t sequenceNumber) {
 
 
 static void test_stPosetAlignment_addAndIsPossible(CuTest *testCase) {
-    for(int32_t trial=0; trial<100; trial++) {
+    for(int64_t trial=0; trial<100; trial++) {
         setup();
 
         //Make random number of sequences.
         stList *sequenceLengths = stList_construct3(0, (void (*)(void *))stIntTuple_destruct);
-        for(int32_t i=0; i<sequenceNumber; i++) {
-            stList_append(sequenceLengths, stIntTuple_construct(1, st_randomInt(0, MAX_SEQUENCE_SIZE)));
+        for(int64_t i=0; i<sequenceNumber; i++) {
+            stList_append(sequenceLengths, stIntTuple_construct1( st_randomInt(0, MAX_SEQUENCE_SIZE)));
         }
 
         //Propose random alignment pairs...
         stList *pairs = stList_construct3(0, (void(*)(void *))stIntTuple_destruct);
-        int32_t maxAlignedPairs = st_randomInt(0, MAX_ALIGNMENTS);
+        int64_t maxAlignedPairs = st_randomInt(0, MAX_ALIGNMENTS);
         if(sequenceNumber > 0) {
-            for(int32_t i=0; i<maxAlignedPairs; i++) {
-                int32_t seq1 = st_randomInt(0, sequenceNumber);
-                int32_t seqLength1 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
+            for(int64_t i=0; i<maxAlignedPairs; i++) {
+                int64_t seq1 = st_randomInt(0, sequenceNumber);
+                int64_t seqLength1 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
                 if(seqLength1 == 0) {
                     continue;
                 }
-                int32_t position1 = st_randomInt(0, seqLength1);
-                int32_t seq2 = st_randomInt(0, sequenceNumber);
-                int32_t seqLength2 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
+                int64_t position1 = st_randomInt(0, seqLength1);
+                int64_t seq2 = st_randomInt(0, sequenceNumber);
+                int64_t seqLength2 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
                 if(seqLength2 == 0) {
                     continue;
                 }
-                int32_t position2 = st_randomInt(0, seqLength2);
+                int64_t position2 = st_randomInt(0, seqLength2);
                 if(seq1 != seq2) {
-                    stList_append(pairs, stIntTuple_construct(4, seq1, position1, seq2, position2));
+                    stList_append(pairs, stIntTuple_construct4( seq1, position1, seq2, position2));
                     if(stPosetAlignment_isPossible(posetAlignment, seq1, position1, seq2, position2)) {
-                        st_logInfo("In %i %i %i %i \n", seq1, position1, seq2, position2);
+                        st_logInfo("In %" PRIi64 " %" PRIi64 " %" PRIi64 " %" PRIi64 " \n", seq1, position1, seq2, position2);
                         //For each accepted pair check it doesn't create a cycle.
                         CuAssertTrue(testCase, !containsACycle(pairs, sequenceNumber));
                         CuAssertTrue(testCase, stPosetAlignment_add(posetAlignment, seq1, position1, seq2, position2));
                     }
                     else {
-                        st_logInfo("Out %i %i %i %i \n", seq1, position1, seq2, position2);
+                        st_logInfo("Out %" PRIi64 " %" PRIi64 " %" PRIi64 " %" PRIi64 " \n", seq1, position1, seq2, position2);
                         //For each rejected pair check it creates a cycle..
                         CuAssertTrue(testCase, containsACycle(pairs, sequenceNumber));
                         CuAssertTrue(testCase, !stPosetAlignment_isPossible(posetAlignment, seq1, position1, seq2, position2));
@@ -221,7 +221,7 @@ static void test_stPosetAlignment_addAndIsPossible(CuTest *testCase) {
         stList_destruct(sequenceLengths);
         stList_destruct(pairs);
         teardown();
-        st_logInfo("Passed a random ordering test with %i sequences and %i aligned pairs\n", sequenceNumber, maxAlignedPairs);
+        st_logInfo("Passed a random ordering test with %" PRIi64 " sequences and %" PRIi64 " aligned pairs\n", sequenceNumber, maxAlignedPairs);
     }
 }
 

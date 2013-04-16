@@ -14,15 +14,15 @@ static void testSetup() {
     // compare by value of memory address
     set0 = stSet_construct();
     // compare by value of ints.
-    set1 = stSet_construct3((uint32_t(*)(const void *)) stIntTuple_hashKey, 
+    set1 = stSet_construct3((uint64_t(*)(const void *)) stIntTuple_hashKey, 
                             (int(*)(const void *, const void *)) stIntTuple_equalsFn,
                             (void(*)(void *)) stIntTuple_destruct);
-    one = stIntTuple_construct(1, 0);
-    two = stIntTuple_construct(1, 1);
-    three = stIntTuple_construct(1, 2);
-    four = stIntTuple_construct(1, 3);
-    five = stIntTuple_construct(1, 4);
-    six = stIntTuple_construct(1, 5);
+    one = stIntTuple_construct1( 0);
+    two = stIntTuple_construct1( 1);
+    three = stIntTuple_construct1( 2);
+    four = stIntTuple_construct1( 3);
+    five = stIntTuple_construct1( 4);
+    six = stIntTuple_construct1( 5);
     stSet_insert(set0, one);
     stSet_insert(set0, two);
     stSet_insert(set0, three);
@@ -48,9 +48,9 @@ static void test_stSet_construct(CuTest* testCase) {
 }
 static void test_stSet_search(CuTest* testCase) {
     testSetup();
-    stIntTuple *i = stIntTuple_construct(1, 0);
-    stIntTuple *j = stIntTuple_construct(10, 0);
-    stIntTuple *k = stIntTuple_construct(1, 5);
+    stIntTuple *i = stIntTuple_construct1( 0);
+    stIntTuple *j = stIntTuple_construct2(10, 0);
+    stIntTuple *k = stIntTuple_construct1( 5);
     //Check search by memory address
     CuAssertTrue(testCase, stSet_search(set0, one) == one);
     CuAssertTrue(testCase, stSet_search(set0, two) == two);
@@ -92,14 +92,14 @@ static void test_stSet_remove(CuTest* testCase) {
 static void test_stSet_removeAndFreeKey(CuTest* testCase) {
     stSet *set2 = stSet_construct2(free);
     stList *keys = stList_construct();
-    int32_t keyNumber = 1000;
-    for (int32_t i = 0; i < keyNumber; i++) {
-        int32_t *key = st_malloc(sizeof(*key));
+    int64_t keyNumber = 1000;
+    for (int64_t i = 0; i < keyNumber; i++) {
+        int64_t *key = st_malloc(sizeof(*key));
         stList_append(keys, key);
         stSet_insert(set2, key);
     }
-    for (int32_t i = 0; i < keyNumber; i++) {
-        int32_t *key = stList_get(keys, i);
+    for (int64_t i = 0; i < keyNumber; i++) {
+        int64_t *key = stList_get(keys, i);
         CuAssertPtrEquals(testCase, key, stSet_removeAndFreeKey(set2, key));
     }
     CuAssertIntEquals(testCase, 0, stSet_size(set2));
@@ -116,7 +116,7 @@ static void test_stSet_insert(CuTest* testCase) {
     CuAssertTrue(testCase, stSet_search(set0, one) == one);
     stSet_insert(set0, three);
     CuAssertTrue(testCase, stSet_search(set0, three) == three);
-    stIntTuple *seven = stIntTuple_construct(7, 7);
+    stIntTuple *seven = stIntTuple_construct2(7, 7);
     CuAssertTrue(testCase, stSet_search(set0, seven) == NULL);
     stSet_insert(set0, seven);
     CuAssertTrue(testCase, stSet_search(set0, seven) == seven);
@@ -139,7 +139,7 @@ static void test_stSet_testIterator(CuTest *testCase) {
     testSetup();
     stSetIterator *iterator = stSet_getIterator(set0);
     stSetIterator *iteratorCopy = stSet_copyIterator(iterator);
-    int32_t i = 0;
+    int64_t i = 0;
     stSet *seen = stSet_construct();
     for (i = 0; i < 6; i++) {
         void *o = stSet_getNext(iterator);
@@ -190,16 +190,16 @@ static void test_stSet_getUnion(CuTest* testCase) {
     set2 = stSet_construct();
     set3 = stSet_construct();
     stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
-    uniqs[0] = stIntTuple_construct(9, 0);
-    uniqs[1] = stIntTuple_construct(9, 1);
-    uniqs[2] = stIntTuple_construct(9, 2);
-    uniqs[3] = stIntTuple_construct(9, 3);
+    uniqs[0] = stIntTuple_construct2(9, 0);
+    uniqs[1] = stIntTuple_construct2(9, 1);
+    uniqs[2] = stIntTuple_construct2(9, 2);
+    uniqs[3] = stIntTuple_construct2(9, 3);
     stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
-    common[0] = stIntTuple_construct(5, 0);
-    common[1] = stIntTuple_construct(5, 1);
-    common[2] = stIntTuple_construct(5, 2);
-    common[3] = stIntTuple_construct(5, 3);
-    common[4] = stIntTuple_construct(5, 4);
+    common[0] = stIntTuple_construct2(5, 0);
+    common[1] = stIntTuple_construct2(5, 1);
+    common[2] = stIntTuple_construct2(5, 2);
+    common[3] = stIntTuple_construct2(5, 3);
+    common[4] = stIntTuple_construct2(5, 4);
     for (int i = 0; i < 5; ++i) {
         stSet_insert(set2, common[i]);
         stSet_insert(set3, common[i]);
@@ -247,16 +247,16 @@ static void test_stSet_getIntersection(CuTest* testCase) {
     set2 = stSet_construct();
     set3 = stSet_construct();
     stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
-    uniqs[0] = stIntTuple_construct(9, 0);
-    uniqs[1] = stIntTuple_construct(9, 1);
-    uniqs[2] = stIntTuple_construct(9, 2);
-    uniqs[3] = stIntTuple_construct(9, 3);
+    uniqs[0] = stIntTuple_construct2(9, 0);
+    uniqs[1] = stIntTuple_construct2(9, 1);
+    uniqs[2] = stIntTuple_construct2(9, 2);
+    uniqs[3] = stIntTuple_construct2(9, 3);
     stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
-    common[0] = stIntTuple_construct(5, 0);
-    common[1] = stIntTuple_construct(5, 1);
-    common[2] = stIntTuple_construct(5, 2);
-    common[3] = stIntTuple_construct(5, 3);
-    common[4] = stIntTuple_construct(5, 4);
+    common[0] = stIntTuple_construct2(5, 0);
+    common[1] = stIntTuple_construct2(5, 1);
+    common[2] = stIntTuple_construct2(5, 2);
+    common[3] = stIntTuple_construct2(5, 3);
+    common[4] = stIntTuple_construct2(5, 4);
     for (int i = 0; i < 5; ++i) {
         stSet_insert(set2, common[i]);
         stSet_insert(set3, common[i]);
@@ -313,16 +313,16 @@ static void test_stSet_getDifference(CuTest* testCase) {
     set2 = stSet_construct();
     set3 = stSet_construct();
     stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
-    uniqs[0] = stIntTuple_construct(9, 0);
-    uniqs[1] = stIntTuple_construct(9, 1);
-    uniqs[2] = stIntTuple_construct(9, 2);
-    uniqs[3] = stIntTuple_construct(9, 3);
+    uniqs[0] = stIntTuple_construct2(9, 0);
+    uniqs[1] = stIntTuple_construct2(9, 1);
+    uniqs[2] = stIntTuple_construct2(9, 2);
+    uniqs[3] = stIntTuple_construct2(9, 3);
     stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
-    common[0] = stIntTuple_construct(5, 0);
-    common[1] = stIntTuple_construct(5, 1);
-    common[2] = stIntTuple_construct(5, 2);
-    common[3] = stIntTuple_construct(5, 3);
-    common[4] = stIntTuple_construct(5, 4);
+    common[0] = stIntTuple_construct2(5, 0);
+    common[1] = stIntTuple_construct2(5, 1);
+    common[2] = stIntTuple_construct2(5, 2);
+    common[3] = stIntTuple_construct2(5, 3);
+    common[4] = stIntTuple_construct2(5, 4);
     for (int i = 0; i < 5; ++i) {
         stSet_insert(set2, common[i]);
         stSet_insert(set3, common[i]);

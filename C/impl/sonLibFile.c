@@ -17,12 +17,12 @@
 
 const char *ST_FILE_EXCEPTION = "ST_FILE_EXCEPTION";
 
-static int32_t stFile_getLineFromFileP(char **s, int32_t *n, FILE *f) {
-    register int32_t nMinus1 = ((*n) - 1), i = 0;
+static int64_t stFile_getLineFromFileP(char **s, int64_t *n, FILE *f) {
+    register int64_t nMinus1 = ((*n) - 1), i = 0;
 
     char *s2 = *s;
     while (1) {
-        register int32_t ch = (char) getc(f);
+        register int64_t ch = (char) getc(f);
 
         if (ch == '\r') {
             ch = getc(f);
@@ -48,9 +48,9 @@ static int32_t stFile_getLineFromFileP(char **s, int32_t *n, FILE *f) {
 }
 
 char *stFile_getLineFromFile(FILE *fileHandle) {
-    int32_t length = 100;
+    int64_t length = 100;
     char *cA = st_malloc(length * sizeof(char));
-    int32_t i = stFile_getLineFromFileP(&cA, &length, fileHandle);
+    int64_t i = stFile_getLineFromFileP(&cA, &length, fileHandle);
     if (i == -1 && strlen(cA) == 0) {
         free(cA);
         return NULL;
@@ -91,7 +91,7 @@ void stFile_mkdir(const char *dirName) {
     }
     int i = mkdir(dirName, S_IRWXU | S_IRWXG | S_IRWXO);
     if (i) {
-        stThrowNew(ST_FILE_EXCEPTION, "Error code from mkdir function: %i\n",
+        stThrowNew(ST_FILE_EXCEPTION, "Error code from mkdir function: %" PRIi64 "\n",
                 i);
     }
 }

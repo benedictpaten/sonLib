@@ -23,8 +23,8 @@ struct _stSetIterator {
     stHashIterator *hashIterator;
 };
 
-uint32_t stSet_pointer(const void *k) {
-    return (uint32_t) (size_t) k; // Use the low order bits
+uint64_t stSet_pointer(const void *k) {
+    return (uint64_t) (size_t) k; // Use the low order bits
 }
 static int stSet_equalKey(const void *key1, const void *key2) {
     return key1 == key2;
@@ -35,7 +35,7 @@ stSet *stSet_construct(void) {
 stSet *stSet_construct2(void(*destructKeys)(void *)) {
     return stSet_construct3(stSet_pointer, stSet_equalKey, destructKeys);
 }
-stSet *stSet_construct3(uint32_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *)) {
+stSet *stSet_construct3(uint64_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *)) {
     stSet *set = st_malloc(sizeof(*set));
     set->hash = stHash_construct3(hashKey, hashEqualsKey, destructKeys, NULL);
     return set;
@@ -59,7 +59,7 @@ void *stSet_remove(stSet *set, void *key) {
 void *stSet_removeAndFreeKey(stSet *set, void *key) {
     return stHash_removeAndFreeKey(set->hash, key);
 }
-int32_t stSet_size(stSet *set) {
+int64_t stSet_size(stSet *set) {
     return stHash_size(set->hash);
 }
 stSetIterator *stSet_getIterator(stSet *set) {
@@ -92,7 +92,7 @@ stList *stSet_getKeys(stSet *set) {
 stList *stSet_getList(stSet *set) {
     return stSet_getKeys(set);
 }
-uint32_t (*stSet_getHashFunction(stSet *set))(const void *) {
+uint64_t (*stSet_getHashFunction(stSet *set))(const void *) {
     return stHash_getHashFunction(set->hash);
 }
 int (*stSet_getEqualityFunction(stSet *set))(const void *, const void *) {

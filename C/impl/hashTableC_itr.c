@@ -8,8 +8,8 @@
 
 
 /* indexFor */
-static uint32_t
-indexFor(uint32_t tablelength, uint32_t hashvalue) {
+static uint64_t
+indexFor(uint64_t tablelength, uint64_t hashvalue) {
     return (hashvalue % tablelength);
 }
 

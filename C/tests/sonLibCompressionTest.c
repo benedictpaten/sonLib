@@ -14,29 +14,29 @@
 #include "sonLibGlobalsTest.h"
 #include <time.h>
 
-static void test_stCompression_compressAndDecompressP(CuTest *testCase, int32_t rounds, int64_t minSize, int64_t maxSize,
-        void *(*compress)(void *, int64_t, int64_t *, int32_t), void *(*decompress)(void *, int64_t, int64_t *)) {
+static void test_stCompression_compressAndDecompressP(CuTest *testCase, int64_t rounds, int64_t minSize, int64_t maxSize,
+        void *(*compress)(void *, int64_t, int64_t *, int64_t), void *(*decompress)(void *, int64_t, int64_t *)) {
     /*
      * Exercises the two compression functions.
      */
     int64_t bytesCompressed = 0, bytesDecompressed = 0;
-    for(int32_t i=0; i<rounds; i++) {
+    for(int64_t i=0; i<rounds; i++) {
         int64_t size = st_randomInt64(minSize, maxSize);
         char *randomString = st_malloc(size);
         for(int64_t j=0; j<size; j++) {
             randomString[j] = (char)st_randomInt(0, 4); //nearly random string
         }
-        int32_t level = -1; //st_randomInt(-1, 10);
+        int64_t level = -1; //st_randomInt(-1, 10);
         int64_t compressedSizeInBytes;
         //Do the compression
         time_t startTime = time(NULL);
         void *compressedString = compress(randomString, sizeof(char)*size, &compressedSizeInBytes, level);
         CuAssertTrue(testCase, compressedSizeInBytes >= 0);
-        st_logDebug("I did a round of compression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed at level %i in %f seconds\n", size, compressedSizeInBytes, level, (float)difftime(time(NULL), startTime));
+        st_logDebug("I did a round of compression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed at level %" PRIi64 " in %f seconds\n", size, compressedSizeInBytes, level, (float)difftime(time(NULL), startTime));
         //Now decompress
         int64_t size2;
         char *randomString2 = decompress(compressedString, compressedSizeInBytes, &size2);
-        st_logDebug("I did a round of compression/decompression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed at level %i in %f seconds\n", size, compressedSizeInBytes, level, (float)difftime(time(NULL), startTime));
+        st_logDebug("I did a round of compression/decompression: I got %" PRIi64  " bytes to compress and %" PRIi64 " bytes compressed at level %" PRIi64 " in %f seconds\n", size, compressedSizeInBytes, level, (float)difftime(time(NULL), startTime));
         bytesCompressed += compressedSizeInBytes;
         bytesDecompressed += size;
         CuAssertTrue(testCase, size == size2);

@@ -14,8 +14,8 @@
 #include "sonLibGlobalsTest.h"
 
 static int cmp32(const void *a, const void *b) {
-    const int32_t *ua = (const int32_t *)a;
-    const int32_t *ub = (const int32_t *)b;
+    const int64_t *ua = (const int64_t *)a;
+    const int64_t *ub = (const int64_t *)b;
     if (*ua < *ub) {
         return -1;
     } else {
@@ -33,8 +33,8 @@ static int cmp64(const void *a, const void *b) {
     }
     return 0;
 }
-static double median32(int32_t *array, uint32_t n) {
-    qsort(array, n, sizeof(int32_t), cmp32);
+static double median32(int64_t *array, uint64_t n) {
+    qsort(array, n, sizeof(int64_t), cmp32);
     if (n % 2) {
         return (double) array[(n + 1) / 2 - 1];
     } else {
@@ -49,7 +49,7 @@ static double median64(int64_t *array, uint64_t n) {
         return (double) ((array[n / 2 - 1] + array[(n / 2)]) / 2.0);
     }
 }
-static double runningMean32(double m, int32_t x, uint32_t i) {
+static double runningMean32(double m, int64_t x, uint64_t i) {
     m += (x - m) / (i + 1);
     return m;
 }
@@ -58,7 +58,7 @@ static double runningMean64(double m, int64_t x, uint64_t i) {
     return m;
 }
 
-static double sv32(int32_t *array, uint32_t n, double mu) {
+static double sv32(int64_t *array, uint64_t n, double mu) {
     // sample variance.
     double sv = 0.0;
     assert(n > 1);
@@ -82,10 +82,10 @@ static void test_st_randomInt(CuTest *testCase) {
     /*
      * Exercises the random int function.
      */
-	int32_t min = INT32_MIN;
-	int32_t max = INT32_MAX;
-    int32_t v;
-    for (int32_t i = -9; i < 10; ++i) {
+	int64_t min = INT32_MIN;
+	int64_t max = INT32_MAX;
+    int64_t v;
+    for (int64_t i = -9; i < 10; ++i) {
         CuAssertTrue(testCase, st_randomInt(i, i + 1) == i);
     }
     for(int64_t i = 0; i < 100000; i++) {
@@ -111,14 +111,14 @@ static void test_st_randomInt_distribution_0(CuTest *testCase) {
      * check the distribution of the randomInt function
      */
     double med, var, mu = 0.0;
-    uint32_t n = 1000000;
-    uint32_t reps = 50;
-    int32_t min = 0;
-    int32_t max = 101;
-    int32_t *array = NULL;
-    for (uint32_t j = 0; j < reps; ++j) {
-        array = (int32_t *) st_malloc(sizeof(*array) * n);
-        for (int32_t i = 0; i < n; i++) {
+    uint64_t n = 1000000;
+    uint64_t reps = 50;
+    int64_t min = 0;
+    int64_t max = 101;
+    int64_t *array = NULL;
+    for (uint64_t j = 0; j < reps; ++j) {
+        array = (int64_t *) st_malloc(sizeof(*array) * n);
+        for (int64_t i = 0; i < n; i++) {
             array[i] = st_randomInt(min, max);
             mu = runningMean32(mu, array[i], i);
         }
@@ -201,7 +201,7 @@ static void test_st_random(CuTest *testCase) {
     /*
      * Excercies the random int function.
      */
-    for(int32_t i = 0; i < 10000; i++) {
+    for(int64_t i = 0; i < 10000; i++) {
         CuAssertTrue(testCase, st_random() >= 0);
         CuAssertTrue(testCase, st_random() < 1.0);
     }
@@ -218,10 +218,10 @@ static void test_st_randomChoice(CuTest *testCase) {
         CuAssertTrue(testCase, stExcept_getId(except) == RANDOM_EXCEPTION_ID);
     } stTryEnd
 
-    for(int32_t i = 0; i < 10; i++) {
-        stList_append(list, stIntTuple_construct(1, i));
+    for(int64_t i = 0; i < 10; i++) {
+        stList_append(list, stIntTuple_construct1( i));
     }
-    for(int32_t i = 0; i < 100; i++) {
+    for(int64_t i = 0; i < 100; i++) {
         CuAssertTrue(testCase, stList_contains(list, st_randomChoice(list)));
     }
     stList_destruct(list);

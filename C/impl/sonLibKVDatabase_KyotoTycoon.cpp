@@ -337,7 +337,7 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
     vector<string> keys;
 
 	for(int32_t i=0; i<stList_length(records); i++) {
-		int64_t key = stInt64Tuple_getPosition((stInt64Tuple *)stList_get(records, i), 0);
+		int64_t key = stIntTuple_getPosition((stIntTuple *)stList_get(records, i), 0);
 		if (recordOnDisk(database, key) == true) {
 			database->secondaryDB->removeRecord(database->secondaryDB, key);
 		}

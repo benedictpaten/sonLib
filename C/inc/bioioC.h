@@ -21,9 +21,9 @@ extern "C" {
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void readIntegers(FILE *file, int32_t intNumber, int32_t *iA);
+void readIntegers(FILE *file, int64_t intNumber, int64_t *iA);
 
-void writeIntegers(FILE *file, int32_t intNumber, int32_t *iA);
+void writeIntegers(FILE *file, int64_t intNumber, int64_t *iA);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ void writeIntegers(FILE *file, int32_t intNumber, int32_t *iA);
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void readDoubles(const char *string, int32_t intNumber, double *dA);
+void readDoubles(const char *string, int64_t intNumber, double *dA);
 
 
 /////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ char *fastaEncodeHeader(stList *attributes);
 
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames);
 
-void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int32_t));
+void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int64_t));
 
 void fastaWrite(char *sequence, char *header, FILE *file);
 
@@ -65,12 +65,12 @@ void fastaWrite(char *sequence, char *header, FILE *file);
 /////////////////////////////////////////////////////////
 
 struct CharColumnAlignment {
-    int32_t columnNo;
-    int32_t seqNo;
+    int64_t columnNo;
+    int64_t seqNo;
     char *columnAlignment;
 };
 
-char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignment, int32_t col);
+char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignment, int64_t col);
 
 void destructCharColumnAlignment(struct CharColumnAlignment *charColumnAlignment);
 
@@ -84,7 +84,7 @@ struct CharColumnAlignment *multiFastaRead(char *fastaFile);
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int32_t unaryNodes);
+struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int64_t unaryNodes);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -96,24 +96,24 @@ struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistanc
 
 char *eatWhiteSpace(char *string);
 
-int32_t parseInt(char **string, int32_t *j);
+int64_t parseInt(char **string, int64_t *j);
 
-int32_t parseFloat(char **string, float *j);
+int64_t parseFloat(char **string, float *j);
 
-int32_t parseString(char **string, char *cA);
+int64_t parseString(char **string, char *cA);
 
 /* 
  * Substitute the string "replacement" for every instance of the character "old" in string "oldString"
  *   Note: Using the variable replacement instead of new to avoid C++ conflicts
  */
-char *replaceString(char *oldString, char old, char *replacement, int32_t newLength);
+char *replaceString(char *oldString, char old, char *replacement, int64_t newLength);
 
 /* 
  * Substitute the string "replacement" for every instance of the character "old" in string "oldString" 
  *   and free oldString.
  *   Note: Using the variable replacement instead of new to avoid C++ conflicts
  */
-char *replaceAndFreeString(char *oldString, char old, char *replacement, int32_t newLength);
+char *replaceAndFreeString(char *oldString, char old, char *replacement, int64_t newLength);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ char *replaceAndFreeString(char *oldString, char old, char *replacement, int32_t
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int32_t benLine(char **s, int32_t *n, FILE *f);
+int64_t benLine(char **s, int64_t *n, FILE *f);
 
 #ifdef __cplusplus
 }

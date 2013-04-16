@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     struct List *seqs;
     struct List *seqLengths;
     struct List *seqNames;
-    int32_t i;
+    int64_t i;
 
     assert(argc == 3);
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
     fileHandle = fopen(argv[2], "w");
     for(i=0; i < seqs->length; i++) {
-        assert(strlen(seqs->list[i]) == *((int32_t *)seqLengths->list[i]));
+        assert(strlen(seqs->list[i]) == *((int64_t *)seqLengths->list[i]));
         fastaWrite(seqs->list[i], seqNames->list[i], fileHandle);
     }
     fclose(fileHandle);

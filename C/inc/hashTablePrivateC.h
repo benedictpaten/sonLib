@@ -14,30 +14,30 @@ extern "C" {
 struct entry
 {
     void *k, *v;
-    uint32_t h;
+    uint64_t h;
     struct entry *next;
 };
 
 struct hashtable {
-    uint32_t tablelength;
+    uint64_t tablelength;
     struct entry **table;
-    uint32_t entrycount;
-    uint32_t loadlimit;
-    uint32_t primeindex;
-    uint32_t (*hashfn) (const void *k);
+    uint64_t entrycount;
+    uint64_t loadlimit;
+    uint64_t primeindex;
+    uint64_t (*hashfn) (const void *k);
     int (*eqfn) (const void *k1, const void *k2);
     void (*keyFree)(void *);
     void (*valueFree)(void *);
 };
 
 /*****************************************************************************/
-uint32_t
+uint64_t
 hashP(struct hashtable *h, void *k);
 
 /*****************************************************************************/
 /* indexFor
-static uint32_t
-indexFor(uint32_t tablelength, uint32_t hashvalue) {
+static uint64_t
+indexFor(uint64_t tablelength, uint64_t hashvalue) {
     return (hashvalue % tablelength);
 }*/
 

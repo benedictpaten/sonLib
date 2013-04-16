@@ -147,7 +147,7 @@ void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
     avl_delete(sortedSet->sortedSet, object);
 }
 
-int32_t stSortedSet_size(stSortedSet *sortedSet) {
+int64_t stSortedSet_size(stSortedSet *sortedSet) {
     return avl_count(sortedSet->sortedSet);
 }
 
@@ -239,7 +239,7 @@ stList *stSortedSet_getList(stSortedSet *sortedSet) {
     stList *list = stList_construct2(stSortedSet_size(sortedSet));
     stSortedSetIterator *it = stSortedSet_getIterator(sortedSet);
     void *o;
-    int32_t i=0;
+    int64_t i=0;
     while((o = stSortedSet_getNext(it)) != NULL) {
         stList_set(list, i++, o);
     }

@@ -53,12 +53,12 @@ void stTree_setParent(stTree *eTree, stTree *parent);
 /*
  * Get the number of children.
  */
-int32_t stTree_getChildNumber(stTree *eTree);
+int64_t stTree_getChildNumber(stTree *eTree);
 
 /*
  * Get a given child.
  */
-stTree *stTree_getChild(stTree *eTree, int32_t i);
+stTree *stTree_getChild(stTree *eTree, int64_t i);
 
 /*
  * find a child by label, returning NULL if not found.

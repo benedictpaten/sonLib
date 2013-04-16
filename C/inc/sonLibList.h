@@ -30,14 +30,14 @@ stList *stList_construct(void);
  * Construct a stList with size length.
  * The destructor will not clean up the elements in the stList.
  */
-stList *stList_construct2(int32_t size);
+stList *stList_construct2(int64_t size);
 
 /*
  * Construct a stList with size length.
  * The destructor will call the given destructElement function
  * for each non-null entry in the stList.
  */
-stList *stList_construct3(int32_t size, void(*destructElement)(void *));
+stList *stList_construct3(int64_t size, void(*destructElement)(void *));
 
 /*
  * Destructs the stList and, if a destructElement function was given to the constructor,
@@ -51,17 +51,17 @@ void stList_destruct(stList *list);
  * in which case zero is returned.  This allows for NULL to be used
  * as an efficient way of returning an empty list.
  */
-int32_t stList_length(stList *list);
+int64_t stList_length(stList *list);
 
 /*
  * Gets item 0 <= index < stList_length(list) from the stList.
  */
-void *stList_get(stList *list, int32_t index);
+void *stList_get(stList *list, int64_t index);
 
 /*
  * Sets the item at that position in the stList.
  */
-void stList_set(stList *list, int32_t index, void *item);
+void stList_set(stList *list, int64_t index, void *item);
 
 /*
  * Adds the item to the end of the st_list, resizing if needed.
@@ -87,7 +87,7 @@ void *stList_pop(stList *list);
 /*
  * Removes and returns the item at the given index, returning the given item.
  */
-void *stList_remove(stList *list, int32_t index);
+void *stList_remove(stList *list, int64_t index);
 
 /*
  * Removes any the first instance of this item from the given stList.
@@ -102,7 +102,7 @@ void *stList_removeFirst(stList *list);
 /*
  * Returns non-zero iff the stList contain one or more copies of references to the given item.
  */
-int32_t stList_contains(stList *list, void *item);
+int64_t stList_contains(stList *list, void *item);
 
 /*
  * Copies the stList. Sets the given destruct item function to the new stList.. can

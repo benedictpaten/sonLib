@@ -15,25 +15,25 @@
  http://br.endernet.org/~akrowne/
  http://planetmath.org/encyclopedia/GoodHashTablePrimes.html
  */
-static const uint32_t primes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
+static const uint64_t primes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
         12289, 24593, 49157, 98317, 196613, 393241, 786433, 1572869, 3145739,
         6291469, 12582917, 25165843, 50331653, 100663319, 201326611, 402653189,
         805306457, 1610612741 };
-const uint32_t prime_table_length = sizeof(primes) / sizeof(primes[0]);
+const uint64_t prime_table_length = sizeof(primes) / sizeof(primes[0]);
 const float max_load_factor = 0.65;
 
 /* indexFor */
-static uint32_t indexFor(uint32_t tablelength, uint32_t hashvalue) {
+static uint64_t indexFor(uint64_t tablelength, uint64_t hashvalue) {
     return (hashvalue % tablelength);
 }
 
 /*****************************************************************************/
 struct hashtable *
-create_hashtable(uint32_t minsize, uint32_t(*hashf)(const void*), int(*eqf)(
+create_hashtable(uint64_t minsize, uint64_t(*hashf)(const void*), int(*eqf)(
         const void*, const void*), void(*keyFree)(void *), void(*valueFree)(
         void *)) {
     struct hashtable *h;
-    uint32_t pindex, size = primes[0];
+    uint64_t pindex, size = primes[0];
     /* Check requested hashtable isn't too large */
     if (minsize > (1u << 30))
         return NULL;
@@ -58,7 +58,7 @@ create_hashtable(uint32_t minsize, uint32_t(*hashf)(const void*), int(*eqf)(
     h->entrycount = 0;
     h->hashfn = hashf;
     h->eqfn = eqf;
-    h->loadlimit = (uint32_t) ceil(size * max_load_factor);
+    h->loadlimit = (uint64_t) ceil(size * max_load_factor);
     //my additions
     h->keyFree = keyFree;
     h->valueFree = valueFree;
@@ -66,10 +66,10 @@ create_hashtable(uint32_t minsize, uint32_t(*hashf)(const void*), int(*eqf)(
 }
 
 /*****************************************************************************/
-uint32_t hashP(struct hashtable *h, void *k) {
+uint64_t hashP(struct hashtable *h, void *k) {
     /* Aim to protect against poor hash functions by adding logic here
      * - logic taken from java 1.4 hashtable source */
-    uint32_t i = h->hashfn(k);
+    uint64_t i = h->hashfn(k);
     i += ~(i << 9);
     i ^= ((i >> 14) | (i << 18)); /* >>> */
     i += (i << 4);
@@ -78,12 +78,12 @@ uint32_t hashP(struct hashtable *h, void *k) {
 }
 
 /*****************************************************************************/
-static int32_t hashtable_expand(struct hashtable *h) {
+static int64_t hashtable_expand(struct hashtable *h) {
     /* Double the size of the table to accomodate more entries */
     struct entry **newtable;
     struct entry *e;
     //struct entry **pE;
-    uint32_t newsize, i, index;
+    uint64_t newsize, i, index;
     /* Check we're not hitting max capacity */
     if (h->primeindex == (prime_table_length - 1))
         return 0;
@@ -129,19 +129,19 @@ static int32_t hashtable_expand(struct hashtable *h) {
          } */
     }
     h->tablelength = newsize;
-    h->loadlimit = (uint32_t) ceil(newsize * max_load_factor);
+    h->loadlimit = (uint64_t) ceil(newsize * max_load_factor);
     return -1;
 }
 
 /*****************************************************************************/
-uint32_t hashtable_count(struct hashtable *h) {
+uint64_t hashtable_count(struct hashtable *h) {
     return h->entrycount;
 }
 
 /*****************************************************************************/
-int32_t hashtable_insert(struct hashtable *h, void *k, void *v) {
+int64_t hashtable_insert(struct hashtable *h, void *k, void *v) {
     /* This method allows duplicate keys - but they shouldn't be used */
-    uint32_t index;
+    uint64_t index;
     struct entry *e;
     if (++(h->entrycount) > h->loadlimit) {
         /* Ignore the return value. If expand fails, we should
@@ -171,7 +171,7 @@ int32_t hashtable_insert(struct hashtable *h, void *k, void *v) {
 void * /* returns value associated with key */
 hashtable_search(struct hashtable *h, void *k) {
     struct entry *e;
-    uint32_t hashvalue, index;
+    uint64_t hashvalue, index;
     hashvalue = hashP(h, k);
     index = indexFor(h->tablelength, hashvalue);
     e = h->table[index];
@@ -186,14 +186,14 @@ hashtable_search(struct hashtable *h, void *k) {
 
 /*****************************************************************************/
 void * /* returns value associated with key */
-hashtable_remove(struct hashtable *h, void *k, int32_t freeKey) {
+hashtable_remove(struct hashtable *h, void *k, int64_t freeKey) {
     /* TODO: consider compacting the table when the load factor drops enough,
      *       or provide a 'compact' method. */
 
     struct entry *e;
     struct entry **pE;
     void *v;
-    uint32_t hashvalue, index;
+    uint64_t hashvalue, index;
 
     hashvalue = hashP(h, k);
     index = indexFor(h->tablelength, hashP(h, k));
@@ -219,9 +219,9 @@ hashtable_remove(struct hashtable *h, void *k, int32_t freeKey) {
 
 /*****************************************************************************/
 /* destroy */
-void hashtable_destroy(struct hashtable *h, int32_t free_values,
-        int32_t free_keys) {
-    uint32_t i;
+void hashtable_destroy(struct hashtable *h, int64_t free_values,
+        int64_t free_keys) {
+    uint64_t i;
     struct entry *e, *f;
     struct entry **table = h->table;
     if (free_keys) {

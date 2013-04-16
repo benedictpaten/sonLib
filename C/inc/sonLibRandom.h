@@ -28,12 +28,12 @@ extern const char *RANDOM_EXCEPTION_ID;
 /*
  * Seed the random number generator.
  */
-void st_randomSeed(int32_t seed);
+void st_randomSeed(int64_t seed);
 
 /*
  * Returns a random value in the range min (inclusive) to max (exclusive), where min < max.
  */
-int32_t st_randomInt(int32_t min, int32_t max);
+int64_t st_randomInt(int64_t min, int64_t max);
 
 /*
  * Like st_randomInt, but for 64 bit integers.

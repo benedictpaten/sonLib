@@ -10,14 +10,14 @@
 
 struct _stList {
     void **list;
-    int32_t length;
-    int32_t maxLength;
+    int64_t length;
+    int64_t maxLength;
     void (*destructElement)(void *);
 };
 
 struct _stListIterator {
     stList *list;
-    int32_t index;
+    int64_t index;
 };
 
 #endif /* SONLISTPRIVATE_H_ */

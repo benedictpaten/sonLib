@@ -77,7 +77,7 @@ char *stString_replace(const char *originalString, const char *toReplace, const 
  * array to join, length is the length of strings and pad is the padding to place
  * between each join.
  */
-char *stString_join(const char *pad, const char **strings, int32_t length);
+char *stString_join(const char *pad, const char **strings, int64_t length);
 
 /*
  * As stString_join, but for a stList of strings.
@@ -92,7 +92,7 @@ stList *stString_split(const char *string);
 /*
  * Gets a substring of a given string.
  */
-char *stString_getSubString(const char *cA, int32_t start, int32_t length);
+char *stString_getSubString(const char *cA, int64_t start, int64_t length);
 
 #ifdef __cplusplus
 }

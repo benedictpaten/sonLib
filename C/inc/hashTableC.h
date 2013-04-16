@@ -78,8 +78,8 @@ struct hashtable;
  */
 
 struct hashtable *
-create_hashtable(uint32_t minsize,
-                 uint32_t (*hashfunction) (const void *),
+create_hashtable(uint64_t minsize,
+                 uint64_t (*hashfunction) (const void *),
                  int (*key_eq_fn) (const void*, const void*),
                  void (*keyFree)(void *),
                  void (*valueFree)(void *));
@@ -103,7 +103,7 @@ create_hashtable(uint32_t minsize,
  * If in doubt, remove before insert.
  */
 
-int32_t
+int64_t
 hashtable_insert(struct hashtable *h, void *k, void *v);
 
 #define DEFINE_HASHTABLE_INSERT(fnname, keytype, valuetype) \
@@ -140,7 +140,7 @@ valuetype * fnname (struct hashtable *h, keytype *k) \
  */
 
 void * /* returns value */
-hashtable_remove(struct hashtable *h, void *k, int32_t freeKey);
+hashtable_remove(struct hashtable *h, void *k, int64_t freeKey);
 
 #define DEFINE_HASHTABLE_REMOVE(fnname, keytype, valuetype) \
 valuetype * fnname (struct hashtable *h, keytype *k) \
@@ -156,7 +156,7 @@ valuetype * fnname (struct hashtable *h, keytype *k) \
  * @param   h   the hashtable
  * @return      the number of items stored in the hashtable
  */
-uint32_t
+uint64_t
 hashtable_count(struct hashtable *h);
 
 
@@ -169,7 +169,7 @@ hashtable_count(struct hashtable *h);
  */
 
 void
-hashtable_destroy(struct hashtable *h, int32_t free_values, int32_t free_keys);
+hashtable_destroy(struct hashtable *h, int64_t free_values, int64_t free_keys);
 
 #ifdef __cplusplus
 }

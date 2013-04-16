@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
+void exitOnFailure(int64_t exitValue, const char *failureMessage, ...) {
     if (exitValue != 0) {
         va_list ap;
         va_start(ap, failureMessage);
@@ -32,7 +32,7 @@ void exitOnFailure(int32_t exitValue, const char *failureMessage, ...) {
     }
 }
 
-struct Chunks *constructChunks(int32_t chunkSize, int32_t elementSize) {
+struct Chunks *constructChunks(int64_t chunkSize, int64_t elementSize) {
     struct Chunks *chunks;
 
     chunks = st_malloc(sizeof(struct Chunks));
@@ -59,8 +59,8 @@ void *mallocChunk(struct Chunks *chunk) {
     }
 }
 
-void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize,
-        int32_t base) {
+void *arrayResize_NoCheck(void *current, int64_t *currentSize, int64_t newSize,
+        int64_t base) {
     assert(*currentSize <= newSize);
     if (current != NULL) {
         free(current);
@@ -69,21 +69,21 @@ void *arrayResize_NoCheck(void *current, int32_t *currentSize, int32_t newSize,
     return st_malloc(base * ((int64_t) newSize));
 }
 
-void *arrayResize(void *current, int32_t *currentSize, int32_t newSize,
-        int32_t base) {
+void *arrayResize(void *current, int64_t *currentSize, int64_t newSize,
+        int64_t base) {
     if (*currentSize < newSize) {
         return arrayResize_NoCheck(current, currentSize, newSize, base);
     }
     return current;
 }
 
-void listResize(struct List *list, int32_t newMaxSize) {
+void listResize(struct List *list, int64_t newMaxSize) {
     list->list = arrayResize(list->list, &list->maxLength, newMaxSize,
             sizeof(void *));
 }
 
-void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize,
-        int32_t newSize, int32_t base) {
+void *arrayCopyResize_NoCheck(void *current, int64_t *currentSize,
+        int64_t newSize, int64_t base) {
     assert(*currentSize <= newSize);
     void *new;
     new = memcpy(st_malloc(((int64_t) base) * newSize), current,
@@ -95,16 +95,16 @@ void *arrayCopyResize_NoCheck(void *current, int32_t *currentSize,
     return new;
 }
 
-void *arrayCopyResize(void *current, int32_t *currentSize, int32_t newSize,
-        int32_t base) {
+void *arrayCopyResize(void *current, int64_t *currentSize, int64_t newSize,
+        int64_t base) {
     if (*currentSize < newSize) {
         return arrayCopyResize_NoCheck(current, currentSize, newSize, base);
     }
     return current;
 }
 
-void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t newLength,
-        int32_t base) {
+void *arrayPrepareAppend(void *current, int64_t *maxLength, int64_t newLength,
+        int64_t base) {
     if (newLength >= *maxLength) {
         return arrayCopyResize_NoCheck(current, maxLength,
                 (*maxLength) * 2 + newLength + SMALL_CHUNK_SIZE, base);
@@ -113,9 +113,9 @@ void *arrayPrepareAppend(void *current, int32_t *maxLength, int32_t newLength,
 }
 
 void listReverse(struct List *list) {
-    int32_t i;
+    int64_t i;
     void *j;
-    int32_t k;
+    int64_t k;
 
     k = list->length - 1;
     for (i = 0; i < list->length / 2; i++) {
@@ -128,11 +128,11 @@ void listReverse(struct List *list) {
 void listIntersection(struct List *list, struct List *list2, struct List *list3) {
     //currently quadratic time, watch cost closely
     //output list can be the same as the input list
-    int32_t i;
-    int32_t j;
-    int32_t k;
+    int64_t i;
+    int64_t j;
+    int64_t k;
     static void **scratch;
-    static int32_t scratchSize;
+    static int64_t scratchSize;
     scratch = arrayResize(scratch, &scratchSize, list->length + 1,
             sizeof(void *));
     k = 0;
@@ -150,13 +150,13 @@ void listIntersection(struct List *list, struct List *list2, struct List *list3)
     }
 }
 
-void listCopyResize(struct List *list, int32_t newMaxSize) {
+void listCopyResize(struct List *list, int64_t newMaxSize) {
     list->list = arrayCopyResize(list->list, &list->maxLength, newMaxSize,
             sizeof(void *));
 }
 
-struct hashtable *intListToHash(struct List *list, int32_t *(*getKey)(void *)) {
-    int32_t i;
+struct hashtable *intListToHash(struct List *list, int64_t *(*getKey)(void *)) {
+    int64_t i;
     void *key;
     struct hashtable *hT;
 
@@ -173,8 +173,8 @@ void swapListFields(struct List *list1, struct List *list2) {
     assert(list1 != list2);
     assert(list1->list == NULL || list1->list != list2->list);
     void **list;
-    int32_t length;
-    int32_t maxLength;
+    int64_t length;
+    int64_t maxLength;
 
     list = list1->list;
     length = list1->length;
@@ -191,7 +191,7 @@ void swapListFields(struct List *list1, struct List *list2) {
 
 struct List *cloneList(struct List *source) {
     struct List *to;
-    int32_t i;
+    int64_t i;
 
     to = constructEmptyList(0, source->destructElement);
     for (i = 0; i < source->length; i++) {
@@ -202,7 +202,7 @@ struct List *cloneList(struct List *source) {
 
 struct List *listCopy(struct List *list) {
     struct List *list2;
-    int32_t i;
+    int64_t i;
 
     list2 = constructEmptyList(0, list->destructElement);
     for (i = 0; i < list->length; i++) {
@@ -212,7 +212,7 @@ struct List *listCopy(struct List *list) {
 }
 
 void copyList(struct List *from, struct List *to) {
-    int32_t i;
+    int64_t i;
 
     to->length = 0;
     for (i = 0; i < from->length; i++) {
@@ -237,7 +237,7 @@ void listAppend(struct List *list, void *item) {
 }
 
 void *listRemoveFirst(struct List *list) {
-    int32_t i;
+    int64_t i;
     void *j;
 
     j = list->list[0];
@@ -248,8 +248,8 @@ void *listRemoveFirst(struct List *list) {
     return j;
 }
 
-void listAppendArray(struct List *list, void **array, int32_t length) {
-    int32_t i;
+void listAppendArray(struct List *list, void **array, int64_t length) {
+    int64_t i;
 
     if (list->length + length > list->maxLength) {
         list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength,
@@ -260,8 +260,8 @@ void listAppendArray(struct List *list, void **array, int32_t length) {
     }
 }
 
-int32_t listContains(struct List *list, void *k) {
-    int32_t i;
+int64_t listContains(struct List *list, void *k) {
+    int64_t i;
 
     for (i = 0; i < list->length; i++) {
         if (list->list[i] == k) {
@@ -271,14 +271,14 @@ int32_t listContains(struct List *list, void *k) {
     return FALSE;
 }
 
-int32_t listGetInt(struct List *list, int32_t index) {
+int64_t listGetInt(struct List *list, int64_t index) {
     assert(list != NULL);
     assert(index >= 0);
     assert(index < list->length);
-    return *((int32_t *) list->list[index]);
+    return *((int64_t *) list->list[index]);
 }
 
-float listGetFloat(struct List *list, int32_t index) {
+float listGetFloat(struct List *list, int64_t index) {
     assert(list != NULL);
     assert(index >= 0);
     assert(index < list->length);
@@ -286,7 +286,7 @@ float listGetFloat(struct List *list, int32_t index) {
 }
 
 void listRemove(struct List *list, void *k) {
-    int32_t i, j;
+    int64_t i, j;
     for (i = 0; i < list->length; i++) {
         if (list->list[i] == k) {
             for (j = i + 1; j < list->length; j++) {
@@ -300,7 +300,7 @@ void listRemove(struct List *list, void *k) {
 struct List *lRD_list2 = NULL;
 
 void listRemoveDuplicates(struct List *list) {
-    int32_t i;
+    int64_t i;
     void *k;
 
     if (lRD_list2 == NULL) {
@@ -321,8 +321,8 @@ void listRemoveDuplicates(struct List *list) {
     list->length = lRD_list2->length;
 }
 
-int32_t listContainsDuplicates(struct List *list) {
-    int32_t i, j;
+int64_t listContainsDuplicates(struct List *list) {
+    int64_t i, j;
     void *k, *l;
 
     for (i = 0; i < list->length; i++) {
@@ -338,10 +338,10 @@ int32_t listContainsDuplicates(struct List *list) {
 }
 
 //list functions
-struct List *copyConstructList(void **list, int32_t length,
+struct List *copyConstructList(void **list, int64_t length,
         void(*destructElement)(void *)) {
     struct List *i;
-    int32_t j;
+    int64_t j;
 
     i = st_malloc(sizeof(struct List));
     i->length = length;
@@ -353,7 +353,7 @@ struct List *copyConstructList(void **list, int32_t length,
     return i;
 }
 
-struct List *constructZeroLengthList(int32_t length,
+struct List *constructZeroLengthList(int64_t length,
         void(*destructElement)(void *)) {
     struct List *l;
     l = constructEmptyList(length, destructElement);
@@ -361,7 +361,7 @@ struct List *constructZeroLengthList(int32_t length,
     return l;
 }
 
-struct List *constructEmptyList(int32_t length, void(*destructElement)(void *)) {
+struct List *constructEmptyList(int64_t length, void(*destructElement)(void *)) {
     struct List *i;
 
     i = st_malloc(sizeof(struct List));
@@ -373,7 +373,7 @@ struct List *constructEmptyList(int32_t length, void(*destructElement)(void *)) 
 }
 
 void destructList(struct List *list) {
-    int32_t i;
+    int64_t i;
 
     if (list->destructElement != NULL) {
         for (i = 0; i < list->length; i++) { //only free up to known area of list
@@ -384,8 +384,8 @@ void destructList(struct List *list) {
     free(list);
 }
 
-int32_t *constructChunkInt(int32_t intValue, struct Chunks *chunks) {
-    int32_t *i;
+int64_t *constructChunkInt(int64_t intValue, struct Chunks *chunks) {
+    int64_t *i;
 
     i = mallocChunk(chunks);
     *i = intValue;
@@ -402,13 +402,13 @@ int64_t *constructChunkLong(int64_t longValue, struct Chunks *chunks) {
 
 //int lists
 
-struct IntList *constructEmptyIntList(int32_t length) {
+struct IntList *constructEmptyIntList(int64_t length) {
     struct IntList *intList;
 
     intList = st_malloc(sizeof(struct IntList));
     intList->length = length;
     intList->maxLength = length;
-    intList->list = st_malloc(sizeof(int32_t) * length);
+    intList->list = st_malloc(sizeof(int64_t) * length);
 
     return intList;
 }
@@ -419,7 +419,7 @@ void destructIntList(struct IntList *intList) {
 }
 
 struct IntList *intListCopy(struct IntList *intList) {
-    int32_t i;
+    int64_t i;
     struct IntList *intList2 = constructEmptyIntList(intList->length);
     assert(intList->length == intList2->length);
     for (i = 0; i < intList->length; i++) {
@@ -428,10 +428,10 @@ struct IntList *intListCopy(struct IntList *intList) {
     return intList2;
 }
 
-void intListAppend(struct IntList *list, int32_t item) {
+void intListAppend(struct IntList *list, int64_t item) {
     if (list->length >= list->maxLength) {
         list->list = arrayCopyResize_NoCheck(list->list, &list->maxLength,
-                list->maxLength * 2 + TINY_CHUNK_SIZE, sizeof(int32_t));
+                list->maxLength * 2 + TINY_CHUNK_SIZE, sizeof(int64_t));
     }
     list->list[list->length++] = item;
 }
@@ -449,57 +449,57 @@ void destructFloat(float *i) {
     free(i);
 }
 
-int32_t *constructInt(int32_t i) {
-    int32_t *j;
+int64_t *constructInt(int64_t i) {
+    int64_t *j;
 
-    j = st_malloc(sizeof(int32_t));
+    j = st_malloc(sizeof(int64_t));
     *j = i;
     return j;
 }
 
-void destructInt(int32_t *i) {
+void destructInt(int64_t *i) {
     free(i);
 }
 
-uint32_t hashtable_intPairHashKey(const void *k) {
-    const int32_t *iA;
+uint64_t hashtable_intPairHashKey(const void *k) {
+    const int64_t *iA;
     iA = k;
     return iA[0] + iA[1];
 }
 
 int hashtable_intPairEqualKey(const void *key1, const void *key2) {
-    const int32_t *iA;
-    const int32_t *iA2;
+    const int64_t *iA;
+    const int64_t *iA2;
     iA = key1;
     iA2 = key2;
     return (iA[0] == iA2[0] && iA[1] == iA2[1]) || (iA[0] == iA2[1] && iA[1]
             == iA2[0]);
 }
 
-uint32_t hashtable_orderedIntPairHashKey(const void *k) {
-    const int32_t *iA;
+uint64_t hashtable_orderedIntPairHashKey(const void *k) {
+    const int64_t *iA;
     iA = k;
     return iA[0];
 }
 
 int hashtable_orderedIntPairEqualKey(const void *key1, const void *key2) {
-    const int32_t *iA;
-    const int32_t *iA2;
+    const int64_t *iA;
+    const int64_t *iA2;
     iA = key1;
     iA2 = key2;
     return iA[0] == iA2[0] && iA[1] == iA2[1];
 }
 
-int32_t *constructIntPair(int32_t i, int32_t j) {
-    int32_t *k;
+int64_t *constructIntPair(int64_t i, int64_t j) {
+    int64_t *k;
 
-    k = st_malloc(sizeof(int32_t) * 2);
+    k = st_malloc(sizeof(int64_t) * 2);
     k[0] = i;
     k[1] = j;
     return k;
 }
 
-void destructIntPair(int32_t *i) {
+void destructIntPair(int64_t *i) {
     free(i);
 }
 
@@ -516,8 +516,8 @@ void destructLong(int64_t *i) {
     free(i);
 }
 
-/*uint32_t hashtable_stringHashKey( const void *k ) {
- uint32_t i, j;
+/*uint64_t hashtable_stringHashKey( const void *k ) {
+ uint64_t i, j;
  const char *cA;
 
  cA = k;
@@ -528,12 +528,12 @@ void destructLong(int64_t *i) {
  return j;
  }*/
 
-uint32_t hashtable_stringHashKey(const void *k) {
+uint64_t hashtable_stringHashKey(const void *k) {
     // djb2
     // This algorithm was first reported by Dan Bernstein
     // many years ago in comp.lang.c
     //
-    uint32_t hash = 0; //5381;
+    uint64_t hash = 0; //5381;
     int c;
     char *cA;
     cA = (char *) k;
@@ -548,15 +548,15 @@ int hashtable_stringEqualKey(const void *key1, const void *key2) {
     return strcmp(key1, key2) == 0;
 }
 
-uint32_t hashtable_intHashKey(const void *k) {
-    return *((int32_t *) k);
+uint64_t hashtable_intHashKey(const void *k) {
+    return *((int64_t *) k);
 }
 
 int hashtable_intEqualKey(const void *key1, const void *key2) {
-    return *((int32_t *) key1) == *((int32_t *) key2);
+    return *((int64_t *) key1) == *((int64_t *) key2);
 }
 
-uint32_t hashtable_longHashKey(const void *k) {
+uint64_t hashtable_longHashKey(const void *k) {
     return *((int64_t *) k);
 }
 
@@ -564,23 +564,23 @@ int hashtable_longEqualKey(const void *key1, const void *key2) {
     return *((int64_t *) key1) == *((int64_t *) key2);
 }
 
-uint32_t hashtable_key(const void *k) {
-    return (uint32_t) (size_t) k;
+uint64_t hashtable_key(const void *k) {
+    return (uint64_t) (size_t) k;
 }
 
 int hashtable_equalKey(const void *key1, const void *key2) {
     return key1 == key2;
 }
 
-int32_t intComparator(int32_t *i, int32_t *j) {
+int64_t intComparator(int64_t *i, int64_t *j) {
     return *i < *j ? -1 : *i > *j ? 1 : 0;
 }
 
-int32_t longComparator(int64_t *i, int64_t *j) {
+int64_t longComparator(int64_t *i, int64_t *j) {
     return *i < *j ? -1 : *i > *j ? 1 : 0;
 }
 
-int intComparator_Int(int32_t *i, int32_t *j) {
+int intComparator_Int(int64_t *i, int64_t *j) {
     return *i < *j ? -1 : *i > *j ? 1 : 0;
 }
 
@@ -592,10 +592,10 @@ int floatComparator(float **f, float **f2) {
     return **f > **f2 ? 1 : (**f < **f2 ? -1 : 0);
 }
 
-int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
-    int32_t i;
-    int32_t j;
-    int32_t k;
+int64_t intsComparator(int64_t *ints1, int64_t *ints2, int64_t length) {
+    int64_t i;
+    int64_t j;
+    int64_t k;
 
     //assertLocal INT_32s1->length == INT_32s2->length;
     if (ints1 == ints2) {
@@ -615,8 +615,8 @@ int32_t intsComparator(int32_t *ints1, int32_t *ints2, int32_t length) {
     return 0;
 }
 
-struct TraversalID *constructTraversalID(int32_t midStart, int32_t mid,
-        int32_t midEnd, int32_t leafNo) {
+struct TraversalID *constructTraversalID(int64_t midStart, int64_t mid,
+        int64_t midEnd, int64_t leafNo) {
     struct TraversalID *traversalID;
 
     traversalID = st_malloc(sizeof(struct TraversalID));
@@ -631,7 +631,7 @@ void destructTraversalID(struct TraversalID *traversalID) {
     free(traversalID);
 }
 
-struct BinaryTree *constructBinaryTree(float distance, int32_t internal,
+struct BinaryTree *constructBinaryTree(float distance, int64_t internal,
         const char *label, struct BinaryTree *left, struct BinaryTree *right) {
     struct BinaryTree *binaryTree;
 
@@ -659,22 +659,22 @@ void destructBinaryTree(struct BinaryTree *binaryTree) {
     free(binaryTree);
 }
 
-int32_t leftMostLeafNo(struct TraversalID *traversalID) {
+int64_t leftMostLeafNo(struct TraversalID *traversalID) {
     return traversalID->midStart / 2;
 }
 
-int32_t rightMostLeafNo(struct TraversalID *traversalID) {
+int64_t rightMostLeafNo(struct TraversalID *traversalID) {
     return traversalID->midEnd / 2;
 }
 
-int32_t leafNoInSubtree(struct TraversalID *traversalID) {
+int64_t leafNoInSubtree(struct TraversalID *traversalID) {
     return rightMostLeafNo(traversalID) - leftMostLeafNo(traversalID) + 1;
 }
 
 static void binaryTree_depthFirstNumbers_Traverse(
-        struct BinaryTree *binaryTree, int32_t *mid, int32_t *leafNo) {
-    int32_t i;
-    int32_t j;
+        struct BinaryTree *binaryTree, int64_t *mid, int64_t *leafNo) {
+    int64_t i;
+    int64_t j;
 
     if (binaryTree->internal) {
         //_isInternal(binaryTree):
@@ -707,8 +707,8 @@ struct List *binaryTree_getOrderedLeafStrings(struct BinaryTree *binaryTree) {
 
 void binaryTree_depthFirstNumbers(struct BinaryTree *binaryTree) {
     //get pre-order, post-order and mid-order depth first tree numbers
-    int32_t mid = 0;
-    int32_t leafNo = 0;
+    int64_t mid = 0;
+    int64_t leafNo = 0;
 
     binaryTree_depthFirstNumbers_Traverse(binaryTree, &mid, &leafNo);
 }
@@ -743,7 +743,7 @@ void annotateTree_Fn(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i),
 
 void annotateTree(struct BinaryTree *bT, void *(*fn)(struct BinaryTree *i),
         struct List *list) {
-    int32_t i;
+    int64_t i;
 
     list->length = 0;
     for (i = 0; i < bT->traversalID->midEnd; i++) {
@@ -762,7 +762,7 @@ void getBinaryTreeNodesInMidOrder(struct BinaryTree *binaryTree,
 }
 
 float linOriginRegression(struct List *pointsX, struct List *pointsY) {
-    int32_t i;
+    int64_t i;
     float j;
     float k;
 
@@ -779,7 +779,7 @@ float linOriginRegression(struct List *pointsX, struct List *pointsY) {
     return 1.0;
 }
 
-int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
+int64_t floatValuesClose(double valueOne, double valueTwo, double precision) {
     return (valueOne - valueTwo <= precision) || (valueTwo - valueOne
             <= precision);
 }
@@ -792,19 +792,19 @@ int32_t floatValuesClose(double valueOne, double valueTwo, double precision) {
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
+int64_t constructRandomDir(const char *tempFilePath, char **tempDir) {
     /*
      * Creates a random directory in the directory pointed to by tempFilePath.
      * Initialses tempDir with this string.
      * Returns 0 if okay.
      */
     char *cA;
-    int32_t i;
+    int64_t i;
 
     cA = st_malloc(sizeof(char) * (strlen(tempFilePath) + 50));
     sprintf(cA, "%s/", tempFilePath);
 
-    for (i = strlen(tempFilePath) + 1; i < (int32_t) strlen(tempFilePath) + 11; i++) {
+    for (i = strlen(tempFilePath) + 1; i < (int64_t) strlen(tempFilePath) + 11; i++) {
         cA[i] = 65 + (RANDOM() * 26);
     }
     cA[i] = '\0';
@@ -820,13 +820,13 @@ int32_t constructRandomDir(const char *tempFilePath, char **tempDir) {
     return 0;
 }
 
-int32_t destructRandomDir(char *tempDir) {
+int64_t destructRandomDir(char *tempDir) {
     /*
      * Destructs the given temp dir and frees the appropriate string pointing
      * to this directory. Partner of constructRandomDir.
      */
     char *cA;
-    int32_t i;
+    int64_t i;
 
     cA = st_malloc(sizeof(char) * (strlen(tempDir) + 50));
     sprintf(cA, "rm -rf %s", tempDir);
@@ -841,8 +841,8 @@ int32_t destructRandomDir(char *tempDir) {
 
 struct TempFileTree *tempFileTree = NULL;
 
-void initialiseTempFileTree(char *rootDir, int32_t filesPerDir,
-        int32_t levelNumber) {
+void initialiseTempFileTree(char *rootDir, int64_t filesPerDir,
+        int64_t levelNumber) {
     tempFileTree = constructTempFileTree(rootDir, filesPerDir, levelNumber);
 }
 
@@ -864,9 +864,9 @@ char *getTempFile(void) {
         tmpdir = "/tmp";
     }
 
-    static int32_t counter = 0;
+    static int64_t counter = 0;
     while(counter < INT32_MAX) {
-        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%i_%i" : "%s/stTmp%i_%i", tmpdir, getpid(), counter++);
+        char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%" PRIi64 "_%" PRIi64 "" : "%s/stTmp%" PRIi64 "_%" PRIi64 "", tmpdir, getpid(), counter++);
         int fd = open(pattern, O_CREAT|O_EXCL, 0600);
         if(fd >= 0) {
             close(fd);
@@ -899,10 +899,10 @@ void removeAllTempFiles(void) {
     tempFileTree = NULL;
 }
 
-struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir,
-        int32_t levelNumber) {
+struct TempFileTree *constructTempFileTree(char *rootDir, int64_t filesPerDir,
+        int64_t levelNumber) {
     struct TempFileTree *tempFileTree;
-    int32_t i, j;
+    int64_t i, j;
     char *cA;
     char *cA2;
     char *cA3;
@@ -919,7 +919,7 @@ struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir,
 
     tempFileTree->filesPerDir = filesPerDir;
     tempFileTree->levelNumber = levelNumber;
-    tempFileTree->levelsArray = st_malloc(sizeof(int32_t) * levelNumber);
+    tempFileTree->levelsArray = st_malloc(sizeof(int64_t) * levelNumber);
     for (i = 0; i < levelNumber; i++) {
         tempFileTree->levelsArray[i] = 0;
     }
@@ -945,9 +945,9 @@ struct TempFileTree *constructTempFileTree(char *rootDir, int32_t filesPerDir,
 void destructTempFileTree(struct TempFileTree *tempFileTree) {
     //does not currently dissmantle the directory structure/temp files!
     char cA[1000];
-    int32_t i;
+    int64_t i;
 
-    st_logDebug("Created: %i temp files, actively destroyed: %i temp files\n",
+    st_logDebug("Created: %" PRIi64 " temp files, actively destroyed: %" PRIi64 " temp files\n",
             tempFileTree->tempFilesCreated, tempFileTree->tempFilesDestroyed);
 
     sprintf(cA, "rm -rf %s", tempFileTree->rootDir);
@@ -961,7 +961,7 @@ void destructTempFileTree(struct TempFileTree *tempFileTree) {
 }
 
 char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
-    int32_t i, j, k;
+    int64_t i, j, k;
     char *cA;
     char *cA2;
     char *cA3;
@@ -1023,12 +1023,12 @@ char *tempFileTree_getTempFile(struct TempFileTree *tempFileTree) {
 
 void graphViz_addNodeToGraph(const char *nodeName, FILE *graphFileHandle,
         const char *label, double width, double height, const char *shape,
-        const char *colour, int32_t fontsize) {
+        const char *colour, int64_t fontsize) {
     /*
      * Adds a node to the graph.
      */
     fprintf(graphFileHandle,
-            "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%i];\n",
+            "node[width=%f,height=%f,shape=%s,colour=%s,fontsize=%" PRIi64 "];\n",
             width, height, shape, colour, fontsize);
     fprintf(graphFileHandle, "n%sn [label=\"%s\"];\n", nodeName, label);
 }
@@ -1060,7 +1060,7 @@ void graphViz_finishGraphFile(FILE *graphFileHandle) {
     fprintf(graphFileHandle, "}\n");
 }
 
-static int32_t getColour_Index = 0;
+static int64_t getColour_Index = 0;
 const char *graphViz_getColour(void) {
     /*
      * Returns a valid colour.
@@ -1071,15 +1071,15 @@ const char *graphViz_getColour(void) {
     return colours[getColour_Index % 11];
 }
 
-void arrayShuffle(void **array, int32_t n) {
+void arrayShuffle(void **array, int64_t n) {
     /* Arrange the N elements of ARRAY in random order.
      Only effective if N is much smaller than RAND_MAX;
      if this may not be the case, use a better random
      number generator. */
     if (n > 1) {
-        int32_t i;
+        int64_t i;
         for (i = 0; i < n - 1; i++) {
-            int32_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+            int64_t j = i + rand() / (RAND_MAX / (n - i) + 1);
             void *t = array[j];
             array[j] = array[i];
             array[i] = t;

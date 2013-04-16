@@ -22,8 +22,8 @@
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void readIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
-    int32_t i;
+void readIntegers(FILE *file, int64_t intNumber, int64_t *iA) {
+    int64_t i;
 
     for(i=0; i<intNumber; i++) {
         int j = fscanf(file, INT_STRING, iA + i);
@@ -32,8 +32,8 @@ void readIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
     }
 }
 
-void writeIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
-    int32_t i;
+void writeIntegers(FILE *file, int64_t intNumber, int64_t *iA) {
+    int64_t i;
 
     for(i=0; i<intNumber; i++) {
         fprintf(file, INT_STRING "\n", iA[i]);
@@ -48,10 +48,10 @@ void writeIntegers(FILE *file, int32_t intNumber, int32_t *iA) {
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void readDoubles(const char *string, int32_t number, double *dA) {
+void readDoubles(const char *string, int64_t number, double *dA) {
     FILE *fileHandle;
     char *tempFile;
-    int32_t i;
+    int64_t i;
 
     tempFile = getTempFile(); //This is kind of a hack.
     fileHandle = fopen(tempFile, "w");
@@ -80,7 +80,7 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
      * Removes white space which is treated weirdly by many programs.
      */
     const char *c;
-    int32_t i, j;
+    int64_t i, j;
     char *c2;
 
     i = 0;
@@ -120,11 +120,11 @@ char *fastaEncodeHeader(stList *attributes) {
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
-    int32_t i, k;
+    int64_t i, k;
     char j;
 
     fprintf(file, ">%s\n", header);
-    k = (int)strlen(sequence);
+    k = strlen(sequence);
     for(i=0; i<k; i++) {
         j = sequence[i];
         assert((j >= 'A' && j <= 'Z') || (j >= 'a' && j <= 'z')); //For safety and sanity I only allows roman alphabet characters in fasta sequences.
@@ -132,7 +132,7 @@ void fastaWrite(char *sequence, char *header, FILE *file) {
     fprintf(file, "%s\n", sequence);
 }
 
-char *addSeqToList(char *seq, int32_t *length, int32_t *maxLength, char *fastaName, void (*addSeq)(const char *, const char *, int32_t)) {
+char *addSeqToList(char *seq, int64_t *length, int64_t *maxLength, char *fastaName, void (*addSeq)(const char *, const char *, int64_t)) {
     seq = arrayPrepareAppend(seq, maxLength, *length+1, sizeof(char));
     seq[*length] = '\0';
     addSeq(fastaName, seq, *length);
@@ -140,14 +140,14 @@ char *addSeqToList(char *seq, int32_t *length, int32_t *maxLength, char *fastaNa
     return seq;
 }
 
-void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int32_t)) {
+void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int64_t)) {
     //reads in group of sequences INT_32o lists
     char j;
-    int32_t k;
+    int64_t k;
     static char *seq;
-    static int32_t seqLength;
+    static int64_t seqLength;
     char cA[STRING_ARRAY_SIZE];
-    int32_t l;
+    int64_t l;
 
     k=0;
     while((j = getc(fastaFile)) != EOF) { //initial terminating characters
@@ -195,7 +195,7 @@ struct List *fastaRead_fastaNames;
 struct List *fastaRead_seqs;
 struct List *fastaRead_seqLengths;
 
-void fastaRead_function(const char *fastaHeader, const char *sequence, int32_t length) {
+void fastaRead_function(const char *fastaHeader, const char *sequence, int64_t length) {
     listAppend(fastaRead_fastaNames, stString_copy(fastaHeader));
     listAppend(fastaRead_seqs, stString_copy(sequence));
     listAppend(fastaRead_seqLengths, constructInt(length));
@@ -224,12 +224,12 @@ char *eatWhiteSpace(char *string) {
     return string;
 }
 
-int32_t parseInt(char **string, int32_t *j) {
+int64_t parseInt(char **string, int64_t *j) {
     /*
      * Parses a string from the input string, and moves up the pointer.
      * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
      */
-    int32_t i;
+    int64_t i;
 
     i = sscanf(*string, INT_STRING, j);
     if(i == 1) {
@@ -245,12 +245,12 @@ int32_t parseInt(char **string, int32_t *j) {
     }
 }
 
-int32_t parseFloat(char **string, float *j) {
+int64_t parseFloat(char **string, float *j) {
     /*
      * Parses a string from the input string, and moves up the pointer.
      * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
      */
-    int32_t i;
+    int64_t i;
 
     i = sscanf(*string, "%f", j);
     if(i == 1) {
@@ -266,12 +266,12 @@ int32_t parseFloat(char **string, float *j) {
     }
 }
 
-int32_t parseString(char **string, char *cA) {
+int64_t parseString(char **string, char *cA) {
     /*
      * Parses a string from the input string, and moves up the pointer.
      * Returns 1 for success, 0 for failures, no action on the pointer occurs if failed.
      */
-    int32_t i;
+    int64_t i;
 
     i = sscanf(*string, "%s", cA);
     if(i == 1) {
@@ -308,9 +308,9 @@ char* eatString(char *string, char **newString) {
     return eatWhiteSpace(string);
 }
 
-char *replaceString(char *oldString, char old, char *new, int32_t newLength) {
+char *replaceString(char *oldString, char old, char *new, int64_t newLength) {
     char *i;
-    int32_t j;
+    int64_t j;
     char *k;
     char *newString;
     j=0;
@@ -336,7 +336,7 @@ char *replaceString(char *oldString, char old, char *new, int32_t newLength) {
     return newString;
 }
 
-char *replaceAndFreeString(char *oldString, char old, char *new, int32_t newLength) {
+char *replaceAndFreeString(char *oldString, char old, char *new, int64_t newLength) {
     char *i;
 
     i = replaceString(oldString, old, new, newLength);
@@ -378,11 +378,11 @@ static char *newickTreeParser_getLabel(char *newickTreeString, char **label) {
     return newickTreeString;
 }
 
-char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct BinaryTree **binaryTree, int32_t unaryNodes) {
+char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct BinaryTree **binaryTree, int64_t unaryNodes) {
     struct BinaryTree *temp1;
     struct BinaryTree *temp2;
     float f;
-    int32_t leaves;
+    int64_t leaves;
 
     temp1 = NULL;
     temp2 = NULL;
@@ -434,7 +434,7 @@ char *newickTreeParser_fn2(char *newickTreeString, float defaultDistance, struct
     return newickTreeString;
 }
 
-struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int32_t unaryNodes) {
+struct BinaryTree *newickTreeParser(char *newickTreeString, float defaultDistance, int64_t unaryNodes) {
     struct BinaryTree *binaryTree;
     char *i;
     //lax newick tree parser
@@ -464,11 +464,11 @@ struct CharColumnAlignment *multiFastaRead(char *fastaFile) {
     struct List *seqLengths;
     struct List *fastaNames;
     FILE *fileHandle;
-    int32_t alignmentLength = 0;
+    int64_t alignmentLength = 0;
     struct CharColumnAlignment *charColumnAlignment;
-    int32_t i;
-    int32_t j;
-    int32_t k;
+    int64_t i;
+    int64_t j;
+    int64_t k;
 
     seqs = constructEmptyList(0, free);
     seqLengths = constructEmptyList(0, free);
@@ -500,7 +500,7 @@ struct CharColumnAlignment *multiFastaRead(char *fastaFile) {
     return charColumnAlignment;
 }
 
-char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignment, int32_t col) {
+char *charColumnAlignment_getColumn(struct CharColumnAlignment *charColumnAlignment, int64_t col) {
     return &charColumnAlignment->columnAlignment[col*charColumnAlignment->seqNo];
 }
 
@@ -517,12 +517,12 @@ void destructCharColumnAlignment(struct CharColumnAlignment *charColumnAlignment
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int32_t benLine(char **s, int32_t *n, FILE *f) {
-    register int32_t nMinus1= ((*n)-1), i= 0;
+int64_t benLine(char **s, int64_t *n, FILE *f) {
+    register int64_t nMinus1= ((*n)-1), i= 0;
 
     char *s2 = *s;
     while(TRUE) {
-        register int32_t ch = (char)getc(f);
+        register int64_t ch = (char)getc(f);
 
         if(ch == '\r') {
             ch= getc(f);

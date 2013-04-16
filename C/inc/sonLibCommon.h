@@ -93,7 +93,7 @@ void st_uglyf(const char *string, ...);
 /*
  * Run a system command, return value is exit value of command.
  */
-int32_t st_system(const char *string, ...);
+int64_t st_system(const char *string, ...);
 
 //////////////////////
 //Error functions..

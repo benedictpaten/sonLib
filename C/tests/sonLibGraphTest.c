@@ -6,7 +6,7 @@
 
 #include "sonLibGlobalsTest.h"
 
-static const int32_t vertexNo = 7;
+static const int64_t vertexNo = 7;
 static stGraph *g = NULL; //Graph has vertices {0, 1, 2, 3, 4, 5, 6}
 
 static double e12W = 0.5;

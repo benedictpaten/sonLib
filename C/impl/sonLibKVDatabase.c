@@ -305,7 +305,7 @@ void stKVDatabase_bulkSetRecords(stKVDatabase *database, stList *records) {
                     stThrowNewCause(
                             ex,
                             ST_KV_DATABASE_EXCEPTION_ID,
-                            "stKVDatabase_bulkSetRecords with %i records to update",
+                            "stKVDatabase_bulkSetRecords with %" PRIi64 " records to update",
                             stList_length(records));
                 }
             }stTryEnd;
@@ -319,8 +319,8 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
 
 #ifndef NDEBUG
     /*This code to check the presence of records is very expensive*/
-    for (int32_t i = 0; i < stList_length(records); i++) {
-        int64_t key = stInt64Tuple_getPosition(stList_get(records, i), 0);
+    for (int64_t i = 0; i < stList_length(records); i++) {
+        int64_t key = stIntTuple_getPosition(stList_get(records, i), 0);
         if (!stKVDatabase_containsRecord(database, key)) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "The key is not in the database which we aim to remove: %lli", key);
@@ -337,7 +337,7 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
                     stThrowNewCause(
                             ex,
                             ST_KV_DATABASE_EXCEPTION_ID,
-                            "stKVDatabase_bulkRemoveRecords with %i records to update",
+                            "stKVDatabase_bulkRemoveRecords with %" PRIi64 " records to update",
                             stList_length(records));
                 }
             }stTryEnd;

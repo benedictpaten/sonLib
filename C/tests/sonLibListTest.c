@@ -14,7 +14,7 @@
 #include "sonLibGlobalsTest.h"
 
 static stList *list = NULL;
-static int32_t stringNumber = 5;
+static int64_t stringNumber = 5;
 static char *strings[5] = { "one", "two", "three", "four", "five" };
 
 static void teardown() {
@@ -27,7 +27,7 @@ static void teardown() {
 static void setup() {
     teardown();
     list = stList_construct();
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         stList_append(list, strings[i]);
     }
@@ -37,7 +37,7 @@ void test_stList_construct(CuTest *testCase) {
     setup();
     stList *list2 = stList_construct2(stringNumber);
     CuAssertTrue(testCase, stList_length(list2) == stringNumber);
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_get(list2, i) == NULL);
     }
@@ -53,7 +53,7 @@ void test_stList_length(CuTest *testCase) {
 
 void test_stList_get(CuTest *testCase) {
     setup();
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_get(list, i) == strings[i]);
     }
@@ -62,7 +62,7 @@ void test_stList_get(CuTest *testCase) {
 
 void test_stList_set(CuTest *testCase) {
     setup();
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         stList_set(list, i, NULL);
         CuAssertTrue(testCase, stList_get(list, i) == NULL);
@@ -83,7 +83,7 @@ void test_stList_appendAll(CuTest *testCase) {
     stList *list2 = stList_copy(list, NULL);
     stList_appendAll(list, list2);
     CuAssertTrue(testCase, stList_length(list) == stringNumber * 2);
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber*2; i++) {
         CuAssertTrue(testCase, stList_get(list, i) == strings[i % stringNumber]);
     }
@@ -99,7 +99,7 @@ void test_stList_peek(CuTest *testCase) {
 
 void test_stList_pop(CuTest *testCase) {
     setup();
-    int32_t i;
+    int64_t i;
     for(i=stringNumber-1; i>=0; i--) {
         CuAssertTrue(testCase, stList_pop(list) == strings[i]);
         CuAssertTrue(testCase, stList_length(list) == i);
@@ -128,7 +128,7 @@ void test_stList_removeItem(CuTest *testCase) {
 
 void test_stList_removeFirst(CuTest *testCase) {
     setup();
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_removeFirst(list) == strings[i]);
         CuAssertTrue(testCase, stList_length(list) == stringNumber-1-i);
@@ -138,7 +138,7 @@ void test_stList_removeFirst(CuTest *testCase) {
 
 void test_stList_contains(CuTest *testCase) {
     setup();
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_contains(list, strings[i]));
     }
@@ -151,7 +151,7 @@ void test_stList_copy(CuTest *testCase) {
     setup();
     stList *list2 = stList_copy(list, NULL);
     CuAssertTrue(testCase, stList_length(list) == stList_length(list2));
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_get(list2, i) == strings[i]);
     }
@@ -162,7 +162,7 @@ void test_stList_copy(CuTest *testCase) {
 void test_stList_reverse(CuTest *testCase) {
     setup();
     stList_reverse(list);
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_get(list, i) == strings[stringNumber-1-i]);
     }
@@ -172,7 +172,7 @@ void test_stList_reverse(CuTest *testCase) {
 void test_stList_iterator(CuTest *testCase) {
     setup();
     stListIterator *it = stList_getIterator(list);
-    int32_t i;
+    int64_t i;
     for(i=0; i<stringNumber; i++) {
         CuAssertTrue(testCase, stList_getNext(it) == strings[i]);
     }

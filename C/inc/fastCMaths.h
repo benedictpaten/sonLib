@@ -37,7 +37,7 @@ extern "C" {
 #define ZERO 0.0
 #define ONE 1.0
 
-#define INT_STRING "%i"
+#define INT_STRING "%" PRIi64
 
 #define STRING_ARRAY_SIZE 100000
 #define BIG_STRING_ARRAY_SIZE 10000000

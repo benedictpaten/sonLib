@@ -27,7 +27,7 @@ extern const char *ST_COMPRESSION_EXCEPTION_ID;
  * compressedSizeInBytes is given the size of the compressed string. The level is a value between 0 and 10 giving the
  * degree of required compression. If -1 is given then the default level is used.
  */
-void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level);
+void *stCompression_compress(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int64_t level);
 
 /*
  * Decompresses the compressed data string of size compressedSizeInBytes, initialises the sizeInBytes point to the size
@@ -38,7 +38,7 @@ void *stCompression_decompress(void *compressedData, int64_t compressedSizeInByt
 /*
  * Uses Zlib.
  */
-void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int32_t level);
+void *stCompression_compressZlib(void *data, int64_t sizeInBytes, int64_t *compressedSizeInBytes, int64_t level);
 
 /*
  * Uses Zlib.

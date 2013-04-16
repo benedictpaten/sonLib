@@ -14,7 +14,6 @@ CuSuite* sonLib_stSortedSetTestSuite(void);
 CuSuite* sonLib_stListTestSuite(void);
 CuSuite* sonLib_stCommonTestSuite(void);
 CuSuite* sonLib_stIntTuplesTestSuite(void);
-CuSuite* sonLib_stInt64TuplesTestSuite(void);
 CuSuite* sonLib_stDoubleTuplesTestSuite(void);
 CuSuite* sonLib_stExceptTestSuite(void);
 CuSuite* sonLib_stRandomTestSuite(void);
@@ -33,7 +32,6 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_ETreeTestSuite());
     CuSuiteAddSuite(suite, sonLib_stStringTestSuite());
     CuSuiteAddSuite(suite, sonLib_stIntTuplesTestSuite());
-    CuSuiteAddSuite(suite, sonLib_stInt64TuplesTestSuite());
     CuSuiteAddSuite(suite, sonLib_stDoubleTuplesTestSuite());
     CuSuiteAddSuite(suite, sonLib_stHashTestSuite());
     CuSuiteAddSuite(suite, sonLib_stSetTestSuite());

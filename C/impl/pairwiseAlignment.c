@@ -12,7 +12,7 @@
 #include "commonC.h"
 #include "bioioC.h"
 
-struct AlignmentOperation *constructAlignmentOperation(int32_t type, int32_t length, float score) {
+struct AlignmentOperation *constructAlignmentOperation(int64_t type, int64_t length, float score) {
     struct AlignmentOperation *oP;
 
     oP = st_malloc(sizeof(struct AlignmentOperation));
@@ -29,7 +29,7 @@ void destructAlignmentOperation(struct AlignmentOperation *alignmentOperation) {
 }
 
 void checkPairwiseAlignment(struct PairwiseAlignment *pA) {
-    int32_t i, j, k;
+    int64_t i, j, k;
     struct AlignmentOperation *op;
 
     assert(pA->start1 >= 0);
@@ -70,8 +70,8 @@ void checkPairwiseAlignment(struct PairwiseAlignment *pA) {
     assert(k == pA->end2);
 }
 
-struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int32_t start1, int32_t end1, int32_t strand1,
-                                                     char *contig2, int32_t start2, int32_t end2, int32_t strand2,
+struct PairwiseAlignment *constructPairwiseAlignment(char *contig1, int64_t start1, int64_t end1, int64_t strand1,
+                                                     char *contig2, int64_t start2, int64_t end2, int64_t strand2,
                                                      float score, struct List *operationList) {
     struct PairwiseAlignment *pA;
     pA = st_malloc(sizeof(struct PairwiseAlignment));
@@ -108,7 +108,7 @@ void logPairwiseAlignment(struct PairwiseAlignment *pA) {
     }
 }
 
-char cigarReadFn(char type, int32_t *withProb) {
+char cigarReadFn(char type, int64_t *withProb) {
     *withProb = FALSE;
     switch(type) {
         case 'X':
@@ -132,7 +132,7 @@ char cigarReadFn(char type, int32_t *withProb) {
 struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
     struct PairwiseAlignment *pA;
     static char cA[BIG_STRING_ARRAY_SIZE+1]; //STRING_ARRAY_SIZE];
-    int32_t type, length, withProb;
+    int64_t type, length, withProb;
     float score;
     static char cA2[STRING_ARRAY_SIZE];
     static char cA3[STRING_ARRAY_SIZE];
@@ -141,7 +141,7 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
 
     pA = st_malloc(sizeof(struct PairwiseAlignment));
     pA->operationList = constructEmptyList(0, (void (*)(void *))destructAlignmentOperation);
-    if(fscanf(fileHandle, "cigar: %s %i %i %c %s %i %i %c %f",\
+    if(fscanf(fileHandle, "cigar: %s %" PRIi64 " %" PRIi64 " %c %s %" PRIi64 " %" PRIi64 " %c %f",\
                 cA2, &pA->start2, &pA->end2, &strand2,\
                 cA3, &pA->start1, &pA->end1, &strand1,\
                 &pA->score) == 9) {
@@ -161,7 +161,7 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
             while(parseString(&cA4, cA2) == 1) {
                 assert(strlen(cA2) == 1);
                 type = cigarReadFn(cA2[0], &withProb);
-                int32_t j = parseInt(&cA4, &length);
+                int64_t j = parseInt(&cA4, &length);
                 (void)j;
                 assert(j == 1);
                 if(withProb == TRUE) {
@@ -185,7 +185,7 @@ struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
     }
 }
 
-char cigarWriteFn(int32_t type) {
+char cigarWriteFn(int64_t type) {
     switch(type) {
         case PAIRWISE_MATCH:
             return 'M';
@@ -199,7 +199,7 @@ char cigarWriteFn(int32_t type) {
     }
 }
 
-char cigarWriteFnWProbs(int32_t type) {
+char cigarWriteFnWProbs(int64_t type) {
     switch(type) {
         case PAIRWISE_MATCH:
             return 'X';
@@ -213,24 +213,24 @@ char cigarWriteFnWProbs(int32_t type) {
     }
 }
 
-void cigarWrite(FILE *fileHandle, struct PairwiseAlignment *pA, int32_t withProbs) {
+void cigarWrite(FILE *fileHandle, struct PairwiseAlignment *pA, int64_t withProbs) {
     int i;
     struct AlignmentOperation *oP;
 
-    fprintf(fileHandle, "cigar: %s %i %i %c %s %i %i %c %f",\
+    fprintf(fileHandle, "cigar: %s %" PRIi64 " %" PRIi64 " %c %s %" PRIi64 " %" PRIi64 " %c %f",\
             pA->contig2, pA->start2, pA->end2, pA->strand2 ? '+' : '-',\
             pA->contig1, pA->start1, pA->end1, pA->strand1 ? '+' : '-',\
             pA->score);
     if(withProbs == TRUE) {
         for(i=0; i<pA->operationList->length; i++) {
             oP = pA->operationList->list[i];
-            fprintf(fileHandle, " %c %i %f", cigarWriteFnWProbs(oP->opType), oP->length, oP->score);
+            fprintf(fileHandle, " %c %" PRIi64 " %f", cigarWriteFnWProbs(oP->opType), oP->length, oP->score);
         }
     }
     else {
         for(i=0; i<pA->operationList->length; i++) {
             oP = pA->operationList->list[i];
-            fprintf(fileHandle, " %c %i", cigarWriteFn(oP->opType), oP->length);
+            fprintf(fileHandle, " %c %" PRIi64 "", cigarWriteFn(oP->opType), oP->length);
         }
     }
     fprintf(fileHandle, "\n");

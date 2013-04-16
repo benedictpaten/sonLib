@@ -125,7 +125,7 @@ static void test_stTree_label(CuTest* testCase) {
 static void test_stTree_newickTreeParser(CuTest *testCase) {
     setup();
     char *testNewickStrings[4] =  { "(((a,b,(c,))d),e)f;",  ";", "f;", "();" };
-    int32_t i;
+    int64_t i;
     for(i=0; i<4; i++) {
         stTree *eTree2 = stTree_parseNewickString(testNewickStrings[i]);
         CuAssertTrue(testCase, eTree2 != NULL);

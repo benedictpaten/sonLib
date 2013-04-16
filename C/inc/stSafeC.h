@@ -105,7 +105,7 @@ __attribute__((format(printf, 1, 2)))
 ;
 
 /* convert a string to a 32 unsigned int, exception if invalid */
-uint32_t stSafeStrToUInt32(const char *str);
+uint64_t stSafeStrToUInt32(const char *str);
 
 /* convert a string to a 64 int, exception if invalid */
 int64_t stSafeStrToInt64(const char *str);

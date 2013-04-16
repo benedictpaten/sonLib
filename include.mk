@@ -31,10 +31,10 @@ cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -lm
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -lm
 
 #for cpp code: don't use pedantic, or Werror
-cppflags = ${cppflags_opt} 
+cppflags = ${cppflags_dbg} 
 
 #Flags to use
-cflags = ${cflags_opt}  
+cflags = ${cflags_dbg}  
  
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib

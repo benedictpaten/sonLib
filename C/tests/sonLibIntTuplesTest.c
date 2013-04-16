@@ -29,11 +29,11 @@ static void teardown() {
 
 static void setup() {
     teardown();
-    intTuple1 = stIntTuple_construct(3, 1, 3, 2);
-    intTuple2 = stIntTuple_construct(4, 1, 5, 2, 7);
-    intTuple3 = stIntTuple_construct(0);
-    intTuple4 = stIntTuple_construct(3, 1, 3, 2);
-    intTuple5 = stIntTuple_construct(4, 1, 3, 2, 7);
+    intTuple1 = stIntTuple_construct3( 1, 3, 2);
+    intTuple2 = stIntTuple_construct4( 1, 5, 2, 7);
+    intTuple3 = stIntTuple_construct0();
+    intTuple4 = stIntTuple_construct3( 1, 3, 2);
+    intTuple5 = stIntTuple_construct4( 1, 3, 2, 7);
 }
 
 static void test_stIntTuple_construct(CuTest *testCase) {
@@ -44,7 +44,7 @@ static void test_stIntTuple_construct(CuTest *testCase) {
 
 static void test_stIntTuple_hashKey(CuTest *testCase) {
     setup();
-    stHash *hash = stHash_construct3((uint32_t (*)(const void *))stIntTuple_hashKey, (int (*)(const void *, const void *))stIntTuple_equalsFn, NULL, NULL);
+    stHash *hash = stHash_construct3((uint64_t (*)(const void *))stIntTuple_hashKey, (int (*)(const void *, const void *))stIntTuple_equalsFn, NULL, NULL);
     stHash_insert(hash, intTuple1, intTuple1);
     stHash_insert(hash, intTuple2, intTuple2);
     CuAssertTrue(testCase, stHash_search(hash, intTuple1) != NULL);

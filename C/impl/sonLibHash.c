@@ -19,7 +19,7 @@ struct _stHash {
     bool destructKeys, destructValues;
 };
 
-uint32_t stHash_pointer(const void *k) {
+uint64_t stHash_pointer(const void *k) {
     /*if (sizeof(const void *) > 4) {
         int64_t key = (int64_t) (size_t) k;
         key = (~key) + (key << 18); // key = (key << 18) - key - 1;
@@ -28,9 +28,9 @@ uint32_t stHash_pointer(const void *k) {
         key = key ^ (key >> 11);
         key = key + (key << 6);
         key = key ^ (key >> 22);
-        return (uint32_t) key;
+        return (uint64_t) key;
     }*/
-    return (uint32_t) (size_t) k; //Just use the low order bits
+    return (uint64_t) (size_t) k; //Just use the low order bits
 }
 
 static int stHash_equalKey(const void *key1, const void *key2) {
@@ -45,7 +45,7 @@ stHash *stHash_construct2(void(*destructKeys)(void *), void(*destructValues)(voi
     return stHash_construct3(stHash_pointer, stHash_equalKey, destructKeys, destructValues);
 }
 
-stHash *stHash_construct3(uint32_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *), void(*destructValues)(void *)) {
+stHash *stHash_construct3(uint64_t(*hashKey)(const void *), int(*hashEqualsKey)(const void *, const void *), void(*destructKeys)(void *), void(*destructValues)(void *)) {
     stHash *hash = st_malloc(sizeof(stHash));
     hash->hash = create_hashtable(0, hashKey, hashEqualsKey, destructKeys, destructValues);
     hash->destructKeys = destructKeys != NULL;
@@ -77,7 +77,7 @@ void *stHash_removeAndFreeKey(stHash *hash, void *key) {
     return hashtable_remove(hash->hash, key, 1);
 }
 
-int32_t stHash_size(stHash *hash) {
+int64_t stHash_size(stHash *hash) {
     return hashtable_count(hash->hash);
 }
 
@@ -133,12 +133,12 @@ stList *stHash_getValues(stHash *hash) {
  * Useful hash keys/equals functions
  */
 
-uint32_t stHash_stringKey(const void *k) {
+uint64_t stHash_stringKey(const void *k) {
     // djb2
     // This algorithm was first reported by Dan Bernstein
     // many years ago in comp.lang.c
     //
-    uint32_t hash = 0; //5381;
+    uint64_t hash = 0; //5381;
     int c;
     char *cA;
     cA = (char *) k;
@@ -153,7 +153,7 @@ int stHash_stringEqualKey(const void *key1, const void *key2) {
     return strcmp(key1, key2) == 0;
 }
 
-stHash *stHash_invert(stHash *hash, uint32_t(*hashKey)(const void *), int(*equalsFn)(const void *, const void *),
+stHash *stHash_invert(stHash *hash, uint64_t(*hashKey)(const void *), int(*equalsFn)(const void *, const void *),
         void(*destructKeys)(void *), void(*destructValues)(void *)) {
     /*
      * Inverts the hash.
@@ -172,7 +172,7 @@ stHash *stHash_invert(stHash *hash, uint32_t(*hashKey)(const void *), int(*equal
     return invertedHash;
 }
 // interface to underlying functions
-uint32_t (*stHash_getHashFunction(stHash *hash))(const void *) {
+uint64_t (*stHash_getHashFunction(stHash *hash))(const void *) {
     return hash->hash->hashfn;
 }
 int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *) {

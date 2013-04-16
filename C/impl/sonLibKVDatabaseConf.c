@@ -116,7 +116,7 @@ static stHash *hackParseXmlString(const char *xmlString) {
     stHash *hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey, free, free);
     char *toReplace[5] = { "</", "<", "/>", ">", "=" };
     char *cA = stString_replace(xmlString, toReplace[0], " "), *cA2;
-    for (int32_t i = 1; i < 5; i++) {
+    for (int64_t i = 1; i < 5; i++) {
         cA2 = stString_replace(cA, toReplace[i], " ");
         free(cA);
         cA = cA2;
