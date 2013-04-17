@@ -25,7 +25,7 @@ extern "C" {
  * number of subsequent arguments..
  */
 
-stIntTuple *stIntTuple_construct0();
+stIntTuple *stIntTuple_construct0(void);
 
 stIntTuple *stIntTuple_construct1(int64_t value);
 
