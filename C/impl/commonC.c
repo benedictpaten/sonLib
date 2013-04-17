@@ -682,7 +682,7 @@ static void binaryTree_depthFirstNumbers_Traverse(
         binaryTree_depthFirstNumbers_Traverse(binaryTree->left, mid, leafNo);
         j = (*mid)++;
         binaryTree_depthFirstNumbers_Traverse(binaryTree->right, mid, leafNo);
-        binaryTree->traversalID = constructTraversalID(i, j, *mid, INT32_MAX);
+        binaryTree->traversalID = constructTraversalID(i, j, *mid, INT64_MAX);
     } else {
         i = (*mid)++;
         binaryTree->traversalID = constructTraversalID(i, i, *mid, (*leafNo)++);
@@ -865,7 +865,7 @@ char *getTempFile(void) {
     }
 
     static int64_t counter = 0;
-    while(counter < INT32_MAX) {
+    while(counter < INT64_MAX) {
         char *pattern = stString_print(tmpdir[strlen(tmpdir)-1] == '/' ? "%sstTmp%" PRIi64 "_%" PRIi64 "" : "%s/stTmp%" PRIi64 "_%" PRIi64 "", tmpdir, getpid(), counter++);
         int fd = open(pattern, O_CREAT|O_EXCL, 0600);
         if(fd >= 0) {
@@ -877,7 +877,7 @@ char *getTempFile(void) {
         }
         free(pattern);
     }
-    st_errnoAbort("Exhausted temporary file patterns");
+    st_errnoAbort("Exhausted temporary file patterns"); //This is pretty bloody unlikely
     return NULL;
 }
 

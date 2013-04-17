@@ -82,8 +82,8 @@ static void test_st_randomInt(CuTest *testCase) {
     /*
      * Exercises the random int function.
      */
-	int64_t min = INT32_MIN;
-	int64_t max = INT32_MAX;
+	int64_t min = INT64_MIN;
+	int64_t max = INT64_MAX;
     int64_t v;
     for (int64_t i = -9; i < 10; ++i) {
         CuAssertTrue(testCase, st_randomInt(i, i + 1) == i);

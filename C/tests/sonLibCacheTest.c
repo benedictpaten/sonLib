@@ -96,7 +96,7 @@ static void readAndUpdateRecords(CuTest *testCase) {
     stCache_setRecord(cache, 1, 0, 6, "world");
     stCache_setRecord(cache, INT64_MAX-1, 0, 8, "goodbye");
     stCache_setRecord(cache, 3, 0, 6, "cruel");
-    stCache_setRecord(cache, INT32_MIN, 0, 6, "earth");
+    stCache_setRecord(cache, INT64_MIN, 0, 6, "earth");
 
     CuAssertStrEquals(testCase, "world", stCache_getRecord(cache, 1, 0, INT64_MAX, &recordSize)); //Get the second word
     CuAssertTrue(testCase, recordSize == 6);
@@ -110,9 +110,9 @@ static void readAndUpdateRecords(CuTest *testCase) {
     CuAssertTrue(testCase, recordSize == 6);
     CuAssertTrue(testCase, stCache_containsRecord(cache, 3, 0, INT64_MAX));
 
-    CuAssertStrEquals(testCase, "earth", stCache_getRecord(cache, INT32_MIN, 0, INT64_MAX, &recordSize)); //Get the second word
+    CuAssertStrEquals(testCase, "earth", stCache_getRecord(cache, INT64_MIN, 0, INT64_MAX, &recordSize)); //Get the second word
     CuAssertTrue(testCase, recordSize == 6);
-    CuAssertTrue(testCase, stCache_containsRecord(cache, INT32_MIN, 0, INT64_MAX));
+    CuAssertTrue(testCase, stCache_containsRecord(cache, INT64_MIN, 0, INT64_MAX));
 
     teardown();
 }
