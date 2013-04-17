@@ -52,7 +52,9 @@ static void destructElements(stList *list) {
 
 void stList_destruct(stList *list) {
     if (list != NULL) {
+        st_uglyf("Here we go\n");
         if (list->destructElement != NULL) {
+            st_uglyf("We are deleting the elements of the list\n");
             destructElements(list);
         }
         if(list->list != NULL) {

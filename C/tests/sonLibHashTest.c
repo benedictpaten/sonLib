@@ -90,7 +90,7 @@ static void test_stHash_removeAndFreeKey(CuTest* testCase) {
     stHash *hash3 = stHash_construct2(free, free);
     stList *keys = stList_construct();
     stList *values = stList_construct();
-    int64_t keyNumber = 1000;
+    int64_t keyNumber = 100000;
     for (int64_t i = 0; i < keyNumber; i++) {
         int64_t *key = st_malloc(sizeof(int64_t));
         int64_t *value = st_malloc(sizeof(int64_t));
