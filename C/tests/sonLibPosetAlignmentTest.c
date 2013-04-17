@@ -68,8 +68,8 @@ static stHash *buildAdjacencyList(stList *pairs, int64_t sequenceNumber) {
     stListIterator *it = stList_getIterator(pairs);
     stIntTuple *pair;
     while((pair = stList_getNext(it)) != NULL) {
-       stIntTuple *seqPos1 = stIntTuple_construct2( stIntTuple_getPosition(pair, 0), stIntTuple_getPosition(pair, 1));
-       stIntTuple *seqPos2 = stIntTuple_construct2( stIntTuple_getPosition(pair, 2), stIntTuple_getPosition(pair, 3));
+       stIntTuple *seqPos1 = stIntTuple_construct2( stIntTuple_get(pair, 0), stIntTuple_get(pair, 1));
+       stIntTuple *seqPos2 = stIntTuple_construct2( stIntTuple_get(pair, 2), stIntTuple_get(pair, 3));
        stSortedSet *column1 = stHash_search(hash, seqPos1);
        assert(column1 != NULL);
        stSortedSet *column2 = stHash_search(hash, seqPos2);
@@ -113,7 +113,7 @@ static int64_t dfs(stHash *adjacencyList, stIntTuple *seqPos,
 
     int64_t cycle =0;
 
-    stIntTuple *nextSeqPos = stIntTuple_construct2( stIntTuple_getPosition(seqPos, 0), stIntTuple_getPosition(seqPos, 1) + 1);
+    stIntTuple *nextSeqPos = stIntTuple_construct2( stIntTuple_get(seqPos, 0), stIntTuple_get(seqPos, 1) + 1);
     stSortedSet *column = stHash_search(adjacencyList, nextSeqPos);
     if(column != NULL) { //It is in the adjacency list, so we can do the recursion
         assert(stSortedSet_search(column, nextSeqPos) != NULL);
@@ -186,13 +186,13 @@ static void test_stPosetAlignment_addAndIsPossible(CuTest *testCase) {
         if(sequenceNumber > 0) {
             for(int64_t i=0; i<maxAlignedPairs; i++) {
                 int64_t seq1 = st_randomInt(0, sequenceNumber);
-                int64_t seqLength1 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
+                int64_t seqLength1 = stIntTuple_get(stList_get(sequenceLengths, seq1), 0);
                 if(seqLength1 == 0) {
                     continue;
                 }
                 int64_t position1 = st_randomInt(0, seqLength1);
                 int64_t seq2 = st_randomInt(0, sequenceNumber);
-                int64_t seqLength2 = stIntTuple_getPosition(stList_get(sequenceLengths, seq1), 0);
+                int64_t seqLength2 = stIntTuple_get(stList_get(sequenceLengths, seq1), 0);
                 if(seqLength2 == 0) {
                     continue;
                 }

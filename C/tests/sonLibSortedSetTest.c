@@ -58,12 +58,12 @@ static void test_stSortedSet(CuTest* testCase) {
         stSortedSet_insert(sortedSet, stIntTuple_construct1( input[i]));
     }
     CuAssertIntEquals(testCase, sortedSize, stSortedSet_size(sortedSet));
-    CuAssertIntEquals(testCase, sortedInput[0], stIntTuple_getPosition(stSortedSet_getFirst(sortedSet), 0));
-    CuAssertIntEquals(testCase, sortedInput[sortedSize-1], stIntTuple_getPosition(stSortedSet_getLast(sortedSet), 0));
+    CuAssertIntEquals(testCase, sortedInput[0], stIntTuple_get(stSortedSet_getFirst(sortedSet), 0));
+    CuAssertIntEquals(testCase, sortedInput[sortedSize-1], stIntTuple_get(stSortedSet_getLast(sortedSet), 0));
     for(i=0; i<sortedSize; i++) {
         CuAssertIntEquals(testCase, sortedSize-i, stSortedSet_size(sortedSet));
         stIntTuple *tuple = stIntTuple_construct1( sortedInput[i]);
-        CuAssertTrue(testCase, stIntTuple_getPosition(stSortedSet_search(sortedSet, tuple), 0) == sortedInput[i]);
+        CuAssertTrue(testCase, stIntTuple_get(stSortedSet_search(sortedSet, tuple), 0) == sortedInput[i]);
         stSortedSet_remove(sortedSet, tuple);
         CuAssertTrue(testCase, stSortedSet_search(sortedSet, tuple) == NULL);
         stIntTuple_destruct(tuple);
@@ -81,14 +81,14 @@ static void test_stSortedSetIterator(CuTest* testCase) {
     CuAssertTrue(testCase, iterator != NULL);
 
     for(i=0; i<sortedSize; i++) {
-        CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_getPosition(stSortedSet_getNext(iterator), 0));
+        CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_get(stSortedSet_getNext(iterator), 0));
     }
     CuAssertTrue(testCase, stSortedSet_getNext(iterator) == NULL);
     stSortedSetIterator *iterator2 = stSortedSet_copyIterator(iterator);
     CuAssertTrue(testCase, iterator2 != NULL);
     for(i=0; i<sortedSize; i++) {
-        CuAssertIntEquals(testCase, sortedInput[sortedSize - 1 - i], stIntTuple_getPosition(stSortedSet_getPrevious(iterator), 0));
-        CuAssertIntEquals(testCase, sortedInput[sortedSize - 1 - i], stIntTuple_getPosition(stSortedSet_getPrevious(iterator2), 0));
+        CuAssertIntEquals(testCase, sortedInput[sortedSize - 1 - i], stIntTuple_get(stSortedSet_getPrevious(iterator), 0));
+        CuAssertIntEquals(testCase, sortedInput[sortedSize - 1 - i], stIntTuple_get(stSortedSet_getPrevious(iterator2), 0));
     }
     CuAssertTrue(testCase, stSortedSet_getPrevious(iterator) == NULL);
     CuAssertTrue(testCase, stSortedSet_getPrevious(iterator2) == NULL);
@@ -110,7 +110,7 @@ static void test_stSortedSetIterator_getIteratorFrom(CuTest* testCase) {
         stSortedSetIterator *it = stSortedSet_getIteratorFrom(sortedSet, stIntTuple_construct1( sortedInput[i]));
         stIntTuple *intTuple = stSortedSet_getNext(it);
         CuAssertTrue(testCase, intTuple != NULL);
-        CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_getPosition(intTuple, 0));
+        CuAssertIntEquals(testCase, sortedInput[i], stIntTuple_get(intTuple, 0));
         stSortedSet_destructIterator(it);
     }
 
@@ -310,7 +310,7 @@ static void test_stSortedSet_searchLessThanOrEqual(CuTest* testCase) {
     for(int64_t i=1; i<stList_length(list); i++) {
         stIntTuple *p = stList_get(list, i-1);
         stIntTuple *j = stList_get(list, i);
-        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_getPosition(p, 0), stIntTuple_getPosition(j, 0)));
+        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_get(p, 0), stIntTuple_get(j, 0)));
         CuAssertTrue(testCase, stSortedSet_searchLessThanOrEqual(sortedSet, k) == p);
         stIntTuple_destruct(k);
     }
@@ -347,7 +347,7 @@ static void test_stSortedSet_searchLessThan(CuTest* testCase) {
     for(int64_t i=1; i<stList_length(list); i++) {
         stIntTuple *p = stList_get(list, i-1);
         stIntTuple *j = stList_get(list, i);
-        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_getPosition(p, 0)+1, stIntTuple_getPosition(j, 0)+1));
+        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_get(p, 0)+1, stIntTuple_get(j, 0)+1));
         CuAssertTrue(testCase, stSortedSet_searchLessThan(sortedSet, k) == p);
         stIntTuple_destruct(k);
     }
@@ -383,7 +383,7 @@ static void test_stSortedSet_searchGreaterThanOrEqual(CuTest* testCase) {
     for(int64_t i=1; i<stList_length(list); i++) {
         stIntTuple *p = stList_get(list, i-1);
         stIntTuple *j = stList_get(list, i);
-        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_getPosition(p, 0)+1, stIntTuple_getPosition(j, 0)+1));
+        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_get(p, 0)+1, stIntTuple_get(j, 0)+1));
         CuAssertTrue(testCase, stSortedSet_searchGreaterThanOrEqual(sortedSet, k) == j);
         stIntTuple_destruct(k);
     }
@@ -419,7 +419,7 @@ static void test_stSortedSet_searchGreaterThan(CuTest* testCase) {
     for(int64_t i=1; i<stList_length(list); i++) {
         stIntTuple *p = stList_get(list, i-1);
         stIntTuple *j = stList_get(list, i);
-        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_getPosition(p, 0), stIntTuple_getPosition(j, 0)));
+        stIntTuple *k = stIntTuple_construct1( st_randomInt(stIntTuple_get(p, 0), stIntTuple_get(j, 0)));
         CuAssertTrue(testCase, stSortedSet_searchGreaterThan(sortedSet, k) == j);
         stIntTuple_destruct(k);
     }

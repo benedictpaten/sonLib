@@ -320,7 +320,7 @@ void stKVDatabase_bulkRemoveRecords(stKVDatabase *database, stList *records) {
 #ifndef NDEBUG
     /*This code to check the presence of records is very expensive*/
     for (int64_t i = 0; i < stList_length(records); i++) {
-        int64_t key = stIntTuple_getPosition(stList_get(records, i), 0);
+        int64_t key = stIntTuple_get(stList_get(records, i), 0);
         if (!stKVDatabase_containsRecord(database, key)) {
             stThrowNew(ST_KV_DATABASE_EXCEPTION_ID,
                     "The key is not in the database which we aim to remove: %lli", key);

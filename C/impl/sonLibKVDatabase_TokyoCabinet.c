@@ -297,7 +297,7 @@ static void bulkRemoveRecords(stKVDatabase *database, stList *records) {
     stTry {
         for(int64_t i=0; i<stList_length(records); i++) {
             stIntTuple *j = stList_get(records, i);
-            removeRecord(database, stIntTuple_getPosition(j, 0));
+            removeRecord(database, stIntTuple_get(j, 0));
         }
         commitTransaction(database);
     }stCatch(ex) {

@@ -16,12 +16,12 @@ static int cmpFn(int64_t i, int64_t j) {
 }
 
 static int comparePositions(stIntTuple *position1, stIntTuple *position2) {
-    if(stIntTuple_getPosition(position1, 0) == INT64_MAX || stIntTuple_getPosition(position2, 0) == INT64_MAX) { //Indicates we should ignore the first position and compare the second.
-        assert(stIntTuple_getPosition(position1, 1) != INT64_MAX);
-        assert(stIntTuple_getPosition(position2, 1) != INT64_MAX);
-        return cmpFn(stIntTuple_getPosition(position1, 1), stIntTuple_getPosition(position2, 1));
+    if(stIntTuple_get(position1, 0) == INT64_MAX || stIntTuple_get(position2, 0) == INT64_MAX) { //Indicates we should ignore the first position and compare the second.
+        assert(stIntTuple_get(position1, 1) != INT64_MAX);
+        assert(stIntTuple_get(position2, 1) != INT64_MAX);
+        return cmpFn(stIntTuple_get(position1, 1), stIntTuple_get(position2, 1));
     }
-    return cmpFn(stIntTuple_getPosition(position1, 0), stIntTuple_getPosition(position2, 0));
+    return cmpFn(stIntTuple_get(position1, 0), stIntTuple_get(position2, 0));
 }
 
 stPosetAlignment *stPosetAlignment_construct(int64_t sequenceNumber) {
@@ -71,7 +71,7 @@ static stIntTuple *getConstraint_lessThan(stPosetAlignment *posetAlignment, int6
     //Get less than or equal
     stIntTuple *constraint = stSortedSet_searchGreaterThanOrEqual(getConstraintList(posetAlignment, sequence1, sequence2), pos);
     stIntTuple_destruct(pos);
-    assert(constraint == NULL || position1 <= stIntTuple_getPosition(constraint, 0));
+    assert(constraint == NULL || position1 <= stIntTuple_get(constraint, 0));
     return constraint;
 }
 
@@ -83,7 +83,7 @@ static stIntTuple *getConstraint_greaterThan(stPosetAlignment *posetAlignment, i
     //Get less than or equal
     stIntTuple *constraint = stSortedSet_searchLessThanOrEqual(getConstraintList(posetAlignment, sequence2, sequence1), pos);
     stIntTuple_destruct(pos);
-    assert(constraint == NULL || position1 >= stIntTuple_getPosition(constraint, 1));
+    assert(constraint == NULL || position1 >= stIntTuple_get(constraint, 1));
     return constraint;
 }
 
@@ -95,13 +95,13 @@ static bool lessThanConstraintIsPrime(stPosetAlignment *posetAlignment, int64_t 
     if(constraint == NULL) {
         return 1;
     }
-    if(position2 < stIntTuple_getPosition(constraint, 1)) { //new constraint is tighter
+    if(position2 < stIntTuple_get(constraint, 1)) { //new constraint is tighter
         return 1;
     }
-    if(position2 > stIntTuple_getPosition(constraint, 1)) { //new constraint is looser
+    if(position2 > stIntTuple_get(constraint, 1)) { //new constraint is looser
         return 0;
     }
-    if(position1 == stIntTuple_getPosition(constraint, 0) && stIntTuple_getPosition(constraint, 2) && !lessThanOrEquals) { //converts a less than or equals constraint to a less than constraint
+    if(position1 == stIntTuple_get(constraint, 0) && stIntTuple_get(constraint, 2) && !lessThanOrEquals) { //converts a less than or equals constraint to a less than constraint
         return 1;
     }
     return 0;
@@ -118,16 +118,16 @@ void addConstraint_lessThan(stPosetAlignment *posetAlignment, int64_t sequence1,
     stIntTuple *constraint1 = stIntTuple_construct3( position1, position2, lessThanOrEquals);
     stIntTuple *constraint2;
     while((constraint2 = stSortedSet_searchLessThanOrEqual(constraintList, constraint1)) != NULL) {
-        assert(stIntTuple_getPosition(constraint2, 0) <= position1);
-        if(stIntTuple_getPosition(constraint2, 1) >= position2) {
-            if(stIntTuple_getPosition(constraint2, 1) == position2) { //Check we are not removing an equivalent or more severe constraint.
-                assert((!lessThanOrEquals && stIntTuple_getPosition(constraint2, 2)) || stIntTuple_getPosition(constraint2, 0) < position1);
+        assert(stIntTuple_get(constraint2, 0) <= position1);
+        if(stIntTuple_get(constraint2, 1) >= position2) {
+            if(stIntTuple_get(constraint2, 1) == position2) { //Check we are not removing an equivalent or more severe constraint.
+                assert((!lessThanOrEquals && stIntTuple_get(constraint2, 2)) || stIntTuple_get(constraint2, 0) < position1);
             }
             stSortedSet_remove(constraintList, constraint2);
             stIntTuple_destruct(constraint2);
         }
         else {
-            assert(stIntTuple_getPosition(constraint2, 0) < position1); //Check the constraint does not overshadow our proposed constraint.
+            assert(stIntTuple_get(constraint2, 0) < position1); //Check the constraint does not overshadow our proposed constraint.
             break;
         }
     }
@@ -139,11 +139,11 @@ bool stPosetAlignment_isPossibleP(stPosetAlignment *posetAlignment, int64_t sequ
     if(constraint == NULL) {
         return 1;
     }
-    if(stIntTuple_getPosition(constraint, 2) && stIntTuple_getPosition(constraint, 0) == position1) { //less than or equals
-        return position2 <= stIntTuple_getPosition(constraint, 1);
+    if(stIntTuple_get(constraint, 2) && stIntTuple_get(constraint, 0) == position1) { //less than or equals
+        return position2 <= stIntTuple_get(constraint, 1);
     }
     else {
-        return position2 < stIntTuple_getPosition(constraint, 1);
+        return position2 < stIntTuple_get(constraint, 1);
     }
 }
 
@@ -157,8 +157,8 @@ static void stPosetAlignment_addP2(stPosetAlignment *posetAlignment, int64_t seq
         if(sequence4 != sequence1 && sequence4 != sequence2 && sequence4 != sequence3) {
             stIntTuple *constraint = getConstraint_lessThan(posetAlignment, sequence2, position2, sequence4);
             if(constraint != NULL) {
-                int64_t position4 = stIntTuple_getPosition(constraint, 1);
-                int64_t transLessThanOrEqual = lessThanOrEqual && stIntTuple_getPosition(constraint, 2) && stIntTuple_getPosition(constraint, 0) == position2; //stuff which maintains the less than or equals
+                int64_t position4 = stIntTuple_get(constraint, 1);
+                int64_t transLessThanOrEqual = lessThanOrEqual && stIntTuple_get(constraint, 2) && stIntTuple_get(constraint, 0) == position2; //stuff which maintains the less than or equals
                 if(lessThanConstraintIsPrime(posetAlignment, sequence3, position3, sequence4, position4, transLessThanOrEqual)) {//We have a new transitive constraint..
                     addConstraint_lessThan(posetAlignment, sequence3, position3, sequence4, position4, transLessThanOrEqual);
                 }
@@ -176,8 +176,8 @@ static void stPosetAlignment_addP(stPosetAlignment *posetAlignment, int64_t sequ
                 if(sequence3 != sequence1) {
                     stIntTuple *constraint = getConstraint_greaterThan(posetAlignment, sequence1, position1, sequence3);
                     if(constraint != NULL) {
-                        int64_t position3 = stIntTuple_getPosition(constraint, 0); //its reversed
-                        int64_t lessThanOrEqual = stIntTuple_getPosition(constraint, 2) && stIntTuple_getPosition(constraint, 1) == position1;
+                        int64_t position3 = stIntTuple_get(constraint, 0); //its reversed
+                        int64_t lessThanOrEqual = stIntTuple_get(constraint, 2) && stIntTuple_get(constraint, 1) == position1;
                         if(lessThanConstraintIsPrime(posetAlignment, sequence3, position3, sequence2, position2, lessThanOrEqual)) { //new constraint found, so add it to the set..
                             addConstraint_lessThan(posetAlignment, sequence3, position3, sequence2, position2, lessThanOrEqual);
                             stPosetAlignment_addP2(posetAlignment, sequence1, sequence3, position3, sequence2, position2, lessThanOrEqual);

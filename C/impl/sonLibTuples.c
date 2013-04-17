@@ -89,7 +89,7 @@ uint64_t stIntTuple_hashKey(stIntTuple *intTuple) {
         // This algorithm was first reported by Dan Bernstein
         // many years ago in comp.lang.c
         //
-        j = stIntTuple_getPosition(intTuple, i) + (j << 6) + (j << 16) - j;
+        j = stIntTuple_get(intTuple, i) + (j << 6) + (j << 16) - j;
     }
     return j;
 }
@@ -106,8 +106,8 @@ int stIntTuple_cmpFn(stIntTuple *intTuple1, stIntTuple *intTuple2) {
                             intTuple1)
                             : stIntTuple_length(intTuple2);
     for (i = 0; i < j; i++) {
-        int64_t k = intCmp(stIntTuple_getPosition(intTuple1, i)
-                ,stIntTuple_getPosition(intTuple2, i));
+        int64_t k = intCmp(stIntTuple_get(intTuple1, i)
+                ,stIntTuple_get(intTuple2, i));
         if (k != 0) {
             return k;
         }
@@ -123,7 +123,7 @@ int64_t stIntTuple_length(stIntTuple *intTuple) {
     return intTuple[0];
 }
 
-int64_t stIntTuple_getPosition(stIntTuple *intTuple, int64_t index) {
+int64_t stIntTuple_get(stIntTuple *intTuple, int64_t index) {
     assert(index < stIntTuple_length(intTuple));
     assert(index >= 0);
     return intTuple[index + 1];

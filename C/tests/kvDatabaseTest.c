@@ -140,7 +140,7 @@ static void partialRecordRetrieval(CuTest *testCase) {
         CuAssertTrue(testCase, stKVDatabase_containsRecord(database, recordKey));
 
         char *record = stList_get(records, recordKey);
-        int64_t size = stIntTuple_getPosition(stList_get(recordSizes, recordKey), 0);
+        int64_t size = stIntTuple_get(stList_get(recordSizes, recordKey), 0);
 
         //Get partial record
         int64_t start = size > 0 ? st_randomInt(0, size) : 0;
@@ -458,9 +458,9 @@ static void readWriteAndRemoveRecordsLotsCheck(CuTest *testCase, stSortedSet *se
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
-        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
-        CuAssertIntEquals(testCase, valueMult*stIntTuple_getPosition(tuple, 0), *value);
+        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_get(tuple, 0));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_get(tuple, 0)));
+        CuAssertIntEquals(testCase, valueMult*stIntTuple_get(tuple, 0), *value);
         free(value);
     }
     stSortedSet_destructIterator(it);
@@ -490,10 +490,10 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numReco
     stSortedSetIterator *it = stSortedSet_getIterator(set);
     stIntTuple *tuple;
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_getPosition(tuple, 0));
+        int64_t *value = (int64_t *) stKVDatabase_getRecord(database, stIntTuple_get(tuple, 0));
         *value *= -1;
-        stKVDatabase_updateRecord(database, stIntTuple_getPosition(tuple, 0), value, sizeof(int64_t));
-        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
+        stKVDatabase_updateRecord(database, stIntTuple_get(tuple, 0), value, sizeof(int64_t));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_get(tuple, 0)));
         free(value);
     }
     stSortedSet_destructIterator(it);
@@ -511,12 +511,12 @@ static void readWriteAndRemoveRecordsLotsIteration(CuTest *testCase, int numReco
     //Now remove each one..
     it = stSortedSet_getIterator(set);
     while ((tuple = stSortedSet_getNext(it)) != NULL) {
-        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
-        stKVDatabase_removeRecord(database, stIntTuple_getPosition(tuple, 0));
-        CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, stIntTuple_getPosition(tuple, 0)));
+        CuAssertTrue(testCase, stKVDatabase_containsRecord(database, stIntTuple_get(tuple, 0)));
+        stKVDatabase_removeRecord(database, stIntTuple_get(tuple, 0));
+        CuAssertTrue(testCase, !stKVDatabase_containsRecord(database, stIntTuple_get(tuple, 0)));
         //Test we get exception if we remove twice.
         stTry {
-                stKVDatabase_removeRecord(database, stIntTuple_getPosition(tuple, 0));
+                stKVDatabase_removeRecord(database, stIntTuple_get(tuple, 0));
                 CuAssertTrue(testCase, 0);
             }
             stCatch(except)

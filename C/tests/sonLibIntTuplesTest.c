@@ -96,9 +96,9 @@ static void test_stIntTuple_length(CuTest *testCase) {
 
 static void test_stIntTuple_getPosition(CuTest *testCase) {
     setup();
-    CuAssertTrue(testCase, stIntTuple_getPosition(intTuple1, 0) == 1);
-    CuAssertTrue(testCase, stIntTuple_getPosition(intTuple1, 1) == 3);
-    CuAssertTrue(testCase, stIntTuple_getPosition(intTuple1, 2) == 2);
+    CuAssertTrue(testCase, stIntTuple_get(intTuple1, 0) == 1);
+    CuAssertTrue(testCase, stIntTuple_get(intTuple1, 1) == 3);
+    CuAssertTrue(testCase, stIntTuple_get(intTuple1, 2) == 2);
     teardown();
 }
 

@@ -72,7 +72,7 @@ int64_t stIntTuple_length(stIntTuple *intTuple);
 /*
  * Returns the value of a position in the tuple, 0 <= index < stIntTuple_length(tuple).
  */
-int64_t stIntTuple_getPosition(stIntTuple *intTuple, int64_t index);
+int64_t stIntTuple_get(stIntTuple *intTuple, int64_t index);
 
 /*
  * The following are double variants of the above functions.
