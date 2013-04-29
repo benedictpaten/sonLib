@@ -120,16 +120,23 @@ char *fastaEncodeHeader(stList *attributes) {
 }
 
 void fastaWrite(char *sequence, char *header, FILE *file) {
-    int64_t i, k;
-    char j;
-
     fprintf(file, ">%s\n", header);
-    k = strlen(sequence);
-    for(i=0; i<k; i++) {
-        j = sequence[i];
-        assert((j >= 'A' && j <= 'Z') || (j >= 'a' && j <= 'z')); //For safety and sanity I only allows roman alphabet characters in fasta sequences.
+    int64_t lineLength = 100;
+    char line[lineLength+1];
+    int64_t k = strlen(sequence);
+    for(int64_t i=0; i<k;i += lineLength) {
+        int64_t l = i+lineLength > k ? k-i : lineLength;
+        memcpy(line, sequence+i, sizeof(char)*l);
+        line[l] = '\0';
+        for(int64_t m=0; m<l; m++) {
+            char j = line[l];
+            if(isalpha(j) && j != '-') {
+                //For safety and sanity I only allows roman alphabet characters and gaps in fasta sequences.
+                st_errAbort("Got an unexpected character in output fasta sequence: %c, position %" PRIi64 "\n", j, i+m);
+            }
+        }
+        fprintf(file, "%s\n", line);
     }
-    fprintf(file, "%s\n", sequence);
 }
 
 char *addSeqToList(char *seq, int64_t *length, int64_t *maxLength, char *fastaName, void (*addSeq)(const char *, const char *, int64_t)) {
@@ -181,7 +188,10 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
                         goto fastaStart;
                     }
                     else { //valid char
-                        assert(isalpha(j) || j == '-'); //For safety and sanity I only allows roman alphabet characters and - in fasta sequences.
+                        if(!isalpha(j) && j != '-') {
+                             //For safety and sanity I only allows roman alphabet characters and gaps in fasta sequences.
+                             st_errAbort("Got an unexpected character in input fasta sequence: %c \n", j);
+                        }
                         seq = arrayPrepareAppend(seq, &seqLength, k+1, sizeof(char));
                         seq[k++] = j;
                     }

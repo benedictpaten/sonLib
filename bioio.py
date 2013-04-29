@@ -677,7 +677,10 @@ def fastaWrite(fileHandle, name, seq):
     assert seq.__class__ == "".__class__
     for i in seq:
         assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences. 
-    fileHandle.write(">%s\n%s\n" % (name, seq))
+    fileHandle.write(">%s\n" % name)
+    chunkSize = 100
+    for i in xrange(0, len(seq), chunkSize):
+        fileHandle.write("%s\n" % seq[i:i+chunkSize])
 
 def _getMultiFastaOffsets(fasta):
     """Reads in columns of multiple alignment and returns them iteratively
