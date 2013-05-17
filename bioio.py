@@ -146,8 +146,8 @@ def addLoggingOptions_argparse(parser):
     parser.add_argument("--logLevel", dest="logLevel", type=str, default='CRITICAL',
                         help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). default=%(default)s")
     parser.add_argument("--logFile", dest="logFile", type=str, help="File to log in")
-    parser.add_option("--rotatingLogging", dest="logRotating", action="store_true", default=False,
-                     help="Turn on rotating logging, which prevents log files getting too big. default=%default")
+    parser.add_argument("--rotatingLogging", dest="logRotating", action="store_true", default=False,
+                        help="Turn on rotating logging, which prevents log files getting too big. default=%default")
     
 def setLoggingFromOptions(options):
     """Sets the logging from a dictionary of name/value options.
