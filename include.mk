@@ -87,5 +87,5 @@ ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
     mysqlLibs = $(shell mysql_config --libs)
 endif
 
-dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz
+dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz -lm
 
