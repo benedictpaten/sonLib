@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 import subprocess
 import distutils.command.build
 
-class BuildWithC(distutils.command.build.build):
+class BuildWithMake(distutils.command.build.build):
     """
-    Build binaries that we need to call, which are written in C, using make.
+    Build using make.
     Then do the default build logic.
     
     """
     def run(self):
-        # Build the C stuff, since we call some of those binaries. Use make.
+        # Call make.
         subprocess.check_call(["make"])
         
         # Keep installing the Python stuff
@@ -29,8 +29,8 @@ setup(name="sonLib",
     # The directory we're in is the module directory. It had better be named
     # "sonLib".
     package_dir= {"": ".."},
-    # Hook the build command to also build C stuff
-    cmdclass={"build": BuildWithC},
+    # Hook the build command to also build with make
+    cmdclass={"build": BuildWithMake},
     # Install all the executable scripts and binaries somewhere on the PATH
     scripts=["bin/sonLibTests", "bin/sonLib_daemonize.py", 
     "bin/sonLib_kvDatabaseTest", "bin/sonLib_cigarTest", 
