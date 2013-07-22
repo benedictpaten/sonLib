@@ -2,9 +2,9 @@
 
 from setuptools import setup
 import subprocess
-import distutils.command.build
+import distutils.command.build_py
 
-class BuildWithMake(distutils.command.build.build):
+class BuildWithMake(distutils.command.build_py.build_py):
     """
     Build using make.
     Then do the default build logic.
@@ -14,8 +14,8 @@ class BuildWithMake(distutils.command.build.build):
         # Call make.
         subprocess.check_call(["make"])
         
-        # Keep installing the Python stuff
-        distutils.command.build.build.run(self)
+        # Keep building the Python stuff
+        distutils.command.build_py.build_py.run(self)
 
 
 setup(name="sonLib",
@@ -27,7 +27,7 @@ setup(name="sonLib",
     url="https://github.com/benedictpaten/sonLib",
     packages=["sonLib"],
     # Hook the build command to also build with make
-    cmdclass={"build": BuildWithMake},
+    cmdclass={"build_py": BuildWithMake},
     # Install all the executable scripts and binaries somewhere on the PATH
     scripts=["bin/sonLibTests", "bin/sonLib_daemonize.py", 
     "bin/sonLib_kvDatabaseTest", "bin/sonLib_cigarTest", 
