@@ -26,9 +26,6 @@ setup(name="sonLib",
     author_email="benedict@soe.ucsc.edu",
     url="https://github.com/benedictpaten/sonLib",
     packages=["sonLib"],
-    # The directory we're in is the module directory. It had better be named
-    # "sonLib".
-    package_dir= {"": ".."},
     # Hook the build command to also build with make
     cmdclass={"build": BuildWithMake},
     # Install all the executable scripts and binaries somewhere on the PATH
