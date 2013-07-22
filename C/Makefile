@@ -20,12 +20,12 @@ clean :
 
 ${binPath}/sonLibTests : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
+	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm
 	mv $@.tmp $@
 
 ${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@.tmp tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs}
+	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@.tmp tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm
 	mv $@.tmp $@
 
 ${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a 
@@ -40,7 +40,7 @@ ${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libInternalHeade
 
 ${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
 	@mkdir -p $(dir $@)
-	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@.tmp tests/kt_connect_test.cpp ${libPath}/sonLib.a -lm ${dblibs}
+	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@.tmp tests/kt_connect_test.cpp ${libPath}/sonLib.a ${dblibs} -lm
 	mv $@.tmp $@
 
 ${libPath}/%.h: inc/%.h
