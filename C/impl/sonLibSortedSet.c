@@ -181,6 +181,12 @@ stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item)
     return iterator;
 }
 
+stSortedSetIterator *stSortedSet_getReverseIterator(stSortedSet *items) {
+    stSortedSetIterator *it = stSortedSet_getIteratorFrom(items, stSortedSet_getLast(items));
+    stSortedSet_getNext(it);
+    stSortedSet_getNext(it);
+    return it;
+}
 
 void stSortedSet_destructIterator(stSortedSetIterator *iterator) {
     assert(iterator->sortedSet->numberOfLiveIterators > 0);

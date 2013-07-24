@@ -124,6 +124,26 @@ static void test_stSortedSetIterator_getIteratorFrom(CuTest* testCase) {
     sonLibSortedSetTestTeardown();
 }
 
+static void test_stSortedSetIterator_getReverseIterator(CuTest* testCase) {
+    sonLibSortedSetTestSetup();
+    int64_t i;
+    for(i=0; i<size; i++) {
+        stSortedSet_insert(sortedSet, stIntTuple_construct1( input[i]));
+    }
+    stSortedSetIterator *iterator = stSortedSet_getIterator(sortedSet);
+    CuAssertTrue(testCase, iterator != NULL);
+
+    stSortedSetIterator *it = stSortedSet_getReverseIterator(sortedSet);
+    stIntTuple *intTuple = stSortedSet_getPrevious(it);
+    CuAssertTrue(testCase, intTuple != NULL);
+    CuAssertIntEquals(testCase, sortedInput[sortedSize-1], stIntTuple_get(intTuple, 0));
+    stSortedSet_destructIterator(it);
+
+
+    sonLibSortedSetTestTeardown();
+}
+
+
 static void test_stSortedSetEquals(CuTest* testCase) {
     sonLibSortedSetTestSetup();
     CuAssertTrue(testCase, stSortedSet_equals(sortedSet, sortedSet));
@@ -435,6 +455,7 @@ CuSuite* sonLib_stSortedSetTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stSortedSet);
     SUITE_ADD_TEST(suite, test_stSortedSetIterator);
     SUITE_ADD_TEST(suite, test_stSortedSetIterator_getIteratorFrom);
+    SUITE_ADD_TEST(suite, test_stSortedSetIterator_getReverseIterator);
     SUITE_ADD_TEST(suite, test_stSortedSetEquals);
     SUITE_ADD_TEST(suite, test_stSortedSetIntersection);
     SUITE_ADD_TEST(suite, test_stSortedSetUnion);

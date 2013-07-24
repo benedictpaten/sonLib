@@ -120,6 +120,11 @@ stSortedSetIterator *stSortedSet_getIterator(stSortedSet *items);
 stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item);
 
 /*
+ * Returns an iterator so that the first call to previous will return the last member of the set.
+ */
+stSortedSetIterator *stSortedSet_getReverseIterator(stSortedSet *items);
+
+/*
  * Destructs an iterator for the sorted set.
  */
 void stSortedSet_destructIterator(stSortedSetIterator *iterator);
