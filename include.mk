@@ -86,12 +86,12 @@ endif
 endif
 
 # location of mysql
-ifndef mysqlLibs
-ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
-    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
-    mysqlLibs = $(shell mysql_config --libs)
-endif
-endif
+#ifndef mysqlLibs
+#ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
+#    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
+#    mysqlLibs = $(shell mysql_config --libs)
+#endif
+#endif
 
 dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz
 
