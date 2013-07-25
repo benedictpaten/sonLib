@@ -18,7 +18,7 @@ import os
 import networkx as NX
 from optparse import OptionParser
 
-class NXTree:    
+class NXTree(object):    
     def __init__(self, nxDg = None):
         self.nxDg = nxDg
         if self.nxDg is None:

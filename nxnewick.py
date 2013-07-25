@@ -20,7 +20,7 @@ from optparse import OptionParser
 from sonLib.nxtree import NXTree
 
 
-class NXNewick:
+class NXNewick(object):
     def __init__(self, nxTree = None):
         self.nxTree = None
         self.bracketMatch = None
