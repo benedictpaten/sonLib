@@ -158,12 +158,6 @@ void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const vo
 void stList_shuffle(stList *list);
 
 /*
- * Returns a new list, either containing the intersection with set if include is non-zero,
- * or containing the set difference if include is zero.
- */
-stList *stList_filter(stList *list, bool(*fn)(void *));
-
-/*
  * Gets a sorted set representation of the stList, using the given cmpFn as backing. The sorted set
  * has no defined destruct element function, so when the sorted set is destructed the elements in it and
  * in this list will not be destructed. If the cmpFn is NULL then we use the default cmpFn.
@@ -177,14 +171,19 @@ stSortedSet *stList_getSortedSet(stList *list,
 stSortedSet *stList_convertToSortedSet(stList *list);
 
 /*
+ * Returns a new list with elements that return 0 for the given function removed.
+ */
+stList *stList_filter(stList *list, bool(*fn)(void *));
+
+/*
+ * As above, but passing along extra arg as second argument to filter fn.
+ */
+stList *stList_filter2(stList *list, bool(*fn)(void *, void *), void *extraArg);
+
+/*
  * Returns a new list, identical to list, but with any elements contained in set removed.
  */
 stList *stList_filterToExclude(stList *list, stSortedSet *set);
-
-/*
- * Sets the destructor of the list.
- */
-void stList_setDestructor(stList *list, void(*destructElement)(void *));
 
 /*
  * Returns a new list, identical to list, but with any elements not contained in set removed.
@@ -192,9 +191,19 @@ void stList_setDestructor(stList *list, void(*destructElement)(void *));
 stList *stList_filterToInclude(stList *list, stSortedSet *set);
 
 /*
+ * Sets the destructor of the list.
+ */
+void stList_setDestructor(stList *list, void(*destructElement)(void *));
+
+/*
  * Returns new list which contains elements of the list of list concatenated in one list.
  */
 stList *stList_join(stList *listOfLists);
+
+/*
+ * Replaces each element in the list by applying the mapFn to the element, also passing in the extraArg argument as the second list.
+ */
+void stList_mapReplace(stList *l, void *(*mapFn)(void *, void *), void *extraArg);
 
 #ifdef __cplusplus
 }

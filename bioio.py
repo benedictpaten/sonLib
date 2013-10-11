@@ -979,9 +979,7 @@ class PairwiseAlignment:
         i = sum([ oP.length for oP in operationList if oP.type != PairwiseAlignment.PAIRWISE_INDEL_X ])
         assert i == abs(end2 - start2) #Check alignment is of right length with respect to the target
         
-    def __eq__(self, pairwiseAlignment):
-        if pairwiseAlignment is None:
-            return False
+    def sameCoordinates(self, pairwiseAlignment):
         return self.contig1 == pairwiseAlignment.contig1 and \
         self.start1 == pairwiseAlignment.start1 and \
         self.end1 == pairwiseAlignment.end1 and \
@@ -990,8 +988,57 @@ class PairwiseAlignment:
         self.start2 == pairwiseAlignment.start2 and \
         self.end2 == pairwiseAlignment.end2 and \
         self.strand2 == pairwiseAlignment.strand2 and \
-        close(self.score, pairwiseAlignment.score, 0.001) and \
-        self.operationList == pairwiseAlignment.operationList
+        close(self.score, pairwiseAlignment.score, 0.001)
+        
+    def __eq__(self, pairwiseAlignment):
+        if pairwiseAlignment is None:
+            return False
+        return self.sameCoordinates(pairwiseAlignment) and self.operationList == pairwiseAlignment.operationList
+
+def cigarReadFromString(line):
+    p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+([^\\s]+)(\\s+(.*)\\s*)*")
+    i = p.match(line)
+    if i is not None:
+        m = i.groups()
+        if len(m) == 11:
+            l = m[10].split(" ")
+            ops = []
+            if l != ['']:
+                j = 0
+                while j < len(l):
+                    if l[j] == 'M':
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_MATCH, int(l[j+1]), 0.0))
+                        j += 2
+                    elif l[j] == 'D':
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_X, int(l[j+1]), 0.0)) #a gap in the query
+                        j += 2
+                    elif l[j] == 'I':
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_Y, int(l[j+1]), 0.0)) #a gap in the target
+                        j += 2
+                    elif l[j] == 'X':
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_MATCH, int(l[j+1]), float(l[j+2])))
+                        j += 3
+                    elif l[j] == 'Y':
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_X, int(l[j+1]), float(l[j+2]))) #a gap in the query
+                        j += 3
+                    else:
+                        assert l[j] == 'Z'
+                        ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_Y, int(l[j+1]), float(l[j+2]))) #a gap in the target
+                        j += 3
+        else:
+            ops = []
+        
+        assert m[3] == '+' or m[3] == '-'
+        strand1 = m[3] == '+'
+        
+        assert m[7] == '+' or m[7] == '-'
+        strand2 = m[7] == '+'
+        
+        start1, end1 = int(m[1]), int(m[2])
+        start2, end2 = int(m[5]), int(m[6])
+        
+        return PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
+    return None
     
 def cigarRead(fileHandle):
     """Reads a list of pairwise alignments into a pairwise alignment structure.
@@ -1002,47 +1049,9 @@ def cigarRead(fileHandle):
     p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+([^\\s]+)(\\s+(.*)\\s*)*")
     line = fileHandle.readline()
     while line != '':
-        i = p.match(line)
-        if i is not None:
-            m = i.groups()
-            if len(m) == 11:
-                l = m[10].split(" ")
-                ops = []
-                if l != ['']:
-                    j = 0
-                    while j < len(l):
-                        if l[j] == 'M':
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_MATCH, int(l[j+1]), 0.0))
-                            j += 2
-                        elif l[j] == 'D':
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_X, int(l[j+1]), 0.0)) #a gap in the query
-                            j += 2
-                        elif l[j] == 'I':
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_Y, int(l[j+1]), 0.0)) #a gap in the target
-                            j += 2
-                        elif l[j] == 'X':
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_MATCH, int(l[j+1]), float(l[j+2])))
-                            j += 3
-                        elif l[j] == 'Y':
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_X, int(l[j+1]), float(l[j+2]))) #a gap in the query
-                            j += 3
-                        else:
-                            assert l[j] == 'Z'
-                            ops.append(AlignmentOperation(PairwiseAlignment.PAIRWISE_INDEL_Y, int(l[j+1]), float(l[j+2]))) #a gap in the target
-                            j += 3
-            else:
-                ops = []
-            
-            assert m[3] == '+' or m[3] == '-'
-            strand1 = m[3] == '+'
-            
-            assert m[7] == '+' or m[7] == '-'
-            strand2 = m[7] == '+'
-            
-            start1, end1 = int(m[1]), int(m[2])
-            start2, end2 = int(m[5]), int(m[6])
-            
-            yield PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
+        pA = cigarReadFromString(line)
+        if pA != None:
+            yield pA
         line = fileHandle.readline()
 
 def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):

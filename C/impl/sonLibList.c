@@ -246,7 +246,6 @@ void stList_setDestructor(stList *list, void (*destructElement)(void *)) {
     list->destructElement = destructElement;
 }
 
-
 stList *stList_filter(stList *list, bool(*fn)(void *)) {
     stList *list2 = stList_construct();
     for (int64_t i = 0; i < stList_length(list); i++) {
@@ -258,28 +257,31 @@ stList *stList_filter(stList *list, bool(*fn)(void *)) {
     return list2;
 }
 
-static stList *filterP(stList *list, stSortedSet *set, bool include) {
-    /*
-     * Returns a new list, either containing the intersection with set if include is non-zero,
-     * or containing the set difference if include is zero.
-     */
+stList *stList_filter2(stList *list, bool(*fn)(void *, void *), void *extraArg) {
     stList *list2 = stList_construct();
     for (int64_t i = 0; i < stList_length(list); i++) {
         void *o = stList_get(list, i);
-        if ((stSortedSet_search(set, o) != NULL && include)
-                || (stSortedSet_search(set, o) == NULL && !include)) {
+        if (fn(o, extraArg)) {
             stList_append(list2, o);
         }
     }
     return list2;
 }
 
+bool filterToExcludeP(void *element, void *set) {
+    return stSortedSet_search(set, element) == NULL;
+}
+
 stList *stList_filterToExclude(stList *list, stSortedSet *set) {
-    return filterP(list, set, 0);
+    return stList_filter2(list, filterToExcludeP, set);
+}
+
+bool filterToIncludeP(void *element, void *set) {
+    return stSortedSet_search(set, element) != NULL;
 }
 
 stList *stList_filterToInclude(stList *list, stSortedSet *set) {
-    return filterP(list, set, 1);
+    return stList_filter2(list, filterToIncludeP, set);
 }
 
 stList *stList_join(stList *listOfLists) {
@@ -296,4 +298,11 @@ stSortedSet *stList_convertToSortedSet(stList *list) {
     stList_setDestructor(list, NULL);
     stList_destruct(list);
     return set;
+}
+
+void stList_mapReplace(stList *l, void *(*mapFn)(void *, void *), void *extraArg) {
+    int64_t j = stList_length(l);
+    for(int64_t i=0; i<j; i++) {
+        stList_set(l, i, mapFn(stList_get(l, i), extraArg));
+    }
 }
