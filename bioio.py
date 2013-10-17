@@ -651,7 +651,9 @@ def fastaRead(fileHandle):
                     seq.extend([ i for i in line[:-1] if i != '\t' and i != ' ' ])
                 line = fileHandle.readline()
             for i in seq:
-                assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences. 
+                #For safety and sanity I only allows roman alphabet characters in fasta sequences. 
+                if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'):
+                    raise RuntimeError("Invalid FASTA character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
             yield name, seq.tostring()
         else:
             line = fileHandle.readline()
