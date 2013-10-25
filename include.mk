@@ -9,18 +9,21 @@ ifeq (${SYS},FreeBSD)
     #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
     cpp = g++
+else ifeq (${SYS},Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
+	cxx = clang -std=c99 -stdlib=libstdc++
+	cpp = clang++ -stdlib=libstdc++
 else
     cxx = gcc -std=c99
     cpp = g++ 
-# -Wno-unused-result
 endif
+# -Wno-unused-result
 
 # Compiler flags.
 # DO NOT put static library -l options here. Those must be specified *after*
 # linker input files. See <http://stackoverflow.com/a/8266512/402891>.
 
 #Release compiler flags
-cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG
+cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG 
 #-fopenmp
 cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG
 
@@ -38,7 +41,7 @@ cflags_prof = -Wall -Werror --pedantic -pg -O3 -g
 cppflags = ${cppflags_opt} 
 
 #Flags to use
-cflags = ${cflags_opt}
+cflags = ${cflags_opt} 
 
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib
@@ -71,7 +74,7 @@ ifneq ($(wildcard /hive/groups/recon/local/include/ktcommon.h),)
    # hgwdev hive install
    ttPrefix = /hive/groups/recon/local
    kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1
-   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++
 else ifneq ($(wildcard /opt/local/include/ktcommon.h),)
    # OS/X with TC installed from MacPorts
    ttPrefix = /opt/local
@@ -81,7 +84,7 @@ else ifneq ($(wildcard /usr/local/include/ktcommon.h),)
    # /usr/local install (FreeBSD, etc)
    ttPrefix = /usr/local
    kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
-   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++ 
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++
 endif
 endif
 
