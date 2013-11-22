@@ -109,7 +109,7 @@ def addLoggingOptions(parser):
         _addLoggingOptions(group.add_option)
         parser.add_option_group(group)
     elif isinstance(parser, ArgumentParser):
-        group = parser.add_argument_group("Jobtree Options", "Logging options", "Options that control logging")
+        group = parser.add_argument_group("Jobtree Options", "Options that control logging")
         _addLoggingOptions(group.add_argument)
     else:
         raise RuntimeError("Unanticipated class passed to addLoggingOptions(), %s. Expecting " 
@@ -128,11 +128,11 @@ def _addLoggingOptions(addOptionFn):
                      help="Turn on logging at INFO level. (default is CRITICAL)")
     addOptionFn("--logDebug", dest="logDebug", action="store_true", default=False,
                      help="Turn on logging at DEBUG level. (default is CRITICAL)")
-    addOptionFn("--logLevel", dest="logLevel", type="string", default='CRITICAL',
-                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). default=%default")
-    addOptionFn("--logFile", dest="logFile", type="string", help="File to log in")
+    addOptionFn("--logLevel", dest="logLevel", default='CRITICAL',
+                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). (default is CRITICAL)")
+    addOptionFn("--logFile", dest="logFile", help="File to log in")
     addOptionFn("--rotatingLogging", dest="logRotating", action="store_true", default=False,
-                     help="Turn on rotating logging, which prevents log files getting too big. default=%default")
+                     help="Turn on rotating logging, which prevents log files getting too big.")
   
 def setLoggingFromOptions(options):
     """Sets the logging from a dictionary of name/value options.
