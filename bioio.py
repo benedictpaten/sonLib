@@ -25,7 +25,7 @@ DEFAULT_DISTANCE = 0.001
 
 #########################################################
 #########################################################
-#########################################################  
+#########################################################
 #global logging settings / log functions
 #########################################################
 #########################################################
@@ -39,7 +39,7 @@ def __setDefaultLogger():
         if handler.stream == sys.stderr:
             return l
     handler = logging.StreamHandler(sys.stderr)
-    l.addHandler(handler) 
+    l.addHandler(handler)
     l.setLevel(logging.CRITICAL)
     return l
 
@@ -53,7 +53,7 @@ def redirectLoggerStreamHandlers(oldStream, newStream):
         if handler.stream == oldStream:
             handler.close()
             logger.removeHandler(handler)
-    for handler in logger.handlers: #Do not add a duplicate handler 
+    for handler in logger.handlers: #Do not add a duplicate handler
         if handler.stream == newStream:
            return
     logger.addHandler(logging.StreamHandler(newStream))
@@ -72,7 +72,7 @@ def addLoggingFileHandler(fileName, rotatingLogging=False):
         handler = logging.FileHandler(fileName)
     logger.addHandler(handler)
     return handler
-    
+
 def setLogLevel(logLevel):
     logLevel = logLevel.upper()
     assert logLevel in [ "OFF", "CRITICAL", "INFO", "DEBUG" ] #Log level must be one of these strings.
@@ -102,59 +102,70 @@ def logFile(fileName, printFunction=logger.info):
     fileHandle.close()
 
 def addLoggingOptions(parser):
-    # Wrapper function that allows jobTree to be used with both the optparse and 
+    # Wrapper function that allows jobTree to be used with both the optparse and
     # argparse option parsing modules
     if isinstance(parser, OptionContainer):
-        group = OptionGroup(parser, "Logging options", "Options that control logging")
+        group = OptionGroup(parser, "Logging options",
+                            "Options that control logging")
         _addLoggingOptions(group.add_option)
         parser.add_option_group(group)
     elif isinstance(parser, ArgumentParser):
-        group = parser.add_argument_group("Jobtree Options", "Options that control logging")
+        group = parser.add_argument_group("Logging Options",
+                                          "Options that control logging")
         _addLoggingOptions(group.add_argument)
     else:
-        raise RuntimeError("Unanticipated class passed to addLoggingOptions(), %s. Expecting " 
-                           "Either optparse.OptionParser or argparse.ArgumentParser" % parser.__class__)
+        raise RuntimeError("Unanticipated class passed to "
+                           "addLoggingOptions(), %s. Expecting "
+                           "Either optparse.OptionParser or "
+                           "argparse.ArgumentParser" % parser.__class__)
 
 def _addLoggingOptions(addOptionFn):
     """Adds logging options
     """
     ##################################################
-    # BEFORE YOU ADD OR REMOVE OPTIONS TO THIS FUNCTION, BE SURE TO MAKE THE SAME CHANGES TO 
-    # addLoggingOptions_argparse() OTHERWISE YOU WILL BREAK THINGS
+    # BEFORE YOU ADD OR REMOVE OPTIONS TO THIS FUNCTION, KNOW THAT
+    # YOU MAY ONLY USE VARIABLES ACCEPTED BY BOTH optparse AND argparse
+    # FOR EXAMPLE, YOU MAY NOT USE default=%default OR default=%(default)s
     ##################################################
     addOptionFn("--logOff", dest="logOff", action="store_true", default=False,
                      help="Turn off logging. (default is CRITICAL)")
-    addOptionFn("--logInfo", dest="logInfo", action="store_true", default=False,
-                     help="Turn on logging at INFO level. (default is CRITICAL)")
-    addOptionFn("--logDebug", dest="logDebug", action="store_true", default=False,
-                     help="Turn on logging at DEBUG level. (default is CRITICAL)")
-    addOptionFn("--logLevel", dest="logLevel", default='CRITICAL',
-                      help="Log at level (may be either OFF/INFO/DEBUG/CRITICAL). (default is CRITICAL)")
+    addOptionFn(
+        "--logInfo", dest="logInfo", action="store_true", default=False,
+        help="Turn on logging at INFO level. (default is CRITICAL)")
+    addOptionFn(
+        "--logDebug", dest="logDebug", action="store_true", default=False,
+        help="Turn on logging at DEBUG level. (default is CRITICAL)")
+    addOptionFn(
+        "--logLevel", dest="logLevel", default='CRITICAL',
+        help=("Log at level (may be either OFF/INFO/DEBUG/CRITICAL). "
+              "(default is CRITICAL)"))
     addOptionFn("--logFile", dest="logFile", help="File to log in")
-    addOptionFn("--rotatingLogging", dest="logRotating", action="store_true", default=False,
-                     help="Turn on rotating logging, which prevents log files getting too big.")
-  
+    addOptionFn(
+        "--rotatingLogging", dest="logRotating", action="store_true",
+        default=False, help=("Turn on rotating logging, which prevents log "
+                             "files getting too big."))
+
 def setLoggingFromOptions(options):
     """Sets the logging from a dictionary of name/value options.
     """
     #We can now set up the logging info.
     if options.logLevel is not None:
-        setLogLevel(options.logLevel) #Use log level, unless flags are set..   
-    
+        setLogLevel(options.logLevel) #Use log level, unless flags are set..
+
     if options.logOff:
         setLogLevel("OFF")
     elif options.logInfo:
         setLogLevel("INFO")
     elif options.logDebug:
         setLogLevel("DEBUG")
-        
-    logger.info("Logging set at level: %s" % logLevelString)  
-    
+
+    logger.info("Logging set at level: %s" % logLevelString)
+
     if options.logFile is not None:
         addLoggingFileHandler(options.logFile, options.logRotating)
-    
-    logger.info("Logging to file: %s" % options.logFile)  
-    
+
+    logger.info("Logging to file: %s" % options.logFile)
+
 
 #########################################################
 #########################################################
@@ -187,7 +198,7 @@ def popenCatch(command, stdinString=None):
     """
     logger.debug("Running the command: %s" % command)
     if stdinString != None:
-        process = subprocess.Popen(command, shell=True, 
+        process = subprocess.Popen(command, shell=True,
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
         output, nothing = process.communicate(stdinString)
     else:
@@ -202,7 +213,7 @@ def popenPush(command, stdinString=None):
     if stdinString == None:
         system(command)
     else:
-        process = subprocess.Popen(command, shell=True, 
+        process = subprocess.Popen(command, shell=True,
                                    stdin=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
         process.communicate(stdinString)
         sts = process.wait()
@@ -215,7 +226,7 @@ def spawnDaemon(command):
     return system("sonLib_daemonize.py \'%s\'" % command)
 
 def getTotalCpuTimeAndMemoryUsage():
-    """Gives the total cpu time and memory usage of itself and its children. 
+    """Gives the total cpu time and memory usage of itself and its children.
     """
     me = resource.getrusage(resource.RUSAGE_SELF)
     childs = resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -224,7 +235,7 @@ def getTotalCpuTimeAndMemoryUsage():
     return totalCpuTime, totalMemoryUsage
 
 def getTotalCpuTime():
-    """Gives the total cpu time, including the children. 
+    """Gives the total cpu time, including the children.
     """
     return getTotalCpuTimeAndMemoryUsage()[0]
 
@@ -233,10 +244,10 @@ def getTotalMemoryUsage():
     """
     return getTotalCpuTimeAndMemoryUsage()[1]
 
- 
+
 #########################################################
 #########################################################
-#########################################################  
+#########################################################
 #testing settings
 #########################################################
 #########################################################
@@ -248,26 +259,26 @@ class TestStatus:
     TEST_MEDIUM = 1
     TEST_LONG = 2
     TEST_VERY_LONG = 3
-    
+
     TEST_STATUS = TEST_SHORT
-    
+
     SAVE_ERROR_LOCATION = None
-    
+
     def getTestStatus():
         return TestStatus.TEST_STATUS
     getTestStatus = staticmethod(getTestStatus)
-    
+
     def setTestStatus(status):
         assert status in (TestStatus.TEST_SHORT, TestStatus.TEST_MEDIUM, TestStatus.TEST_LONG, TestStatus.TEST_VERY_LONG)
         TestStatus.TEST_STATUS = status
     setTestStatus = staticmethod(setTestStatus)
-    
+
     def getSaveErrorLocation():
         """Location to in which to write inputs which created test error.
         """
         return TestStatus.SAVE_ERROR_LOCATION
     getSaveErrorLocation = staticmethod(getSaveErrorLocation)
-    
+
     def setSaveErrorLocation(dir):
         """Set location in which to write inputs which created test error.
         """
@@ -275,7 +286,7 @@ class TestStatus:
         assert os.path.isdir(dir)
         TestStatus.SAVE_ERROR_LOCATION = dir
     setSaveErrorLocation = staticmethod(setSaveErrorLocation)
-    
+
     def getTestSetup(shortTestNo=1, mediumTestNo=5, longTestNo=100, veryLongTestNo=0):
         if TestStatus.TEST_STATUS == TestStatus.TEST_SHORT:
             return shortTestNo
@@ -286,16 +297,16 @@ class TestStatus:
         else: #Used for long example tests
             return veryLongTestNo
     getTestSetup = staticmethod(getTestSetup)
-    
+
     def getPathToDataSets():
-        """This method is used to store the location of 
+        """This method is used to store the location of
         the path where all the data sets used by tests for analysis are kept.
         These are not kept in the distrbution itself for reasons of size.
         """
         assert "SON_TRACE_DATASETS" in os.environ
         return os.environ["SON_TRACE_DATASETS"]
     getPathToDataSets = staticmethod(getPathToDataSets)
-    
+
 def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
     """Copies the list of files to a directory created in the save inputs dir,
     and returns the name of this directory.
@@ -325,42 +336,42 @@ def saveInputs(savedInputsDir, listOfFilesAndDirsToSave):
 def getBasicOptionParser(usage="usage: %prog [options]", version="%prog 0.1", parser=None):
     if parser is None:
         parser = OptionParser(usage=usage, version=version)
-    
+
     addLoggingOptions(parser)
-    
+
     parser.add_option("--tempDirRoot", dest="tempDirRoot", type="string",
                       help="Path to where temporary directory containing all temp files are created, by default uses the current working directory as the base.",
                       default=os.getcwd())
-    
+
     return parser
 
 def parseBasicOptions(parser):
     """Setups the standard things from things added by getBasicOptionParser.
     """
     (options, args) = parser.parse_args()
-    
+
     setLoggingFromOptions(options)
-    
+
     #Set up the temp dir root
     if options.tempDirRoot == "None":
         options.tempDirRoot = os.getcwd()
-    
+
     return options, args
 
 def parseSuiteTestOptions(parser=None):
     if parser is None:
         parser = getBasicOptionParser()
-    
+
     parser.add_option("--testLength", dest="testLength", type="string",
                      help="Control the length of the tests either SHORT/MEDIUM/LONG/VERY_LONG. default=%default",
                      default="SHORT")
-    
+
     parser.add_option("--saveError", dest="saveError", type="string",
                      help="Directory in which to store the inputs of failed tests")
-    
+
     options, args = parseBasicOptions(parser)
     logger.info("Parsed arguments")
-    
+
     if options.testLength == "SHORT":
         TestStatus.setTestStatus(TestStatus.TEST_SHORT)
     elif options.testLength == "MEDIUM":
@@ -370,14 +381,14 @@ def parseSuiteTestOptions(parser=None):
     elif options.testLength == "VERY_LONG":
         TestStatus.setTestStatus(TestStatus.TEST_VERY_LONG)
     else:
-        parser.error('Unrecognised option for --testLength, %s. Options are SHORT, MEDIUM, LONG, VERY_LONG.' % 
+        parser.error('Unrecognised option for --testLength, %s. Options are SHORT, MEDIUM, LONG, VERY_LONG.' %
                      options.testLength)
-    
+
     if options.saveError is not None:
         TestStatus.setSaveErrorLocation(options.saveError)
-        
+
     return options, args
-    
+
 def nameValue(name, value, valueType=str, quotes=False):
     """Little function to make it easier to make name value strings for commands.
     """
@@ -388,8 +399,8 @@ def nameValue(name, value, valueType=str, quotes=False):
     if value is None:
         return ""
     if quotes:
-        return "--%s '%s'" % (name, valueType(value))  
-    return "--%s %s" % (name, valueType(value))    
+        return "--%s '%s'" % (name, valueType(value))
+    return "--%s %s" % (name, valueType(value))
 
 #########################################################
 #########################################################
@@ -439,10 +450,10 @@ def getTempDirectory(rootDir=None):
         os.mkdir(rootDir)
         os.chmod(rootDir, 0777) #Ensure everyone has access to the file.
         return rootDir
-    
+
 class TempFileTree:
     """A hierarchical tree structure for storing directories of files/dirs/
-    
+
     The total number of legal files is equal to filesPerDir**levels.
     filesPerDer and levels must both be greater than zero.
     The rootDir may or may not yet exist (and may or may not be empty), though
@@ -457,7 +468,7 @@ class TempFileTree:
             #Make the root dir
             os.mkdir(rootDir)
             open(os.path.join(rootDir, "lock"), 'w').close() #Add the lock file
-        
+
         #Basic attributes of system at start up.
         self.levelNo = levels
         self.filesPerDir = filesPerDir
@@ -469,12 +480,12 @@ class TempFileTree:
         #These two variables will only refer to the existance of this class instance.
         self.tempFilesCreated = 0
         self.tempFilesDestroyed = 0
-        
+
         currentFiles = self.listFiles()
         logger.info("We have setup the temp file tree, it contains %s files currently, \
         %s of the possible total" % \
         (len(currentFiles), len(currentFiles)/math.pow(filesPerDir, levels)))
-    
+
     def getTempFile(self, suffix="", makeDir=False):
         while 1:
             #Basic checks for start of loop
@@ -506,10 +517,10 @@ class TempFileTree:
                     open(os.path.join(self.tempDir, "lock"), 'w').close() #Add the lock file
                     self.level += 1
                     self.filesInDir = 1
-    
+
     def getTempDirectory(self):
         return self.getTempFile(makeDir=True)
-    
+
     def __destroyFile(self, tempFile):
         #If not part of the current tempDir, from which files are being created.
         baseDir = os.path.split(tempFile)[0]
@@ -522,7 +533,7 @@ class TempFileTree:
                 baseDir = os.path.split(baseDir)[0]
                 if baseDir == self.rootDir:
                     break
-    
+
     def destroyTempFile(self, tempFile):
         """Removes the temporary file in the temp file dir, checking its in the temp file tree.
         """
@@ -534,7 +545,7 @@ class TempFileTree:
         #Do the actual removal
         os.remove(tempFile)
         self.__destroyFile(tempFile)
-    
+
     def destroyTempDir(self, tempDir):
         """Removes a temporary directory in the temp file dir, checking its in the temp file tree.
         The dir will be removed regardless of if it is empty.
@@ -551,7 +562,7 @@ class TempFileTree:
             shutil.rmtree(tempDir)
             #system("rm -rf %s" % tempDir)
         self.__destroyFile(tempDir)
-   
+
     def listFiles(self):
         """Gets all files in the temp file tree (which may be dirs).
         """
@@ -570,12 +581,12 @@ class TempFileTree:
         files = []
         fn(self.rootDir, 0, files)
         return files
-   
+
     def destroyTempFiles(self):
         """Destroys all temp temp file hierarchy, getting rid of all files.
         """
         os.system("rm -rf %s" % self.rootDir)
-        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))  
+        logger.debug("Temp files created: %s, temp files actively destroyed: %s" % (self.tempFilesCreated, self.tempFilesDestroyed))
 
 #########################################################
 #########################################################
@@ -651,7 +662,7 @@ def fastaRead(fileHandle):
                     seq.extend([ i for i in line[:-1] if i != '\t' and i != ' ' ])
                 line = fileHandle.readline()
             for i in seq:
-                #For safety and sanity I only allows roman alphabet characters in fasta sequences. 
+                #For safety and sanity I only allows roman alphabet characters in fasta sequences.
                 if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'):
                     raise RuntimeError("Invalid FASTA character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
             yield name, seq.tostring()
@@ -663,7 +674,7 @@ def fastaWrite(fileHandle, name, seq):
     """
     assert seq.__class__ == "".__class__
     for i in seq:
-        assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences. 
+        assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences.
     fileHandle.write(">%s\n" % name)
     chunkSize = 100
     for i in xrange(0, len(seq), chunkSize):
@@ -688,7 +699,7 @@ def _getMultiFastaOffsets(fasta):
     return l
 
 def fastaReadHeaders(fasta):
-    """Returns a list of fasta header lines, excluding 
+    """Returns a list of fasta header lines, excluding
     """
     headers = []
     fileHandle = open(fasta, 'r')
@@ -733,7 +744,7 @@ def fastaAlignmentRead(fasta, mapFn=(lambda x : x), l=None):
     for i in l:
         i.close()
 
-def fastaAlignmentWrite(columnAlignment, names, seqNo, fastaFile, 
+def fastaAlignmentWrite(columnAlignment, names, seqNo, fastaFile,
                         filter=lambda x : True):
     """
     Writes out column alignment to given file multi-fasta format
@@ -792,8 +803,8 @@ def reverseComplement(seq):
             return dNA[i]
         return i
     return "".join([ fn(i) for i in seq ])
- 
-        
+
+
 #########################################################
 #########################################################
 #########################################################
@@ -801,7 +812,7 @@ def reverseComplement(seq):
 #########################################################
 #########################################################
 #########################################################
-       
+
 def newickTreeParser(newickTree, defaultDistance=DEFAULT_DISTANCE, \
                      sortNonBinaryNodes=False, reportUnaryNodes=False):
     """
@@ -812,7 +823,7 @@ def newickTreeParser(newickTree, defaultDistance=DEFAULT_DISTANCE, \
     newickTree = newickTree.replace(":", " : ")
     newickTree = newickTree.replace(";", "")
     newickTree = newickTree.replace(",", " , ")
-    
+
     newickTree = re.compile("[\s]*").split(newickTree)
     while "" in newickTree:
         newickTree.remove("")
@@ -869,7 +880,7 @@ def newickTreeParser(newickTree, defaultDistance=DEFAULT_DISTANCE, \
 
 def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePrintFn=(lambda f : "%f" % f)):
     def fn(binaryTree):
-        #print " tree Node ", binaryTree.left, binaryTree.right, binaryTree.distance, binaryTree.internal, binaryTree.iD 
+        #print " tree Node ", binaryTree.left, binaryTree.right, binaryTree.distance, binaryTree.internal, binaryTree.iD
         if binaryTree.iD is not None:
             iD = str(binaryTree.iD)
         else:
@@ -878,7 +889,7 @@ def printBinaryTree(binaryTree, includeDistances, dontStopAtID=True, distancePri
             if binaryTree.right is not None:
                 s = '(' + fn(binaryTree.left) + ',' + fn(binaryTree.right) + ')' + iD
             else:
-                s = '(' + fn(binaryTree.left) + ')' + iD 
+                s = '(' + fn(binaryTree.left) + ')' + iD
         else:
             s = iD
         if includeDistances:
@@ -933,18 +944,18 @@ def _checkSegment(start, end, strand):
     else:
         assert end <= start
     assert strand == True or strand == False
-    
+
 class AlignmentOperation:
     def __init__(self, opType, length, score):
         self.type = opType
         self.length = length
         self.score = score
-    
+
     def __eq__(self, op):
         if op is None:
             return False
         return self.type == op.type and self.length == op.length and close(self.score, op.score, 0.0001)
-    
+
     def __str__(self):
         return "Type: %i Length: %i Score: %f" % (self.type, self.length, self.score)
 
@@ -957,13 +968,13 @@ class PairwiseAlignment:
     PAIRWISE_INDEL_X = 2
     PAIRWISE_PLUS = '+'
     PAIRWISE_MINUS = '-'
-    
+
     def __init__(self, contig1, start1, end1, strand1,
-                 contig2, start2, end2, strand2, 
+                 contig2, start2, end2, strand2,
                  score, operationList):
         _checkSegment(start1, end1, strand1)
         _checkSegment(start2, end2, strand2)
-        
+
         self.contig1 = contig1
         self.start1 = start1
         self.end1 = end1
@@ -974,13 +985,13 @@ class PairwiseAlignment:
         self.strand2 = strand2
         self.score = score
         self.operationList = operationList
-        
+
         i = sum([ oP.length for oP in operationList if oP.type != PairwiseAlignment.PAIRWISE_INDEL_Y ])
         assert i == abs(end1 - start1) #Check alignment is of right length with respect to the query
-        
+
         i = sum([ oP.length for oP in operationList if oP.type != PairwiseAlignment.PAIRWISE_INDEL_X ])
         assert i == abs(end2 - start2) #Check alignment is of right length with respect to the target
-        
+
     def sameCoordinates(self, pairwiseAlignment):
         return self.contig1 == pairwiseAlignment.contig1 and \
         self.start1 == pairwiseAlignment.start1 and \
@@ -991,7 +1002,7 @@ class PairwiseAlignment:
         self.end2 == pairwiseAlignment.end2 and \
         self.strand2 == pairwiseAlignment.strand2 and \
         close(self.score, pairwiseAlignment.score, 0.001)
-        
+
     def __eq__(self, pairwiseAlignment):
         if pairwiseAlignment is None:
             return False
@@ -1029,22 +1040,22 @@ def cigarReadFromString(line):
                         j += 3
         else:
             ops = []
-        
+
         assert m[3] == '+' or m[3] == '-'
         strand1 = m[3] == '+'
-        
+
         assert m[7] == '+' or m[7] == '-'
         strand2 = m[7] == '+'
-        
+
         start1, end1 = int(m[1]), int(m[2])
         start2, end2 = int(m[5]), int(m[6])
-        
+
         return PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
     return None
-    
+
 def cigarRead(fileHandle):
     """Reads a list of pairwise alignments into a pairwise alignment structure.
-    
+
     Query and target are reversed!
     """
     #p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+(.*)\\s*)*")
@@ -1058,20 +1069,20 @@ def cigarRead(fileHandle):
 
 def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
     """Writes out the pairwiseAlignment to the file stream.
-    
+
     Query and target are reversed from normal order.
     """
     if len(pairwiseAlignment.operationList) == 0:
         logger.info("Writing zero length pairwiseAlignment to file!")
-        
+
     strand1 = "+"
     if not pairwiseAlignment.strand1:
         strand1 = "-"
-    
+
     strand2 = "+"
     if not pairwiseAlignment.strand2:
         strand2 = "-"
-        
+
     fileHandle.write("cigar: %s %i %i %s %s %i %i %s %f" % (pairwiseAlignment.contig2, pairwiseAlignment.start2, pairwiseAlignment.end2, strand2,\
                                                             pairwiseAlignment.contig1, pairwiseAlignment.start1, pairwiseAlignment.end1, strand1,\
                                                             pairwiseAlignment.score))
@@ -1084,7 +1095,7 @@ def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
         for op in pairwiseAlignment.operationList:
             fileHandle.write(' %s %i' % (hashMap[op.type], op.length))
     fileHandle.write("\n")
-    
+
 def _getRandomSegment():
     contig = random.choice([ "one", "two", "three", "four" ])
     start = random.choice(xrange(0, 10000))
@@ -1110,11 +1121,11 @@ def getRandomOperationList(xLength, yLength, operationMaxLength=100):
         if opType != PairwiseAlignment.PAIRWISE_INDEL_Y:
             xLength -= length
         if opType != PairwiseAlignment.PAIRWISE_INDEL_X:
-            yLength -= length    
+            yLength -= length
         operationList.append(AlignmentOperation(opType, length, random.random()))
         assert xLength >= 0 and yLength >= 0
     return operationList
-        
+
 def getRandomPairwiseAlignment():
     """Gets a random pairwiseAlignment.
     """
@@ -1155,7 +1166,7 @@ def finishGraphFile(graphFileHandle):
     """
     graphFileHandle.write("}\n")
     logger.info("Finished writing the graph")
-    
+
 def runGraphViz(graphFile, outputFile, command="dot"):
     """Runs graphviz.
     """
@@ -1166,7 +1177,7 @@ def main():
     pass
 
 def _test():
-    import doctest      
+    import doctest
     return doctest.testmod()
 
 if __name__ == '__main__':
