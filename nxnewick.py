@@ -162,10 +162,11 @@ class NXNewick(object):
             assert parent is None
             root = id
             if len(weight) > 0:
-                root = self.nextId
-                self.nextId += 1
-                self.nxTree.nxDg.add_edge(root, id)
-                self.nxTree.setWeight(root,id, weight)
+                raise RuntimeError("Root node of newick tree has a branch "
+                                   "length. This implies a root node "
+                                   "above the last node explicity specified. "
+                                   "If this is what you intend, please "
+                                   "include that node in the tree.")
             self.nxTree.rootId = root
         
         # recurse on children
