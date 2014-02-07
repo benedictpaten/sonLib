@@ -1170,10 +1170,10 @@ def addNodeToGraph(nodeName, graphFileHandle, label, width=0.3, height=0.3, shap
     graphFileHandle.write("node[width=%s,height=%s,shape=%s,colour=%s,fontsize=%s];\n" % (width, height, shape, colour, fontsize))
     graphFileHandle.write("%s [label=\"%s\"];\n" % (nodeName, label))
 
-def addEdgeToGraph(parentNodeName, childNodeName, graphFileHandle, colour="black", length="10", weight="1", dir="none"):
+def addEdgeToGraph(parentNodeName, childNodeName, graphFileHandle, colour="black", length="10", weight="1", dir="none", label="", style=""):
     """Links two nodes in the graph together.
     """
-    graphFileHandle.write("edge[color=%s,len=%s,weight=%s,dir=%s];\n" % (colour, length, weight, dir))
+    graphFileHandle.write('edge[color=%s,len=%s,weight=%s,dir=%s,label="%s",style=%s];\n' % (colour, length, weight, dir, label, style))
     graphFileHandle.write("%s -- %s;\n" % (parentNodeName, childNodeName))
 
 def setupGraphFile(graphFileHandle):
