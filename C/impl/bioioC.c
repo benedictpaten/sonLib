@@ -556,4 +556,5 @@ int64_t benLine(char **s, int64_t *n, FILE *f) {
         }
         ++i;
     }
+    return 0;
 }

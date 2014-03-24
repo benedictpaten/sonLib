@@ -17,7 +17,7 @@ from bioio import TempFileTree
 from bioio import getRandomAlphaNumericString
 
 from bioio import fastaRead
-from bioio import fastaWrite
+from bioio import fastaWrite 
 from bioio import getRandomSequence
 
 from bioio import pWMRead
@@ -94,7 +94,7 @@ class TestCase(unittest.TestCase):
                 tempFile = tempFiles.pop()
                 assert os.path.isfile(tempFile)
                 tempFileTree.destroyTempFile(tempFile)
-                assert not os.path.isfile(tempFile)
+                assert not os.path.isfile(tempFile)  
             
             #Now remove a few temp dirs
             while random.random() > 0.1 and len(tempDirs) > 0:

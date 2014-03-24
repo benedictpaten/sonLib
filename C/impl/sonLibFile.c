@@ -45,6 +45,7 @@ static int64_t stFile_getLineFromFileP(char **s, int64_t *n, FILE *f) {
         }
         ++i;
     }
+    return 0;
 }
 
 char *stFile_getLineFromFile(FILE *fileHandle) {

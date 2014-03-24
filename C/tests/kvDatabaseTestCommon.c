@@ -105,6 +105,7 @@ stKVDatabaseConf *kvDatabaseTestParseOptions(int argc, char *const *argv, const 
             break;
         case 'n':
         	optName = optarg;
+        	break;
         case 'h':
             usage(desc);
             break;

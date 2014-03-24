@@ -821,6 +821,7 @@ avl_copy(const struct avl_table *org, avl_copy_func *copy,
             x = stack[--height];
         }
     }
+    return 0;
 }
 
 /* Frees storage allocated for |tree|.
