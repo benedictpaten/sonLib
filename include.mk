@@ -9,7 +9,7 @@ ifeq (${SYS},FreeBSD)
     #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
     cpp = g++
-else ifneq ($(wildcard /usr/bin/clang),) #This is to deal with the Mavericks replacing gcc with clang fully
+else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
 	cxx = clang -std=c99 -stdlib=libstdc++
 	cpp = clang++ -stdlib=libstdc++
 else
