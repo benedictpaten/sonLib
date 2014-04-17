@@ -10,12 +10,13 @@ ifeq (${SYS},FreeBSD)
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
     cpp = g++
 else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
-	cxx = clang -std=c99 -stdlib=libstdc++
-	cpp = clang++ -stdlib=libstdc++
+	cxx = clang -std=c99 
+	cpp = clang++ 
 else
     cxx = gcc -std=c99
     cpp = g++ 
 endif
+
 # -Wno-unused-result
 
 # Compiler flags.
