@@ -33,5 +33,5 @@
 #include "stGraph.h"
 #include "stPosetAlignment.h"
 #include "stMatrix.h"
-
+#include "stPhylogeny.h"
 #endif /* SONLIB_H_ */

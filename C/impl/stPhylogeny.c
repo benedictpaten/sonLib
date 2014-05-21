@@ -111,7 +111,7 @@ void stPhylogenyInfo_destruct(stPhylogenyInfo *info) {
     free(info);
 }
 
-static stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info)
+stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info)
 {
     stPhylogenyInfo *ret = malloc(sizeof(stPhylogenyInfo));
     memcpy(ret, info, sizeof(stPhylogenyInfo));

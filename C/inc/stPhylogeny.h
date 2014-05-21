@@ -25,6 +25,8 @@ void stPhylogenyInfo_destruct(stPhylogenyInfo *info);
 // Free stPhylogenyInfo data on all nodes in the tree.
 void stPhylogenyInfo_destructOnTree(stTree *tree);
 
+stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info);
+
 // Add valid stPhylogenyInfo to a tree with leaves labeled 0, 1, 2, 3,
 // etc. and with internal nodes unlabeled. This function will fail on
 // trees labeled any other way.
