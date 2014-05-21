@@ -94,6 +94,11 @@ stList *stString_split(const char *string);
  */
 char *stString_getSubString(const char *cA, int64_t start, int64_t length);
 
+/*
+ * Reverse complements an upper or lower case ACTG character, treats all other characters as unknown and returns them unmodified.
+ */
+char stString_reverseComplement(char nucleotide);
+
 #ifdef __cplusplus
 }
 #endif

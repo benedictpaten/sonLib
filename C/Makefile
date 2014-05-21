@@ -6,7 +6,7 @@ libSources = impl/*.c
 cppSources = impl/*.cpp
 libHeaders = $(wildcard inc/*.h)
 libInternalHeaders = impl/*.h
-libTests = tests/sonLib*.c
+libTests = tests/sonLib*.c tests/st*
 
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 

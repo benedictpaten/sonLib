@@ -16,7 +16,7 @@
 static void test_stString_copy(CuTest* testCase) {
     const char *test[3] = { "hello this is a test", "", "BOO\nTOO\n" };
     int64_t i;
-    for(i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
         char *testCopy = stString_copy(test[i]);
         CuAssertTrue(testCase, testCopy != test[i]);
         CuAssertStrEquals(testCase, test[i], testCopy);
@@ -35,7 +35,7 @@ static void test_stString_print(CuTest* testCase) {
 
 static void test_stString_getNextWord(CuTest* testCase) {
     const char *cA = "Hello    world \n 5 \t6.0 ( )";
-    char **pointer = (char **)&cA;
+    char **pointer = (char **) &cA;
     char *cA2;
     cA2 = stString_getNextWord(pointer);
     CuAssertStrEquals(testCase, "Hello", cA2);
@@ -108,6 +108,19 @@ static void test_stString_getSubString(CuTest *testCase) {
     free(cA);
 }
 
+static void test_stString_reverseComplement(CuTest *testCase) {
+    CuAssertIntEquals(testCase, 'T', stString_reverseComplement('A'));
+    CuAssertIntEquals(testCase, 't', stString_reverseComplement('a'));
+    CuAssertIntEquals(testCase, 'A', stString_reverseComplement('T'));
+    CuAssertIntEquals(testCase, 'a', stString_reverseComplement('t'));
+    CuAssertIntEquals(testCase, 'C', stString_reverseComplement('G'));
+    CuAssertIntEquals(testCase, 'c', stString_reverseComplement('g'));
+    CuAssertIntEquals(testCase, 'G', stString_reverseComplement('C'));
+    CuAssertIntEquals(testCase, 'g', stString_reverseComplement('c'));
+    CuAssertIntEquals(testCase, 'N', stString_reverseComplement('N'));
+    CuAssertIntEquals(testCase, 'n', stString_reverseComplement('n'));
+}
+
 CuSuite* sonLib_stStringTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stString_copy);
@@ -118,7 +131,7 @@ CuSuite* sonLib_stStringTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stString_join2);
     SUITE_ADD_TEST(suite, test_stString_split);
     SUITE_ADD_TEST(suite, test_stString_getSubString);
+    SUITE_ADD_TEST(suite, test_stString_reverseComplement);
     return suite;
 }
-
 

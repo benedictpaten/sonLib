@@ -32,5 +32,6 @@
 #include "sonLibCache.h"
 #include "stGraph.h"
 #include "stPosetAlignment.h"
+#include "stMatrix.h"
 
 #endif /* SONLIB_H_ */

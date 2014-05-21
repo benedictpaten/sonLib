@@ -150,3 +150,27 @@ char *stString_getSubString(const char *cA, int64_t start, int64_t length) {
     cA2[length] = '\0';
     return cA2;
 }
+
+char stString_reverseComplement(char base) {
+    base = toupper(base);
+    switch (base) {
+    case 'A':
+        return 'T';
+    case 'a':
+        return 't';
+    case 'T':
+        return 'A';
+    case 't':
+        return 'a';
+    case 'C':
+        return 'G';
+    case 'c':
+        return 'g';
+    case 'G':
+        return 'C';
+    case 'g':
+        return 'g';
+    default:
+        return base;
+    }
+}

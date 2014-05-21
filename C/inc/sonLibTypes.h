@@ -56,6 +56,7 @@ typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
 typedef struct _stEdge stEdge;
 typedef struct _stGraph stGraph;
 typedef struct _stPosetAlignment stPosetAlignment;
+typedef struct _stMatrix stMatrix;
 
 #ifdef __cplusplus
 }
