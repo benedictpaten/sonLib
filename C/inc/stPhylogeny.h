@@ -7,7 +7,7 @@
 typedef struct {
     int64_t matrixIndex;    // = -1 if an internal node, index into
                             // distance matrix if a leaf.
-    int64_t *leavesBelow;   // leavesBelow[i] = 1 if leaf i is present
+    char *leavesBelow;      // leavesBelow[i] = 1 if leaf i is present
                             // below this node, 0 otherwise. Could be a
                             // bit array, which would make things much
                             // faster.

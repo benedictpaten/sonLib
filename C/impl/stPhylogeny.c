@@ -50,7 +50,7 @@ void stPhylogeny_setLeavesBelow(stTree *tree, int64_t totalNumLeaves)
         // leavesBelow has already been allocated somewhere else, free it.
         free(info->leavesBelow);
     }
-    info->leavesBelow = st_calloc(totalNumLeaves, sizeof(int64_t));
+    info->leavesBelow = st_calloc(totalNumLeaves, sizeof(char));
     if (stTree_getChildNumber(tree) == 0) {
         assert(info->matrixIndex < totalNumLeaves);
         assert(info->matrixIndex >= 0);
@@ -115,8 +115,8 @@ stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info)
 {
     stPhylogenyInfo *ret = malloc(sizeof(stPhylogenyInfo));
     memcpy(ret, info, sizeof(stPhylogenyInfo));
-    ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(int64_t));
-    memcpy(ret->leavesBelow, info->leavesBelow, ret->totalNumLeaves * sizeof(int64_t));
+    ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(char));
+    memcpy(ret->leavesBelow, info->leavesBelow, ret->totalNumLeaves * sizeof(char));
     return ret;
 }
 
@@ -149,7 +149,7 @@ static void updatePartitionSupportFromPartition(stTree *partition, stTree *boots
     // Check if the set of leaves is equal in both partitions. If not,
     // the partitions can't be equal.
     if (memcmp(partitionInfo->leavesBelow, bootstrapInfo->leavesBelow,
-            partitionInfo->totalNumLeaves * sizeof(int64_t))) {
+            partitionInfo->totalNumLeaves * sizeof(char))) {
         return;
     }
 
@@ -161,7 +161,7 @@ static void updatePartitionSupportFromPartition(stTree *partition, stTree *boots
         for (j = 0; j < stTree_getChildNumber(bootstrap); j++) {
             stPhylogenyInfo *bootstrapChildInfo = stTree_getClientData(stTree_getChild(bootstrap, j));
             if (memcmp(childInfo->leavesBelow, bootstrapChildInfo->leavesBelow,
-                    partitionInfo->totalNumLeaves * sizeof(int64_t)) == 0) {
+                    partitionInfo->totalNumLeaves * sizeof(char)) == 0) {
                 foundPartition = true;
                 break;
             }
