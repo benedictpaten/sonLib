@@ -1,8 +1,8 @@
 .PHONY: all clean cutestM cutestM.clean
 
-all : cutestM 
+all : cutestM quicktreeM
 
-clean : cutestM.clean
+clean : cutestM.clean quicktreeM.clean
 
 cutestM :
 	cd cutest && make all
@@ -10,3 +10,8 @@ cutestM :
 cutestM.clean :
 	cd cutest && make clean
 
+quicktreeM :
+	cd quicktree_1.1 && make all
+
+quicktreeM.clean :
+	cd quicktree_1.1 && make clean
