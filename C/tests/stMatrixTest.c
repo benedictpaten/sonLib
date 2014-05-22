@@ -19,7 +19,7 @@ void test_stMatrixBasics(CuTest *testCase) {
         int64_t m = st_randomInt64(0, 10);
         stMatrix *matrix = stMatrix_construct(n, m);
         CuAssertIntEquals(testCase, n, stMatrix_n(matrix));
-        CuAssertIntEquals(testCase, m, stMatrix_n(matrix));
+        CuAssertIntEquals(testCase, m, stMatrix_m(matrix));
         for (int64_t i = 0; i < n; i++) {
             for (int64_t j = 0; j < m; j++) {
                 CuAssertDblEquals(testCase, 0.0, *stMatrix_getCell(matrix, i, j), 0.0);

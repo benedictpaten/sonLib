@@ -34,7 +34,7 @@ int64_t stMatrix_m(stMatrix *matrix);
 /*
  * Gets the cell for the given indices.
  */
-double *stMatrix_getCell(stMatrix *matrix, int64_t index1, int64_t index2);
+double *stMatrix_getCell(stMatrix *matrix, int64_t indexN, int64_t indexM);
 
 /*
  * Adds together two matrices.

@@ -152,7 +152,6 @@ char *stString_getSubString(const char *cA, int64_t start, int64_t length) {
 }
 
 char stString_reverseComplement(char base) {
-    base = toupper(base);
     switch (base) {
     case 'A':
         return 'T';
@@ -169,7 +168,7 @@ char stString_reverseComplement(char base) {
     case 'G':
         return 'C';
     case 'g':
-        return 'g';
+        return 'c';
     default:
         return base;
     }
