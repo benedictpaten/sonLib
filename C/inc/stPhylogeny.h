@@ -1,6 +1,17 @@
-#ifndef STPHYLOGENY_H_
-#define STPHYLOGENY_H_
-#include "sonLib.h"
+/*
+ * Copyright (C) 2006-2014 by Joel Armstrong & Benedict Paten
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
+#ifndef st_phylogeny_h_
+#define st_phylogeny_h_
+
+#include "sonLibTypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
@@ -54,4 +65,8 @@ stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps);
 // Only one half of the distanceMatrix is used, distances[i][j] for which i > j
 // Tree returned is labeled by the indices of the distance matrix and is rooted halfway along the longest branch.
 stTree *stPhylogeny_neighborJoin(stMatrix *distances);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

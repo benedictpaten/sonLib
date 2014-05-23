@@ -67,8 +67,20 @@ stMatrix *stMatrix_clone(stMatrix *matrix) {
     return matrix2;
 }
 
-void stMatrix_scale(stMatrix *matrix, double scaleFactor) {
+void stMatrix_scale(stMatrix *matrix, double scaleFactor, double addFactor) {
     for (int64_t i = 0; i < matrix->n * matrix->m; i++) {
-        matrix->M[i] *= scaleFactor;
+        matrix->M[i] = matrix->M[i] * scaleFactor + addFactor;
     }
+}
+
+bool stMatrix_equal(stMatrix *matrix1, stMatrix *matrix2, double close) {
+    if(matrix1->n != matrix2->n || matrix1->m != matrix2->m) {
+        return 0;
+    }
+    for(int64_t i=0; i<matrix1->n * matrix1->m; i++) {
+        if(matrix1->M[i] + close < matrix2->M[i] || matrix1->M[i] - close > matrix2->M[i]) {
+            return 0;
+        }
+    }
+    return 1;
 }

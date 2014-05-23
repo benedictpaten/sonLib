@@ -66,10 +66,10 @@ void test_stMatrixScale(CuTest *testCase) {
         int64_t m = st_randomInt64(0, 10);
         stMatrix *matrix = getRandomMatrix(n, m);
         stMatrix *matrix2 = stMatrix_clone(matrix);
-        stMatrix_scale(matrix, 100);
+        stMatrix_scale(matrix, 100, 50);
         for (int64_t i = 0; i < n; i++) {
             for (int64_t j = 0; j < m; j++) {
-                CuAssertDblEquals(testCase, (*stMatrix_getCell(matrix2, i, j)) * 100, *stMatrix_getCell(matrix, i, j),
+                CuAssertDblEquals(testCase, (*stMatrix_getCell(matrix2, i, j)) * 100 + 50, *stMatrix_getCell(matrix, i, j),
                         0.0);
             }
         }
@@ -78,11 +78,29 @@ void test_stMatrixScale(CuTest *testCase) {
     }
 }
 
+void test_stMatrixEqual(CuTest *testCase) {
+    for (int64_t test = 0; test < 100; test++) {
+        int64_t n = st_randomInt64(0, 10);
+        int64_t m = st_randomInt64(0, 10);
+        stMatrix *matrix1 = getRandomMatrix(n, m);
+        stMatrix *matrix2 = stMatrix_clone(matrix1);
+        CuAssertTrue(testCase, stMatrix_equal(matrix1, matrix2, 0.0));
+        stMatrix_scale(matrix1, 0.0, 1.0);
+        CuAssertTrue(testCase, !stMatrix_equal(matrix1, matrix2, 0.0));
+        CuAssertTrue(testCase, stMatrix_equal(matrix1, matrix2, 1.0));
+        CuAssertTrue(testCase, !stMatrix_equal(matrix1, matrix2, 0.99));
+        stMatrix_destruct(matrix1);
+        stMatrix_destruct(matrix2);
+    }
+}
+
+
 CuSuite* sonLib_stMatrixTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stMatrixBasics);
     SUITE_ADD_TEST(suite, test_stMatrixAdd);
     SUITE_ADD_TEST(suite, test_stMatrixScale);
+    SUITE_ADD_TEST(suite, test_stMatrixEqual);
 
     return suite;
 }
