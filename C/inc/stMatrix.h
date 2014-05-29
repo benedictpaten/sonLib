@@ -47,9 +47,14 @@ stMatrix *stMatrix_add(stMatrix *matrix1, stMatrix *matrix2);
 stMatrix *stMatrix_clone(stMatrix *matrix);
 
 /*
- * Scales the values in the given matrix by the given coefficient.
+ * Scales the values in the given matrix by the given coefficients.
  */
-void stMatrix_scale(stMatrix *matrix, double scaleFactor);
+void stMatrix_scale(stMatrix *matrix, double scaleFactor, double addFactor);
+
+/*
+ * Returns true iff the matrices have the same dimensions and are all values are within close+/- of each other.
+ */
+bool stMatrix_equal(stMatrix *matrix1, stMatrix *matrix2, double close);
 
 #ifdef __cplusplus
 }

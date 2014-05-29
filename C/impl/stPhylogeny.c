@@ -133,7 +133,6 @@ void stPhylogenyInfo_destructOnTree(stTree *tree) {
 // Compare a single partition to a single bootstrap partition and
 // update its support if they are identical.
 static void updatePartitionSupportFromPartition(stTree *partition, stTree *bootstrap) {
-    int64_t i, j;
     stPhylogenyInfo *partitionInfo, *bootstrapInfo;
     if (stTree_getChildNumber(partition) != stTree_getChildNumber(bootstrap)) {
         // Can't compare different numbers of partitions
@@ -151,25 +150,6 @@ static void updatePartitionSupportFromPartition(stTree *partition, stTree *boots
             partitionInfo->totalNumLeaves * sizeof(char))) {
         return;
     }
-
-    // The sets of leaves under the nodes are equal; now we need to
-    // check that the sets they are partitioned into are equal.
-    for (i = 0; i < stTree_getChildNumber(partition); i++) {
-        stPhylogenyInfo *childInfo = stTree_getClientData(stTree_getChild(partition, i));
-        bool foundPartition = false;
-        for (j = 0; j < stTree_getChildNumber(bootstrap); j++) {
-            stPhylogenyInfo *bootstrapChildInfo = stTree_getClientData(stTree_getChild(bootstrap, j));
-            if (memcmp(childInfo->leavesBelow, bootstrapChildInfo->leavesBelow,
-                    partitionInfo->totalNumLeaves * sizeof(char)) == 0) {
-                foundPartition = true;
-                break;
-            }
-        }
-        if (!foundPartition) {
-            return;
-        }
-    }
-
     // The partitions are equal, increase the support 
     partitionInfo->numBootstraps++;
 }

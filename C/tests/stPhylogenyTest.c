@@ -74,8 +74,8 @@ void testSimpleBootstrapScoring(CuTest *testCase)
     stPhylogeny_addStPhylogenyInfo(bootstrap);
     result = stPhylogeny_scoreFromBootstrap(tree, bootstrap);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
-    CuAssertTrue(testCase, info->bootstrapSupport == 0.0);
+    CuAssertTrue(testCase, info->numBootstraps == 1);
+    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
     CuAssertTrue(testCase, info->numBootstraps == 0);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
@@ -94,7 +94,7 @@ void testSimpleBootstrapScoring(CuTest *testCase)
     CuAssertTrue(testCase, info->numBootstraps == 1);
     CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    CuAssertTrue(testCase, info->numBootstraps == 1);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
     CuAssertTrue(testCase, info->numBootstraps == 0);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
@@ -106,9 +106,9 @@ void testSimpleBootstrapScoring(CuTest *testCase)
     // Test all 3 together
     result = stPhylogeny_scoreFromBootstraps(tree, bootstraps);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 2);
+    CuAssertTrue(testCase, info->numBootstraps == 3);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    CuAssertTrue(testCase, info->numBootstraps == 2);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
     CuAssertTrue(testCase, info->numBootstraps == 1);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));

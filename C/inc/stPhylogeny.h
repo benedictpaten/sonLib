@@ -1,6 +1,17 @@
-#ifndef STPHYLOGENY_H_
-#define STPHYLOGENY_H_
-#include "sonLib.h"
+/*
+ * Copyright (C) 2006-2014 by Joel Armstrong & Benedict Paten
+ *
+ * Released under the MIT license, see LICENSE.txt
+ */
+
+#ifndef st_phylogeny_h_
+#define st_phylogeny_h_
+
+#include "sonLibTypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
@@ -69,4 +80,8 @@ double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
 
 // Return the MRCA of the given leaves.
 stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
