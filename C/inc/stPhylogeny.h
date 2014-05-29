@@ -54,4 +54,19 @@ stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps);
 // Only one half of the distanceMatrix is used, distances[i][j] for which i > j
 // Tree returned is labeled by the indices of the distance matrix and is rooted halfway along the longest branch.
 stTree *stPhylogeny_neighborJoin(stMatrix *distances);
+
+// Gets the (leaf) node corresponding to an index in the distance matrix.
+stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex);
+
+// Find the distance between two arbitrary nodes (which must be in the
+// same tree, with stPhylogenyInfo attached properly).
+double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2);
+
+// Find the distance between leaves (given by their index in the
+// distance matrix.)
+double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
+                                         int64_t leaf2);
+
+// Return the MRCA of the given leaves.
+stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
 #endif

@@ -111,8 +111,8 @@ void stPhylogenyInfo_destruct(stPhylogenyInfo *info) {
     free(info);
 }
 
-stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info)
-{
+// Clone a stPhylogenyInfo struct
+stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info) {
     stPhylogenyInfo *ret = malloc(sizeof(stPhylogenyInfo));
     memcpy(ret, info, sizeof(stPhylogenyInfo));
     ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(char));
@@ -132,8 +132,7 @@ void stPhylogenyInfo_destructOnTree(stTree *tree) {
 
 // Compare a single partition to a single bootstrap partition and
 // update its support if they are identical.
-static void updatePartitionSupportFromPartition(stTree *partition, stTree *bootstrap)
-{
+static void updatePartitionSupportFromPartition(stTree *partition, stTree *bootstrap) {
     int64_t i, j;
     stPhylogenyInfo *partitionInfo, *bootstrapInfo;
     if (stTree_getChildNumber(partition) != stTree_getChildNumber(bootstrap)) {
@@ -278,7 +277,7 @@ stTree *stPhylogeny_neighborJoin(stMatrix *distances) {
     struct Tree *tree;
     int64_t i, j;
     int64_t numSequences = stMatrix_n(distances);
-    assert(numSequences > 0);
+    assert(numSequences > 2);
     assert(distances != NULL);
     assert(stMatrix_n(distances) == stMatrix_m(distances));
     // Set up the basic QuickTree data structures to represent the sequences.
@@ -306,4 +305,170 @@ stTree *stPhylogeny_neighborJoin(stMatrix *distances) {
     tree = neighbour_joining_buildtree(clusterGroup, 0);
     free_ClusterGroup(clusterGroup);
     return quickTreeToStTree(tree);
+}
+
+// Get the distance to a leaf from an internal node
+static double stPhylogeny_distToLeaf(stTree *tree, int64_t leafIndex) {
+    int64_t i;
+    stPhylogenyInfo *info = stTree_getClientData(tree);
+    (void)info;
+    assert(info->leavesBelow[leafIndex]);
+    if(stTree_getChildNumber(tree) == 0) {
+        return 0.0;
+    }
+    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+        stTree *child = stTree_getChild(tree, i);
+        stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        if(childInfo->leavesBelow[leafIndex]) {
+            return stTree_getBranchLength(child) + stPhylogeny_distToLeaf(child, leafIndex);
+        }
+    }
+    // We shouldn't've gotten here--none of the children have the
+    // leaf under them, but this node claims to have the leaf under it!
+    assert(false);
+    return 0.0/0.0;
+}
+
+// Get the distance to a node from an internal node above it. Will
+// fail if the target node is not below.
+static double stPhylogeny_distToChild(stTree *tree, stTree *target) {
+    int64_t i, j;
+    stPhylogenyInfo *treeInfo, *targetInfo;
+    treeInfo = stTree_getClientData(tree);
+    targetInfo = stTree_getClientData(target);
+    assert(treeInfo->totalNumLeaves == targetInfo->totalNumLeaves);
+    if(memcmp(treeInfo->leavesBelow, targetInfo->leavesBelow,
+              treeInfo->totalNumLeaves) == 0) {
+        // This node is the target node
+        return 0.0;
+    }
+    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+        stTree *child = stTree_getChild(tree, i);
+        stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        bool childIsSuperset = true;
+        // Go through all the children and find one which is above (or
+        // is) the target node. (Any node above the target will have a
+        // leaf set that is a superset of the target's leaf set.)
+        assert(childInfo->totalNumLeaves == treeInfo->totalNumLeaves);
+        for(j = 0; j < childInfo->totalNumLeaves; j++) {
+            if(targetInfo->leavesBelow[j] && !childInfo->leavesBelow[j]) {
+                childIsSuperset = false;
+                break;
+            }
+        }
+        if(childIsSuperset) {
+            return stPhylogeny_distToChild(child, target) + stTree_getBranchLength(child);
+            break;
+        }
+    }
+    // We shouldn't've gotten here--none of the children have the
+    // target under them, but this node claims to have the target under it!
+    assert(false);
+    return 0.0/0.0;
+}
+
+
+// Return the MRCA of the given leaves.
+stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2) {
+    int64_t i;
+    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+        stTree *child = stTree_getChild(tree, i);
+        stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        if(childInfo->leavesBelow[leaf1] && childInfo->leavesBelow[leaf2]) {
+            return stPhylogeny_getMRCA(child, leaf1, leaf2);
+        }
+    }
+
+    // If we've gotten to this point, then this is the MRCA of the leaves.
+    return tree;
+}
+
+// Find the distance between leaves (given by their index in the
+// distance matrix.)
+double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
+                                         int64_t leaf2) {
+    stTree *mrca = stPhylogeny_getMRCA(tree, leaf1, leaf2);
+    return stPhylogeny_distToLeaf(mrca, leaf1) + stPhylogeny_distToLeaf(mrca, leaf2);
+}
+
+// Find the distance between two arbitrary nodes (which must be in the
+// same tree, with stPhylogenyInfo attached properly).
+double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2) {
+    int64_t i;
+    stPhylogenyInfo *info1, *info2;
+    if(node1 == node2) {
+        return 0.0;
+    }
+    info1 = stTree_getClientData(node1);
+    info2 = stTree_getClientData(node2);
+    assert(info1->totalNumLeaves == info2->totalNumLeaves);
+    // Check if node1 is under node2, vice versa, or if they aren't on
+    // the same path to the root
+    bool oneAboveTwo = false, twoAboveOne = false, differentSubsets = true;
+    for(i = 0; i < info1->totalNumLeaves; i++) {
+        if(info1->leavesBelow[i] && info2->leavesBelow[i]) {
+            differentSubsets = false;
+        } else if(info2->leavesBelow[i] && !info1->leavesBelow[i]) {
+            twoAboveOne = true;
+            // Technically we can break here, but it's cheap to
+            // double-check that everything is correct.
+            assert(differentSubsets || oneAboveTwo == false);
+        } else if(info1->leavesBelow[i] && !info2->leavesBelow[i]) {
+            oneAboveTwo = true;
+            assert(differentSubsets || twoAboveOne == false);
+        }
+    }
+    // If differentSubsets is true, then the values of oneAboveTwo and
+    // twoAboveOne don't matter; if differentSubsets is false, exactly
+    // one should be true.
+    assert(differentSubsets || (oneAboveTwo ^ twoAboveOne));
+
+    if(differentSubsets) {
+        stTree *parent = node1;
+        for(;;) {
+            parent = stTree_getParent(parent);
+            assert(parent != NULL);
+            stPhylogenyInfo *parentInfo = stTree_getClientData(parent);
+            assert(parentInfo->totalNumLeaves == info1->totalNumLeaves);
+            bool isCommonAncestor = true;
+            for(i = 0; i < parentInfo->totalNumLeaves; i++) {
+                if((info1->leavesBelow[i] || info2->leavesBelow[i]) &&
+                   !parentInfo->leavesBelow[i]) {
+                    isCommonAncestor = false;
+                }
+            }
+            if(isCommonAncestor) {
+                // Found the MRCA of both nodes
+                break;
+            }
+        }
+        return stPhylogeny_distToChild(parent, node1) +
+            stPhylogeny_distToChild(parent, node2);
+    } else if(oneAboveTwo) {
+        return stPhylogeny_distToChild(node1, node2);
+    } else {
+        assert(twoAboveOne);
+        return stPhylogeny_distToChild(node2, node1);
+    }
+}
+
+// Gets the (leaf) node corresponding to an index in the distance matrix.
+stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex) {
+    int64_t i;
+    stPhylogenyInfo *info = stTree_getClientData(tree);
+    assert(leafIndex < info->totalNumLeaves);
+    if(info->matrixIndex == leafIndex) {
+        return tree;
+    }
+    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+        stTree *child = stTree_getChild(tree, i);
+        stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        assert(info->totalNumLeaves == childInfo->totalNumLeaves);
+        if(childInfo->leavesBelow[leafIndex]) {
+            return stPhylogeny_getLeafByIndex(child, leafIndex);
+        }
+    }
+
+    // Shouldn't get here if the stPhylogenyInfo is set properly
+    return NULL;
 }
