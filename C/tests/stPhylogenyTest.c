@@ -256,24 +256,29 @@ static void testRandomBootstraps(CuTest *testCase) {
     }
 
     // Run the code that scores partitions by bootstraps
-    stPhylogeny_scoreFromBootstraps(canonicalTree, bootstraps);
+    stTree *bootstrappedTree = stPhylogeny_scoreFromBootstraps(canonicalTree, bootstraps);
 
     // Check that leavesBelow is set correctly
-    testOnTree(testCase, canonicalTree, checkLeavesBelow);
+    testOnTree(testCase, bootstrappedTree, checkLeavesBelow);
 
     // Check that stPhylogeny_getLeafIndex works
-    testOnTree(testCase, canonicalTree, checkGetLeafByIndex);
+    testOnTree(testCase, bootstrappedTree, checkGetLeafByIndex);
 
     // Sanity-check the distance functions.
-    checkDistanceFunctions(canonicalTree, testCase);
+    checkDistanceFunctions(bootstrappedTree, testCase);
 
+    // Root support should always be 1
+    stPhylogenyInfo *rootInfo = stTree_getClientData(bootstrappedTree);
+    CuAssertTrue(testCase, rootInfo->bootstrapSupport == 1.0);
     // Check that the parition support numbers are all reasonable
-    testOnTree(testCase, canonicalTree, checkPartitionSupport);
+    testOnTree(testCase, bootstrappedTree, checkPartitionSupport);
 
     // Clean up
     stMatrix_destruct(canonicalMatrix);
     stPhylogenyInfo_destructOnTree(canonicalTree);
     stTree_destruct(canonicalTree);
+    stPhylogenyInfo_destructOnTree(bootstrappedTree);
+    stTree_destruct(bootstrappedTree);
 }
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {

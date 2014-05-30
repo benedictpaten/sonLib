@@ -134,10 +134,6 @@ void stPhylogenyInfo_destructOnTree(stTree *tree) {
 // update its support if they are identical.
 static void updatePartitionSupportFromPartition(stTree *partition, stTree *bootstrap) {
     stPhylogenyInfo *partitionInfo, *bootstrapInfo;
-    if (stTree_getChildNumber(partition) != stTree_getChildNumber(bootstrap)) {
-        // Can't compare different numbers of partitions
-        return;
-    }
 
     partitionInfo = stTree_getClientData(partition);
     bootstrapInfo = stTree_getClientData(bootstrap);
@@ -193,7 +189,7 @@ static void updatePartitionSupportFromTree(stTree *partition, stTree *bootstrapT
         }
         if(isSuperset) {
             updatePartitionSupportFromTree(partition, bootstrapChild);
-            checkThisPartition = TRUE;
+            checkThisPartition = FALSE;
             break;
         }
     }
@@ -276,7 +272,7 @@ stTree *stPhylogeny_neighborJoin(stMatrix *distances) {
     // Fill in the QuickTree distance matrix
     distanceMatrix = empty_DistanceMatrix(numSequences);
     for (i = 0; i < numSequences; i++) {
-        for (j = 0; j < i; j++) {
+        for (j = 0; j <= i; j++) {
             distanceMatrix->data[i][j] = *stMatrix_getCell(distances, i, j);
         }
     }
