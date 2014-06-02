@@ -34,13 +34,13 @@ class NXNewick(object):
         inFile.close()
         return self.nxTree
     
-    def parseString(self, newickString):
+    def parseString(self, newickString, addImpliedRoots = True):
         self.nxTree = NXTree()
         self.inString = self.__filterWhitespace(newickString)
         self.__createBracketTable()
         self.nextId = 0
         assert self.inString[-1] == ';'
-        self.__addNode(0, len(self.inString)-1, None)
+        self.__addNode(0, len(self.inString)-1, None, addImpliedRoots)
         self.nxTree.isTree()
         return self.nxTree
     
@@ -133,7 +133,7 @@ class NXNewick(object):
             weight = tokens[1]
         return (name, weight)
         
-    def __addNode(self, start, length, parent = None):       
+    def __addNode(self, start, length, parent = None, addImpliedRoots = True):
         # parse the children (..,...,..)
         children = []
         if self.inString[start] == '(':
@@ -162,11 +162,11 @@ class NXNewick(object):
             assert parent is None
             root = id
             if len(weight) > 0:
-                raise RuntimeError("Root node of newick tree has a branch "
-                                   "length. This implies a root node "
-                                   "above the last node explicity specified. "
-                                   "If this is what you intend, please "
-                                   "include that node in the tree.")
+                if addImpliedRoots:
+                    root = self.nextId
+                    self.nextId += 1
+                    self.nxTree.nxDg.add_edge(root, id)
+                    self.nxTree.setWeight(root,id, weight)
             self.nxTree.rootId = root
         
         # recurse on children
