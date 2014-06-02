@@ -113,14 +113,17 @@ char cigarReadFn(char type, int64_t *withProb) {
     switch(type) {
         case 'X':
             *withProb = TRUE;
+            return PAIRWISE_MATCH;
         case 'M':
             return PAIRWISE_MATCH;
         case 'Y':
             *withProb = TRUE;
+            return PAIRWISE_INDEL_X;
         case 'D':
             return PAIRWISE_INDEL_X;
         case 'Z':
             *withProb = TRUE;
+            return PAIRWISE_INDEL_Y;
         case 'I':
             return PAIRWISE_INDEL_Y;
         default:

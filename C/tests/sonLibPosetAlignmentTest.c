@@ -21,7 +21,7 @@
 static const int64_t MAX_SEQUENCE_NUMBER = 10;
 static const int64_t MAX_SEQUENCE_SIZE = 100;
 static const int64_t MAX_ALIGNMENTS = 100;
-static const int64_t MAX_ALIGNED_PAIRS = 10000;
+//static const int64_t MAX_ALIGNED_PAIRS = 10000;
 
 
 static int64_t sequenceNumber;

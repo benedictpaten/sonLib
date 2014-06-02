@@ -41,8 +41,8 @@ static void test_st_system(CuTest *testCase) {
     /*
      * Tries running two commands, one which should pass, one which should fail.
      */
-    CuAssertTrue(testCase, !st_system("echo 1 &> /dev/null"));
-    CuAssertTrue(testCase, st_system("thisProgramDoesNotExist &> /dev/null"));
+    CuAssertTrue(testCase, !st_system("echo 1 2>&1 > /dev/null"));
+    CuAssertTrue(testCase, st_system("thisProgramDoesNotExist  2>&1 > /dev/null"));
 }
 
 CuSuite* sonLib_stCommonTestSuite(void) {
