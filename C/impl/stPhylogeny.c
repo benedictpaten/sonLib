@@ -78,20 +78,23 @@ static stTree *quickTreeToStTreeR(struct Tnode *tNode) {
         stTree_setParent(right, ret);
         hasChild = true;
     }
-    if (stTree_getClientData(ret) == NULL) {
-        // Allocate the phylogenyInfo for this node.
-        stPhylogenyInfo *info = st_calloc(1, sizeof(stPhylogenyInfo));
-        if (!hasChild) {
-            info->matrixIndex = tNode->nodenumber;
-        } else {
-            info->matrixIndex = -1;
-        }
-        stTree_setClientData(ret, info);
+
+    // Allocate the phylogenyInfo for this node.
+    stPhylogenyInfo *info = st_calloc(1, sizeof(stPhylogenyInfo));
+    if (!hasChild) {
+        info->matrixIndex = tNode->nodenumber;
+    } else {
+        info->matrixIndex = -1;
     }
+    stTree_setClientData(ret, info);
+
     stTree_setBranchLength(ret, tNode->distance);
 
     // Can remove if needed, probably not useful except for testing.
-    stTree_setLabel(ret, stString_print("%u", tNode->nodenumber));
+    char *label = stString_print("%u", tNode->nodenumber);
+    stTree_setLabel(ret, label);
+    free(label);
+
     return ret;
 }
 
@@ -101,6 +104,8 @@ static stTree *quickTreeToStTree(struct Tree *tree) {
     struct Tree *rootedTree = get_root_Tnode(tree);
     stTree *ret = quickTreeToStTreeR(rootedTree->child[0]);
     stPhylogeny_setLeavesBelow(ret, (stTree_getNumNodes(ret) + 1) / 2);
+    free_Tree(tree);
+    free_Tree(rootedTree);
     return ret;
 }
 

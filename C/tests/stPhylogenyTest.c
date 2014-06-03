@@ -37,6 +37,7 @@ static void testSimpleNeighborJoin(CuTest *testCase) {
     CuAssertTrue(testCase, stPhylogeny_distanceBetweenLeaves(tree, 0, 2) < stPhylogeny_distanceBetweenLeaves(tree, 0, 1));
     CuAssertTrue(testCase, stPhylogeny_distanceBetweenLeaves(tree, 0, 2) < stPhylogeny_distanceBetweenLeaves(tree, 2, 1));
 
+    stMatrix_destruct(distanceStMatrix);
     stPhylogenyInfo_destructOnTree(tree);
     stTree_destruct(tree);
 }
@@ -113,8 +114,17 @@ void testSimpleBootstrapScoring(CuTest *testCase)
     CuAssertTrue(testCase, info->numBootstraps == 1);
     info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
     CuAssertTrue(testCase, info->numBootstraps == 2);
+
+    // Clean up
+    stPhylogenyInfo_destructOnTree(tree);
+    stTree_destruct(tree);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
+    for(int64_t i = 0; i < stList_length(bootstraps); i++) {
+        stPhylogenyInfo_destructOnTree(stList_get(bootstraps, i));
+        stTree_destruct(stList_get(bootstraps, i));
+    }
+    stList_destruct(bootstraps);
 }
 
 static stMatrix *getRandomDistanceMatrix(int64_t size) {
@@ -253,6 +263,8 @@ static void testRandomBootstraps(CuTest *testCase) {
         stMatrix *bootstrapMatrix = getRandomDistanceMatrix(matrixSize);
         stTree *bootstrapTree = stPhylogeny_neighborJoin(bootstrapMatrix);
         stList_append(bootstraps, bootstrapTree);
+
+        stMatrix_destruct(bootstrapMatrix);
     }
 
     // Run the code that scores partitions by bootstraps
@@ -279,6 +291,11 @@ static void testRandomBootstraps(CuTest *testCase) {
     stTree_destruct(canonicalTree);
     stPhylogenyInfo_destructOnTree(bootstrappedTree);
     stTree_destruct(bootstrappedTree);
+    for(int64_t i = 0; i < stList_length(bootstraps); i++) {
+        stPhylogenyInfo_destructOnTree(stList_get(bootstraps, i));
+        stTree_destruct(stList_get(bootstraps, i));
+    }
+    stList_destruct(bootstraps);
 }
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {

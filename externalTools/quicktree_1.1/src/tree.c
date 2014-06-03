@@ -49,7 +49,7 @@ struct Tnode *clone_Tnode( struct Tnode *source) {
   struct Tnode *dest = NULL;
 
   if (source != NULL) {
-    dest = (struct Tnode *) malloc_util( sizeof( struct Tnode ) );
+    dest = (struct Tnode *) calloc_util(1,  sizeof( struct Tnode ) );
     
     dest->distance = source->distance;
     dest->nodenumber = source->nodenumber;
@@ -323,7 +323,7 @@ struct Tree *get_root_Tnode( struct Tree *source ) {
 struct Tnode *new_interior_Tnode( unsigned int label ) {
   struct Tnode *newNode;
 
-  newNode = (struct Tnode *) malloc_util(sizeof(struct Tnode));
+  newNode = (struct Tnode *) calloc_util(1, sizeof(struct Tnode));
   newNode->left = NULL;
   newNode->right = NULL;
   newNode->parent = NULL;
