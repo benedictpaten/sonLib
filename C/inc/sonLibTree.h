@@ -117,6 +117,10 @@ stTree *stTree_parseNewickString(const char *string);
  */
 char *stTree_getNewickTreeString(stTree *eTree);
 
+/*
+ * Return a new tree rooted a given distance above the given node.
+ */
+stTree *stTree_reRoot(stTree *node, double distanceAbove);
 
 #ifdef __cplusplus
 }

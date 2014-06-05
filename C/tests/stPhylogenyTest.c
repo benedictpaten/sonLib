@@ -17,7 +17,7 @@ static void testSimpleNeighborJoin(CuTest *testCase) {
             *stMatrix_getCell(distanceStMatrix, i, j) = distances[i][j];
         }
     }
-    stTree *tree = stPhylogeny_neighborJoin(distanceStMatrix);
+    stTree *tree = stPhylogeny_neighborJoin(distanceStMatrix, NULL);
     stPhylogenyInfo *info = stTree_getClientData(tree);
 
     // Check that leavesBelow is correct for the root (every leaf is
@@ -216,8 +216,36 @@ static void testRandomNeighborJoin(CuTest *testCase) {
     int64_t testNum;
     for (testNum = 0; testNum < 50; testNum++) {
         // Run neighbor-joining
-        stMatrix *matrix = getRandomDistanceMatrix(st_randomInt64(3, 600));
-        stTree *tree = stPhylogeny_neighborJoin(matrix);
+        int64_t numLeaves = st_randomInt64(3, 600);
+        stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
+        bool rootOnOutgroup = st_random() > 0.5;
+        stList *outgroups = NULL;
+
+        if(rootOnOutgroup) {
+            // Create outgroup list
+            outgroups = stList_construct3(0, (void (*)(void *))stIntTuple_destruct);
+            int64_t numOutgroups = st_randomInt64(1, numLeaves);
+            for(int64_t i = 0; i < numOutgroups; i++) {
+                int64_t outgroup = st_randomInt64(0, numLeaves);
+                stList_append(outgroups, stIntTuple_construct1(outgroup));
+            }
+        }
+
+        stTree *tree = stPhylogeny_neighborJoin(matrix, outgroups);
+
+        if(rootOnOutgroup) {
+            // Check that the root is placed on one of the outgroup branches.
+            bool outgroupBranchIsRoot = false;
+            for(int64_t i = 0; i < stList_length(outgroups); i++) {
+                int64_t outgroup = stIntTuple_get(stList_get(outgroups, i), 0);
+                if(stTree_getParent(stTree_getParent(stPhylogeny_getLeafByIndex(tree, outgroup))) == NULL) {
+                    outgroupBranchIsRoot = true;
+                }
+            }
+            assert(outgroupBranchIsRoot);
+            CuAssertTrue(testCase, outgroupBranchIsRoot);
+            stList_destruct(outgroups);
+        }
 
         // Check that leavesBelow is set correctly
         testOnTree(testCase, tree, checkLeavesBelow);
@@ -256,12 +284,12 @@ static void testRandomBootstraps(CuTest *testCase) {
     int64_t matrixSize = st_randomInt64(3, 300);
     numBootstraps = st_randomInt64(1, 200);
     stMatrix *canonicalMatrix = getRandomDistanceMatrix(matrixSize);
-    stTree *canonicalTree = stPhylogeny_neighborJoin(canonicalMatrix);
+    stTree *canonicalTree = stPhylogeny_neighborJoin(canonicalMatrix, NULL);
     for(int64_t i = 0; i < numBootstraps; i++) {
         // Not a real bootstrap matrix, but the indices are the same
         // so the bootstrap code still needs to work.
         stMatrix *bootstrapMatrix = getRandomDistanceMatrix(matrixSize);
-        stTree *bootstrapTree = stPhylogeny_neighborJoin(bootstrapMatrix);
+        stTree *bootstrapTree = stPhylogeny_neighborJoin(bootstrapMatrix, NULL);
         stList_append(bootstraps, bootstrapTree);
 
         stMatrix_destruct(bootstrapMatrix);

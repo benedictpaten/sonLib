@@ -176,6 +176,53 @@ static void test_stTree_clone(CuTest* testCase) {
     teardown();
 }
 
+static int cmpByLabel(stTree *a, stTree *b) {
+    return strcmp(stTree_getLabel(a), stTree_getLabel(b));
+}
+
+void test_stTree_reRoot(CuTest *testCase) {
+    setup();
+    // Re-rooting a tree at its existing root just returns a cloned
+    // tree
+    stTree *reRooted = stTree_reRoot(root, 0.0);
+    CuAssertTrue(testCase, stTree_equals(reRooted, root));
+    stTree_destruct(reRooted);
+
+    // Root the tree 0.1 units above the "internal" node. Since the
+    // root has no other children, this means the tree looks almost
+    // exactly the same, except that the root is closer.
+    reRooted = stTree_reRoot(internal, 0.1);
+    CuAssertTrue(testCase, stTree_getChildNumber(reRooted) == 1);
+    stTree *newInternal = stTree_getChild(reRooted, 0);
+    CuAssertTrue(testCase, stTree_getChildNumber(newInternal) == 2);
+    CuAssertTrue(testCase, stTree_getBranchLength(newInternal) == 0.1);
+    stTree_destruct(reRooted);
+    teardown();
+
+    // A slightly more complex example
+    stTree *tree = stTree_parseNewickString("((C:1,D:1)B:2,(F:3,G:3,(I:3,(K:4)J:5)H:5)E:6)A:9;");
+
+    reRooted = stTree_reRoot(stTree_findChild(tree, "J"), 1);
+    // Sort so that the newick string is consistent
+    stTree_sortChildren(reRooted, cmpByLabel);
+    CuAssertStrEquals(testCase, "((((C:1,D:1)B:8,F:3,G:3)E:5,I:3)H:4,(K:4)J:1);", stTree_getNewickTreeString(reRooted));
+    stTree_destruct(reRooted);
+
+    // Rerooting at a different place above E should just shuffle B and E's branch lengths
+    reRooted = stTree_reRoot(stTree_findChild(tree, "E"), 2);
+    // Sort so that the newick string is consistent
+    stTree_sortChildren(reRooted, cmpByLabel);
+    CuAssertStrEquals(testCase, "((C:1,D:1)B:6,(F:3,G:3,(I:3,(K:4)J:5)H:5)E:2);", stTree_getNewickTreeString(reRooted));
+    stTree_destruct(reRooted);
+
+    // Test rerooting on a leaf of a 3-child node
+    reRooted = stTree_reRoot(stTree_findChild(tree, "G"), 2);
+    // Sort so that the newick string is consistent
+    stTree_sortChildren(reRooted, cmpByLabel);
+    CuAssertStrEquals(testCase, "(((C:1,D:1)B:8,F:3,(I:3,(K:4)J:5)H:5)E:1,G:2);", stTree_getNewickTreeString(reRooted));
+    stTree_destruct(reRooted);
+}
+
 CuSuite* sonLib_ETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stTree_construct);
@@ -189,5 +236,6 @@ CuSuite* sonLib_ETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stTree_getNumNodes);
     SUITE_ADD_TEST(suite, test_stTree_equals);
     SUITE_ADD_TEST(suite, test_stTree_clone);
+    SUITE_ADD_TEST(suite, test_stTree_reRoot);
     return suite;
 }

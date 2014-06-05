@@ -61,10 +61,12 @@ stTree *stPhylogeny_scoreFromBootstrap(stTree *tree, stTree *bootstrap);
 // stPhylogenyInfo.
 stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps);
 
-// Construct a tree from the given distance matrix using neighbor-joining.
 // Only one half of the distanceMatrix is used, distances[i][j] for which i > j
-// Tree returned is labeled by the indices of the distance matrix and is rooted halfway along the longest branch.
-stTree *stPhylogeny_neighborJoin(stMatrix *distances);
+// Tree returned is labeled by the indices of the distance matrix. The
+// tree is rooted halfway along the longest branch if outgroups is
+// NULL; otherwise, it's rooted halfway along the longest outgroup
+// branch.
+stTree *stPhylogeny_neighborJoin(stMatrix *distances, stList *outgroups);
 
 // Gets the (leaf) node corresponding to an index in the distance matrix.
 stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex);

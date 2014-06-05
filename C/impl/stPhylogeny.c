@@ -99,11 +99,38 @@ static stTree *quickTreeToStTreeR(struct Tnode *tNode) {
 }
 
 // Helper function for converting an unrooted QuickTree Tree into an
-// stTree, rooted halfway along the longest branch.
-static stTree *quickTreeToStTree(struct Tree *tree) {
+// stTree. The tree is rooted halfway along the longest branch if
+// outgroups is NULL, otherwise it's rooted halfway along the longest
+// branch to an outgroup.
+static stTree *quickTreeToStTree(struct Tree *tree, stList *outgroups) {
     struct Tree *rootedTree = get_root_Tnode(tree);
     stTree *ret = quickTreeToStTreeR(rootedTree->child[0]);
     stPhylogeny_setLeavesBelow(ret, (stTree_getNumNodes(ret) + 1) / 2);
+    if(outgroups != NULL && stList_length(outgroups) != 0) {
+        // Find the longest branch to an outgroup and root the tree
+        // there. If we're desperate for speedups, we can just root
+        // the tree once instead of rooting once and then re-rooting.
+        assert(stList_length(outgroups) != 0);
+        double maxLength = -1;
+        stTree *maxNode = NULL;
+        for(int64_t i = 0; i < stList_length(outgroups); i++) {
+            int64_t outgroupIndex = stIntTuple_get(stList_get(outgroups, i), 0);
+            stTree *outgroup = stPhylogeny_getLeafByIndex(ret, outgroupIndex);
+            if(stTree_getBranchLength(outgroup) > maxLength) {
+                maxLength = stTree_getBranchLength(outgroup);
+                maxNode = outgroup;
+            }
+        }
+        assert(maxNode != NULL);
+        stTree *reRooted = stTree_reRoot(maxNode, maxLength/2);
+        assert(stTree_getNumNodes(reRooted) == stTree_getNumNodes(ret));
+        stPhylogeny_addStPhylogenyInfo(reRooted);
+
+        // Get rid of the old tree
+        stPhylogenyInfo_destructOnTree(ret);
+        stTree_destruct(ret);
+        ret = reRooted;
+    }
     free_Tree(tree);
     free_Tree(rootedTree);
     return ret;
@@ -252,8 +279,11 @@ stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps)
 }
 
 // Only one half of the distanceMatrix is used, distances[i][j] for which i > j
-// Tree returned is labeled by the indices of the distance matrix and is rooted halfway along the longest branch.
-stTree *stPhylogeny_neighborJoin(stMatrix *distances) {
+// Tree returned is labeled by the indices of the distance matrix. The
+// tree is rooted halfway along the longest branch if outgroups is
+// NULL; otherwise, it's rooted halfway along the longest outgroup
+// branch.
+stTree *stPhylogeny_neighborJoin(stMatrix *distances, stList *outgroups) {
     struct DistanceMatrix *distanceMatrix;
     struct Tree *tree;
     int64_t i, j;
@@ -285,7 +315,7 @@ stTree *stPhylogeny_neighborJoin(stMatrix *distances) {
     // Finally, run the neighbor-joining algorithm.
     tree = neighbour_joining_buildtree(clusterGroup, 0);
     free_ClusterGroup(clusterGroup);
-    return quickTreeToStTree(tree);
+    return quickTreeToStTree(tree, outgroups);
 }
 
 // Get the distance to a leaf from an internal node

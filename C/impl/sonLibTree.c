@@ -72,6 +72,62 @@ stTree *stTree_clone(stTree *root) {
     return tree_clonetree(root, NULL);
 }
 
+// clone this node, make its supertree a child, and clone all children
+// other than oldNode, leaving this node as a child of nodeToAddTo
+static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
+                                  stTree *nodeToAddTo,
+                                  double branchLength) {
+    if(stTree_getParent(node) != NULL) {
+        // This node isn't the root
+        stTree *clonedNode = stTree_cloneNode(node);
+        stTree_setParent(clonedNode, nodeToAddTo);
+        stTree_setBranchLength(clonedNode, branchLength);
+        // Clone its children (other than oldNode) and their subtrees
+        for(int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stTree *child = stTree_getChild(node, i);
+            if(child != oldNode) {
+                stTree *clonedChild = stTree_clone(child);
+                stTree_setParent(clonedChild, clonedNode);
+            }
+        }
+        
+        // Recurse on the parent of this node.
+        tree_cloneFlippedTree(stTree_getParent(node), node,
+                              clonedNode, stTree_getBranchLength(node));
+    } else {
+        // We have to treat the root specially, because we're going to
+        // eliminate it. Just add all the other children of the root
+        // as children of nodeToAddTo.
+        for(int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stTree *child = stTree_getChild(node, i);
+            if(child != oldNode) {
+                stTree *clonedChild = stTree_clone(child);
+                stTree_setParent(clonedChild, nodeToAddTo);
+                stTree_setBranchLength(clonedChild, stTree_getBranchLength(child) + branchLength);
+            }
+        }
+    }
+}
+
+// Return a new tree rooted a given distance above the given node.
+stTree *stTree_reRoot(stTree *node, double distanceAbove) {
+    if(stTree_getParent(node) == NULL) {
+        // This node is already the root.
+        return stTree_clone(node);
+    }
+
+    assert(stTree_getBranchLength(node) >= distanceAbove);
+
+    stTree *newRoot = stTree_construct();
+    // This node and its children (if any) are fine already.
+    stTree *clonedNode = stTree_clone(node);
+    stTree_setParent(clonedNode, newRoot);
+    stTree_setBranchLength(clonedNode, distanceAbove);
+    tree_cloneFlippedTree(stTree_getParent(node), node, newRoot,
+                          stTree_getBranchLength(node) - distanceAbove);
+    return newRoot;
+}
+
 stTree *stTree_getParent(stTree *tree) {
     return tree->parent;
 }
