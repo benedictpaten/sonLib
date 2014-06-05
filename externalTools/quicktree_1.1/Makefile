@@ -53,4 +53,4 @@ $(OBJ)/options.o : $(SRC)/options.c $(INC)/options.h
 	$(CC) $(CFLAGS) -o $(OBJ)/options.o $(SRC)/options.c
 
 clean:
-	rm $(OBJ)/*.o
+	rm -rf $(OBJ)/*.o
