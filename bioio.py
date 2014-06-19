@@ -625,6 +625,13 @@ def padWord(word, length=25):
         return word + " "*(length-len(word))
     return word
 
+def isNewer(firstFile, secondFile):
+    """Returns True if the first file was modified more recently than the second file (used os.path.getctime)
+    """
+    assert os.exists(firstFile)
+    assert os.exists(secondFile)
+    return os.path.getctime(firstFile) < os.path.getctime(secondFile)
+    
 #########################################################
 #########################################################
 #########################################################
