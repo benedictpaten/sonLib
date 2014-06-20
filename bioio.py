@@ -628,8 +628,8 @@ def padWord(word, length=25):
 def isNewer(firstFile, secondFile):
     """Returns True if the first file was modified more recently than the second file (used os.path.getctime)
     """
-    assert os.exists(firstFile)
-    assert os.exists(secondFile)
+    assert os.path.exists(firstFile)
+    assert os.path.exists(secondFile)
     return os.path.getctime(firstFile) < os.path.getctime(secondFile)
     
 #########################################################
