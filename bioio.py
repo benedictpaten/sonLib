@@ -20,6 +20,8 @@ from tree import BinaryTree
 from misc import close
 import subprocess
 import array
+import xml.etree.cElementTree as ET
+from xml.dom import minidom  # For making stuff pretty
 
 DEFAULT_DISTANCE = 0.001
 
@@ -624,13 +626,6 @@ def padWord(word, length=25):
     if len(word) < length:
         return word + " "*(length-len(word))
     return word
-
-def isNewer(firstFile, secondFile):
-    """Returns True if the first file was modified more recently than the second file (used os.path.getctime)
-    """
-    assert os.path.exists(firstFile)
-    assert os.path.exists(secondFile)
-    return os.path.getctime(firstFile) < os.path.getctime(secondFile)
     
 #########################################################
 #########################################################
@@ -653,6 +648,20 @@ def catFiles(filesToCat, catFile):
     while len(filesToCat) > 0:
         system("cat %s >> %s" % (" ".join(filesToCat[:maxCat]), catFile))
         filesToCat = filesToCat[maxCat:]
+
+def prettyXml(elem):
+    """ Return a pretty-printed XML string for the ElementTree Element.
+    """
+    roughString = ET.tostring(elem, "utf-8")
+    reparsed = minidom.parseString(roughString)
+    return reparsed.toprettyxml(indent="  ")
+
+def isNewer(firstFile, secondFile):
+    """Returns True if the first file was modified more recently than the second file (used os.path.getctime)
+    """
+    assert os.path.exists(firstFile)
+    assert os.path.exists(secondFile)
+    return os.path.getctime(firstFile) < os.path.getctime(secondFile)
 
 #########################################################
 #########################################################
