@@ -768,8 +768,8 @@ def fastqWrite(fileHandleOrFile, name, seq, qualValues, mode="w"):
     fileHandle = _getFileHandle(fileHandleOrFile, mode)
     assert seq.__class__ == "".__class__
     for i in seq:
-        if not (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-': #For safety and sanity I only allows roman alphabet characters in fasta sequences.
-            raise RuntimeError("Invalid FASTQ character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
+        if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'): #For safety and sanity I only allows roman alphabet characters in fasta sequences.
+            raise RuntimeError("Invalid FASTQ character, ASCII code = \'%d\', char = '%s' found in input sequence %s" % (ord(i), i, name))
     if len(seq) != len(qualValues):
         raise RuntimeError("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s " % (len(seq), len(qualValues), name))
     for i in qualValues:
