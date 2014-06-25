@@ -18,6 +18,8 @@ from bioio import getRandomAlphaNumericString
 
 from bioio import fastaRead
 from bioio import fastaWrite 
+from bioio import fastqRead
+from bioio import fastqWrite 
 from bioio import getRandomSequence
 
 from bioio import pWMRead
@@ -144,6 +146,22 @@ class TestCase(unittest.TestCase):
                 name, seq = i
                 fastaWrite(sys.stdout, name, seq)
             fileHandle.close()
+            
+    def testFastqReadWrite(self):
+        tempFile = getTempFile()
+        self.tempFiles.append(tempFile)
+        for test in xrange(0, self.testNo):
+            fastaNumber = random.choice(xrange(10))
+            fastqs = [ (name, seq, [ random.randint(33, 126) for i in range(len(seq)) ]) for name, seq in [ getRandomSequence() for i in xrange(fastaNumber) ]]
+            fH = open(tempFile, 'w')
+            for name, seq, quals in fastqs:
+                fastqWrite(fH, name, seq, quals)
+            fH.close()
+            fastqs.reverse()
+            for i in fastqRead(tempFile):
+                assert i == fastqs.pop()
+                name, seq, quals = i
+                fastqWrite(sys.stdout, name, seq, quals)
             
     def testFastaReadWriteC(self):
         """Tests consistency with C version of this function.
