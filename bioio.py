@@ -709,7 +709,7 @@ def fastaRead(fileHandleOrFile):
             seq = array.array('c')
             while line != '' and line[0] != '>':
                 if line[0] != '#':
-                    seq.extend([ i for i in line[:-1] if i != '\t' and i != ' ' ])
+                    seq.extend([ i for i in line[:-1] if not i.isspace() ]) #The white-space check is to remove any annoying trailing characters.
                 line = fileHandle.readline()
             for i in seq:
                 #For safety and sanity I only allows roman alphabet characters in fasta sequences.
