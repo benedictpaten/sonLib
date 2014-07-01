@@ -661,7 +661,7 @@ def isNewer(firstFile, secondFile):
     """
     assert os.path.exists(firstFile)
     assert os.path.exists(secondFile)
-    return os.path.getctime(firstFile) < os.path.getctime(secondFile)
+    return os.path.getctime(firstFile) > os.path.getctime(secondFile)
 
 #########################################################
 #########################################################
