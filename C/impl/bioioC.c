@@ -190,7 +190,7 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
                     else { //valid char
                         if(!isalpha(j) && j != '-') {
                              //For safety and sanity I only allows roman alphabet characters and gaps in fasta sequences.
-                             st_errAbort("Got an unexpected character in input fasta sequence: %c \n", j);
+                             st_errAbort("!!Got an unexpected character in input fasta sequence: '%c' \n", j);
                         }
                         seq = arrayPrepareAppend(seq, &seqLength, k+1, sizeof(char));
                         seq[k++] = j;

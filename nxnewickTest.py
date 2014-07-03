@@ -6,6 +6,7 @@
 
 import unittest
 import random
+import re
 from string import whitespace as ws
 
 from sonLib.nxnewick import NXNewick
@@ -33,8 +34,9 @@ class TestCase(unittest.TestCase):
         trees = [tree1, tree2, tree3, tree4, tree5, tree6]        
         newickParser = NXNewick()
         
+        # Parse newicks, adding implied roots
         for tree in trees:
-            newickParser.parseString(tree)
+            newickParser.parseString(tree, addImpliedRoots=True)
             answer = self.__cleanTree(tree)
             outputString = newickParser.writeString()
             logger.debug(" ***************** ")
@@ -42,6 +44,18 @@ class TestCase(unittest.TestCase):
             logger.debug(answer)
             assert outputString == answer
     
+        # Parse newicks, not adding implied roots
+        for tree in trees:
+            newickParser.parseString(tree, addImpliedRoots=False)
+            outputString = newickParser.writeString()
+            answer = re.sub(r':[.0-9]+?;', ';', tree)
+            answer = re.sub(r'\s+', '', answer)
+            logger.debug(" ***************** ")
+            logger.debug(outputString)
+            logger.debug(answer)
+            assert outputString == answer
+        
+
     # remove whitespace
     # change trees of form (blabla):123; to ((blabla):123);
     def __cleanTree(self, tree):
