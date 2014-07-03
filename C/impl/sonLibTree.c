@@ -365,3 +365,8 @@ void stTree_sortChildren(stTree *root, int cmpFn(stTree *a, stTree *b)) {
     }
 }
 
+void stTree_setChild(stTree *tree, int64_t i, stTree *child) {
+    assert(i >= 0);
+    assert(i < stTree_getChildNumber(tree));
+    stList_set(tree->nodes, i, child);
+}

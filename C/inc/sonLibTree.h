@@ -122,6 +122,10 @@ char *stTree_getNewickTreeString(stTree *eTree);
  */
 stTree *stTree_reRoot(stTree *node, double distanceAbove);
 
+/*
+ * Replace the child at the given index.
+ */
+void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
 #ifdef __cplusplus
 }
 #endif
