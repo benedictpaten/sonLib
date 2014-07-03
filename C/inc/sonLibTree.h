@@ -118,6 +118,10 @@ stTree *stTree_parseNewickString(const char *string);
 char *stTree_getNewickTreeString(stTree *eTree);
 
 
+/*
+ * Replace the child at the given index.
+ */
+void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
 #ifdef __cplusplus
 }
 #endif
