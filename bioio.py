@@ -749,7 +749,8 @@ def fastqRead(fileHandleOrFile):
                 raise RuntimeError("Got unexpected line: %s" % plus)
             qualValues = [ ord(i) for i in fileHandle.readline()[:-1] ]
             if len(seq) != len(qualValues):
-                raise RuntimeError("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s " % (len(seq), len(qualValues), name))
+                logger.critical("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s, ignoring returning None" % (len(seq), len(qualValues), name))
+                qualValues = None
             for i in qualValues:
                 if i < 33 or i > 126:
                     raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
@@ -763,19 +764,22 @@ def fastqRead(fileHandleOrFile):
         fileHandle.close()
 
 def fastqWrite(fileHandleOrFile, name, seq, qualValues, mode="w"):
-    """Writes out fastq file
+    """Writes out fastq file. If qualValues is None or '*' then prints a '*' instead.
     """
     fileHandle = _getFileHandle(fileHandleOrFile, mode)
     assert seq.__class__ == "".__class__
     for i in seq:
         if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'): #For safety and sanity I only allows roman alphabet characters in fasta sequences.
             raise RuntimeError("Invalid FASTQ character, ASCII code = \'%d\', char = '%s' found in input sequence %s" % (ord(i), i, name))
-    if len(seq) != len(qualValues):
-        raise RuntimeError("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s " % (len(seq), len(qualValues), name))
-    for i in qualValues:
-        if i < 33 or i > 126:
-            raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
-    fileHandle.write("@%s\n%s\n+\n%s\n" % (name, seq, "".join([ chr(i) for i in qualValues ])))
+    if qualValues != None and qualValues != '*':
+        if len(seq) != len(qualValues):
+            raise RuntimeError("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s " % (len(seq), len(qualValues), name))
+        for i in qualValues:
+            if i < 33 or i > 126:
+                raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
+        fileHandle.write("@%s\n%s\n+\n%s\n" % (name, seq, "".join([ chr(i) for i in qualValues ])))
+    else:
+        fileHandle.write("@%s\n%s\n+\n*\n" % (name, seq))
     if isinstance(fileHandleOrFile, "".__class__):
         fileHandle.close()
 
