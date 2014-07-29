@@ -751,9 +751,10 @@ def fastqRead(fileHandleOrFile):
             if len(seq) != len(qualValues):
                 logger.critical("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s, ignoring returning None" % (len(seq), len(qualValues), name))
                 qualValues = None
-            for i in qualValues:
-                if i < 33 or i > 126:
-                    raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
+            else:
+                for i in qualValues:
+                    if i < 33 or i > 126:
+                        raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
             for i in seq:
                 #For safety and sanity I only allows roman alphabet characters in fasta sequences.
                 if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'):
