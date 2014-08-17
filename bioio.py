@@ -1157,11 +1157,13 @@ def cigarReadFromString(line):
         return PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
     return None
 
-def cigarRead(fileHandle):
+def cigarRead(fileHandleOrFile):
     """Reads a list of pairwise alignments into a pairwise alignment structure.
 
     Query and target are reversed!
     """
+    fileHandle = _getFileHandle(fileHandleOrFile)
+    line = fileHandle.readline()
     #p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+(.*)\\s*)*")
     p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+([^\\s]+)(\\s+(.*)\\s*)*")
     line = fileHandle.readline()
@@ -1170,6 +1172,8 @@ def cigarRead(fileHandle):
         if pA != None:
             yield pA
         line = fileHandle.readline()
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
 
 def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
     """Writes out the pairwiseAlignment to the file stream.
