@@ -126,6 +126,13 @@ stTree *stTree_reRoot(stTree *node, double distanceAbove);
  * Replace the child at the given index.
  */
 void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
+
+/*
+ * Get the most recent common ancestor of two nodes in the same
+ * stTree, or NULL if they are not in the same tree.
+ */
+stTree *stTree_getMRCA(stTree *node1, stTree *node2);
+
 #ifdef __cplusplus
 }
 #endif

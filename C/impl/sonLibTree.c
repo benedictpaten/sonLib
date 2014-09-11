@@ -370,3 +370,25 @@ void stTree_setChild(stTree *tree, int64_t i, stTree *child) {
     assert(i < stTree_getChildNumber(tree));
     stList_set(tree->nodes, i, child);
 }
+
+stTree *stTree_getMRCA(stTree *node1, stTree *node2) {
+    // Find all of node 1's parents (inclusive of node 1)
+    stSet *parents = stSet_construct();
+    stTree *curNode = node1;
+    do {
+        stSet_insert(parents, curNode);
+    } while ((curNode = stTree_getParent(curNode)) != NULL);
+
+    // Find the first parent of node 2 that is a parent of node 1
+    stTree *ret = NULL;
+    curNode = node2;
+    do {
+        if (stSet_search(parents, curNode) != NULL) {
+            ret = curNode;
+            break;
+        }
+    } while ((curNode = stTree_getParent(curNode)) != NULL);
+
+    stSet_destruct(parents);
+    return ret;
+}
