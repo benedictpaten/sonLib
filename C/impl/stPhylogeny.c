@@ -381,8 +381,7 @@ static double stPhylogeny_distToChild(stTree *tree, stTree *target) {
 
 // Return the MRCA of the given leaves.
 stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2) {
-    int64_t i;
-    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
         stTree *child = stTree_getChild(tree, i);
         stPhylogenyInfo *childInfo = stTree_getClientData(child);
         if(childInfo->leavesBelow[leaf1] && childInfo->leavesBelow[leaf2]) {
@@ -481,5 +480,124 @@ stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex) {
     }
 
     // Shouldn't get here if the stPhylogenyInfo is set properly
+    return NULL;
+}
+
+// Helper function for computeJoinCosts. Populates a map from a tree to a unique int.
+static void populateSpeciesToIndex(stTree *speciesTree, stHash *speciesToIndex) {
+    stList *bfQueue = stList_construct();
+    stList_append(bfQueue, speciesTree);
+    int64_t curIdx = 0;
+    while (stList_length(bfQueue) != 0) {
+        stTree *node = stList_pop(bfQueue);
+        for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stList_append(bfQueue, stTree_getChild(node, i));
+        }
+        stHash_insert(speciesToIndex, node, stIntTuple_construct1(curIdx++));
+    }
+    stList_destruct(bfQueue);
+}
+
+// Helper function for computeJoinCosts. Precomputes number of
+// leaves for each node.
+static stHash *getNodeToNumberOfLeaves(stTree *speciesTree) {
+    stHash *ret = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+    stList *bfQueue = stList_construct();
+    stList_append(bfQueue, speciesTree);
+    while (stList_length(bfQueue) != 0) {
+        stTree *node = stList_pop(bfQueue);
+        for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stList_append(bfQueue, stTree_getChild(node, i));
+        }
+        stHash_insert(ret, node, stIntTuple_construct1(stTree_getNumNodes(node) - 1));
+    }
+
+    stList_destruct(bfQueue);
+    return ret;
+}
+
+// Compute join costs for a species tree for use in guided
+// neighbor-joining. These costs are calculated by penalizing
+// according to the number of dups and losses implied by the
+// reconciliation when joining two genes reconciled to certain nodes
+// of the species tree.
+// speciesToIndex (a blank hash) will be populated with stIntTuples
+// corresponding to each species' index into the join cost matrix.
+// NB: the species tree must be binary.
+// TODO: take branch lengths into account
+stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToIndex, double costPerDup, double costPerLoss) {
+    assert(stHash_size(speciesToIndex) == 0);
+
+    int64_t numSpecies = stTree_getNumNodes(speciesTree);
+
+    populateSpeciesToIndex(speciesTree, speciesToIndex);
+    assert(stHash_size(speciesToIndex) == numSpecies);
+
+    // Need to precompute the number of leaves below each species as
+    // well -- this is useful for calculating the number of losses
+    // without traversing each subtree each iteration.
+    stHash *nodeToNumberOfLeaves = getNodeToNumberOfLeaves(speciesTree);
+    assert(stHash_size(nodeToNumberOfLeaves) == numSpecies);
+
+    // Fill in the join cost matrix.
+    stMatrix *ret = stMatrix_construct(numSpecies, numSpecies);
+    stHash *indexToSpecies = stHash_invert(speciesToIndex, (uint64_t (*)(const void *)) stIntTuple_hashKey,
+                                           (int (*)(const void *, const void *)) stIntTuple_equalsFn, NULL, NULL);
+    for (int64_t i = 0; i < numSpecies; i++) {
+        // get the species node for this index (the intTuple is
+        // necessary to query the hash properly)
+        stIntTuple *query_i = stIntTuple_construct1(i);
+        stTree *species_i = stHash_search(indexToSpecies, query_i);
+        assert(species_i != NULL);
+        for (int64_t j = i; j < numSpecies; j++) {
+            // get the species node for this index (the intTuple is
+            // necessary to query the hash properly)
+            stIntTuple *query_j = stIntTuple_construct1(j);
+            stTree *species_j = stHash_search(indexToSpecies, query_j);
+            assert(species_j != NULL);
+
+            // Can't use stPhylogeny_getMRCA as that is only defined for leaves.
+            stTree *mrca = stTree_getMRCA(species_i, species_j);
+
+            // Calculate the number of dups implied when joining species i and j.
+            if (species_i == mrca || species_j == mrca) {
+                // One species is the ancestor of the other, or they
+                // are equal. This implies one dup.
+                *stMatrix_getCell(ret, i, j) += costPerDup;
+                *stMatrix_getCell(ret, j, i) += costPerDup;
+            }
+
+            // Calculate the number of losses (in leaf lineages)
+            // implied when joining species i and j.
+            stIntTuple *leavesUnder_i = stHash_search(nodeToNumberOfLeaves, species_i);
+            assert(leavesUnder_i != NULL);
+            stIntTuple *leavesUnder_j = stHash_search(nodeToNumberOfLeaves, species_j);
+            assert(leavesUnder_j != NULL);
+            stIntTuple *leavesUnder_mrca = stHash_search(nodeToNumberOfLeaves, mrca);
+            assert(leavesUnder_mrca != NULL);
+            // Number of losses = (leaves below the MRCA) - (leaves
+            // below lineage i) - (leaves below lineage j)
+            int64_t numLosses = stIntTuple_get(leavesUnder_mrca, 0) - stIntTuple_get(leavesUnder_i, 0) - stIntTuple_get(leavesUnder_j, 0);
+            *stMatrix_getCell(ret, i, j) += costPerDup * numLosses;
+            *stMatrix_getCell(ret, j, i) += costPerDup * numLosses;
+
+            stIntTuple_destruct(query_j);
+        }
+        stIntTuple_destruct(query_i);
+    }
+
+    stHash_destruct(indexToSpecies);
+    stHash_destruct(nodeToNumberOfLeaves);
+    return ret;
+}
+
+// Neighbor joining guided by a species tree. Note that the matrix is
+// a similarity matrix (i < j is # differences between i and j, i > j
+// is # similarities between i and j) rather than a distance
+// matrix. Join costs should be precomputed by
+// stPhylogeny_computeJoinCosts.
+stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
+                                          stHash *joinCosts,
+                                          stHash *leafToSpecies) {
     return NULL;
 }

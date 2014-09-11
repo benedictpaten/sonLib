@@ -80,9 +80,19 @@ double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2);
 double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
                                          int64_t leaf2);
 
-// Return the MRCA of the given leaves.
+// Return the MRCA of the given leaves. More efficient than
+// stTree_getMRCA.
 stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
 
+// Compute join costs for a species tree for use in guided
+// neighbor-joining. These costs are calculated by penalizing
+// according to the number of dups and losses implied by the
+// reconciliation when joining two genes reconciled to certain nodes
+// of the species tree.
+// speciesToIndex (a blank hash) will be populated with stIntTuples
+// corresponding to each species' index into the join cost matrix.
+// NB: the species tree must be binary.
+stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToIndex, double costPerDup, double costPerLoss);
 #ifdef __cplusplus
 }
 #endif
