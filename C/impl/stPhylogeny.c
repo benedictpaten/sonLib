@@ -498,22 +498,26 @@ static void populateSpeciesToIndex(stTree *speciesTree, stHash *speciesToIndex) 
     stList_destruct(bfQueue);
 }
 
-// Helper function for computeJoinCosts. Precomputes number of
-// leaves for each node.
-static stHash *getNodeToNumberOfLeaves(stTree *speciesTree) {
-    stHash *ret = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
-    stList *bfQueue = stList_construct();
-    stList_append(bfQueue, speciesTree);
-    while (stList_length(bfQueue) != 0) {
-        stTree *node = stList_pop(bfQueue);
-        for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
-            stList_append(bfQueue, stTree_getChild(node, i));
+// Get the number of nodes between a descendant and its
+// ancestor. (Exclusive of both the ancestor and its descendant, so if
+// the descendant is a direct child of the ancestor, that counts as
+// 0.)
+static int64_t numNodesToAncestor(stTree *descendant, stTree *ancestor) {
+    if (descendant == ancestor) {
+        return 0;
+    }
+    stTree *curNode = descendant;
+    int64_t ret = 0;
+    while ((curNode = stTree_getParent(curNode)) != NULL) {
+        if (curNode == ancestor) {
+            return ret;
         }
-        stHash_insert(ret, node, stIntTuple_construct1(stTree_getNumNodes(node) - 1));
+        ret++;
     }
 
-    stList_destruct(bfQueue);
-    return ret;
+    // Shouldn't get here.
+    assert(false);
+    return -1;
 }
 
 // Compute join costs for a species tree for use in guided
@@ -532,12 +536,6 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
 
     populateSpeciesToIndex(speciesTree, speciesToIndex);
     assert(stHash_size(speciesToIndex) == numSpecies);
-
-    // Need to precompute the number of leaves below each species as
-    // well -- this is useful for calculating the number of losses
-    // without traversing each subtree each iteration.
-    stHash *nodeToNumberOfLeaves = getNodeToNumberOfLeaves(speciesTree);
-    assert(stHash_size(nodeToNumberOfLeaves) == numSpecies);
 
     // Fill in the join cost matrix.
     stMatrix *ret = stMatrix_construct(numSpecies, numSpecies);
@@ -564,22 +562,22 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
                 // One species is the ancestor of the other, or they
                 // are equal. This implies one dup.
                 *stMatrix_getCell(ret, i, j) += costPerDup;
-                *stMatrix_getCell(ret, j, i) += costPerDup;
+                if (j != i) {
+                    *stMatrix_getCell(ret, j, i) += costPerDup;
+                }
             }
 
-            // Calculate the number of losses (in leaf lineages)
-            // implied when joining species i and j.
-            stIntTuple *leavesUnder_i = stHash_search(nodeToNumberOfLeaves, species_i);
-            assert(leavesUnder_i != NULL);
-            stIntTuple *leavesUnder_j = stHash_search(nodeToNumberOfLeaves, species_j);
-            assert(leavesUnder_j != NULL);
-            stIntTuple *leavesUnder_mrca = stHash_search(nodeToNumberOfLeaves, mrca);
-            assert(leavesUnder_mrca != NULL);
-            // Number of losses = (leaves below the MRCA) - (leaves
-            // below lineage i) - (leaves below lineage j)
-            int64_t numLosses = stIntTuple_get(leavesUnder_mrca, 0) - stIntTuple_get(leavesUnder_i, 0) - stIntTuple_get(leavesUnder_j, 0);
-            *stMatrix_getCell(ret, i, j) += costPerDup * numLosses;
-            *stMatrix_getCell(ret, j, i) += costPerDup * numLosses;
+            // Calculate the minimum number of losses implied when
+            // joining species i and j.
+            int64_t numLosses = numNodesToAncestor(species_i, mrca) + numNodesToAncestor(species_j, mrca);
+            if ((species_i == mrca || species_j == mrca) && (species_i != species_j)) {
+                // An "extra" loss on the other child of the MRCA.
+                numLosses++;
+            }
+            *stMatrix_getCell(ret, i, j) += costPerLoss * numLosses;
+            if (j != i) {
+                *stMatrix_getCell(ret, j, i) += costPerLoss * numLosses;
+            }
 
             stIntTuple_destruct(query_j);
         }
@@ -587,7 +585,6 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
     }
 
     stHash_destruct(indexToSpecies);
-    stHash_destruct(nodeToNumberOfLeaves);
     return ret;
 }
 
