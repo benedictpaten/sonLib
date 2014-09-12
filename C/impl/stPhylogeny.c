@@ -613,6 +613,7 @@ static int64_t **getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex) {
         }
         stIntTuple_destruct(query_i);
     }
+    return ret;
 }
 
 // Neighbor joining guided by a species tree. Note that the matrix is
@@ -649,7 +650,17 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     }
 
     // Distance matrix. Note: only valid for i < j.
-    double **distances = st_calloc(numLeaves * numLeaves, sizeof(double));
+    double **distances = st_calloc(numLeaves, sizeof(double *));
+    for (int64_t i = 0; i < numLeaves; i++) {
+        distances[i] = st_calloc(numLeaves, sizeof(double));
+    }
+
+    // Confidence matrix (i.e. count of similarities + differences for
+    // i,j). Note: only valid for i < j.
+    double **confidences = st_calloc(numLeaves, sizeof(double *));
+    for (int64_t i = 0; i < numLeaves; i++) {
+        confidences[i] = st_calloc(numLeaves, sizeof(double));
+    }
 
     // Initial distance matrix calculation using the similarities and join costs.
     for (int64_t i = 0; i < numLeaves; i++) {
@@ -657,6 +668,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
             double similarities = *stMatrix_getCell(similarityMatrix, i, j);
             double differences = *stMatrix_getCell(similarityMatrix, j, i) + *stMatrix_getCell(joinCosts, recon[i], recon[j]);
             double count = similarities + differences;
+            confidences[i][j] = count;
             distances[i][j] = (count != 0.0) ? differences / count : INT64_MAX;
         }
     }
@@ -712,16 +724,25 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         assert(minj != -1);
 
         printf("Chose to merge indices %" PRIi64 " and %" PRIi64 ".\n", mini, minj);
+
+        // Subtract out the influence of the join cost on the distance between the pair of nodes to merge.
+        double rawDifferences_mini_minj = distances[mini][minj] * confidences[mini][minj] - *stMatrix_getCell(joinCosts, recon[mini], recon[minj]);
+        confidences[mini][minj] -= *stMatrix_getCell(joinCosts, recon[mini], recon[minj]);
+        double dist_mini_minj = rawDifferences_mini_minj / confidences[mini][minj];
+
         // Get the branch lengths for the children of the new node.
-        int64_t branchLength_i = (distances[mini][minj] + r[mini] - r[minj]) / 2;
-        int64_t branchLength_j = distances[mini][minj] - branchLength_i;
+        // FIXME: not satisfied with using the standard
+        // neighbor-joining branch length calculation here since r
+        // takes into account join costs.
+        int64_t branchLength_mini = (dist_mini_minj + r[mini] - r[minj]) / 2;
+        int64_t branchLength_minj = dist_mini_minj - branchLength_mini;
         // Fix the distances in case of negative branch length.
-        if (branchLength_i < 0) {
-            branchLength_i = 0;
-            branchLength_j = distances[mini][minj];
-        } else if (branchLength_j < 0) {
-            branchLength_j = 0;
-            branchLength_i = distances[mini][minj];
+        if (branchLength_mini < 0) {
+            branchLength_mini = 0;
+            branchLength_minj = dist_mini_minj;
+        } else if (branchLength_minj < 0) {
+            branchLength_minj = 0;
+            branchLength_mini = dist_mini_minj;
         }
 
         // Join the nodes.
@@ -732,8 +753,8 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         stTree *joined = stTree_construct();
         stTree_setParent(nodei, joined);
         stTree_setParent(nodej, joined);
-        stTree_setBranchLength(nodei, branchLength_i);
-        stTree_setBranchLength(nodej, branchLength_j);
+        stTree_setBranchLength(nodei, branchLength_mini);
+        stTree_setBranchLength(nodej, branchLength_minj);
         nodes[mini] = joined;
         // Not strictly necessary.
         nodes[minj] = NULL;
@@ -746,15 +767,61 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         recon[minj] = -1;
 
         // Update the new row of the distance matrix.
-        for (int64_t j = 0; j < numLeaves; j++) {
-            if (recon[j] == -1) {
+        for (int64_t k = 0; k < numLeaves; k++) {
+            if (recon[k] == -1) {
                 // Node is gone, don't need to update.
                 continue;
             }
-            distances[mini][j];
-        }
+            if (k == mini) {
+                // Skip distance calculation with self
+                continue;
+            }
 
-        // Update r.
+            // calculate the proper indices for accessing i<->k and
+            // j<->k distances and confidences (the matrix is
+            // symmetric, so only one half is stored)
+            int64_t mini_kRow = mini;
+            int64_t mini_kCol = k;
+            int64_t minj_kRow = minj;
+            int64_t minj_kCol = k;
+            if (mini > k) {
+                mini_kRow = k;
+                mini_kCol = mini;
+            }
+            if (minj > k) {
+                minj_kRow = k;
+                minj_kCol = minj;
+            }
+
+            // Update the distances. This is a little complicated
+            // since the influence of the join costs needs to be
+            // subtracted out and new join costs need to be
+            // applied to the new pair.
+            double dist_mini_k = distances[mini_kRow][mini_kCol];
+            double dist_minj_k = distances[minj_kRow][minj_kCol];
+            double confidences_mini_k = confidences[mini_kRow][mini_kCol];
+            double confidences_minj_k = confidences[minj_kRow][minj_kCol];
+            double rawDifferences_mini_k = (dist_mini_k * confidences_mini_k) - *stMatrix_getCell(joinCosts, recon_i, recon[k]);
+            double rawDifferences_minj_k = (dist_minj_k * confidences_minj_k) - *stMatrix_getCell(joinCosts, recon_j, recon[k]);
+            // FIXME: there is an argument to be made that the 0.5
+            // term shouldn't be in here, in fact I think it is
+            // probably only correct (reduces to neighbor-joining in
+            // the case of 0 join costs) that way.
+            confidences[mini_kRow][mini_kCol] = (confidences_mini_k + confidences_minj_k) / 2;
+            // This is similar to the typical neighbor-joining update
+            // step: dist[newNode][k] = (dist[i][k] + dist[j][k] -
+            // dist[i][j]) / 2, except that we have to convert the
+            // first two terms from distances to confidences. The
+            // influence of join costs in the dist[i][j] term has
+            // already been canceled out.
+            distances[mini_kRow][mini_kCol] = (((rawDifferences_mini_k + rawDifferences_minj_k + *stMatrix_getCell(joinCosts, recon[mini], recon[k])) / confidences[mini_kRow][mini_kCol]) - dist_mini_minj) / 2;
+
+            // Update r.
+            // FIXME: this is probably at least slightly wrong as
+            // well, although it at least reduces to neighbor-joining
+            // properly.
+            r[k] = ((r[k] * (numJoinsLeft - 1)) - dist_mini_k - dist_minj_k + distances[mini_kRow][mini_kCol]) / (numJoinsLeft - 2);
+        }
 
         numJoinsLeft--;
     }
@@ -764,6 +831,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     free(recon);
     free(distances);
     free(r);
+    free(confidences);
     assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
     return ret;
 }
