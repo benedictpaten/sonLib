@@ -93,6 +93,18 @@ stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
 // corresponding to each species' index into the join cost matrix.
 // NB: the species tree must be binary.
 stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToIndex, double costPerDup, double costPerLoss);
+
+// Neighbor joining guided by a species tree. Note that the matrix is
+// a similarity matrix (i > j is # differences between i and j, i < j
+// is # similarities between i and j) rather than a distance
+// matrix. Join costs should be precomputed by
+// stPhylogeny_computeJoinCosts. indexToSpecies is a map from matrix
+// index (of the similarity matrix) to species leaves.
+stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
+                                          stMatrix *joinCosts,
+                                          stHash *matrixIndexToJoinCostIndex,
+                                          stHash *speciesToJoinCostIndex,
+                                          stTree *speciesTree);
 #ifdef __cplusplus
 }
 #endif

@@ -679,6 +679,9 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     for (int64_t i = 0; i < numLeaves; i++) {
         assert(r[i] == 0.0);
         for (int64_t j = 0; j < numLeaves; j++) {
+            if (i == j) {
+                continue;
+            }
             if (i < j) {
                 r[i] += distances[i][j];
             } else {
@@ -734,8 +737,8 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         // FIXME: not satisfied with using the standard
         // neighbor-joining branch length calculation here since r
         // takes into account join costs.
-        int64_t branchLength_mini = (dist_mini_minj + r[mini] - r[minj]) / 2;
-        int64_t branchLength_minj = dist_mini_minj - branchLength_mini;
+        double branchLength_mini = (dist_mini_minj + r[mini] - r[minj]) / 2;
+        double branchLength_minj = dist_mini_minj - branchLength_mini;
         // Fix the distances in case of negative branch length.
         if (branchLength_mini < 0) {
             branchLength_mini = 0;
@@ -803,11 +806,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
             double confidences_minj_k = confidences[minj_kRow][minj_kCol];
             double rawDifferences_mini_k = (dist_mini_k * confidences_mini_k) - *stMatrix_getCell(joinCosts, recon_i, recon[k]);
             double rawDifferences_minj_k = (dist_minj_k * confidences_minj_k) - *stMatrix_getCell(joinCosts, recon_j, recon[k]);
-            // FIXME: there is an argument to be made that the 0.5
-            // term shouldn't be in here, in fact I think it is
-            // probably only correct (reduces to neighbor-joining in
-            // the case of 0 join costs) that way.
-            confidences[mini_kRow][mini_kCol] = (confidences_mini_k + confidences_minj_k) / 2;
+            confidences[mini_kRow][mini_kCol] = confidences_mini_k + confidences_minj_k;
             // This is similar to the typical neighbor-joining update
             // step: dist[newNode][k] = (dist[i][k] + dist[j][k] -
             // dist[i][j]) / 2, except that we have to convert the
@@ -816,21 +815,48 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
             // already been canceled out.
             distances[mini_kRow][mini_kCol] = (((rawDifferences_mini_k + rawDifferences_minj_k + *stMatrix_getCell(joinCosts, recon[mini], recon[k])) / confidences[mini_kRow][mini_kCol]) - dist_mini_minj) / 2;
 
-            // Update r.
+            // Update r[k].
             // FIXME: this is probably at least slightly wrong as
             // well, although it at least reduces to neighbor-joining
             // properly.
-            r[k] = ((r[k] * (numJoinsLeft - 1)) - dist_mini_k - dist_minj_k + distances[mini_kRow][mini_kCol]) / (numJoinsLeft - 2);
+            if (numJoinsLeft > 2) {
+                printf("r for %" PRIi64 " was: %lf\n", k, r[k]);
+                r[k] = ((r[k] * (numJoinsLeft - 1)) - dist_mini_k - dist_minj_k + distances[mini_kRow][mini_kCol]) / (numJoinsLeft - 2);
+                printf("r for %" PRIi64 " is now: %lf\n", k, r[k]);
+            } else {
+                // Pointless to keep r around when there are 2 or fewer joins left.
+                r[k] = 0.0;
+            }
         }
 
+        // Set r for the new column.
+        r[mini] = 0.0;
+        if (numJoinsLeft > 2) {
+            for (int64_t k = 0; k < numLeaves; k++) {
+                if (k < mini) {
+                    r[mini] += distances[k][mini];
+                } else {
+                    r[mini] += distances[mini][k];
+                }
+            }
+            r[mini] /= numJoinsLeft - 2;
+        }
         numJoinsLeft--;
     }
     stTree *ret = nodes[0];
     assert(ret != NULL);
 
     free(recon);
-    free(distances);
     free(r);
+
+    for (int64_t i = 0; i < numLeaves; i++) {
+        free(distances[i]);
+    }
+    free(distances);
+
+    for (int64_t i = 0; i < numLeaves; i++) {
+        free(confidences[i]);
+    }
     free(confidences);
     assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
     return ret;
