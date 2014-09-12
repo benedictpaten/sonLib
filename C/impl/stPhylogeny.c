@@ -588,13 +588,182 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
     return ret;
 }
 
+static int64_t **getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex) {
+    int64_t numSpecies = stTree_getNumNodes(speciesTree);
+    int64_t **ret = st_calloc(numSpecies, sizeof(int64_t *));
+    for (int64_t i = 0; i < numSpecies; i++) {
+        ret[i] = st_calloc(numSpecies, sizeof(int64_t));
+    }
+    stHash *indexToSpecies = stHash_invert(speciesToIndex, (uint64_t (*)(const void *)) stIntTuple_hashKey,
+                                           (int (*)(const void *, const void *)) stIntTuple_equalsFn, NULL, NULL);
+    for (int64_t i = 0; i < numSpecies; i++) {
+        stIntTuple *query_i = stIntTuple_construct1(i);
+        for (int64_t j = i; j < numSpecies; j++) {
+            stTree *node_i = stHash_search(indexToSpecies, query_i);
+            assert(node_i != NULL);
+            stIntTuple *query_j = stIntTuple_construct1(j);
+            stTree *node_j = stHash_search(indexToSpecies, query_j);
+            assert(node_j != NULL);
+            stTree *mrca = stTree_getMRCA(node_i, node_j);
+            stIntTuple *mrcaIndex = stHash_search(speciesToIndex, mrca);
+            assert(mrcaIndex != NULL);
+            ret[i][j] = stIntTuple_get(mrcaIndex, 0);
+            ret[j][i] = ret[i][j];
+            stIntTuple_destruct(query_j);
+        }
+        stIntTuple_destruct(query_i);
+    }
+}
+
 // Neighbor joining guided by a species tree. Note that the matrix is
-// a similarity matrix (i < j is # differences between i and j, i > j
+// a similarity matrix (i > j is # differences between i and j, i < j
 // is # similarities between i and j) rather than a distance
 // matrix. Join costs should be precomputed by
-// stPhylogeny_computeJoinCosts.
+// stPhylogeny_computeJoinCosts. indexToSpecies is a map from matrix
+// index (of the similarity matrix) to species leaves.
 stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
-                                          stHash *joinCosts,
-                                          stHash *leafToSpecies) {
-    return NULL;
+                                          stMatrix *joinCosts,
+                                          stHash *matrixIndexToJoinCostIndex,
+                                          stHash *speciesToJoinCostIndex,
+                                          stTree *speciesTree) {
+    // TODO: could precompute MRCA calculations outside this to save
+    // time.
+    int64_t **mrca = getMRCAMatrix(speciesTree, speciesToJoinCostIndex);
+
+    int64_t numLeaves = stMatrix_n(similarityMatrix);
+    assert(numLeaves == stMatrix_m(similarityMatrix));
+    assert(numLeaves >= 3);
+
+    // Stores the reconciliation (in join cost matrix indices) for
+    // each leaf/node.
+    int64_t *recon = st_calloc(numLeaves, sizeof(int64_t));
+
+    // Fill in the initial reconciliation array.
+    stHashIterator *hashIt = stHash_getIterator(matrixIndexToJoinCostIndex);
+    stIntTuple *matrixIndex;
+    while ((matrixIndex = stHash_getNext(hashIt)) != NULL) {
+        int64_t i = stIntTuple_get(matrixIndex, 0);
+        stIntTuple *joinCostIndex = stHash_search(matrixIndexToJoinCostIndex, matrixIndex);
+        assert(joinCostIndex != NULL);
+        recon[i] = stIntTuple_get(joinCostIndex, 0);
+    }
+
+    // Distance matrix. Note: only valid for i < j.
+    double **distances = st_calloc(numLeaves * numLeaves, sizeof(double));
+
+    // Initial distance matrix calculation using the similarities and join costs.
+    for (int64_t i = 0; i < numLeaves; i++) {
+        for (int64_t j = i + 1; j < numLeaves; j++) {
+            double similarities = *stMatrix_getCell(similarityMatrix, i, j);
+            double differences = *stMatrix_getCell(similarityMatrix, j, i) + *stMatrix_getCell(joinCosts, recon[i], recon[j]);
+            double count = similarities + differences;
+            distances[i][j] = (count != 0.0) ? differences / count : INT64_MAX;
+        }
+    }
+
+    // Initial "r" cost (the average of the distances from each node
+    // to all others) to weight with.
+    double *r = st_calloc(numLeaves, sizeof(double));
+    for (int64_t i = 0; i < numLeaves; i++) {
+        assert(r[i] == 0.0);
+        for (int64_t j = 0; j < numLeaves; j++) {
+            if (i < j) {
+                r[i] += distances[i][j];
+            } else {
+                r[i] += distances[j][i];
+            }
+        }
+        r[i] /= numLeaves - 1;
+    }
+
+    // The actual neighbor-joining process.
+    stTree **nodes = st_calloc(numLeaves, sizeof(stTree *));
+    for (int64_t i = 0; i < numLeaves; i++) {
+        // Initialize nodes.
+        nodes[i] = stTree_construct();
+        stTree_setLabel(nodes[i], stString_print("%" PRIi64, i));
+    }
+    int64_t numJoinsLeft = numLeaves - 1;
+    while (numJoinsLeft > 0) {
+        // Find the lowest distance between any two roots in the
+        // forest.
+        double minDist = DBL_MAX;
+        int64_t mini = -1, minj = -1;
+        for (int64_t i = 0; i < numLeaves; i++) {
+            if (recon[i] == -1) {
+                // Signals that this node has been joined and its
+                // index is abandoned.
+                continue;
+            }
+            for (int64_t j = i + 1; j < numLeaves; j++) {
+                if (recon[j] == -1) {
+                    // Signals that this node has been joined and its
+                    // index is abandoned.
+                    continue;
+                }
+                if (distances[i][j] - r[i] - r[j] < minDist) {
+                    mini = i;
+                    minj = j;
+                    minDist = distances[i][j] - r[i] - r[j];
+                }
+            }
+        }
+        assert(mini != -1);
+        assert(minj != -1);
+
+        printf("Chose to merge indices %" PRIi64 " and %" PRIi64 ".\n", mini, minj);
+        // Get the branch lengths for the children of the new node.
+        int64_t branchLength_i = (distances[mini][minj] + r[mini] - r[minj]) / 2;
+        int64_t branchLength_j = distances[mini][minj] - branchLength_i;
+        // Fix the distances in case of negative branch length.
+        if (branchLength_i < 0) {
+            branchLength_i = 0;
+            branchLength_j = distances[mini][minj];
+        } else if (branchLength_j < 0) {
+            branchLength_j = 0;
+            branchLength_i = distances[mini][minj];
+        }
+
+        // Join the nodes.
+        stTree *nodei = nodes[mini];
+        assert(nodei != NULL);
+        stTree *nodej = nodes[minj];
+        assert(nodej != NULL);
+        stTree *joined = stTree_construct();
+        stTree_setParent(nodei, joined);
+        stTree_setParent(nodej, joined);
+        stTree_setBranchLength(nodei, branchLength_i);
+        stTree_setBranchLength(nodej, branchLength_j);
+        nodes[mini] = joined;
+        // Not strictly necessary.
+        nodes[minj] = NULL;
+
+        // Update the reconciliation of our new joined node to be the
+        // MRCA of its children's reconciliations.
+        int64_t recon_i = recon[mini];
+        int64_t recon_j = recon[minj];
+        recon[mini] = mrca[recon_i][recon_j];
+        recon[minj] = -1;
+
+        // Update the new row of the distance matrix.
+        for (int64_t j = 0; j < numLeaves; j++) {
+            if (recon[j] == -1) {
+                // Node is gone, don't need to update.
+                continue;
+            }
+            distances[mini][j];
+        }
+
+        // Update r.
+
+        numJoinsLeft--;
+    }
+    stTree *ret = nodes[0];
+    assert(ret != NULL);
+
+    free(recon);
+    free(distances);
+    free(r);
+    assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
+    return ret;
 }
