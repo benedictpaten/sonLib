@@ -407,6 +407,75 @@ static void testSimpleJoinCosts(CuTest *testCase) {
     stTree_destruct(tree);
 }
 
+// get a random binary tree. numLeaves will get set to the eventual number of leaves.
+static stTree *getRandomBinaryTree(int64_t maxDepth, int64_t *numLeaves) {
+    stTree *ret = stTree_construct();
+    int64_t numChildren = st_random() > 0.5 ? 2 : 0;
+    if (maxDepth != 0) {
+        for (int64_t i = 0; i < numChildren; i++) {
+            stTree_setParent(getRandomBinaryTree(maxDepth - 1, numLeaves), ret);
+        }
+    }
+    if (stTree_getChildNumber(ret) == 0) {
+        stTree_setLabel(ret, stString_print("%" PRIi64, (*numLeaves)++));
+    }
+    return ret;
+}
+
+static stMatrix *getRandomSimilarityMatrix(int64_t size, int64_t maxNumSimilarities, int64_t maxNumDifferences) {
+    stMatrix *ret = stMatrix_construct(size, size);
+    for (int64_t i = 0; i < size; i++) {
+        for (int64_t j = i + 1; j < size; j++) {
+            double similarities = st_random() * maxNumSimilarities;
+            double differences = st_random() * maxNumDifferences;
+            *stMatrix_getCell(ret, i, j) = similarities;
+            *stMatrix_getCell(ret, j, i) = differences;
+        }
+    }
+    return ret;
+}
+
+static stMatrix *getDistanceMatrixFromSimilarityMatrix(stMatrix *similarityMatrix) {
+    assert(stMatrix_n(similarityMatrix) == stMatrix_m(similarityMatrix));
+    stMatrix *ret = stMatrix_construct(stMatrix_n(similarityMatrix), stMatrix_m(similarityMatrix));
+    for (int64_t i = 0; i < stMatrix_n(ret); i++) {
+        for (int64_t j = i + 1; j < stMatrix_m(ret); j++) {
+            double similarities = *stMatrix_getCell(similarityMatrix, i, j);
+            double differences = *stMatrix_getCell(similarityMatrix, j, i);
+            double count = similarities + differences;
+            *stMatrix_getCell(ret, i, j) = (count != 0.0) ? differences / count : INT64_MAX;
+            *stMatrix_getCell(ret, j, i) = (count != 0.0) ? differences / count : INT64_MAX;
+        }
+    }
+    return ret;
+}
+
+static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) {
+    // Get a random species tree.
+    int64_t numSpecies = 0;
+    stTree *speciesTree = getRandomBinaryTree(4, &numSpecies);
+    printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
+
+    // Join cost stuff 
+    stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+    stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 0.0, 0.0);
+
+    stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies, 50, 50);
+    stMatrix *distanceMatrix = getDistanceMatrixFromSimilarityMatrix(similarityMatrix);
+    stTree *neighborJoiningTree = stPhylogeny_neighborJoin(distanceMatrix, NULL);
+    printf("neighbor joining tree: %s\n", stTree_getNewickTreeString(neighborJoiningTree));
+
+    stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
+    // assign the matrix indices to be equal to the species indices.
+    for (int64_t i = 0; i < numSpecies; i++) {
+        stIntTuple *iTuple = stIntTuple_construct1(i);
+        stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, stString_print("%" PRIi64, i)));
+        stHash_insert(matrixIndexToJoinCostIndex, iTuple, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+    }
+    stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+    printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     (void) testSimpleNeighborJoin;
@@ -418,5 +487,6 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
     /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
     SUITE_ADD_TEST(suite, testSimpleJoinCosts);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
     return suite;
 }

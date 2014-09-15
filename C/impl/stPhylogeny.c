@@ -647,6 +647,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         stIntTuple *joinCostIndex = stHash_search(matrixIndexToJoinCostIndex, matrixIndex);
         assert(joinCostIndex != NULL);
         recon[i] = stIntTuple_get(joinCostIndex, 0);
+        printf("assigning matrix index %" PRIi64 " to %" PRIi64 "\n", i, recon[i]);
     }
 
     // Distance matrix. Note: only valid for i < j.
@@ -666,7 +667,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     for (int64_t i = 0; i < numLeaves; i++) {
         for (int64_t j = i + 1; j < numLeaves; j++) {
             double similarities = *stMatrix_getCell(similarityMatrix, i, j);
-            double differences = *stMatrix_getCell(similarityMatrix, j, i) + *stMatrix_getCell(joinCosts, recon[i], recon[j]);
+            double differences = *stMatrix_getCell(similarityMatrix, j, i);
             double count = similarities + differences;
             confidences[i][j] = count;
             distances[i][j] = (count != 0.0) ? differences / count : INT64_MAX;
@@ -688,7 +689,18 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                 r[i] += distances[j][i];
             }
         }
-        r[i] /= numLeaves - 1;
+        r[i] /= numLeaves - 2;
+    }
+
+    // Initialize the join distances (i.e. distance-relative rather
+    // than the similarity/difference-relative join costs.) Only
+    // defined for row < col.
+    double **joinDistances = st_calloc(numLeaves, sizeof(double *));
+    for (int64_t i = 0; i < numLeaves; i++) {
+        joinDistances[i] = st_calloc(numLeaves, sizeof(double));
+        for (int64_t j = i + 1; j < numLeaves; j++) {
+            joinDistances[i][j] = *stMatrix_getCell(joinCosts, recon[i], recon[j]) / confidences[i][j];
+        }
     }
 
     // The actual neighbor-joining process.
@@ -716,10 +728,12 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                     // index is abandoned.
                     continue;
                 }
-                if (distances[i][j] - r[i] - r[j] < minDist) {
+                double dist = distances[i][j] + joinDistances[i][j] - r[i] - r[j];
+                printf("%" PRIi64 "->%" PRIi64 ": %lf\n", i, j, dist);
+                if (dist < minDist) {
                     mini = i;
                     minj = j;
-                    minDist = distances[i][j] - r[i] - r[j];
+                    minDist = dist;
                 }
             }
         }
@@ -728,10 +742,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 
         printf("Chose to merge indices %" PRIi64 " and %" PRIi64 ".\n", mini, minj);
 
-        // Subtract out the influence of the join cost on the distance between the pair of nodes to merge.
-        double rawDifferences_mini_minj = distances[mini][minj] * confidences[mini][minj] - *stMatrix_getCell(joinCosts, recon[mini], recon[minj]);
-        confidences[mini][minj] -= *stMatrix_getCell(joinCosts, recon[mini], recon[minj]);
-        double dist_mini_minj = rawDifferences_mini_minj / confidences[mini][minj];
+        double dist_mini_minj = distances[mini][minj];
 
         // Get the branch lengths for the children of the new node.
         // FIXME: not satisfied with using the standard
@@ -796,35 +807,22 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                 minj_kCol = minj;
             }
 
-            // Update the distances. This is a little complicated
-            // since the influence of the join costs needs to be
-            // subtracted out and new join costs need to be
-            // applied to the new pair.
+            confidences[mini_kRow][mini_kCol] = (confidences[mini_kRow][mini_kCol] + confidences[minj_kRow][minj_kCol]) / 2;
+
+            // Update the distances.
             double dist_mini_k = distances[mini_kRow][mini_kCol];
             double dist_minj_k = distances[minj_kRow][minj_kCol];
-            double confidences_mini_k = confidences[mini_kRow][mini_kCol];
-            double confidences_minj_k = confidences[minj_kRow][minj_kCol];
-            double rawDifferences_mini_k = (dist_mini_k * confidences_mini_k) - *stMatrix_getCell(joinCosts, recon_i, recon[k]);
-            double rawDifferences_minj_k = (dist_minj_k * confidences_minj_k) - *stMatrix_getCell(joinCosts, recon_j, recon[k]);
-            confidences[mini_kRow][mini_kCol] = confidences_mini_k + confidences_minj_k;
-            // This is similar to the typical neighbor-joining update
-            // step: dist[newNode][k] = (dist[i][k] + dist[j][k] -
-            // dist[i][j]) / 2, except that we have to convert the
-            // first two terms from distances to confidences. The
-            // influence of join costs in the dist[i][j] term has
-            // already been canceled out.
-            distances[mini_kRow][mini_kCol] = (((rawDifferences_mini_k + rawDifferences_minj_k + *stMatrix_getCell(joinCosts, recon[mini], recon[k])) / confidences[mini_kRow][mini_kCol]) - dist_mini_minj) / 2;
+            distances[mini_kRow][mini_kCol] = (dist_mini_k + dist_minj_k - dist_mini_minj) / 2;
+            printf("distance from %" PRIi64 " to %" PRIi64 " is now: %lf\n", mini, k, distances[mini_kRow][mini_kCol]);
+            // Update the join distance.
+            joinDistances[mini_kRow][mini_kCol] = *stMatrix_getCell(joinCosts, recon[mini], recon[k]) / confidences[mini_kRow][mini_kCol];
 
             // Update r[k].
-            // FIXME: this is probably at least slightly wrong as
-            // well, although it at least reduces to neighbor-joining
-            // properly.
             if (numJoinsLeft > 2) {
                 printf("r for %" PRIi64 " was: %lf\n", k, r[k]);
                 r[k] = ((r[k] * (numJoinsLeft - 1)) - dist_mini_k - dist_minj_k + distances[mini_kRow][mini_kCol]) / (numJoinsLeft - 2);
                 printf("r for %" PRIi64 " is now: %lf\n", k, r[k]);
             } else {
-                // Pointless to keep r around when there are 2 or fewer joins left.
                 r[k] = 0.0;
             }
         }
@@ -833,6 +831,9 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         r[mini] = 0.0;
         if (numJoinsLeft > 2) {
             for (int64_t k = 0; k < numLeaves; k++) {
+                if (recon[k] == -1) {
+                    continue;
+                }
                 if (k < mini) {
                     r[mini] += distances[k][mini];
                 } else {
@@ -840,9 +841,35 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                 }
             }
             r[mini] /= numJoinsLeft - 2;
+        } else {
+            r[mini] = 0.0;
         }
         numJoinsLeft--;
+/* #ifndef NDEBUG */
+/*         // Check that r is set correctly */
+/*         if (numJoinsLeft > 1) { */
+/*             for (int64_t i = 0; i < numLeaves; i++) { */
+/*                 if (recon[i] == -1) { */
+/*                     continue; */
+/*                 } */
+/*                 double ri = 0.0; */
+/*                 for (int64_t j = 0; j < numLeaves; j++) { */
+/*                     if (recon[i] == -1) { */
+/*                         continue; */
+/*                     } */
+/*                     if (i < j) { */
+/*                         ri += distances[i][j]; */
+/*                     } else { */
+/*                         ri += distances[j][i]; */
+/*                     } */
+/*                 } */
+/*                 ri /= numJoinsLeft - 1; */
+/*                 assert(abs(ri - r[i]) <= 0.01); */
+/*             } */
+/*         } */
+/* #endif */
     }
+
     stTree *ret = nodes[0];
     assert(ret != NULL);
 
