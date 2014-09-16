@@ -647,7 +647,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         stIntTuple *joinCostIndex = stHash_search(matrixIndexToJoinCostIndex, matrixIndex);
         assert(joinCostIndex != NULL);
         recon[i] = stIntTuple_get(joinCostIndex, 0);
-        printf("assigning matrix index %" PRIi64 " to %" PRIi64 "\n", i, recon[i]);
     }
 
     // Distance matrix. Note: only valid for i < j.
@@ -699,7 +698,14 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     for (int64_t i = 0; i < numLeaves; i++) {
         joinDistances[i] = st_calloc(numLeaves, sizeof(double));
         for (int64_t j = i + 1; j < numLeaves; j++) {
-            joinDistances[i][j] = *stMatrix_getCell(joinCosts, recon[i], recon[j]) / confidences[i][j];
+            if (confidences[i][j] != 0) {
+                joinDistances[i][j] = *stMatrix_getCell(joinCosts, recon[i], recon[j]) / confidences[i][j];
+            } else {
+                // the distance will already be INT64_MAX, just try to
+                // bias it toward the species tree (although we may
+                // run into floating-point resolution errors here)
+                joinDistances[i][j] = *stMatrix_getCell(joinCosts, recon[i], recon[j]);
+            }
         }
     }
 
@@ -729,7 +735,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                     continue;
                 }
                 double dist = distances[i][j] + joinDistances[i][j] - r[i] - r[j];
-                printf("%" PRIi64 "->%" PRIi64 ": %lf\n", i, j, dist);
                 if (dist < minDist) {
                     mini = i;
                     minj = j;
@@ -740,23 +745,21 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         assert(mini != -1);
         assert(minj != -1);
 
-        printf("Chose to merge indices %" PRIi64 " and %" PRIi64 ".\n", mini, minj);
-
         double dist_mini_minj = distances[mini][minj];
 
         // Get the branch lengths for the children of the new node.
-        // FIXME: not satisfied with using the standard
-        // neighbor-joining branch length calculation here since r
-        // takes into account join costs.
         double branchLength_mini = (dist_mini_minj + r[mini] - r[minj]) / 2;
         double branchLength_minj = dist_mini_minj - branchLength_mini;
         // Fix the distances in case of negative branch length.
-        if (branchLength_mini < 0) {
+        if ((branchLength_mini <= 0 || branchLength_minj <= 0) && dist_mini_minj < 0) {
+            branchLength_mini = 0;
+            branchLength_minj = 0;
+        } else if (branchLength_mini < 0) {
             branchLength_mini = 0;
             branchLength_minj = dist_mini_minj;
         } else if (branchLength_minj < 0) {
-            branchLength_minj = 0;
             branchLength_mini = dist_mini_minj;
+            branchLength_minj = 0;
         }
 
         // Join the nodes.
@@ -813,15 +816,17 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
             double dist_mini_k = distances[mini_kRow][mini_kCol];
             double dist_minj_k = distances[minj_kRow][minj_kCol];
             distances[mini_kRow][mini_kCol] = (dist_mini_k + dist_minj_k - dist_mini_minj) / 2;
-            printf("distance from %" PRIi64 " to %" PRIi64 " is now: %lf\n", mini, k, distances[mini_kRow][mini_kCol]);
+
             // Update the join distance.
-            joinDistances[mini_kRow][mini_kCol] = *stMatrix_getCell(joinCosts, recon[mini], recon[k]) / confidences[mini_kRow][mini_kCol];
+            if (confidences[mini_kRow][mini_kCol] != 0) {
+                joinDistances[mini_kRow][mini_kCol] = *stMatrix_getCell(joinCosts, recon[mini], recon[k]) / confidences[mini_kRow][mini_kCol];
+            } else {
+                joinDistances[mini_kRow][mini_kCol] = *stMatrix_getCell(joinCosts, recon[mini], recon[k]);
+            }
 
             // Update r[k].
             if (numJoinsLeft > 2) {
-                printf("r for %" PRIi64 " was: %lf\n", k, r[k]);
                 r[k] = ((r[k] * (numJoinsLeft - 1)) - dist_mini_k - dist_minj_k + distances[mini_kRow][mini_kCol]) / (numJoinsLeft - 2);
-                printf("r for %" PRIi64 " is now: %lf\n", k, r[k]);
             } else {
                 r[k] = 0.0;
             }
@@ -845,29 +850,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
             r[mini] = 0.0;
         }
         numJoinsLeft--;
-/* #ifndef NDEBUG */
-/*         // Check that r is set correctly */
-/*         if (numJoinsLeft > 1) { */
-/*             for (int64_t i = 0; i < numLeaves; i++) { */
-/*                 if (recon[i] == -1) { */
-/*                     continue; */
-/*                 } */
-/*                 double ri = 0.0; */
-/*                 for (int64_t j = 0; j < numLeaves; j++) { */
-/*                     if (recon[i] == -1) { */
-/*                         continue; */
-/*                     } */
-/*                     if (i < j) { */
-/*                         ri += distances[i][j]; */
-/*                     } else { */
-/*                         ri += distances[j][i]; */
-/*                     } */
-/*                 } */
-/*                 ri /= numJoinsLeft - 1; */
-/*                 assert(abs(ri - r[i]) <= 0.01); */
-/*             } */
-/*         } */
-/* #endif */
     }
 
     stTree *ret = nodes[0];
@@ -886,5 +868,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     }
     free(confidences);
     assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
+
+    stPhylogeny_addStPhylogenyInfo(ret);
     return ret;
 }
