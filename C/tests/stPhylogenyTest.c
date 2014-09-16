@@ -450,30 +450,76 @@ static stMatrix *getDistanceMatrixFromSimilarityMatrix(stMatrix *similarityMatri
     return ret;
 }
 
-static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) {
-    // Get a random species tree.
-    int64_t numSpecies = 0;
-    stTree *speciesTree = getRandomBinaryTree(4, &numSpecies);
-    printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
-
-    // Join cost stuff 
-    stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
-    stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 0.0, 0.0);
-
-    stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies, 50, 50);
-    stMatrix *distanceMatrix = getDistanceMatrixFromSimilarityMatrix(similarityMatrix);
-    stTree *neighborJoiningTree = stPhylogeny_neighborJoin(distanceMatrix, NULL);
-    printf("neighbor joining tree: %s\n", stTree_getNewickTreeString(neighborJoiningTree));
-
-    stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
-    // assign the matrix indices to be equal to the species indices.
-    for (int64_t i = 0; i < numSpecies; i++) {
-        stIntTuple *iTuple = stIntTuple_construct1(i);
-        stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, stString_print("%" PRIi64, i)));
-        stHash_insert(matrixIndexToJoinCostIndex, iTuple, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+static bool isTopologyEqual(stTree *tree1, stTree *tree2) {
+    if (stTree_getChildNumber(tree1) != stTree_getChildNumber(tree2)) {
+        return false;
     }
-    stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
-    printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
+
+    for (int64_t i = 0; i < stTree_getChildNumber(tree1); i++) {
+        stTree *child1 = stTree_getChild(tree1, i);
+        // Find matching child in tree2.
+        stPhylogenyInfo *info1 = stTree_getClientData(child1);
+        stTree *matchingChild = NULL;
+        for (int64_t j = 0; j < stTree_getChildNumber(tree2); j++) {
+            stTree *child2 = stTree_getChild(tree2, j);
+            stPhylogenyInfo *info2 = stTree_getClientData(child2);
+            if (info1->totalNumLeaves != info2->totalNumLeaves) {
+                return false;
+            }
+            if (!memcmp(info1->leavesBelow, info2->leavesBelow, info1->totalNumLeaves)) {
+                // Found correct child
+                matchingChild = child2;
+                break;
+            }
+        }
+        if (matchingChild == NULL) {
+            return false;
+        }
+        if (!isTopologyEqual(child1, matchingChild)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) {
+    for (int64_t testNum = 0; testNum < 100; testNum++) {
+        // Get a random species tree.
+        int64_t numSpecies = 0;
+        stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
+        if (numSpecies < 3) {
+            continue;
+        }
+        printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
+
+        // Join cost stuff
+        stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+        stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 0.0, 0.0);
+
+        stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies, 50, 50);
+        stMatrix *distanceMatrix = getDistanceMatrixFromSimilarityMatrix(similarityMatrix);
+        stTree *neighborJoiningTree = stPhylogeny_neighborJoin(distanceMatrix, NULL);
+        printf("neighbor joining tree: %s\n", stTree_getNewickTreeString(neighborJoiningTree));
+
+        stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
+        // assign the matrix indices to be equal to the species indices.
+        for (int64_t i = 0; i < numSpecies; i++) {
+            stIntTuple *iTuple = stIntTuple_construct1(i);
+            stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, stString_print("%" PRIi64, i)));
+            stHash_insert(matrixIndexToJoinCostIndex, iTuple, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+        }
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+        printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
+
+        // Root both the trees the same way (above node 0)
+        stTree *tmp = stTree_findChild(neighborJoiningTree, "0");
+        stTree *rootedNeighborJoiningTree = stTree_reRoot(tmp, stTree_getBranchLength(tmp)/2);
+        tmp = stTree_findChild(guidedNeighborJoiningTree, "0");
+        stTree *rootedGuidedNeighborJoiningTree = stTree_reRoot(tmp, stTree_getBranchLength(tmp)/2);
+        stPhylogeny_addStPhylogenyInfo(rootedNeighborJoiningTree);
+        stPhylogeny_addStPhylogenyInfo(rootedGuidedNeighborJoiningTree);
+        CuAssertTrue(testCase, isTopologyEqual(rootedNeighborJoiningTree, rootedGuidedNeighborJoiningTree));
+    }
 }
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
