@@ -613,6 +613,7 @@ static int64_t **getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex) {
         }
         stIntTuple_destruct(query_i);
     }
+    stHash_destruct(indexToSpecies);
     return ret;
 }
 
@@ -627,6 +628,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,
                                           stTree *speciesTree) {
+    int64_t numSpecies = stTree_getNumNodes(speciesTree);
     // TODO: could precompute MRCA calculations outside this to save
     // time.
     int64_t **mrca = getMRCAMatrix(speciesTree, speciesToJoinCostIndex);
@@ -648,6 +650,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         assert(joinCostIndex != NULL);
         recon[i] = stIntTuple_get(joinCostIndex, 0);
     }
+    stHash_destructIterator(hashIt);
 
     // Distance matrix. Note: only valid for i < j.
     double **distances = st_calloc(numLeaves, sizeof(double *));
@@ -714,7 +717,9 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     for (int64_t i = 0; i < numLeaves; i++) {
         // Initialize nodes.
         nodes[i] = stTree_construct();
-        stTree_setLabel(nodes[i], stString_print("%" PRIi64, i));
+        char *name = stString_print("%" PRIi64, i);
+        stTree_setLabel(nodes[i], name);
+        free(name);
     }
     int64_t numJoinsLeft = numLeaves - 1;
     while (numJoinsLeft > 0) {
@@ -855,8 +860,10 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     stTree *ret = nodes[0];
     assert(ret != NULL);
 
+    // Clean up.
     free(recon);
     free(r);
+    free(nodes);
 
     for (int64_t i = 0; i < numLeaves; i++) {
         free(distances[i]);
@@ -867,6 +874,17 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         free(confidences[i]);
     }
     free(confidences);
+
+    for (int64_t i = 0; i < numSpecies; i++) {
+        free(mrca[i]);
+    }
+    free(mrca);
+
+    for (int64_t i = 0; i < numLeaves; i++) {
+        free(joinDistances[i]);
+    }
+    free(joinDistances);
+
     assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
 
     stPhylogeny_addStPhylogenyInfo(ret);
