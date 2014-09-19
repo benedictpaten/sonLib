@@ -13,6 +13,26 @@
 extern "C" {
 #endif
 
+// Used for identifying the event underlying a node in a reconciled tree.
+typedef enum {
+    DUPLICATION,
+    SPECIATION,
+    LEAF
+} stReconciliationEvent;
+
+// Reconciliation information. Only defined on internal nodes.
+typedef struct {
+    stTree *species; // The node in the species tree that this node maps to.
+    stReconciliationEvent event; // Duplication or speciation node.
+} stReconciliationInfo;
+
+// Free stReconciliationInfo properly.
+void stReconciliationInfo_destruct(stReconciliationInfo *info);
+
+// Free stReconciliationInfo in the client data field of a tree and
+// all its children recursively.
+void stReconciliationInfo_destructOnTree(stTree *tree);
+
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
 typedef struct {
@@ -105,6 +125,22 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,
                                           stTree *speciesTree);
+
+// (Re)root a gene tree to minimize dups.
+// leafToSpecies is a hash from leaves of geneTree to leaves of speciesTree.
+// Both trees must be binary.
+stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies);
+
+// Reconcile a gene tree (without rerooting), set the
+// stReconcilationInfo as client data on all nodes, and optionally
+// set the labels of the ancestors to the labels of the species tree.
+void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
+                                      bool relabelAncestors);
+
+// Calculate the reconciliation cost in dups and losses.
+void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
+                                               int64_t *dups, int64_t *losses);
+
 #ifdef __cplusplus
 }
 #endif

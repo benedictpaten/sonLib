@@ -401,9 +401,10 @@ static void testSimpleJoinCosts(CuTest *testCase) {
     CuAssertDblEquals(testCase, 1.0, getJoinCost(matrix, speciesToIndex, tree, "A", "C"), 0.01);
     CuAssertDblEquals(testCase, 1.0, getJoinCost(matrix, speciesToIndex, tree, "C", "A"), 0.01);
     CuAssertDblEquals(testCase, 0.0, getJoinCost(matrix, speciesToIndex, tree, "D", "D"), 0.01);
+
     stMatrix_destruct(matrix);
     stHash_destruct(speciesToIndex);
-
+    stSet_destruct(seen);
     stTree_destruct(tree);
 }
 
@@ -417,7 +418,9 @@ static stTree *getRandomBinaryTree(int64_t maxDepth, int64_t *numLeaves) {
         }
     }
     if (stTree_getChildNumber(ret) == 0) {
-        stTree_setLabel(ret, stString_print("%" PRIi64, (*numLeaves)++));
+        char *name = stString_print("%" PRIi64, (*numLeaves)++);
+        stTree_setLabel(ret, name);
+        free(name);
     }
     return ret;
 }
@@ -488,6 +491,7 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         int64_t numSpecies = 0;
         stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
         if (numSpecies < 3) {
+            stTree_destruct(speciesTree);
             continue;
         }
         printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
@@ -505,8 +509,10 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         // assign the matrix indices to be equal to the species indices.
         for (int64_t i = 0; i < numSpecies; i++) {
             stIntTuple *iTuple = stIntTuple_construct1(i);
-            stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, stString_print("%" PRIi64, i)));
+            char *speciesName = stString_print("%" PRIi64, i);
+            stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, speciesName));
             stHash_insert(matrixIndexToJoinCostIndex, iTuple, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+            free(speciesName);
         }
         stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
         printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
@@ -518,7 +524,190 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         stTree *rootedGuidedNeighborJoiningTree = stTree_reRoot(tmp, stTree_getBranchLength(tmp)/2);
         stPhylogeny_addStPhylogenyInfo(rootedNeighborJoiningTree);
         stPhylogeny_addStPhylogenyInfo(rootedGuidedNeighborJoiningTree);
+
+        // Check that the topologies are the same in neighbor-joining
+        // vs guided neighbor-joining (when they are rooted the same way)
         CuAssertTrue(testCase, isTopologyEqual(rootedNeighborJoiningTree, rootedGuidedNeighborJoiningTree));
+
+        // Clean up.
+        stPhylogenyInfo_destructOnTree(rootedGuidedNeighborJoiningTree);
+        stTree_destruct(rootedGuidedNeighborJoiningTree);
+        stPhylogenyInfo_destructOnTree(rootedNeighborJoiningTree);
+        stTree_destruct(rootedNeighborJoiningTree);
+        stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
+        stTree_destruct(guidedNeighborJoiningTree);
+        stPhylogenyInfo_destructOnTree(neighborJoiningTree);
+        stTree_destruct(neighborJoiningTree);
+        stTree_destruct(speciesTree);
+        stMatrix_destruct(similarityMatrix);
+        stMatrix_destruct(distanceMatrix);
+        stMatrix_destruct(joinCosts);
+        stHash_destruct(matrixIndexToJoinCostIndex);
+        stHash_destruct(speciesToIndex);
+    }
+}
+
+// Check that when join costs are ratcheted up to insane levels, the
+// tree produced has minimal reconciliation cost.
+static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
+{
+    // Get a random species tree.
+    int64_t numSpecies = 0;
+    stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
+    if (numSpecies < 3) {
+        //continue;
+    }
+    printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
+
+    // Join cost stuff
+    stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+    stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 100000.0, 100000.0);
+
+    // Create a set of genes of size n*(num species), where each leaf
+    // species is mapped to n genes. We'd like the guided neighbor
+    // joining process to create a tree that can be reconciled so that
+    // there are only n dups.
+    int64_t numGenesPerSpecies = st_randomInt64(2, 5);
+    stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies*numGenesPerSpecies, 50, 50);
+    // assign the matrix indices i, 2i, 3i, ... to map to species index i.
+    stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
+    for (int64_t i = 0; i < numSpecies; i++) {
+        char *speciesName = stString_print("%" PRIi64, i);
+        stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, speciesName));
+        for (int64_t j = i; j < numGenesPerSpecies * numSpecies; j += numSpecies) {
+            stIntTuple *matrixIndex = stIntTuple_construct1(j);
+            printf("%" PRIi64 "->%s\n", j, speciesName);
+            stHash_insert(matrixIndexToJoinCostIndex, matrixIndex, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+        }
+        free(speciesName);
+    }
+
+    stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+    printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
+
+    // Clean up.
+    stTree_destruct(speciesTree);
+    stHash_destruct(matrixIndexToJoinCostIndex);
+    stHash_destruct(speciesToIndex);
+    stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
+    stTree_destruct(guidedNeighborJoiningTree);
+    stMatrix_destruct(similarityMatrix);
+    stMatrix_destruct(joinCosts);
+}
+
+static void testStPhylogeny_rootAndReconcileBinary_simpleTests(CuTest *testCase) {
+    // First off -- sanity check that reconciling a gene tree equal to
+    // a species tree is a no-op.
+    int64_t numLeaves = st_randomInt64(3, 300);
+    stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
+    stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
+    stTree *geneTree = stTree_clone(speciesTree);
+    stHash *leafToSpecies = stHash_construct();
+    for(int64_t i = 0; i < numLeaves; i++) {
+        stTree *gene = stPhylogeny_getLeafByIndex(geneTree, i);
+        stTree *species = stPhylogeny_getLeafByIndex(speciesTree, i);
+        stHash_insert(leafToSpecies, gene, species);
+    }
+    stTree *rooted = stPhylogeny_rootAndReconcileBinary(geneTree, speciesTree, leafToSpecies);
+    CuAssertTrue(testCase, stTree_equals(rooted, geneTree));
+    // Check that the cost is 0.
+    int64_t dups, losses;
+    stPhylogeny_reconciliationCostBinary(geneTree, speciesTree, leafToSpecies, &dups, &losses);
+    CuAssertTrue(testCase, dups == 0);
+    CuAssertTrue(testCase, losses == 0);
+
+    stPhylogenyInfo_destructOnTree(speciesTree);
+    stTree_destruct(speciesTree);
+    stTree_destruct(geneTree);
+    stTree_destruct(rooted);
+}
+
+// Globals for checkMinimalReconScore
+stTree *globalSpeciesTree;
+stHash *globalLeafToSpecies;
+int64_t bestDups;
+
+// Check that the tree rooted above this node doesn't have a lower cost
+// than the "best" cost.
+static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
+    stTree *newRootedTree = stTree_reRoot(tree, 0.0);
+    stPhylogeny_addStPhylogenyInfo(newRootedTree);
+    // This is pretty stupid, but we have to map from the
+    // leafToSpecies on the old gene tree to this rerooted
+    // one. TODO: Probably the leafToSpecies concept needs to be rethought.
+    // Probably should use matrix index -> species node instead.
+    stHash *myLeafToSpecies = stHash_construct();
+    stHashIterator *hashIt = stHash_getIterator(globalLeafToSpecies);
+    stTree *curGene; // Current gene in the old leafToSpecies.
+    while((curGene = stHash_getNext(hashIt)) != NULL) {
+        stPhylogenyInfo *info = stTree_getClientData(curGene);
+        stTree *species = stHash_search(globalLeafToSpecies, curGene);
+        stTree *newGene = stPhylogeny_getLeafByIndex(newRootedTree, info->matrixIndex);
+        stHash_insert(myLeafToSpecies, newGene, species);
+    }
+
+    // Check the cost.
+    int64_t dups, losses;
+    stPhylogeny_reconciliationCostBinary(newRootedTree, globalSpeciesTree, myLeafToSpecies, &dups, &losses);
+    CuAssertTrue(testCase, dups >= bestDups);
+    CuAssertTrue(testCase, dups + losses >= 0);
+    stHash_destruct(myLeafToSpecies);
+    stPhylogenyInfo_destructOnTree(newRootedTree);
+    stTree_destruct(newRootedTree);
+    stHash_destructIterator(hashIt);
+}
+
+// Make sure that the tree given by rootAndReconcileBinary is a tree with
+// the lowest possible reconciliation cost (in terms of dups).
+static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
+    for(int64_t testNum = 0; testNum < 10; testNum++) {
+        int64_t numSpecies = st_randomInt64(3, 100);
+        stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
+        globalSpeciesTree = stPhylogeny_neighborJoin(matrix, NULL);
+        int64_t numGenes = st_randomInt64(3, 300);
+        stMatrix_destruct(matrix);
+        matrix = getRandomDistanceMatrix(numGenes);
+        stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
+        stMatrix_destruct(matrix);
+
+        // Assign genes to random species.
+        globalLeafToSpecies = stHash_construct();
+        for(int64_t i = 0; i < numGenes; i++) {
+            stTree *gene = stPhylogeny_getLeafByIndex(geneTree, i);
+            stTree *species = stPhylogeny_getLeafByIndex(globalSpeciesTree, st_randomInt64(0, numSpecies));
+            stHash_insert(globalLeafToSpecies, gene, species);
+        }
+
+        // Find the best rooting.
+        stTree *rooted = stPhylogeny_rootAndReconcileBinary(geneTree, globalSpeciesTree, globalLeafToSpecies);
+        int64_t dups, losses;
+
+        // This is pretty stupid, but we have to map from the
+        // leafToSpecies on the old gene tree to this rerooted
+        // one. TODO: Probably the leafToSpecies concept needs to be rethought.
+        // Probably should use matrix index -> species node instead.
+        stHash *myLeafToSpecies = stHash_construct();
+        stHashIterator *hashIt = stHash_getIterator(globalLeafToSpecies);
+        stTree *curGene; // Current gene in the old leafToSpecies.
+        while((curGene = stHash_getNext(hashIt)) != NULL) {
+            stPhylogenyInfo *info = stTree_getClientData(curGene);
+            stTree *species = stHash_search(globalLeafToSpecies, curGene);
+            stTree *newGene = stPhylogeny_getLeafByIndex(rooted, info->matrixIndex);
+            stHash_insert(myLeafToSpecies, newGene, species);
+        }
+        stPhylogeny_reconciliationCostBinary(rooted, globalSpeciesTree, myLeafToSpecies, &dups, &losses);
+        bestDups = dups;
+        CuAssertTrue(testCase, bestDups >= 0);
+        CuAssertTrue(testCase, losses >= 0);
+
+        // Now check all possible roots and confirm that there isn't a
+        // better one.
+        testOnTree(testCase, geneTree, checkMinimalReconScore);
+        stTree_destruct(rooted);
+        stPhylogenyInfo_destructOnTree(geneTree);
+        stTree_destruct(geneTree);
+        stPhylogenyInfo_destructOnTree(globalSpeciesTree);
+        stTree_destruct(globalSpeciesTree);
     }
 }
 
@@ -534,5 +723,8 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
     SUITE_ADD_TEST(suite, testSimpleJoinCosts);
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random);
     return suite;
 }

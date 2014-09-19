@@ -5,6 +5,8 @@
 #include "cluster.h"
 #include "tree.h"
 #include "buildtree.h"
+// Spimap C/C++ translation layer include
+#include "stSpimapLayer.h"
 
 // Helper function to add the stPhylogenyInfo that is normally
 // generated during neighbor-joining to a tree that has leaf-labels 0,
@@ -889,4 +891,37 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 
     stPhylogeny_addStPhylogenyInfo(ret);
     return ret;
+}
+
+// (Re)root and reconcile a gene tree to a tree with minimal dups.
+stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies) {
+    return spimap_rootAndReconcile(geneTree, speciesTree, leafToSpecies);
+}
+
+// Reconcile a gene tree (without rerooting), set the
+// stReconcilationInfo as client data on all nodes, and optionally
+// set the labels of the ancestors to the labels of the species tree.
+void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
+                                      bool relabelAncestors) {
+    spimap_reconcile(geneTree, speciesTree, leafToSpecies, relabelAncestors);
+}
+
+// FIXME: does an extra unnecessary reconciliation
+void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
+                                               int64_t *dups, int64_t *losses) {
+    spimap_reconciliationCost(geneTree, speciesTree, leafToSpecies, dups, losses);
+}
+
+// Free stReconciliationInfo properly.
+void stReconciliationInfo_destruct(stReconciliationInfo *info) {
+    free(info);
+}
+
+// Free stReconciliationInfo in the client data field of a tree and
+// all its children recursively.
+void stReconciliationInfo_destructOnTree(stTree *tree) {
+    stReconciliationInfo_destruct(stTree_getClientData(tree));
+    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+        stReconciliationInfo_destructOnTree(stTree_getChild(tree, i));
+    }
 }

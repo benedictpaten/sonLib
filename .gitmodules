@@ -1,0 +1,3 @@
+[submodule "externalTools/spimap"]
+	path = externalTools/spimap
+	url = https://github.com/mdrasmus/spimap.git
