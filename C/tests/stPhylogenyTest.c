@@ -494,7 +494,6 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
             stTree_destruct(speciesTree);
             continue;
         }
-        printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
 
         // Join cost stuff
         stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
@@ -503,7 +502,6 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies, 50, 50);
         stMatrix *distanceMatrix = getDistanceMatrixFromSimilarityMatrix(similarityMatrix);
         stTree *neighborJoiningTree = stPhylogeny_neighborJoin(distanceMatrix, NULL);
-        printf("neighbor joining tree: %s\n", stTree_getNewickTreeString(neighborJoiningTree));
 
         stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
         // assign the matrix indices to be equal to the species indices.
@@ -515,7 +513,6 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
             free(speciesName);
         }
         stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
-        printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
 
         // Root both the trees the same way (above node 0)
         stTree *tmp = stTree_findChild(neighborJoiningTree, "0");
@@ -551,48 +548,72 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
 // tree produced has minimal reconciliation cost.
 static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
 {
-    // Get a random species tree.
-    int64_t numSpecies = 0;
-    stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
-    if (numSpecies < 3) {
-        //continue;
-    }
-    printf("species tree: %s\n", stTree_getNewickTreeString(speciesTree));
-
-    // Join cost stuff
-    stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
-    stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 100000.0, 100000.0);
-
-    // Create a set of genes of size n*(num species), where each leaf
-    // species is mapped to n genes. We'd like the guided neighbor
-    // joining process to create a tree that can be reconciled so that
-    // there are only n dups.
-    int64_t numGenesPerSpecies = st_randomInt64(2, 5);
-    stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies*numGenesPerSpecies, 50, 50);
-    // assign the matrix indices i, 2i, 3i, ... to map to species index i.
-    stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
-    for (int64_t i = 0; i < numSpecies; i++) {
-        char *speciesName = stString_print("%" PRIi64, i);
-        stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, speciesName));
-        for (int64_t j = i; j < numGenesPerSpecies * numSpecies; j += numSpecies) {
-            stIntTuple *matrixIndex = stIntTuple_construct1(j);
-            printf("%" PRIi64 "->%s\n", j, speciesName);
-            stHash_insert(matrixIndexToJoinCostIndex, matrixIndex, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+    for (int64_t testNum = 0; testNum < 100; testNum++) {
+        // Get a random species tree.
+        int64_t numSpecies = 0;
+        stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
+        if (numSpecies < 3) {
+            stTree_destruct(speciesTree);
+            continue;
         }
-        free(speciesName);
+
+        // Join cost stuff
+        stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+        stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree, speciesToIndex, 100000.0, 100000.0);
+
+        // Create a set of genes of size n*(num species), where each leaf
+        // species is mapped to n genes. We'd like the guided neighbor
+        // joining process to create a tree that can be reconciled so that
+        // there are only n dups.
+        int64_t numGenesPerSpecies = st_randomInt64(2, 5);
+        stMatrix *similarityMatrix = getRandomSimilarityMatrix(numSpecies*numGenesPerSpecies, 50, 50);
+        // assign the matrix indices i, 2i, 3i, ... to map to species index i.
+        stHash *matrixIndexToJoinCostIndex = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, (void (*)(void *)) stIntTuple_destruct);
+        for (int64_t i = 0; i < numSpecies; i++) {
+            char *speciesName = stString_print("%" PRIi64, i);
+            stIntTuple *joinCostIndex = stHash_search(speciesToIndex, stTree_findChild(speciesTree, speciesName));
+            for (int64_t j = i; j < numGenesPerSpecies * numSpecies; j += numSpecies) {
+                stIntTuple *matrixIndex = stIntTuple_construct1(j);
+                stHash_insert(matrixIndexToJoinCostIndex, matrixIndex, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
+            }
+            free(speciesName);
+        }
+
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+
+        // Build the gene->species mapping for the reconciliation algorithm.
+        stHash *leafToSpecies = stHash_construct();
+        for (int64_t i = 0; i < numSpecies; i++) {
+            char *speciesName = stString_print("%" PRIi64, i);
+            stTree *species = stTree_findChild(speciesTree, speciesName);
+            for (int64_t j = i; j < numGenesPerSpecies * numSpecies; j += numSpecies) {
+                char *geneName = stString_print("%" PRIi64, j);
+                stTree *gene = stTree_findChild(guidedNeighborJoiningTree, geneName);
+                stHash_insert(leafToSpecies, gene, species);
+                free(geneName);
+            }
+            free(speciesName);
+        }
+
+        // Now check that the gene tree we get out of the algorithm has
+        // minimal reconcilation cost due to the very high join costs (in
+        // this case, the number of dups should be equal to the number of
+        // "extra" genes per species).
+        int64_t dups, losses;
+        stPhylogeny_reconciliationCostBinary(guidedNeighborJoiningTree, speciesTree, leafToSpecies, &dups, &losses);
+        CuAssertTrue(testCase, losses == 0);
+        CuAssertTrue(testCase, dups == numGenesPerSpecies - 1);
+
+        // Clean up.
+        stTree_destruct(speciesTree);
+        stHash_destruct(matrixIndexToJoinCostIndex);
+        stHash_destruct(speciesToIndex);
+        stHash_destruct(leafToSpecies);
+        stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
+        stTree_destruct(guidedNeighborJoiningTree);
+        stMatrix_destruct(similarityMatrix);
+        stMatrix_destruct(joinCosts);
     }
-
-    stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
-    printf("guided neighbor joining tree: %s\n", stTree_getNewickTreeString(guidedNeighborJoiningTree));
-
-    // Clean up.
-    stTree_destruct(speciesTree);
-    stHash_destruct(matrixIndexToJoinCostIndex);
-    stHash_destruct(speciesToIndex);
-    stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
-    stTree_destruct(guidedNeighborJoiningTree);
-    stMatrix_destruct(similarityMatrix);
-    stMatrix_destruct(joinCosts);
 }
 
 static void testStPhylogeny_rootAndReconcileBinary_simpleTests(CuTest *testCase) {
@@ -717,10 +738,10 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     (void) testSimpleBootstrapScoring;
     (void) testRandomNeighborJoin;
     (void) testRandomBootstraps;
-    /* SUITE_ADD_TEST(suite, testSimpleNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testSimpleBootstrapScoring); */
-    /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
+    SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
+    SUITE_ADD_TEST(suite, testSimpleBootstrapScoring);
+    SUITE_ADD_TEST(suite, testRandomNeighborJoin);
+    SUITE_ADD_TEST(suite, testRandomBootstraps);
     SUITE_ADD_TEST(suite, testSimpleJoinCosts);
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
