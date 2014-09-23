@@ -190,10 +190,10 @@ void spimap_reconcile(stTree *geneTree, stTree *speciesTree,
         } else {
             assert(events[i] == EVENT_DUP || events[i] == EVENT_SPEC);
             reconInfo->event = (events[i] == EVENT_DUP) ? DUPLICATION : SPECIATION;
-        }
-        // Change the label on the ancestors if needed.
-        if (stTree_getChildNumber(gene) == 0 && relabelAncestors) {
-            stTree_setLabel(gene, stString_copy(stTree_getLabel(species)));
+            if (relabelAncestors) {
+                // Change the label on the ancestors if needed.
+                stTree_setLabel(gene, stString_copy(stTree_getLabel(species)));
+            }
         }
         stIntTuple_destruct(speciesIndex);
         stIntTuple_destruct(geneIndex);
