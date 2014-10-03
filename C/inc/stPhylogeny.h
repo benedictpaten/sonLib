@@ -36,18 +36,22 @@ void stReconciliationInfo_destructOnTree(stTree *tree);
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
 typedef struct {
-    int64_t matrixIndex;    // = -1 if an internal node, index into
-                            // distance matrix if a leaf.
-    char *leavesBelow;      // leavesBelow[i] = 1 if leaf i is present
-                            // below this node, 0 otherwise. Could be a
-                            // bit array, which would make things much
-                            // faster.
-    int64_t numBootstraps;  // Number of bootstraps that support this split.
-    double bootstrapSupport;// Fraction of bootstraps that support this split.
-    int64_t totalNumLeaves; // Total number of leaves overall in the
-                            // tree (which is the size of
-                            // leavesBelow). Not strictly necessary,
-                            // but convenient
+    int64_t matrixIndex;         // = -1 if an internal node, index
+                                 // into distance matrix if a leaf.
+    char *leavesBelow;           // leavesBelow[i] = 1 if leaf i is
+                                 // present below this node, 0
+                                 // otherwise. Could be a bit array,
+                                 // which would make things much
+                                 // faster.
+    int64_t numBootstraps;       // Number of bootstraps that support
+                                 // this split.
+    double bootstrapSupport;     // Fraction of bootstraps that
+                                 // support this split.
+    int64_t totalNumLeaves;      // Total number of leaves overall in
+                                 // the tree (which is the size of
+                                 // leavesBelow). Not strictly
+                                 // necessary, but convenient
+    stReconciliationInfo *recon; // Reconciliation info. Can be NULL.
 } stPhylogenyInfo;
 
 // Free a stPhylogenyInfo struct.
@@ -112,7 +116,9 @@ stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
 // speciesToIndex (a blank hash) will be populated with stIntTuples
 // corresponding to each species' index into the join cost matrix.
 // NB: the species tree must be binary.
-stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToIndex, double costPerDup, double costPerLoss);
+stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree,
+                                       stHash *speciesToIndex,
+                                       double costPerDup, double costPerLoss);
 
 // Neighbor joining guided by a species tree. Note that the matrix is
 // a similarity matrix (i > j is # differences between i and j, i < j
@@ -129,17 +135,23 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 // (Re)root a gene tree to minimize dups.
 // leafToSpecies is a hash from leaves of geneTree to leaves of speciesTree.
 // Both trees must be binary.
-stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies);
+// TODO: maybe should set stReconciliationInfo.
+stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree,
+                                           stHash *leafToSpecies);
 
-// Reconcile a gene tree (without rerooting), set the
-// stReconcilationInfo as client data on all nodes, and optionally
-// set the labels of the ancestors to the labels of the species tree.
-void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
-                                      bool relabelAncestors);
+// Reconcile a gene tree (without rerooting). If client data is
+// present, it's assumed to be stPhylogenyInfo, and its reconciliation
+// subinfo is set. If no client data is present, stReconcilationInfo
+// is set as client data on all nodes.  Optionally set the labels of
+// the ancestors to the labels of the species tree.
+void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree,
+                                 stHash *leafToSpecies, bool relabelAncestors);
 
 // Calculate the reconciliation cost in dups and losses.
-void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
-                                               int64_t *dups, int64_t *losses);
+// TODO: does not use any existing stReconciliationInfo.
+void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
+                                          stHash *leafToSpecies, int64_t *dups,
+                                          int64_t *losses);
 
 #ifdef __cplusplus
 }

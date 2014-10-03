@@ -197,7 +197,14 @@ void spimap_reconcile(stTree *geneTree, stTree *speciesTree,
         }
         stIntTuple_destruct(speciesIndex);
         stIntTuple_destruct(geneIndex);
-        stTree_setClientData(gene, reconInfo);
+        if (stTree_getClientData(gene) == NULL) {
+          // set new reconciliationInfo as client data
+          stTree_setClientData(gene, reconInfo);
+        } else {
+          stPhylogenyInfo *phylogenyInfo = (stPhylogenyInfo *) stTree_getClientData(gene);
+          assert(phylogenyInfo->recon == NULL);
+          phylogenyInfo->recon = reconInfo;
+        }
     }
     stHash_destruct(indexToSpecies);
     stHash_destruct(indexToGene);
