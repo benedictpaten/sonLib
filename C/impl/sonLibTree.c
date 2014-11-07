@@ -151,6 +151,9 @@ stTree *stTree_getChild(stTree *tree, int64_t i) {
 }
 
 stTree *stTree_findChild(stTree *tree, const char *label) {
+    if (tree->label != NULL && strcmp(tree->label, label) == 0) {
+        return tree;
+    }
     for (int i = 0; i < stList_length(tree->nodes); i++) {
         stTree *node = (stTree *)stList_get(tree->nodes, i);
         if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
