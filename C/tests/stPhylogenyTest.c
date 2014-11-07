@@ -945,12 +945,12 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
     SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
     SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring);
-    /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
-    /* SUITE_ADD_TEST(suite, testSimpleJoinCosts); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random); */
+    SUITE_ADD_TEST(suite, testRandomNeighborJoin);
+    SUITE_ADD_TEST(suite, testRandomBootstraps);
+    SUITE_ADD_TEST(suite, testSimpleJoinCosts);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random);
     return suite;
 }
