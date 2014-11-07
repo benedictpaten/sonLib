@@ -33,6 +33,9 @@ void stReconciliationInfo_destruct(stReconciliationInfo *info);
 // all its children recursively.
 void stReconciliationInfo_destructOnTree(stTree *tree);
 
+// Copy reconciliation info.
+stReconciliationInfo *stReconciliationInfo_clone(stReconciliationInfo *info);
+
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
 typedef struct {
@@ -84,6 +87,17 @@ stTree *stPhylogeny_scoreFromBootstrap(stTree *tree, stTree *bootstrap);
 // bootstrapSupport fields of each node. All trees must have valid
 // stPhylogenyInfo.
 stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps);
+
+stTree *stPhylogeny_scoreReconciliationFromBootstrap(stTree *tree,
+                                                     stTree *bootstrap);
+
+// Return a new tree which has its partitions scored by how often they
+// appear with the same reconciliation in the bootstraps. Obviously,
+// this is always less than or equal to the normal bootstrap
+// score. This fills in the numBootstraps and bootstrapSupport fields
+// of each node. All trees must have valid stPhylogenyInfo.
+stTree *stPhylogeny_scoreReconciliationFromBootstraps(stTree *tree,
+                                                      stList *bootstraps);
 
 // Only one half of the distanceMatrix is used, distances[i][j] for which i > j
 // Tree returned is labeled by the indices of the distance matrix. The

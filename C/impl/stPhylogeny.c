@@ -18,6 +18,7 @@ void addStPhylogenyInfoR(stTree *tree)
     if(stTree_getChildNumber(tree) == 0) {
         int ret;
         ret = sscanf(stTree_getLabel(tree), "%" PRIi64, &info->matrixIndex);
+        (void) ret;
         assert(ret == 1);
     } else {
         info->matrixIndex = -1;
@@ -142,15 +143,23 @@ static stTree *quickTreeToStTree(struct Tree *tree, stList *outgroups) {
 void stPhylogenyInfo_destruct(stPhylogenyInfo *info) {
     assert(info != NULL);
     free(info->leavesBelow);
+    if (info->recon != NULL) {
+      stReconciliationInfo_destruct(info->recon);
+    }
     free(info);
 }
 
 // Clone a stPhylogenyInfo struct
 stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info) {
-    stPhylogenyInfo *ret = malloc(sizeof(stPhylogenyInfo));
+    stPhylogenyInfo *ret = st_malloc(sizeof(stPhylogenyInfo));
     memcpy(ret, info, sizeof(stPhylogenyInfo));
     ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(char));
     memcpy(ret->leavesBelow, info->leavesBelow, ret->totalNumLeaves * sizeof(char));
+    if (info->recon != NULL) {
+        ret->recon = stReconciliationInfo_clone(info->recon);
+    } else {
+        ret->recon = NULL;
+    }
     return ret;
 }
 
@@ -166,10 +175,12 @@ void stPhylogenyInfo_destructOnTree(stTree *tree) {
 
 // Compare a single partition to a single bootstrap partition and
 // update its support if they are identical.
-static void updatePartitionSupportFromPartition(stTree *partition, stTree *bootstrap) {
+static void updatePartitionSupportFromPartition(stTree *partitionToScore,
+                                                stTree *originalPartition,
+                                                stTree *bootstrap) {
     stPhylogenyInfo *partitionInfo, *bootstrapInfo;
 
-    partitionInfo = stTree_getClientData(partition);
+    partitionInfo = stTree_getClientData(partitionToScore);
     bootstrapInfo = stTree_getClientData(bootstrap);
     assert(partitionInfo != NULL);
     assert(bootstrapInfo != NULL);
@@ -184,18 +195,24 @@ static void updatePartitionSupportFromPartition(stTree *partition, stTree *boots
     partitionInfo->numBootstraps++;
 }
 
-// Increase a partition's bootstrap support if it appears anywhere in
-// the given bootstrap tree.
-static void updatePartitionSupportFromTree(stTree *partition, stTree *bootstrapTree)
+// Increase a partition's bootstrap support by supplying the given
+// function with the closest possible bootstrap candidate from this
+// tree (i.e. it may not be exactly the same branch, if that branch is
+// not in the bootstrap).
+static void updateSupportFromTree(stTree *partitionToScore,
+                                  stTree *originalPartition,
+                                  stTree *bootstrapTree,
+                                  void (*updateAgainstBootstrapCandidate)(stTree *, stTree *, stTree *))
 {
     int64_t i, j;
-    stPhylogenyInfo *partitionInfo = stTree_getClientData(partition);
+    stPhylogenyInfo *partitionInfo = stTree_getClientData(partitionToScore);
     stPhylogenyInfo *bootstrapInfo = stTree_getClientData(bootstrapTree);
     // This partition should be updated against the bootstrap
     // partition only if none of the bootstrap's children have a leaf
     // set that is a superset of the partition's leaf set.
     bool checkThisPartition = TRUE;
 
+    (void) bootstrapInfo;
     assert(partitionInfo->totalNumLeaves == bootstrapInfo->totalNumLeaves);
     // Check that the leaves under the partition are a subset of the
     // leaves under the current bootstrap node. This should always be
@@ -222,7 +239,9 @@ static void updatePartitionSupportFromTree(stTree *partition, stTree *bootstrapT
             }
         }
         if(isSuperset) {
-            updatePartitionSupportFromTree(partition, bootstrapChild);
+            updateSupportFromTree(partitionToScore, originalPartition,
+                                  bootstrapChild,
+                                  updateAgainstBootstrapCandidate);
             checkThisPartition = FALSE;
             break;
         }
@@ -231,7 +250,8 @@ static void updatePartitionSupportFromTree(stTree *partition, stTree *bootstrapT
     if(checkThisPartition) {
         // This bootstrap partition is the closest candidate. Check
         // the partition against this node.
-        updatePartitionSupportFromPartition(partition, bootstrapTree);
+        updateAgainstBootstrapCandidate(partitionToScore, originalPartition,
+                                        bootstrapTree);
     }
 }
 
@@ -241,18 +261,10 @@ static void updatePartitionSupportFromTree(stTree *partition, stTree *bootstrapT
 // stPhylogenyInfo.
 stTree *stPhylogeny_scoreFromBootstrap(stTree *tree, stTree *bootstrap)
 {
-    int64_t i;
-    stTree *ret = stTree_cloneNode(tree);
-    stPhylogenyInfo *info = stPhylogenyInfo_clone(stTree_getClientData(tree));
-    stTree_setClientData(ret, info);
-    // Update child partitions (if any)
-    for(i = 0; i < stTree_getChildNumber(tree); i++) {
-        stTree_setParent(stPhylogeny_scoreFromBootstrap(stTree_getChild(tree, i), bootstrap), ret);
-    }
-    updatePartitionSupportFromTree(ret, bootstrap);
-
-    info->bootstrapSupport = ((double) info->numBootstraps) / 1.0;
-
+    stList *list = stList_construct();
+    stList_append(list, bootstrap);
+    stTree *ret = stPhylogeny_scoreFromBootstraps(tree, list);
+    stList_destruct(list);
     return ret;
 }
 
@@ -273,7 +285,91 @@ stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps)
 
     // Check the current partition against all bootstraps
     for(i = 0; i < stList_length(bootstraps); i++) {
-        updatePartitionSupportFromTree(ret, stList_get(bootstraps, i));
+        updateSupportFromTree(ret, tree, stList_get(bootstraps, i),
+                              updatePartitionSupportFromPartition);
+    }
+
+    info->bootstrapSupport = ((double) info->numBootstraps) / stList_length(bootstraps);
+    return ret;
+}
+
+void updateReconciliationSupportFromPartition(stTree *partitionToScore,
+                                              stTree *originalPartition,
+                                              stTree *bootstrapPartition) {
+    stPhylogenyInfo *partitionInfo, *bootstrapInfo;
+
+    // First, check that the branches are identical.
+    partitionInfo = stTree_getClientData(partitionToScore);
+    bootstrapInfo = stTree_getClientData(bootstrapPartition);
+    assert(partitionInfo != NULL);
+    assert(bootstrapInfo != NULL);
+    assert(partitionInfo->totalNumLeaves == bootstrapInfo->totalNumLeaves);
+    // Check if the set of leaves is equal in both partitions. If not,
+    // the partitions can't be equal.
+    if (memcmp(partitionInfo->leavesBelow, bootstrapInfo->leavesBelow,
+            partitionInfo->totalNumLeaves * sizeof(char))) {
+        return;
+    }
+
+    // Now check the reconciliation of the parents.
+    stTree *partitionParent = stTree_getParent(originalPartition);
+    stTree *bootstrapParent = stTree_getParent(bootstrapPartition);
+    if (partitionParent == NULL && bootstrapParent == NULL) {
+        // We count this case as having identical reconciliation.
+        partitionInfo->numBootstraps++;
+        return;
+    } else if (partitionParent == NULL || bootstrapParent == NULL) {
+        // If only one is the root, we don't consider them to have the
+        // same reconciliation.
+        return;
+    }
+    stPhylogenyInfo *partitionParentInfo = stTree_getClientData(partitionParent);
+    stPhylogenyInfo *bootstrapParentInfo = stTree_getClientData(bootstrapParent);
+    assert(partitionParentInfo != NULL);
+    assert(bootstrapParentInfo != NULL);
+    stReconciliationInfo *partitionParentRecon = partitionParentInfo->recon;
+    stReconciliationInfo *bootstrapParentRecon = bootstrapParentInfo->recon;
+    assert(partitionParentRecon != NULL);
+    assert(bootstrapParentRecon != NULL);
+    if (partitionParentRecon->event != bootstrapParentRecon->event ||
+        partitionParentRecon->species != bootstrapParentRecon->species) {
+        // Not the same reconciliation / duplication labeling.
+        return;
+    }
+    // The partitions are equal and they have the same reconciliation,
+    // increase the support
+    partitionInfo->numBootstraps++;
+}
+
+stTree *stPhylogeny_scoreReconciliationFromBootstrap(stTree *tree,
+                                                     stTree *bootstrap) {
+    stList *list = stList_construct();
+    stList_append(list, bootstrap);
+    stTree *ret = stPhylogeny_scoreReconciliationFromBootstraps(tree, list);
+    stList_destruct(list);
+    return ret;
+}
+
+// Return a new tree which has its partitions scored by how often they
+// appear with the same reconciliation in the bootstraps. Obviously,
+// this is always less than or equal to the normal bootstrap
+// score. This fills in the numBootstraps and bootstrapSupport fields
+// of each node. All trees must have valid stPhylogenyInfo.
+stTree *stPhylogeny_scoreReconciliationFromBootstraps(stTree *tree,
+                                                      stList *bootstraps)
+{
+    int64_t i;
+    stTree *ret = stTree_cloneNode(tree);
+    stPhylogenyInfo *info = stPhylogenyInfo_clone(stTree_getClientData(tree));
+    stTree_setClientData(ret, info);
+    // Update child partitions (if any)
+    for(i = 0; i < stTree_getChildNumber(tree); i++) {
+        stTree_setParent(stPhylogeny_scoreReconciliationFromBootstraps(stTree_getChild(tree, i), bootstraps), ret);
+    }
+    // Check the current partition against all bootstraps
+    for(i = 0; i < stList_length(bootstraps); i++) {
+        updateSupportFromTree(ret, tree, stList_get(bootstraps, i),
+                              updateReconciliationSupportFromPartition);
     }
 
     info->bootstrapSupport = ((double) info->numBootstraps) / stList_length(bootstraps);
@@ -433,6 +529,8 @@ double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2) {
     // If differentSubsets is true, then the values of oneAboveTwo and
     // twoAboveOne don't matter; if differentSubsets is false, exactly
     // one should be true.
+    (void) twoAboveOne; // stop gcc complaining about this value,
+                        // which is used in asserts
     assert(differentSubsets || (oneAboveTwo ^ twoAboveOne));
 
     if(differentSubsets) {
@@ -894,21 +992,23 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 }
 
 // (Re)root and reconcile a gene tree to a tree with minimal dups.
-stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies) {
+stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree,
+                                           stHash *leafToSpecies) {
     return spimap_rootAndReconcile(geneTree, speciesTree, leafToSpecies);
 }
 
 // Reconcile a gene tree (without rerooting), set the
 // stReconcilationInfo as client data on all nodes, and optionally
 // set the labels of the ancestors to the labels of the species tree.
-void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
-                                      bool relabelAncestors) {
+void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree,
+                                 stHash *leafToSpecies, bool relabelAncestors) {
     spimap_reconcile(geneTree, speciesTree, leafToSpecies, relabelAncestors);
 }
 
 // FIXME: does an extra unnecessary reconciliation
-void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree, stHash *leafToSpecies,
-                                               int64_t *dups, int64_t *losses) {
+void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
+                                          stHash *leafToSpecies,
+                                          int64_t *dups, int64_t *losses) {
     spimap_reconciliationCost(geneTree, speciesTree, leafToSpecies, dups, losses);
 }
 
@@ -924,4 +1024,11 @@ void stReconciliationInfo_destructOnTree(stTree *tree) {
     for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
         stReconciliationInfo_destructOnTree(stTree_getChild(tree, i));
     }
+}
+
+stReconciliationInfo *stReconciliationInfo_clone(stReconciliationInfo *info) {
+    stReconciliationInfo *ret = st_malloc(sizeof(stReconciliationInfo));
+    ret->species = info->species;
+    ret->event = info->event;
+    return ret;
 }
