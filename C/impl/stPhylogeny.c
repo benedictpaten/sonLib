@@ -997,6 +997,70 @@ stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree
     return spimap_rootAndReconcile(geneTree, speciesTree, leafToSpecies);
 }
 
+// Fills in stReconciliationInfo, creating the containing
+// stPhylogenyInfo if necessary.
+static void fillInReconciliationInfo(stTree *gene, stTree *recon,
+                                     bool relabelAncestors) {
+    stPhylogenyInfo *info = stTree_getClientData(gene);
+    if (info == NULL) {
+        info = st_calloc(1, sizeof(stPhylogenyInfo));
+        stTree_setClientData(gene, info);
+    }
+    stReconciliationInfo *reconInfo = info->recon;
+    if (reconInfo == NULL) {
+        reconInfo = st_calloc(1, sizeof(stReconciliationInfo));
+        info->recon = reconInfo;
+    }
+    reconInfo->species = recon;
+    if (stTree_getChildNumber(gene) == 0) {
+        reconInfo->event = LEAF;
+    } else {
+        assert(stTree_getChildNumber(gene) == 2);
+        stPhylogenyInfo *leftInfo = stTree_getClientData(stTree_getChild(gene, 0));
+        stTree *leftRecon = leftInfo->recon->species;
+        stPhylogenyInfo *rightInfo = stTree_getClientData(stTree_getChild(gene, 1));
+        stTree *rightRecon = rightInfo->recon->species;
+        if (leftRecon == recon || rightRecon == recon) {
+            reconInfo->event = DUPLICATION;
+        } else {
+            reconInfo->event = SPECIATION;
+        }
+        if (relabelAncestors) {
+            stTree_setLabel(gene, stString_copy(stTree_getLabel(recon)));
+        }
+    }
+}
+
+static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
+                                                   stHash *leafToSpecies,
+                                                   bool relabelAncestors) {
+    assert(stTree_getChildNumber(gene) == 0 ||
+           stTree_getChildNumber(gene) == 2);
+    stTree *recon;
+    if (stTree_getChildNumber(gene) == 0) {
+        // Leaves are already reconciled.
+        recon = stHash_search(leafToSpecies, gene);
+        assert(recon != NULL);
+    } else {
+        stTree *leftRecon = stPhylogeny_reconcileAtMostBinary_R(
+            stTree_getChild(gene, 0), leafToSpecies, relabelAncestors);
+        stTree *rightRecon = stPhylogeny_reconcileAtMostBinary_R(
+            stTree_getChild(gene, 1), leafToSpecies, relabelAncestors);
+        recon = stTree_getMRCA(leftRecon, rightRecon);
+    }
+    fillInReconciliationInfo(gene, recon, relabelAncestors);
+    return recon;
+}
+
+// Reconcile a gene tree (without rerooting), set the
+// stReconcilationInfo as client data on all nodes, and optionally
+// set the labels of the ancestors to the labels of the species tree.
+void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
+                                       bool relabelAncestors) {
+    stPhylogeny_reconcileAtMostBinary_R(geneTree, leafToSpecies,
+                                        relabelAncestors);
+}
+
 // Reconcile a gene tree (without rerooting), set the
 // stReconcilationInfo as client data on all nodes, and optionally
 // set the labels of the ancestors to the labels of the species tree.

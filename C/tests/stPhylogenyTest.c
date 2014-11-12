@@ -940,17 +940,69 @@ static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
     }
 }
 
+// Temp test to make sure reconcileBinary and reconcileAtMostBinary
+// give the same solution.
+static void testStPhylogeny_reconcileAtMostBinary_random(CuTest *testCase) {
+    for (int64_t testNum = 0; testNum < 1000; testNum++) {
+        int64_t numSpecies = st_randomInt64(4, 100);
+        stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
+        stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
+        int64_t numGenes = st_randomInt64(4, 300);
+        stMatrix_destruct(matrix);
+        matrix = getRandomDistanceMatrix(numGenes);
+        stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
+        stMatrix_destruct(matrix);
+
+        stTree *reconciledAtMostBinary = stTree_clone(geneTree);
+        stPhylogeny_addStPhylogenyInfo(reconciledAtMostBinary);
+
+        stTree *reconciledBinary = stTree_clone(geneTree);
+        stPhylogeny_addStPhylogenyInfo(reconciledBinary);
+
+        // Assign genes to random species.
+        stHash *leafToSpeciesAtMostBinary = stHash_construct();
+        stHash *leafToSpeciesBinary = stHash_construct();
+        for(int64_t i = 0; i < numGenes; i++) {
+            stTree *geneAtMostBinary = stPhylogeny_getLeafByIndex(reconciledAtMostBinary, i);
+            stTree *geneBinary = stPhylogeny_getLeafByIndex(reconciledBinary, i);
+            stTree *species = stPhylogeny_getLeafByIndex(speciesTree, st_randomInt64(0, numSpecies));
+            stHash_insert(leafToSpeciesAtMostBinary, geneAtMostBinary, species);
+            stHash_insert(leafToSpeciesBinary, geneBinary, species);
+        }
+
+        stPhylogeny_reconcileAtMostBinary(reconciledAtMostBinary,
+                                          leafToSpeciesAtMostBinary, true);
+        stPhylogeny_reconcileBinary(reconciledBinary, speciesTree,
+                                    leafToSpeciesBinary, true);
+
+        CuAssertTrue(testCase, stTree_equals(reconciledBinary, reconciledAtMostBinary));
+    }
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
-    SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
-    SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring);
-    SUITE_ADD_TEST(suite, testRandomNeighborJoin);
-    SUITE_ADD_TEST(suite, testRandomBootstraps);
-    SUITE_ADD_TEST(suite, testSimpleJoinCosts);
-    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
-    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
-    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests);
-    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random);
+    (void ) testSimpleNeighborJoin;
+    (void ) testSimpleBootstrapPartitionScoring;
+    (void ) testSimpleBootstrapReconciliationScoring;
+    (void ) testRandomNeighborJoin;
+    (void ) testRandomBootstraps;
+    (void ) testSimpleJoinCosts;
+    (void ) testGuidedNeighborJoiningReducesToNeighborJoining;
+    (void ) testGuidedNeighborJoiningLowersReconCost;
+    (void ) testStPhylogeny_rootAndReconcileBinary_simpleTests;
+    (void ) testStPhylogeny_rootAndReconcileBinary_random;
+
+
+    /* SUITE_ADD_TEST(suite, testSimpleNeighborJoin); */
+    /* SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring); */
+    /* SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring); */
+    /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
+    /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
+    /* SUITE_ADD_TEST(suite, testSimpleJoinCosts); */
+    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining); */
+    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost); */
+    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests); */
+    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random); */
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_random);
     return suite;
 }

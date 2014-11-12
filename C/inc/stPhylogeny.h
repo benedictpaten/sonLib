@@ -153,6 +153,9 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree,
                                            stHash *leafToSpecies);
 
+void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
+                                       bool relabelAncestors);
+
 // Reconcile a gene tree (without rerooting). If client data is
 // present, it's assumed to be stPhylogenyInfo, and its reconciliation
 // subinfo is set. If no client data is present, stReconcilationInfo
