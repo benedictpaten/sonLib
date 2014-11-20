@@ -29,11 +29,11 @@ cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG
 cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG
 
 #Debug flags (slow)
-cflags_dbg = -Wall -Werror --pedantic -g -fno-inline
-cppflags_dbg = -Wall -g -O0 -fno-inline 
+cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG
+cppflags_dbg = -Wall -g -O0 -fno-inline -UNDEBUG
 
 #Ultra Debug flags (really slow)
-cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline
+cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG
 
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g
