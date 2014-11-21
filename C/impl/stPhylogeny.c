@@ -689,7 +689,7 @@ static int64_t numNodesToAncestor(stTree *descendant, stTree *ancestor) {
 
     // Shouldn't get here.
     assert(false);
-    return -1;
+    return -INT64_MAX;
 }
 
 // Compute join costs for a species tree for use in guided
@@ -1122,6 +1122,167 @@ void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
                                        bool relabelAncestors) {
     stPhylogeny_reconcileAtMostBinary_R(geneTree, leafToSpecies,
                                         relabelAncestors);
+}
+
+void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
+                                                int64_t *dups,
+                                                int64_t *losses) {
+    assert(stTree_getChildNumber(reconciledTree) == 0
+           || stTree_getChildNumber(reconciledTree) == 2);
+    stPhylogenyInfo *info = stTree_getClientData(reconciledTree);
+    assert(info != NULL);
+    stReconciliationInfo *recon = info->recon;
+    assert(recon != NULL);
+    stTree *species = recon->species;
+    if (recon->event == DUPLICATION) {
+        (*dups)++;
+    }
+    // Count losses.
+    // Look at all this node's children. If the children's
+    // recons aren't direct children of this node's recon, then
+    // count N losses, where N is the number of nodes "skipped" on the
+    // way to this node's recon (plus one if this is a dup and the
+    // children's recons are not equal.)
+    if (stTree_getChildNumber(reconciledTree) != 0) {
+        stTree *leftChild = stTree_getChild(reconciledTree, 0);
+        stPhylogenyInfo *leftInfo = stTree_getClientData(leftChild);
+        assert(leftInfo != NULL);
+        stReconciliationInfo *leftRecon = leftInfo->recon;
+        assert(leftRecon != NULL);
+        stTree *leftSpecies = leftRecon->species;
+
+        stTree *rightChild = stTree_getChild(reconciledTree, 1);
+        stPhylogenyInfo *rightInfo = stTree_getClientData(rightChild);
+        assert(rightInfo != NULL);
+        stReconciliationInfo *rightRecon = rightInfo->recon;
+        assert(rightRecon != NULL);
+        stTree *rightSpecies = rightRecon->species;
+
+        if (stTree_getParent(leftSpecies) != species) {
+            *losses += numNodesToAncestor(leftSpecies, species);
+        }
+        if (stTree_getParent(rightSpecies) != species) {
+            *losses += numNodesToAncestor(rightSpecies, species);
+        }
+        if (leftSpecies != rightSpecies && recon->event == DUPLICATION) {
+            (*losses)++;
+        }
+    }
+
+    for (int64_t i = 0; i < stTree_getChildNumber(reconciledTree); i++) {
+        stPhylogeny_reconciliationCostAtMostBinary(stTree_getChild(reconciledTree, i),
+                                                   dups, losses);
+    }
+}
+
+static void clearClientData(stTree *tree) {
+    stTree_setClientData(tree, NULL);
+    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+        clearClientData(stTree_getChild(tree, i));
+    }
+}
+
+// Recurse down a tree testing roots to see which would give the
+// lowest recon cost if the tree was rooted at that position.
+// curRoot is the child of the branch to root on.
+void stPhylogeny_rootAndReconcileAtMostBinary_R(stTree *curRoot,
+                                                stTree *prevRootParentSpecies,
+                                                int64_t prevRootCost,
+                                                int64_t *bestCost,
+                                                stTree **bestRoot) {
+    // The difference between the tree rooted at this branch and the
+    // one that was rooted previous to this is just the reconciliation
+    // of the parent of this branch and the new root. So recalculate
+    // the reconciliation of these nodes, pretending that the tree has
+    // already been rerooted.
+    stTree *parent = stTree_getParent(curRoot);
+    stPhylogenyInfo *parentInfo = stTree_getClientData(parent);
+    assert(parentInfo != NULL && parentInfo->recon != NULL);
+    stTree *parentOldSpecies = parentInfo->recon->species;
+
+    // First, the parent of our branch should just be reconciled to
+    // the MRCA of prev root's parent reconciliation and our sibling's
+    // reconciliation (which has not changed).
+    stTree *sibling = NULL;
+    for (int64_t i = 0; i < stTree_getChildNumber(parent); i++) {
+        if (stTree_getChild(parent, i) != curRoot) {
+            sibling = stTree_getChild(parent, i);
+        }
+    }
+    stPhylogenyInfo *siblingInfo = stTree_getClientData(sibling);
+    assert(siblingInfo != NULL && siblingInfo->recon != NULL);
+    stTree *siblingSpecies = siblingInfo->recon->species;
+    stTree *parentNewSpecies = stTree_getMRCA(prevRootParentSpecies, siblingSpecies);
+
+    // Next, the new root's recon is just the MRCA of our parent's
+    // recon in the rerooted tree, and the recon of this node (which
+    // would stay the same).
+    stPhylogenyInfo *curInfo = stTree_getClientData(curRoot);
+    assert(curInfo != NULL && curInfo->recon != NULL);
+    stTree *curSpecies = curInfo->recon->species;
+    stTree *newRootSpecies = stTree_getMRCA(curSpecies, parentNewSpecies);
+
+    int64_t curRootCost = prevRootCost;
+    if (parentOldSpecies == curSpecies || parentOldSpecies == siblingSpecies) {
+        curRootCost--;
+    }
+    stTree *oldRootSpecies = stTree_getMRCA(prevRootParentSpecies,
+                                            parentOldSpecies);
+    if (oldRootSpecies == prevRootParentSpecies || oldRootSpecies == parentOldSpecies) {
+        curRootCost--;
+    }
+    if (newRootSpecies == curSpecies || newRootSpecies == parentNewSpecies) {
+        curRootCost++;
+    }
+    if (parentNewSpecies == siblingSpecies || parentNewSpecies == prevRootParentSpecies) {
+        curRootCost++;
+    }
+    if (curRootCost < *bestCost) {
+        *bestCost = curRootCost;
+        *bestRoot = curRoot;
+    }
+    for (int64_t i = 0; i < stTree_getChildNumber(curRoot); i++) {
+        stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(curRoot, i),
+                                                   parentNewSpecies,
+                                                   curRootCost, bestCost,
+                                                   bestRoot);
+    }
+}
+
+stTree *stPhylogeny_rootAndReconcileAtMostBinary(stTree *geneTree,
+                                                 stHash *leafToSpecies) {
+    stTree *ret = stTree_clone(geneTree);
+    clearClientData(ret);
+    stPhylogeny_reconcileAtMostBinary(ret, leafToSpecies, false);
+    // Find the root which has the lowest reconciliation cost.
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconciliationCostAtMostBinary(ret, &dups, &losses);
+    stTree *bestRoot;
+    int64_t bestCost = dups;
+    if (stTree_getChildNumber(geneTree) == 0) {
+        return stTree_clone(geneTree);
+    } else {
+        assert(stTree_getChildNumber(geneTree) == 2);
+        stTree *leftChild = stTree_getChild(geneTree, 0);
+        stTree *rightChild = stTree_getChild(geneTree, 1);
+        stPhylogenyInfo *leftChildInfo = stTree_getClientData(leftChild);
+        stTree *leftChildSpecies = leftChildInfo->recon->species;
+        stPhylogenyInfo *rightChildInfo = stTree_getClientData(rightChild);
+        stTree *rightChildSpecies = rightChildInfo->recon->species;
+        for (int64_t i = 0; i < stTree_getChildNumber(leftChild); i++) {
+            stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(leftChild, i),
+                                                       rightChildSpecies,
+                                                       dups, &bestCost,
+                                                       &bestRoot);
+        }
+        for (int64_t i = 0; i < stTree_getChildNumber(rightChild); i++) {
+            stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(rightChild, i),
+                                                       leftChildSpecies,
+                                                       dups, &bestCost,
+                                                       &bestRoot);
+        }
+        return stTree_reRoot(bestRoot, stTree_getBranchLength(bestRoot)/2);
+    }
 }
 
 // Reconcile a gene tree (without rerooting), set the

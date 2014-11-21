@@ -181,6 +181,10 @@ void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
                                           stHash *leafToSpecies, int64_t *dups,
                                           int64_t *losses);
 
+void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
+                                                int64_t *dups,
+                                                int64_t *losses);
+
 #ifdef __cplusplus
 }
 #endif
