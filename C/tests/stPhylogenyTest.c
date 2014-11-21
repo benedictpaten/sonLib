@@ -720,7 +720,15 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
             stHash_insert(matrixIndexToJoinCostIndex, iTuple, stIntTuple_construct1(stIntTuple_get(joinCostIndex, 0)));
             free(speciesName);
         }
-        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+        // Get the MRCA matrix
+        int64_t **speciesMRCAMatrix = stPhylogeny_getMRCAMatrix(speciesTree, speciesToIndex);
+
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
+
+        for(int i = 0; i < stTree_getNumNodes(speciesTree); i++) {
+          free(speciesMRCAMatrix[i]);
+        }
+        free(speciesMRCAMatrix);
 
         // Root both the trees the same way (above node 0)
         stTree *tmp = stTree_findChild(neighborJoiningTree, "0");
@@ -787,7 +795,15 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
             free(speciesName);
         }
 
-        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesTree);
+        // get MRCA matrix
+        int64_t **speciesMRCAMatrix = stPhylogeny_getMRCAMatrix(speciesTree, speciesToIndex);
+
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
+
+        for(int i = 0; i < stTree_getNumNodes(speciesTree); i++) {
+          free(speciesMRCAMatrix[i]);
+        }
+        free(speciesMRCAMatrix);
 
         // Build the gene->species mapping for the reconciliation algorithm.
         stHash *leafToSpecies = stHash_construct();
@@ -981,28 +997,17 @@ static void testStPhylogeny_reconcileAtMostBinary_random(CuTest *testCase) {
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    (void ) testSimpleNeighborJoin;
-    (void ) testSimpleBootstrapPartitionScoring;
-    (void ) testSimpleBootstrapReconciliationScoring;
-    (void ) testRandomNeighborJoin;
-    (void ) testRandomBootstraps;
-    (void ) testSimpleJoinCosts;
-    (void ) testGuidedNeighborJoiningReducesToNeighborJoining;
-    (void ) testGuidedNeighborJoiningLowersReconCost;
-    (void ) testStPhylogeny_rootAndReconcileBinary_simpleTests;
-    (void ) testStPhylogeny_rootAndReconcileBinary_random;
 
-
-    /* SUITE_ADD_TEST(suite, testSimpleNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring); */
-    /* SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring); */
-    /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
-    /* SUITE_ADD_TEST(suite, testSimpleJoinCosts); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random); */
+    SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
+    SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
+    SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring);
+    SUITE_ADD_TEST(suite, testRandomNeighborJoin);
+    SUITE_ADD_TEST(suite, testRandomBootstraps);
+    SUITE_ADD_TEST(suite, testSimpleJoinCosts);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_random);
     return suite;
 }

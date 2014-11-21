@@ -134,6 +134,9 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree,
                                        stHash *speciesToIndex,
                                        double costPerDup, double costPerLoss);
 
+// Precompute an MRCA matrix to pass to guided neighbor-joining.
+int64_t **stPhylogeny_getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex);
+
 // Neighbor joining guided by a species tree. Note that the matrix is
 // a similarity matrix (i > j is # differences between i and j, i < j
 // is # similarities between i and j) rather than a distance
@@ -144,6 +147,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           stMatrix *joinCosts,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,
+                                          int64_t **speciesMRCAMatrix,
                                           stTree *speciesTree);
 
 // (Re)root a gene tree to minimize dups.

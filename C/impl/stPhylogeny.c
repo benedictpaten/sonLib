@@ -688,7 +688,7 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
     return ret;
 }
 
-static int64_t **getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex) {
+int64_t **stPhylogeny_getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex) {
     int64_t numSpecies = stTree_getNumNodes(speciesTree);
     int64_t **ret = st_calloc(numSpecies, sizeof(int64_t *));
     for (int64_t i = 0; i < numSpecies; i++) {
@@ -727,11 +727,9 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           stMatrix *joinCosts,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,
+                                          int64_t **speciesMRCAMatrix,
                                           stTree *speciesTree) {
     int64_t numSpecies = stTree_getNumNodes(speciesTree);
-    // TODO: could precompute MRCA calculations outside this to save
-    // time.
-    int64_t **mrca = getMRCAMatrix(speciesTree, speciesToJoinCostIndex);
 
     int64_t numLeaves = stMatrix_n(similarityMatrix);
     assert(numLeaves == stMatrix_m(similarityMatrix));
@@ -885,7 +883,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         // MRCA of its children's reconciliations.
         int64_t recon_i = recon[mini];
         int64_t recon_j = recon[minj];
-        recon[mini] = mrca[recon_i][recon_j];
+        recon[mini] = speciesMRCAMatrix[recon_i][recon_j];
         recon[minj] = -1;
 
         // Update the new row of the distance matrix.
@@ -974,11 +972,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         free(confidences[i]);
     }
     free(confidences);
-
-    for (int64_t i = 0; i < numSpecies; i++) {
-        free(mrca[i]);
-    }
-    free(mrca);
 
     for (int64_t i = 0; i < numLeaves; i++) {
         free(joinDistances[i]);
