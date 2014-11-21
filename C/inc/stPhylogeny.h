@@ -26,16 +26,6 @@ typedef struct {
     stReconciliationEvent event; // Duplication or speciation node.
 } stReconciliationInfo;
 
-// Free stReconciliationInfo properly.
-void stReconciliationInfo_destruct(stReconciliationInfo *info);
-
-// Free stReconciliationInfo in the client data field of a tree and
-// all its children recursively.
-void stReconciliationInfo_destructOnTree(stTree *tree);
-
-// Copy reconciliation info.
-stReconciliationInfo *stReconciliationInfo_clone(stReconciliationInfo *info);
-
 // Data structure for storing information about a node in a
 // neighbor-joined tree.
 typedef struct {
@@ -54,7 +44,16 @@ typedef struct {
                                  // the tree (which is the size of
                                  // leavesBelow). Not strictly
                                  // necessary, but convenient
+} stIndexedTreeInfo;
+
+// Used as client-data on nodes in trees created/used by the
+// functions in this file.
+typedef struct {
     stReconciliationInfo *recon; // Reconciliation info. Can be NULL.
+    stIndexedTreeInfo *index;    // Index, in case this tree has a
+                                 // previous numbering of its
+                                 // leaves. Allows more efficient traversals.
+                                 // Can be NULL.
 } stPhylogenyInfo;
 
 // Free a stPhylogenyInfo struct.
@@ -63,17 +62,17 @@ void stPhylogenyInfo_destruct(stPhylogenyInfo *info);
 // Free stPhylogenyInfo data on all nodes in the tree.
 void stPhylogenyInfo_destructOnTree(stTree *tree);
 
+// Clones stPhylogenyInfo and all sub-info.
 stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info);
 
-// Add valid stPhylogenyInfo to a tree with leaves labeled 0, 1, 2, 3,
-// etc. and with internal nodes unlabeled. This function will fail on
-// trees labeled any other way.
-void stPhylogeny_addStPhylogenyInfo(stTree *tree);
+// Add valid stIndexedTreeInfo (as a subfield of stPhylogenyInfo) to a
+// tree with leaves labeled 0, 1, 2, 3, etc. and with internal nodes
+// unlabeled. This function will fail on trees labeled any other way.
+void stPhylogeny_addStIndexedTreeInfo(stTree *tree);
 
 // Set (and allocate) the leavesBelow and totalNumLeaves attribute in
-// the phylogenyInfo for the given tree and all subtrees. The
-// phylogenyInfo structure (in the clientData field) must already be
-// allocated!
+// the stIndexedTreeInfo for the given tree and all subtrees.
+// The stIndexedTreeInfo must already be allocated!
 void stPhylogeny_setLeavesBelow(stTree *tree, int64_t totalNumLeaves);
 
 // Return a new tree which has its partitions scored by how often they
@@ -107,19 +106,27 @@ stTree *stPhylogeny_scoreReconciliationFromBootstraps(stTree *tree,
 stTree *stPhylogeny_neighborJoin(stMatrix *distances, stList *outgroups);
 
 // Gets the (leaf) node corresponding to an index in the distance matrix.
+// Requires an indexed tree (which has stPhylogenyInfo with non-null
+// stIndexedTreeInfo.)
 stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex);
 
 // Find the distance between two arbitrary nodes (which must be in the
-// same tree, with stPhylogenyInfo attached properly).
+// same tree).
+// Requires an indexed tree (which has stPhylogenyInfo with non-null
+// stIndexedTreeInfo.)
 double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2);
 
 // Find the distance between leaves (given by their index in the
 // distance matrix.)
+// Requires an indexed tree (which has stPhylogenyInfo with non-null
+// stIndexedTreeInfo.)
 double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
                                          int64_t leaf2);
 
 // Return the MRCA of the given leaves. More efficient than
 // stTree_getMRCA.
+// Requires an indexed tree (which has stPhylogenyInfo with non-null
+// stIndexedTreeInfo.)
 stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2);
 
 // Compute join costs for a species tree for use in guided

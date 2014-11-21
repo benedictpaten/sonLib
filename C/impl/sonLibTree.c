@@ -72,6 +72,16 @@ stTree *stTree_clone(stTree *root) {
     return tree_clonetree(root, NULL);
 }
 
+// Set client data to NULL (optionally recursively).
+static void stTree_clearClientData(stTree *tree, bool recursive) {
+    stTree_setClientData(tree, NULL);
+    if (recursive) {
+        for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+            stTree_clearClientData(stTree_getChild(tree, i), true);
+        }
+    }
+}
+
 // clone this node, make its supertree a child, and clone all children
 // other than oldNode, leaving this node as a child of nodeToAddTo
 static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
@@ -113,7 +123,9 @@ static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
 stTree *stTree_reRoot(stTree *node, double distanceAbove) {
     if(stTree_getParent(node) == NULL) {
         // This node is already the root.
-        return stTree_clone(node);
+        stTree *newRoot = stTree_clone(node);
+        stTree_clearClientData(newRoot, true);
+        return newRoot;
     }
 
     assert(stTree_getBranchLength(node) >= distanceAbove);
@@ -125,6 +137,8 @@ stTree *stTree_reRoot(stTree *node, double distanceAbove) {
     stTree_setBranchLength(clonedNode, distanceAbove);
     tree_cloneFlippedTree(stTree_getParent(node), node, newRoot,
                           stTree_getBranchLength(node) - distanceAbove);
+    // Having the same client data can be a problem
+    stTree_clearClientData(newRoot, true);
     return newRoot;
 }
 

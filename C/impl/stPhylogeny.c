@@ -8,29 +8,98 @@
 // Spimap C/C++ translation layer include
 #include "stSpimapLayer.h"
 
-// Helper function to add the stPhylogenyInfo that is normally
+// Free stReconciliationInfo properly.
+static void stReconciliationInfo_destruct(stReconciliationInfo *info) {
+    free(info);
+}
+
+static stReconciliationInfo *stReconciliationInfo_clone(stReconciliationInfo *info) {
+    stReconciliationInfo *ret = st_malloc(sizeof(stReconciliationInfo));
+    ret->species = info->species;
+    ret->event = info->event;
+    return ret;
+}
+
+static void stIndexedTreeInfo_destruct(stIndexedTreeInfo *info) {
+    assert(info != NULL);
+    free(info->leavesBelow);
+    free(info);
+}
+
+// Free a stPhylogenyInfo struct
+void stPhylogenyInfo_destruct(stPhylogenyInfo *info) {
+    if (info->index != NULL) {
+        stIndexedTreeInfo_destruct(info->index);
+    }
+    if (info->recon != NULL) {
+        stReconciliationInfo_destruct(info->recon);
+    }
+    free(info);
+}
+
+// Clone a stIndexedTreeInfo struct
+static stIndexedTreeInfo *stIndexedTreeInfo_clone(stIndexedTreeInfo *info) {
+    stIndexedTreeInfo *ret = st_malloc(sizeof(stIndexedTreeInfo));
+    memcpy(ret, info, sizeof(stIndexedTreeInfo));
+    ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(char));
+    memcpy(ret->leavesBelow, info->leavesBelow, ret->totalNumLeaves * sizeof(char));
+    return ret;
+}
+
+// Clone a stPhylogenyInfo struct
+stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info) {
+    stPhylogenyInfo *ret = st_malloc(sizeof(stPhylogenyInfo));
+    if (info->index != NULL) {
+        ret->index = stIndexedTreeInfo_clone(info->index);
+    }
+    if (info->recon != NULL) {
+        ret->recon = stReconciliationInfo_clone(info->recon);
+    } else {
+        ret->recon = NULL;
+    }
+    return ret;
+}
+
+// Free the stPhylogenyInfo struct for this node and all nodes below it.
+void stPhylogenyInfo_destructOnTree(stTree *tree) {
+    stPhylogenyInfo_destruct(stTree_getClientData(tree));
+    stTree_setClientData(tree, NULL);
+    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+        stPhylogenyInfo_destructOnTree(stTree_getChild(tree, i));
+    }
+}
+
+// Helper function to add the stIndexedTreeInfo that is normally
 // generated during neighbor-joining to a tree that has leaf-labels 0,
 // 1, 2, etc.
-void addStPhylogenyInfoR(stTree *tree)
+void addStIndexedTreeInfoR(stTree *tree)
 {
-    stPhylogenyInfo *info = st_calloc(1, sizeof(stPhylogenyInfo));
-    stTree_setClientData(tree, info);
+    stPhylogenyInfo *info = stTree_getClientData(tree);
+    if (info == NULL) {
+        info = st_calloc(1, sizeof(stPhylogenyInfo));
+        stTree_setClientData(tree, info);
+    }
+    if (info->index != NULL) {
+        stIndexedTreeInfo_destruct(info->index);
+    }
+    stIndexedTreeInfo *indexInfo = st_calloc(1, sizeof(stIndexedTreeInfo));
+    info->index = indexInfo;
     if(stTree_getChildNumber(tree) == 0) {
         int ret;
-        ret = sscanf(stTree_getLabel(tree), "%" PRIi64, &info->matrixIndex);
+        ret = sscanf(stTree_getLabel(tree), "%" PRIi64, &indexInfo->matrixIndex);
         (void) ret;
         assert(ret == 1);
     } else {
-        info->matrixIndex = -1;
-        int64_t i;
-        for(i = 0; i < stTree_getChildNumber(tree); i++) {
-            addStPhylogenyInfoR(stTree_getChild(tree, i));
+        indexInfo->matrixIndex = -1;
+        for(int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+            addStIndexedTreeInfoR(stTree_getChild(tree, i));
         }
     }
 }
 
-void stPhylogeny_addStPhylogenyInfo(stTree *tree) {
-    addStPhylogenyInfoR(tree);
+void stPhylogeny_addStIndexedTreeInfo(stTree *tree) {
+    addStIndexedTreeInfoR(tree);
+    // FIXME: assumes binary tree
     stPhylogeny_setLeavesBelow(tree, (stTree_getNumNodes(tree)+1)/2);
 }
 
@@ -44,25 +113,28 @@ void stPhylogeny_setLeavesBelow(stTree *tree, int64_t totalNumLeaves)
     int64_t i, j;
     assert(stTree_getClientData(tree) != NULL);
     stPhylogenyInfo *info = stTree_getClientData(tree);
+    assert(info->index != NULL);
+    stIndexedTreeInfo *indexInfo = info->index;
     for (i = 0; i < stTree_getChildNumber(tree); i++) {
         stPhylogeny_setLeavesBelow(stTree_getChild(tree, i), totalNumLeaves);
     }
 
-    info->totalNumLeaves = totalNumLeaves;
-    if (info->leavesBelow != NULL) {
+    indexInfo->totalNumLeaves = totalNumLeaves;
+    if (indexInfo->leavesBelow != NULL) {
         // leavesBelow has already been allocated somewhere else, free it.
-        free(info->leavesBelow);
+        free(indexInfo->leavesBelow);
     }
-    info->leavesBelow = st_calloc(totalNumLeaves, sizeof(char));
+    indexInfo->leavesBelow = st_calloc(totalNumLeaves, sizeof(char));
     if (stTree_getChildNumber(tree) == 0) {
-        assert(info->matrixIndex < totalNumLeaves);
-        assert(info->matrixIndex >= 0);
-        info->leavesBelow[info->matrixIndex] = 1;
+        assert(indexInfo->matrixIndex < totalNumLeaves);
+        assert(indexInfo->matrixIndex >= 0);
+        indexInfo->leavesBelow[indexInfo->matrixIndex] = 1;
     } else {
         for (i = 0; i < totalNumLeaves; i++) {
             for (j = 0; j < stTree_getChildNumber(tree); j++) {
                 stPhylogenyInfo *childInfo = stTree_getClientData(stTree_getChild(tree, j));
-                info->leavesBelow[i] |= childInfo->leavesBelow[i];
+                stIndexedTreeInfo *childIndexInfo = childInfo->index;
+                indexInfo->leavesBelow[i] |= childIndexInfo->leavesBelow[i];
             }
         }
     }
@@ -84,10 +156,12 @@ static stTree *quickTreeToStTreeR(struct Tnode *tNode) {
 
     // Allocate the phylogenyInfo for this node.
     stPhylogenyInfo *info = st_calloc(1, sizeof(stPhylogenyInfo));
+    stIndexedTreeInfo *indexInfo = st_calloc(1, sizeof(stIndexedTreeInfo));
+    info->index = indexInfo;
     if (!hasChild) {
-        info->matrixIndex = tNode->nodenumber;
+        indexInfo->matrixIndex = tNode->nodenumber;
     } else {
-        info->matrixIndex = -1;
+        indexInfo->matrixIndex = -1;
     }
     stTree_setClientData(ret, info);
 
@@ -126,51 +200,17 @@ static stTree *quickTreeToStTree(struct Tree *tree, stList *outgroups) {
         }
         assert(maxNode != NULL);
         stTree *reRooted = stTree_reRoot(maxNode, maxLength/2);
-        assert(stTree_getNumNodes(reRooted) == stTree_getNumNodes(ret));
-        stPhylogeny_addStPhylogenyInfo(reRooted);
 
         // Get rid of the old tree
         stPhylogenyInfo_destructOnTree(ret);
         stTree_destruct(ret);
+
+        stPhylogeny_addStIndexedTreeInfo(reRooted);
         ret = reRooted;
     }
     free_Tree(tree);
     free_Tree(rootedTree);
     return ret;
-}
-
-// Free a stPhylogenyInfo struct
-void stPhylogenyInfo_destruct(stPhylogenyInfo *info) {
-    assert(info != NULL);
-    free(info->leavesBelow);
-    if (info->recon != NULL) {
-      stReconciliationInfo_destruct(info->recon);
-    }
-    free(info);
-}
-
-// Clone a stPhylogenyInfo struct
-stPhylogenyInfo *stPhylogenyInfo_clone(stPhylogenyInfo *info) {
-    stPhylogenyInfo *ret = st_malloc(sizeof(stPhylogenyInfo));
-    memcpy(ret, info, sizeof(stPhylogenyInfo));
-    ret->leavesBelow = malloc(ret->totalNumLeaves * sizeof(char));
-    memcpy(ret->leavesBelow, info->leavesBelow, ret->totalNumLeaves * sizeof(char));
-    if (info->recon != NULL) {
-        ret->recon = stReconciliationInfo_clone(info->recon);
-    } else {
-        ret->recon = NULL;
-    }
-    return ret;
-}
-
-// Free the stPhylogenyInfo struct for this node and all nodes below it.
-void stPhylogenyInfo_destructOnTree(stTree *tree) {
-    int64_t i;
-    stPhylogenyInfo_destruct(stTree_getClientData(tree));
-    stTree_setClientData(tree, NULL);
-    for (i = 0; i < stTree_getChildNumber(tree); i++) {
-        stPhylogenyInfo_destructOnTree(stTree_getChild(tree, i));
-    }
 }
 
 // Compare a single partition to a single bootstrap partition and
@@ -182,17 +222,17 @@ static void updatePartitionSupportFromPartition(stTree *partitionToScore,
 
     partitionInfo = stTree_getClientData(partitionToScore);
     bootstrapInfo = stTree_getClientData(bootstrap);
-    assert(partitionInfo != NULL);
-    assert(bootstrapInfo != NULL);
-    assert(partitionInfo->totalNumLeaves == bootstrapInfo->totalNumLeaves);
+    assert(partitionInfo != NULL && partitionInfo->index != NULL);
+    assert(partitionInfo != NULL && bootstrapInfo->index != NULL);
+    assert(partitionInfo->index->totalNumLeaves == bootstrapInfo->index->totalNumLeaves);
     // Check if the set of leaves is equal in both partitions. If not,
     // the partitions can't be equal.
-    if (memcmp(partitionInfo->leavesBelow, bootstrapInfo->leavesBelow,
-            partitionInfo->totalNumLeaves * sizeof(char))) {
+    if (memcmp(partitionInfo->index->leavesBelow, bootstrapInfo->index->leavesBelow,
+            partitionInfo->index->totalNumLeaves * sizeof(char))) {
         return;
     }
     // The partitions are equal, increase the support 
-    partitionInfo->numBootstraps++;
+    partitionInfo->index->numBootstraps++;
 }
 
 // Increase a partition's bootstrap support by supplying the given
@@ -204,41 +244,48 @@ static void updateSupportFromTree(stTree *partitionToScore,
                                   stTree *bootstrapTree,
                                   void (*updateAgainstBootstrapCandidate)(stTree *, stTree *, stTree *))
 {
-    int64_t i, j;
     stPhylogenyInfo *partitionInfo = stTree_getClientData(partitionToScore);
     stPhylogenyInfo *bootstrapInfo = stTree_getClientData(bootstrapTree);
+    assert(partitionInfo != NULL);
+    assert(bootstrapInfo != NULL);
+    stIndexedTreeInfo *partitionIndex = partitionInfo->index;
+    stIndexedTreeInfo *bootstrapIndex = bootstrapInfo->index;
+    assert(partitionIndex != NULL);
+    assert(bootstrapIndex != NULL);
     // This partition should be updated against the bootstrap
     // partition only if none of the bootstrap's children have a leaf
     // set that is a superset of the partition's leaf set.
     bool checkThisPartition = TRUE;
 
-    (void) bootstrapInfo;
-    assert(partitionInfo->totalNumLeaves == bootstrapInfo->totalNumLeaves);
+    (void) bootstrapIndex;
+    assert(partitionIndex->totalNumLeaves == bootstrapIndex->totalNumLeaves);
     // Check that the leaves under the partition are a subset of the
     // leaves under the current bootstrap node. This should always be
     // true, since that's checked before running this function
-    for(i = 0; i < partitionInfo->totalNumLeaves; i++) {
-        if(partitionInfo->leavesBelow[i]) {
-            assert(bootstrapInfo->leavesBelow[i]);
+    for (int64_t i = 0; i < partitionIndex->totalNumLeaves; i++) {
+        if (partitionIndex->leavesBelow[i]) {
+            assert(bootstrapIndex->leavesBelow[i]);
         }
     }
     
-    for(i = 0; i < stTree_getChildNumber(bootstrapTree); i++) {
+    for(int64_t i = 0; i < stTree_getChildNumber(bootstrapTree); i++) {
         stTree *bootstrapChild = stTree_getChild(bootstrapTree, i);
         stPhylogenyInfo *bootstrapChildInfo = stTree_getClientData(bootstrapChild);
+        assert(bootstrapChildInfo != NULL);
+        stIndexedTreeInfo *bootstrapChildIndex = bootstrapChildInfo->index;
         // If any of the bootstrap's children has a leaf set that is a
         // superset of the partition's leaf set, we should update
         // against that child instead.
         bool isSuperset = TRUE;
-        for(j = 0; j < partitionInfo->totalNumLeaves; j++) {
-            if(partitionInfo->leavesBelow[j]) {
-                if(!bootstrapChildInfo->leavesBelow[j]) {
+        for (int64_t j = 0; j < partitionIndex->totalNumLeaves; j++) {
+            if (partitionIndex->leavesBelow[j]) {
+                if (!bootstrapChildIndex->leavesBelow[j]) {
                     isSuperset = FALSE;
                     break;
                 }
             }
         }
-        if(isSuperset) {
+        if (isSuperset) {
             updateSupportFromTree(partitionToScore, originalPartition,
                                   bootstrapChild,
                                   updateAgainstBootstrapCandidate);
@@ -247,7 +294,7 @@ static void updateSupportFromTree(stTree *partitionToScore,
         }
     }
 
-    if(checkThisPartition) {
+    if (checkThisPartition) {
         // This bootstrap partition is the closest candidate. Check
         // the partition against this node.
         updateAgainstBootstrapCandidate(partitionToScore, originalPartition,
@@ -289,7 +336,7 @@ stTree *stPhylogeny_scoreFromBootstraps(stTree *tree, stList *bootstraps)
                               updatePartitionSupportFromPartition);
     }
 
-    info->bootstrapSupport = ((double) info->numBootstraps) / stList_length(bootstraps);
+    info->index->bootstrapSupport = ((double) info->index->numBootstraps) / stList_length(bootstraps);
     return ret;
 }
 
@@ -303,11 +350,15 @@ void updateReconciliationSupportFromPartition(stTree *partitionToScore,
     bootstrapInfo = stTree_getClientData(bootstrapPartition);
     assert(partitionInfo != NULL);
     assert(bootstrapInfo != NULL);
-    assert(partitionInfo->totalNumLeaves == bootstrapInfo->totalNumLeaves);
+    stIndexedTreeInfo *partitionIndex = partitionInfo->index;
+    stIndexedTreeInfo *bootstrapIndex = bootstrapInfo->index;
+    assert(partitionIndex != NULL);
+    assert(bootstrapIndex != NULL);
+    assert(partitionIndex->totalNumLeaves == bootstrapIndex->totalNumLeaves);
     // Check if the set of leaves is equal in both partitions. If not,
     // the partitions can't be equal.
-    if (memcmp(partitionInfo->leavesBelow, bootstrapInfo->leavesBelow,
-            partitionInfo->totalNumLeaves * sizeof(char))) {
+    if (memcmp(partitionIndex->leavesBelow, bootstrapIndex->leavesBelow,
+            partitionIndex->totalNumLeaves * sizeof(char))) {
         return;
     }
 
@@ -316,7 +367,7 @@ void updateReconciliationSupportFromPartition(stTree *partitionToScore,
     stTree *bootstrapParent = stTree_getParent(bootstrapPartition);
     if (partitionParent == NULL && bootstrapParent == NULL) {
         // We count this case as having identical reconciliation.
-        partitionInfo->numBootstraps++;
+        partitionIndex->numBootstraps++;
         return;
     } else if (partitionParent == NULL || bootstrapParent == NULL) {
         // If only one is the root, we don't consider them to have the
@@ -338,7 +389,7 @@ void updateReconciliationSupportFromPartition(stTree *partitionToScore,
     }
     // The partitions are equal and they have the same reconciliation,
     // increase the support
-    partitionInfo->numBootstraps++;
+    partitionIndex->numBootstraps++;
 }
 
 stTree *stPhylogeny_scoreReconciliationFromBootstrap(stTree *tree,
@@ -372,7 +423,7 @@ stTree *stPhylogeny_scoreReconciliationFromBootstraps(stTree *tree,
                               updateReconciliationSupportFromPartition);
     }
 
-    info->bootstrapSupport = ((double) info->numBootstraps) / stList_length(bootstraps);
+    info->index->bootstrapSupport = ((double) info->index->numBootstraps) / stList_length(bootstraps);
     return ret;
 }
 
@@ -421,14 +472,14 @@ static double stPhylogeny_distToLeaf(stTree *tree, int64_t leafIndex) {
     int64_t i;
     stPhylogenyInfo *info = stTree_getClientData(tree);
     (void)info;
-    assert(info->leavesBelow[leafIndex]);
+    assert(info->index->leavesBelow[leafIndex]);
     if(stTree_getChildNumber(tree) == 0) {
         return 0.0;
     }
     for(i = 0; i < stTree_getChildNumber(tree); i++) {
         stTree *child = stTree_getChild(tree, i);
         stPhylogenyInfo *childInfo = stTree_getClientData(child);
-        if(childInfo->leavesBelow[leafIndex]) {
+        if(childInfo->index->leavesBelow[leafIndex]) {
             return stTree_getBranchLength(child) + stPhylogeny_distToLeaf(child, leafIndex);
         }
     }
@@ -445,22 +496,31 @@ static double stPhylogeny_distToChild(stTree *tree, stTree *target) {
     stPhylogenyInfo *treeInfo, *targetInfo;
     treeInfo = stTree_getClientData(tree);
     targetInfo = stTree_getClientData(target);
-    assert(treeInfo->totalNumLeaves == targetInfo->totalNumLeaves);
-    if(memcmp(treeInfo->leavesBelow, targetInfo->leavesBelow,
-              treeInfo->totalNumLeaves) == 0) {
+    assert(treeInfo != NULL);
+    assert(targetInfo != NULL);
+    stIndexedTreeInfo *treeIndex = treeInfo->index;
+    stIndexedTreeInfo *targetIndex = targetInfo->index;
+    assert(treeIndex != NULL);
+    assert(targetIndex != NULL);
+    assert(treeIndex->totalNumLeaves == targetIndex->totalNumLeaves);
+    if(memcmp(treeIndex->leavesBelow, targetIndex->leavesBelow,
+              treeIndex->totalNumLeaves) == 0) {
         // This node is the target node
         return 0.0;
     }
     for(i = 0; i < stTree_getChildNumber(tree); i++) {
         stTree *child = stTree_getChild(tree, i);
         stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        assert(childInfo != NULL);
+        stIndexedTreeInfo *childIndex = childInfo->index;
+        assert(childIndex != NULL);
         bool childIsSuperset = true;
         // Go through all the children and find one which is above (or
         // is) the target node. (Any node above the target will have a
         // leaf set that is a superset of the target's leaf set.)
-        assert(childInfo->totalNumLeaves == treeInfo->totalNumLeaves);
-        for(j = 0; j < childInfo->totalNumLeaves; j++) {
-            if(targetInfo->leavesBelow[j] && !childInfo->leavesBelow[j]) {
+        assert(childIndex->totalNumLeaves == treeIndex->totalNumLeaves);
+        for(j = 0; j < childIndex->totalNumLeaves; j++) {
+            if(targetIndex->leavesBelow[j] && !childIndex->leavesBelow[j]) {
                 childIsSuperset = false;
                 break;
             }
@@ -482,7 +542,10 @@ stTree *stPhylogeny_getMRCA(stTree *tree, int64_t leaf1, int64_t leaf2) {
     for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
         stTree *child = stTree_getChild(tree, i);
         stPhylogenyInfo *childInfo = stTree_getClientData(child);
-        if(childInfo->leavesBelow[leaf1] && childInfo->leavesBelow[leaf2]) {
+        assert(childInfo != NULL);
+        stIndexedTreeInfo *childIndex = childInfo->index;
+        assert(childIndex != NULL);
+        if(childIndex->leavesBelow[leaf1] && childIndex->leavesBelow[leaf2]) {
             return stPhylogeny_getMRCA(child, leaf1, leaf2);
         }
     }
@@ -502,26 +565,27 @@ double stPhylogeny_distanceBetweenLeaves(stTree *tree, int64_t leaf1,
 // Find the distance between two arbitrary nodes (which must be in the
 // same tree, with stPhylogenyInfo attached properly).
 double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2) {
-    int64_t i;
     stPhylogenyInfo *info1, *info2;
     if(node1 == node2) {
         return 0.0;
     }
     info1 = stTree_getClientData(node1);
     info2 = stTree_getClientData(node2);
-    assert(info1->totalNumLeaves == info2->totalNumLeaves);
+    stIndexedTreeInfo *index1 = info1->index;
+    stIndexedTreeInfo *index2 = info2->index;
+    assert(index1->totalNumLeaves == index2->totalNumLeaves);
     // Check if node1 is under node2, vice versa, or if they aren't on
     // the same path to the root
     bool oneAboveTwo = false, twoAboveOne = false, differentSubsets = true;
-    for(i = 0; i < info1->totalNumLeaves; i++) {
-        if(info1->leavesBelow[i] && info2->leavesBelow[i]) {
+    for(int64_t i = 0; i < index1->totalNumLeaves; i++) {
+        if(index1->leavesBelow[i] && index2->leavesBelow[i]) {
             differentSubsets = false;
-        } else if(info2->leavesBelow[i] && !info1->leavesBelow[i]) {
+        } else if(index2->leavesBelow[i] && !index1->leavesBelow[i]) {
             twoAboveOne = true;
             // Technically we can break here, but it's cheap to
             // double-check that everything is correct.
             assert(differentSubsets || oneAboveTwo == false);
-        } else if(info1->leavesBelow[i] && !info2->leavesBelow[i]) {
+        } else if(index1->leavesBelow[i] && !index2->leavesBelow[i]) {
             oneAboveTwo = true;
             assert(differentSubsets || twoAboveOne == false);
         }
@@ -539,11 +603,13 @@ double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2) {
             parent = stTree_getParent(parent);
             assert(parent != NULL);
             stPhylogenyInfo *parentInfo = stTree_getClientData(parent);
-            assert(parentInfo->totalNumLeaves == info1->totalNumLeaves);
+            assert(parentInfo != NULL && parentInfo->index != NULL);
+            stIndexedTreeInfo *parentIndex = parentInfo->index;
+            assert(parentIndex->totalNumLeaves == index1->totalNumLeaves);
             bool isCommonAncestor = true;
-            for(i = 0; i < parentInfo->totalNumLeaves; i++) {
-                if((info1->leavesBelow[i] || info2->leavesBelow[i]) &&
-                   !parentInfo->leavesBelow[i]) {
+            for(int64_t i = 0; i < parentIndex->totalNumLeaves; i++) {
+                if((index1->leavesBelow[i] || index2->leavesBelow[i]) &&
+                   !parentIndex->leavesBelow[i]) {
                     isCommonAncestor = false;
                 }
             }
@@ -566,20 +632,26 @@ double stPhylogeny_distanceBetweenNodes(stTree *node1, stTree *node2) {
 stTree *stPhylogeny_getLeafByIndex(stTree *tree, int64_t leafIndex) {
     int64_t i;
     stPhylogenyInfo *info = stTree_getClientData(tree);
-    assert(leafIndex < info->totalNumLeaves);
-    if(info->matrixIndex == leafIndex) {
+    assert(info != NULL);
+    stIndexedTreeInfo *index = info->index;
+    assert(index != NULL);
+    assert(leafIndex < index->totalNumLeaves);
+    if(index->matrixIndex == leafIndex) {
         return tree;
     }
     for(i = 0; i < stTree_getChildNumber(tree); i++) {
         stTree *child = stTree_getChild(tree, i);
         stPhylogenyInfo *childInfo = stTree_getClientData(child);
-        assert(info->totalNumLeaves == childInfo->totalNumLeaves);
-        if(childInfo->leavesBelow[leafIndex]) {
+        assert(childInfo != NULL);
+        stIndexedTreeInfo *childIndex = childInfo->index;
+        assert(childIndex != NULL);
+        assert(index->totalNumLeaves == childIndex->totalNumLeaves);
+        if(childIndex->leavesBelow[leafIndex]) {
             return stPhylogeny_getLeafByIndex(child, leafIndex);
         }
     }
 
-    // Shouldn't get here if the stPhylogenyInfo is set properly
+    // Shouldn't get here if the stIndexedTreeInfo is set properly
     return NULL;
 }
 
@@ -729,8 +801,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           stHash *speciesToJoinCostIndex,
                                           int64_t **speciesMRCAMatrix,
                                           stTree *speciesTree) {
-    int64_t numSpecies = stTree_getNumNodes(speciesTree);
-
     int64_t numLeaves = stMatrix_n(similarityMatrix);
     assert(numLeaves == stMatrix_m(similarityMatrix));
     assert(numLeaves >= 3);
@@ -980,7 +1050,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 
     assert(stTree_getNumNodes(ret) == numLeaves * 2 - 1);
 
-    stPhylogeny_addStPhylogenyInfo(ret);
+    stPhylogeny_addStIndexedTreeInfo(ret);
     return ret;
 }
 
@@ -1067,25 +1137,4 @@ void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
                                           stHash *leafToSpecies,
                                           int64_t *dups, int64_t *losses) {
     spimap_reconciliationCost(geneTree, speciesTree, leafToSpecies, dups, losses);
-}
-
-// Free stReconciliationInfo properly.
-void stReconciliationInfo_destruct(stReconciliationInfo *info) {
-    free(info);
-}
-
-// Free stReconciliationInfo in the client data field of a tree and
-// all its children recursively.
-void stReconciliationInfo_destructOnTree(stTree *tree) {
-    stReconciliationInfo_destruct(stTree_getClientData(tree));
-    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
-        stReconciliationInfo_destructOnTree(stTree_getChild(tree, i));
-    }
-}
-
-stReconciliationInfo *stReconciliationInfo_clone(stReconciliationInfo *info) {
-    stReconciliationInfo *ret = st_malloc(sizeof(stReconciliationInfo));
-    ret->species = info->species;
-    ret->event = info->event;
-    return ret;
 }

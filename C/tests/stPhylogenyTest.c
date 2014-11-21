@@ -3,6 +3,15 @@
 #include "sonLib.h"
 #include "stPhylogeny.h"
 
+static stIndexedTreeInfo *getIndex(stTree *node) {
+    assert(node != NULL);
+    stPhylogenyInfo *info = stTree_getClientData(node);
+    assert(info != NULL);
+    stIndexedTreeInfo *index = info->index;
+    assert(index != NULL);
+    return index;
+}
+
 static void testSimpleNeighborJoin(CuTest *testCase) {
     int64_t i, j;
     // Simple static test, with index 1 very far away from everything,
@@ -18,7 +27,7 @@ static void testSimpleNeighborJoin(CuTest *testCase) {
         }
     }
     stTree *tree = stPhylogeny_neighborJoin(distanceStMatrix, NULL);
-    stPhylogenyInfo *info = stTree_getClientData(tree);
+    stIndexedTreeInfo *info = getIndex(tree);
 
     // Check that leavesBelow is correct for the root (every leaf is
     // below the root)
@@ -42,7 +51,6 @@ static void testSimpleNeighborJoin(CuTest *testCase) {
     stTree_destruct(tree);
 }
 
-
 // Score a tree against a few simple "bootstrapped" trees to check
 // that identical partitions are counted correctly.
 void testSimpleBootstrapPartitionScoring(CuTest *testCase)
@@ -50,70 +58,70 @@ void testSimpleBootstrapPartitionScoring(CuTest *testCase)
     stList *bootstraps = stList_construct();
     stTree *tree = stTree_parseNewickString("(((0,1),(2,3)),4);");
     stTree *bootstrap, *result;
-    stPhylogenyInfo *info;
-    stPhylogeny_addStPhylogenyInfo(tree);
+    stIndexedTreeInfo *index;
+    stPhylogeny_addStIndexedTreeInfo(tree);
 
     // An identical tree should give support to all partitions.
     bootstrap = stTree_parseNewickString("(4,((1,0),(3,2)));");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     result = stPhylogeny_scoreFromBootstrap(tree, bootstrap);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
     stList_append(bootstraps, bootstrap);
 
     // Swapping 0 for 4
     bootstrap = stTree_parseNewickString("(0,((1,4),(3,2)));");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     result = stPhylogeny_scoreFromBootstrap(tree, bootstrap);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
     stList_append(bootstraps, bootstrap);
 
     // Swapping 0 for 3
     bootstrap = stTree_parseNewickString("(4,((1,3),(0,2)));");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     result = stPhylogeny_scoreFromBootstrap(tree, bootstrap);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
     stList_append(bootstraps, bootstrap);
 
     // Test all 3 together
     result = stPhylogeny_scoreFromBootstraps(tree, bootstraps);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 3);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 2);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 2);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 3);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 2);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 2);
 
     // Clean up
     stPhylogenyInfo_destructOnTree(tree);
@@ -152,8 +160,8 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     stList *bootstraps = stList_construct();
     stTree *tree = stTree_parseNewickString("(((0,1)a,(2,3)b)c,4)d;");
     stTree *bootstrap, *result;
-    stPhylogenyInfo *info;
-    stPhylogeny_addStPhylogenyInfo(tree);
+    stIndexedTreeInfo *index;
+    stPhylogeny_addStIndexedTreeInfo(tree);
     // Add dummy recon info
 
     // Dummy species that don't actually point anywhere. A bit nasty,
@@ -177,7 +185,7 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     // An identical tree with identical reconciliation should give
     // support to all partitions.
     bootstrap = stTree_parseNewickString("(4,((1,0)a,(3,2)b)c)d;");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     // Add dummy recon info identical to above
     setReconInfoManually(bootstrap, "0", s0, LEAF);
     setReconInfoManually(bootstrap, "1", s1, LEAF);
@@ -190,18 +198,18 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     setReconInfoManually(bootstrap, "d", s3, SPECIATION);
     result = stPhylogeny_scoreReconciliationFromBootstrap(tree, bootstrap);
     // d
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
     // c
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // a
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // b
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
     stList_append(bootstraps, bootstrap);
@@ -210,7 +218,7 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     // decrease, even though the reconciliation is identical, because
     // it relies on the partitions being the same
     bootstrap = stTree_parseNewickString("(0,((1,4)a,(3,2)b)c)d;");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     // Add dummy recon info identical to above
     setReconInfoManually(bootstrap, "0", s0, LEAF);
     setReconInfoManually(bootstrap, "1", s1, LEAF);
@@ -223,29 +231,29 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     setReconInfoManually(bootstrap, "d", s3, SPECIATION);
     result = stPhylogeny_scoreReconciliationFromBootstrap(tree, bootstrap);
     // d
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
     // c
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // a
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // b
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // NB: the reconciliation bootstrap support level for leaves is
     // not always 1!
     // 0
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // 4
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 4));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 4));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // 2
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
 
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
@@ -255,7 +263,7 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     // event (duplication, speciation) labels affect the support value
     // as well.
     bootstrap = stTree_parseNewickString("(4,((1,0)a,(3,2)b)c)d;");
-    stPhylogeny_addStPhylogenyInfo(bootstrap);
+    stPhylogeny_addStIndexedTreeInfo(bootstrap);
     // Add dummy recon info, but this time, the event for a is a
     // duplication (impossible in MP reconciliation, but we should
     // support it anyway).
@@ -270,24 +278,24 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     setReconInfoManually(bootstrap, "d", s5, SPECIATION);
     result = stPhylogeny_scoreReconciliationFromBootstrap(tree, bootstrap);
     // d
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
     // c
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // a
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // b
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // 1
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 1));
-    CuAssertTrue(testCase, info->numBootstraps == 0);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 1));
+    CuAssertTrue(testCase, index->numBootstraps == 0);
     // 2
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
     stList_append(bootstraps, bootstrap);
@@ -295,33 +303,33 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
     // Test all 3 together
     result = stPhylogeny_scoreReconciliationFromBootstraps(tree, bootstraps);
     // d
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 4, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 3);
-    CuAssertTrue(testCase, info->bootstrapSupport == 1.0);
+    index = getIndex(stPhylogeny_getMRCA(result, 4, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 3);
+    CuAssertTrue(testCase, index->bootstrapSupport == 1.0);
     // c
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // a
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 1, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 2);
+    index = getIndex(stPhylogeny_getMRCA(result, 1, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 2);
     // b
-    info = stTree_getClientData(stPhylogeny_getMRCA(result, 3, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 3);
+    index = getIndex(stPhylogeny_getMRCA(result, 3, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 3);
     // 4
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 4));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 4));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     // 3
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 3));
-    CuAssertTrue(testCase, info->numBootstraps == 3);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 3));
+    CuAssertTrue(testCase, index->numBootstraps == 3);
     // 2
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 2));
-    CuAssertTrue(testCase, info->numBootstraps == 3);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 2));
+    CuAssertTrue(testCase, index->numBootstraps == 3);
     // 1
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 1));
-    CuAssertTrue(testCase, info->numBootstraps == 2);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 1));
+    CuAssertTrue(testCase, index->numBootstraps == 2);
     // 0
-    info = stTree_getClientData(stPhylogeny_getLeafByIndex(result, 0));
-    CuAssertTrue(testCase, info->numBootstraps == 1);
+    index = getIndex(stPhylogeny_getLeafByIndex(result, 0));
+    CuAssertTrue(testCase, index->numBootstraps == 1);
     stPhylogenyInfo_destructOnTree(result);
     stTree_destruct(result);
 
@@ -364,14 +372,14 @@ static void testOnTree(CuTest *testCase, stTree *tree,
 
 static void checkLeavesBelow(stTree *tree, CuTest *testCase) {
     int64_t i;
-    stPhylogenyInfo *info = stTree_getClientData(tree);
-    for (i = 0; i < info->totalNumLeaves; i++) {
+    stIndexedTreeInfo *index = getIndex(tree);
+    for (i = 0; i < index->totalNumLeaves; i++) {
         char *label = stString_print("%" PRIi64, i);
-        if (info->leavesBelow[i]) {
+        if (index->leavesBelow[i]) {
             // leavesBelow says it has leaf i under it -- check
             // that it actually does
             CuAssertTrue(testCase, stTree_findChild(tree, label) != NULL ||
-                         info->matrixIndex == i);
+                         index->matrixIndex == i);
         } else {
             // leavesBelow says leaf i is not under this node, check
             // that it's not
@@ -384,12 +392,12 @@ static void checkLeavesBelow(stTree *tree, CuTest *testCase) {
 // check the stPhylogeny_getLeafByIndex function on a tree.
 static void checkGetLeafByIndex(stTree *tree, CuTest *testCase) {
     int64_t i;
-    stPhylogenyInfo *info = stTree_getClientData(tree);
-    for (i = 0; i < info->totalNumLeaves; i++) {
-        if (info->leavesBelow[i]) {
+    stIndexedTreeInfo *index = getIndex(tree);
+    for (i = 0; i < index->totalNumLeaves; i++) {
+        if (index->leavesBelow[i]) {
             stTree *leaf = stPhylogeny_getLeafByIndex(tree, i);
-            stPhylogenyInfo *leafInfo = stTree_getClientData(leaf);
-            CuAssertTrue(testCase, leafInfo->matrixIndex == i);
+            stIndexedTreeInfo *leafIndex = getIndex(leaf);
+            CuAssertTrue(testCase, leafIndex->matrixIndex == i);
         } else {
             CuAssertTrue(testCase, stPhylogeny_getLeafByIndex(tree, i) == NULL);
         }
@@ -399,10 +407,10 @@ static void checkGetLeafByIndex(stTree *tree, CuTest *testCase) {
 // Sanity-check the assorted distance functions
 static void checkDistanceFunctions(stTree *tree, CuTest *testCase) {
     int64_t i, j;
-    stPhylogenyInfo *info = stTree_getClientData(tree);
-    for (i = 0; i < info->totalNumLeaves; i++) {
+    stIndexedTreeInfo *index = getIndex(tree);
+    for (i = 0; i < index->totalNumLeaves; i++) {
         for (j = 0; j < i; j++) {
-            if (info->leavesBelow[i] && info->leavesBelow[j]) {
+            if (index->leavesBelow[i] && index->leavesBelow[j]) {
                 // Check that the distance from leaf i to leaf j is the same as
                 // the distance from j to i
                 CuAssertDblEquals(testCase, stPhylogeny_distanceBetweenLeaves(tree, i, j), stPhylogeny_distanceBetweenLeaves(tree, j, i), 0.1);
@@ -450,7 +458,6 @@ static void testRandomNeighborJoin(CuTest *testCase) {
                     outgroupBranchIsRoot = true;
                 }
             }
-            assert(outgroupBranchIsRoot);
             CuAssertTrue(testCase, outgroupBranchIsRoot);
             stList_destruct(outgroups);
         }
@@ -478,11 +485,11 @@ static int64_t numBootstraps; // Totally lazy, but enables
 // Check that the partition-support values on a bootstrap-scored tree
 // are all sensible.
 static void checkPartitionSupport(stTree *tree, CuTest *testCase) {
-    stPhylogenyInfo *info = stTree_getClientData(tree);
-    CuAssertTrue(testCase, info->numBootstraps <= numBootstraps);
-    CuAssertTrue(testCase, info->numBootstraps >= 0);
-    CuAssertTrue(testCase, info->bootstrapSupport >= 0.0);
-    CuAssertTrue(testCase, info->bootstrapSupport <= 1.0);
+    stIndexedTreeInfo *index = getIndex(tree);
+    CuAssertTrue(testCase, index->numBootstraps <= numBootstraps);
+    CuAssertTrue(testCase, index->numBootstraps >= 0);
+    CuAssertTrue(testCase, index->bootstrapSupport >= 0.0);
+    CuAssertTrue(testCase, index->bootstrapSupport <= 1.0);
 }
 
 // Run faux "bootstraps" on random distance matrices of the same size,
@@ -516,8 +523,8 @@ static void testRandomBootstraps(CuTest *testCase) {
     checkDistanceFunctions(bootstrappedTree, testCase);
 
     // Root support should always be 1
-    stPhylogenyInfo *rootInfo = stTree_getClientData(bootstrappedTree);
-    CuAssertTrue(testCase, rootInfo->bootstrapSupport == 1.0);
+    stIndexedTreeInfo *rootIndex = getIndex(bootstrappedTree);
+    CuAssertTrue(testCase, rootIndex->bootstrapSupport == 1.0);
     // Check that the parition support numbers are all reasonable
     testOnTree(testCase, bootstrappedTree, checkPartitionSupport);
 
@@ -669,15 +676,15 @@ static bool isTopologyEqual(stTree *tree1, stTree *tree2) {
     for (int64_t i = 0; i < stTree_getChildNumber(tree1); i++) {
         stTree *child1 = stTree_getChild(tree1, i);
         // Find matching child in tree2.
-        stPhylogenyInfo *info1 = stTree_getClientData(child1);
+        stIndexedTreeInfo *index1 = getIndex(child1);
         stTree *matchingChild = NULL;
         for (int64_t j = 0; j < stTree_getChildNumber(tree2); j++) {
             stTree *child2 = stTree_getChild(tree2, j);
-            stPhylogenyInfo *info2 = stTree_getClientData(child2);
-            if (info1->totalNumLeaves != info2->totalNumLeaves) {
+            stIndexedTreeInfo *index2 = getIndex(child2);
+            if (index1->totalNumLeaves != index2->totalNumLeaves) {
                 return false;
             }
-            if (!memcmp(info1->leavesBelow, info2->leavesBelow, info1->totalNumLeaves)) {
+            if (!memcmp(index1->leavesBelow, index2->leavesBelow, index1->totalNumLeaves)) {
                 // Found correct child
                 matchingChild = child2;
                 break;
@@ -731,12 +738,14 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         free(speciesMRCAMatrix);
 
         // Root both the trees the same way (above node 0)
+        stPhylogenyInfo_destructOnTree(neighborJoiningTree);
+        stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
         stTree *tmp = stTree_findChild(neighborJoiningTree, "0");
         stTree *rootedNeighborJoiningTree = stTree_reRoot(tmp, stTree_getBranchLength(tmp)/2);
         tmp = stTree_findChild(guidedNeighborJoiningTree, "0");
         stTree *rootedGuidedNeighborJoiningTree = stTree_reRoot(tmp, stTree_getBranchLength(tmp)/2);
-        stPhylogeny_addStPhylogenyInfo(rootedNeighborJoiningTree);
-        stPhylogeny_addStPhylogenyInfo(rootedGuidedNeighborJoiningTree);
+        stPhylogeny_addStIndexedTreeInfo(rootedNeighborJoiningTree);
+        stPhylogeny_addStIndexedTreeInfo(rootedGuidedNeighborJoiningTree);
 
         // Check that the topologies are the same in neighbor-joining
         // vs guided neighbor-joining (when they are rooted the same way)
@@ -747,9 +756,7 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         stTree_destruct(rootedGuidedNeighborJoiningTree);
         stPhylogenyInfo_destructOnTree(rootedNeighborJoiningTree);
         stTree_destruct(rootedNeighborJoiningTree);
-        stPhylogenyInfo_destructOnTree(guidedNeighborJoiningTree);
         stTree_destruct(guidedNeighborJoiningTree);
-        stPhylogenyInfo_destructOnTree(neighborJoiningTree);
         stTree_destruct(neighborJoiningTree);
         stTree_destruct(speciesTree);
         stMatrix_destruct(similarityMatrix);
@@ -876,7 +883,7 @@ int64_t bestDups;
 // than the "best" cost.
 static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     stTree *newRootedTree = stTree_reRoot(tree, 0.0);
-    stPhylogeny_addStPhylogenyInfo(newRootedTree);
+    stPhylogeny_addStIndexedTreeInfo(newRootedTree);
     // This is pretty stupid, but we have to map from the
     // leafToSpecies on the old gene tree to this rerooted
     // one. TODO: Probably the leafToSpecies concept needs to be rethought.
@@ -885,9 +892,9 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     stHashIterator *hashIt = stHash_getIterator(globalLeafToSpecies);
     stTree *curGene; // Current gene in the old leafToSpecies.
     while((curGene = stHash_getNext(hashIt)) != NULL) {
-        stPhylogenyInfo *info = stTree_getClientData(curGene);
+        stIndexedTreeInfo *index = getIndex(curGene);
         stTree *species = stHash_search(globalLeafToSpecies, curGene);
-        stTree *newGene = stPhylogeny_getLeafByIndex(newRootedTree, info->matrixIndex);
+        stTree *newGene = stPhylogeny_getLeafByIndex(newRootedTree, index->matrixIndex);
         stHash_insert(myLeafToSpecies, newGene, species);
     }
 
@@ -935,9 +942,9 @@ static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
         stHashIterator *hashIt = stHash_getIterator(globalLeafToSpecies);
         stTree *curGene; // Current gene in the old leafToSpecies.
         while((curGene = stHash_getNext(hashIt)) != NULL) {
-            stPhylogenyInfo *info = stTree_getClientData(curGene);
+            stIndexedTreeInfo *index = getIndex(curGene);
             stTree *species = stHash_search(globalLeafToSpecies, curGene);
-            stTree *newGene = stPhylogeny_getLeafByIndex(rooted, info->matrixIndex);
+            stTree *newGene = stPhylogeny_getLeafByIndex(rooted, index->matrixIndex);
             stHash_insert(myLeafToSpecies, newGene, species);
         }
         stPhylogeny_reconciliationCostBinary(rooted, globalSpeciesTree, myLeafToSpecies, &dups, &losses);
@@ -970,10 +977,10 @@ static void testStPhylogeny_reconcileAtMostBinary_random(CuTest *testCase) {
         stMatrix_destruct(matrix);
 
         stTree *reconciledAtMostBinary = stTree_clone(geneTree);
-        stPhylogeny_addStPhylogenyInfo(reconciledAtMostBinary);
+        stPhylogeny_addStIndexedTreeInfo(reconciledAtMostBinary);
 
         stTree *reconciledBinary = stTree_clone(geneTree);
-        stPhylogeny_addStPhylogenyInfo(reconciledBinary);
+        stPhylogeny_addStIndexedTreeInfo(reconciledBinary);
 
         // Assign genes to random species.
         stHash *leafToSpeciesAtMostBinary = stHash_construct();
