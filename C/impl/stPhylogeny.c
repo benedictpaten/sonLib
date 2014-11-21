@@ -1175,13 +1175,6 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
     }
 }
 
-static void clearClientData(stTree *tree) {
-    stTree_setClientData(tree, NULL);
-    for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
-        clearClientData(stTree_getChild(tree, i));
-    }
-}
-
 // Recurse down a tree testing roots to see which would give the
 // lowest recon cost if the tree was rooted at that position.
 // curRoot is the child of the branch to root on.
@@ -1249,15 +1242,15 @@ void stPhylogeny_rootAndReconcileAtMostBinary_R(stTree *curRoot,
     }
 }
 
+// FIXME: destructive to client data on geneTree.
 stTree *stPhylogeny_rootAndReconcileAtMostBinary(stTree *geneTree,
                                                  stHash *leafToSpecies) {
-    stTree *ret = stTree_clone(geneTree);
-    clearClientData(ret);
-    stPhylogeny_reconcileAtMostBinary(ret, leafToSpecies, false);
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
+
     // Find the root which has the lowest reconciliation cost.
     int64_t dups = 0, losses = 0;
-    stPhylogeny_reconciliationCostAtMostBinary(ret, &dups, &losses);
-    stTree *bestRoot;
+    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
+    stTree *bestRoot = geneTree;
     int64_t bestCost = dups;
     if (stTree_getChildNumber(geneTree) == 0) {
         return stTree_clone(geneTree);
