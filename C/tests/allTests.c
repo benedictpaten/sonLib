@@ -24,10 +24,12 @@ CuSuite* stPosetAlignmentTestSuite(void);
 CuSuite* sonLibGraphTestSuite(void);
 CuSuite* sonLib_stMatrixTestSuite(void);
 CuSuite* sonLib_stPhylogenyTestSuite(void);
+CuSuite* sonLib_stThreadPoolTestSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
+    CuSuiteAddSuite(suite, sonLib_stThreadPoolTestSuite());
     CuSuiteAddSuite(suite, sonLib_stPhylogenyTestSuite());
     CuSuiteAddSuite(suite, sonLib_stMatrixTestSuite());
     CuSuiteAddSuite(suite, sonLibGraphTestSuite());
