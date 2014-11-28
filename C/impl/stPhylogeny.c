@@ -1056,12 +1056,6 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     return ret;
 }
 
-// (Re)root and reconcile a gene tree to a tree with minimal dups.
-stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree,
-                                           stHash *leafToSpecies) {
-    return spimap_rootAndReconcile(geneTree, speciesTree, leafToSpecies);
-}
-
 // Fills in stReconciliationInfo, creating the containing
 // stPhylogenyInfo if necessary.
 static void fillInReconciliationInfo(stTree *gene, stTree *recon,
@@ -1117,15 +1111,24 @@ static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
     return recon;
 }
 
-// Reconcile a gene tree (without rerooting), set the
-// stReconcilationInfo as client data on all nodes, and optionally
-// set the labels of the ancestors to the labels of the species tree.
+// Reconcile a gene tree (without rerooting), set the proper
+// stReconcilationInfo (as an entry of stPhylogenyInfo) as client data
+// on all nodes, and optionally set the labels of the ancestors to the
+// labels of their reconciliation in the species tree.
+//
+// The gene tree must be binary, and the species tree must be
+// "at-most-binary", i.e. it must have no nodes with more than 3
+// children, but may have nodes with only one child.
 void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
                                        bool relabelAncestors) {
     stPhylogeny_reconcileAtMostBinary_R(geneTree, leafToSpecies,
                                         relabelAncestors);
 }
 
+// For a tree that has already been reconciled by
+// reconcileAtMostBinary, calculates the number of dups and losses
+// implied by the reconciliation. dups and losses must be set to 0
+// before calling.
 void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
                                                 int64_t *dups,
                                                 int64_t *losses) {
@@ -1181,11 +1184,11 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
 // Recurse down a tree testing roots to see which would give the
 // lowest recon cost if the tree was rooted at that position.
 // curRoot is the child of the branch to root on.
-void stPhylogeny_rootAndReconcileAtMostBinary_R(stTree *curRoot,
-                                                stTree *prevRootParentSpecies,
-                                                int64_t prevRootCost,
-                                                int64_t *bestCost,
-                                                stTree **bestRoot) {
+void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
+                                                    stTree *prevRootParentSpecies,
+                                                    int64_t prevRootCost,
+                                                    int64_t *bestCost,
+                                                    stTree **bestRoot) {
     // The difference between the tree rooted at this branch and the
     // one that was rooted previous to this is just the reconciliation
     // of the parent of this branch and the new root. So recalculate
@@ -1238,15 +1241,18 @@ void stPhylogeny_rootAndReconcileAtMostBinary_R(stTree *curRoot,
         *bestRoot = curRoot;
     }
     for (int64_t i = 0; i < stTree_getChildNumber(curRoot); i++) {
-        stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(curRoot, i),
-                                                   parentNewSpecies,
-                                                   curRootCost, bestCost,
-                                                   bestRoot);
+        stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(curRoot, i),
+                                                       parentNewSpecies,
+                                                       curRootCost, bestCost,
+                                                       bestRoot);
     }
 }
 
-// FIXME: destructive to client data on geneTree.
-stTree *stPhylogeny_rootAndReconcileAtMostBinary(stTree *geneTree,
+// Return a copy of geneTree that is rooted to minimize duplications.
+// NOTE: the returned tree does *not* have reconciliation info set,
+// and this function will reconcile geneTree, resetting any
+// reconciliation information that potentially already exists.
+stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
                                                  stHash *leafToSpecies) {
     stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
 
@@ -1266,32 +1272,17 @@ stTree *stPhylogeny_rootAndReconcileAtMostBinary(stTree *geneTree,
         stPhylogenyInfo *rightChildInfo = stTree_getClientData(rightChild);
         stTree *rightChildSpecies = rightChildInfo->recon->species;
         for (int64_t i = 0; i < stTree_getChildNumber(leftChild); i++) {
-            stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(leftChild, i),
-                                                       rightChildSpecies,
-                                                       dups, &bestCost,
-                                                       &bestRoot);
+            stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(leftChild, i),
+                                                           rightChildSpecies,
+                                                           dups, &bestCost,
+                                                           &bestRoot);
         }
         for (int64_t i = 0; i < stTree_getChildNumber(rightChild); i++) {
-            stPhylogeny_rootAndReconcileAtMostBinary_R(stTree_getChild(rightChild, i),
-                                                       leftChildSpecies,
-                                                       dups, &bestCost,
-                                                       &bestRoot);
+            stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(rightChild, i),
+                                                           leftChildSpecies,
+                                                           dups, &bestCost,
+                                                           &bestRoot);
         }
         return stTree_reRoot(bestRoot, stTree_getBranchLength(bestRoot)/2);
     }
-}
-
-// Reconcile a gene tree (without rerooting), set the
-// stReconcilationInfo as client data on all nodes, and optionally
-// set the labels of the ancestors to the labels of the species tree.
-void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree,
-                                 stHash *leafToSpecies, bool relabelAncestors) {
-    spimap_reconcile(geneTree, speciesTree, leafToSpecies, relabelAncestors);
-}
-
-// FIXME: does an extra unnecessary reconciliation
-void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
-                                          stHash *leafToSpecies,
-                                          int64_t *dups, int64_t *losses) {
-    spimap_reconciliationCost(geneTree, speciesTree, leafToSpecies, dups, losses);
 }

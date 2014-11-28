@@ -840,8 +840,11 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
         // minimal reconcilation cost due to the very high join costs (in
         // this case, the number of dups should be equal to the number of
         // "extra" genes per species).
-        int64_t dups, losses;
-        stPhylogeny_reconciliationCostBinary(guidedNeighborJoiningTree, speciesTree, leafToSpecies, &dups, &losses);
+        int64_t dups = 0, losses = 0;
+        stPhylogeny_reconcileAtMostBinary(guidedNeighborJoiningTree,
+                                          leafToSpecies, false);
+        stPhylogeny_reconciliationCostAtMostBinary(guidedNeighborJoiningTree,
+                                                   &dups, &losses);
         CuAssertTrue(testCase, losses == 0);
         CuAssertTrue(testCase, dups == numGenesPerSpecies - 1);
 
@@ -857,7 +860,7 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
     }
 }
 
-static void testStPhylogeny_rootAndReconcileBinary_simpleTests(CuTest *testCase) {
+static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest *testCase) {
     // First off -- sanity check that reconciling a gene tree equal to
     // a species tree is a no-op.
     int64_t numLeaves = st_randomInt64(3, 300);
@@ -870,11 +873,13 @@ static void testStPhylogeny_rootAndReconcileBinary_simpleTests(CuTest *testCase)
         stTree *species = stPhylogeny_getLeafByIndex(speciesTree, i);
         stHash_insert(leafToSpecies, gene, species);
     }
-    stTree *rooted = stPhylogeny_rootAndReconcileBinary(geneTree, speciesTree, leafToSpecies);
+    stTree *rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree,
+                                                                  leafToSpecies);
     CuAssertTrue(testCase, stTree_equals(rooted, geneTree));
     // Check that the cost is 0.
-    int64_t dups, losses;
-    stPhylogeny_reconciliationCostBinary(geneTree, speciesTree, leafToSpecies, &dups, &losses);
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
+    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
     CuAssertTrue(testCase, dups == 0);
     CuAssertTrue(testCase, losses == 0);
 
@@ -909,8 +914,9 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     }
 
     // Check the cost.
-    int64_t dups, losses;
-    stPhylogeny_reconciliationCostBinary(newRootedTree, globalSpeciesTree, myLeafToSpecies, &dups, &losses);
+    stPhylogeny_reconcileAtMostBinary(newRootedTree, myLeafToSpecies, false);
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconciliationCostAtMostBinary(newRootedTree, &dups, &losses);
     CuAssertTrue(testCase, dups >= bestDups);
     CuAssertTrue(testCase, dups + losses >= 0);
     stHash_destruct(myLeafToSpecies);
@@ -919,9 +925,9 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     stHash_destructIterator(hashIt);
 }
 
-// Make sure that the tree given by rootAndReconcileBinary is a tree with
+// Make sure that the tree given by rootByReconciliationAtMostBinary is a tree with
 // the lowest possible reconciliation cost (in terms of dups).
-static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
+static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *testCase) {
     for(int64_t testNum = 0; testNum < 10; testNum++) {
         int64_t numSpecies = st_randomInt64(3, 100);
         stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
@@ -941,9 +947,8 @@ static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
         }
 
         // Find the best rooting.
-        stTree *rooted = stPhylogeny_rootAndReconcileBinary(geneTree, globalSpeciesTree, globalLeafToSpecies);
-        int64_t dups, losses;
-
+        stTree *rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree, globalLeafToSpecies);
+        stPhylogeny_addStIndexedTreeInfo(rooted);
         // This is pretty stupid, but we have to map from the
         // leafToSpecies on the old gene tree to this rerooted
         // one. TODO: Probably the leafToSpecies concept needs to be rethought.
@@ -957,7 +962,9 @@ static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
             stTree *newGene = stPhylogeny_getLeafByIndex(rooted, index->matrixIndex);
             stHash_insert(myLeafToSpecies, newGene, species);
         }
-        stPhylogeny_reconciliationCostBinary(rooted, globalSpeciesTree, myLeafToSpecies, &dups, &losses);
+        stPhylogeny_reconcileAtMostBinary(rooted, myLeafToSpecies, false);
+        int64_t dups = 0, losses = 0;
+        stPhylogeny_reconciliationCostAtMostBinary(rooted, &dups, &losses);
         bestDups = dups;
         CuAssertTrue(testCase, bestDups >= 0);
         CuAssertTrue(testCase, losses >= 0);
@@ -1029,141 +1036,8 @@ static void testStPhylogeny_reconcileAtMostBinary_degree2Nodes(CuTest *testCase)
     stTree_destruct(speciesTree);
 }
 
-// Temp test to make sure reconcileBinary and reconcileAtMostBinary
-// give the same solution.
-static void testStPhylogeny_reconcileAtMostBinary_random(CuTest *testCase) {
-    for (int64_t testNum = 0; testNum < 1000; testNum++) {
-        int64_t numSpecies = st_randomInt64(4, 100);
-        stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
-        stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
-        int64_t numGenes = st_randomInt64(4, 300);
-        stMatrix_destruct(matrix);
-        matrix = getRandomDistanceMatrix(numGenes);
-        stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
-        stMatrix_destruct(matrix);
-
-        stTree *reconciledAtMostBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledAtMostBinary);
-
-        stTree *reconciledBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledBinary);
-
-        // Assign genes to random species.
-        stHash *leafToSpeciesAtMostBinary = stHash_construct();
-        stHash *leafToSpeciesBinary = stHash_construct();
-        for(int64_t i = 0; i < numGenes; i++) {
-            stTree *geneAtMostBinary = stPhylogeny_getLeafByIndex(reconciledAtMostBinary, i);
-            stTree *geneBinary = stPhylogeny_getLeafByIndex(reconciledBinary, i);
-            stTree *species = stPhylogeny_getLeafByIndex(speciesTree, st_randomInt64(0, numSpecies));
-            stHash_insert(leafToSpeciesAtMostBinary, geneAtMostBinary, species);
-            stHash_insert(leafToSpeciesBinary, geneBinary, species);
-        }
-
-        stPhylogeny_reconcileAtMostBinary(reconciledAtMostBinary,
-                                          leafToSpeciesAtMostBinary, true);
-        stPhylogeny_reconcileBinary(reconciledBinary, speciesTree,
-                                    leafToSpeciesBinary, true);
-
-        CuAssertTrue(testCase, stTree_equals(reconciledBinary, reconciledAtMostBinary));
-    }
-}
-
-// Temp test to make sure reconciliationCostBinary and
-// reconciliationCostAtMostBinary give the same solution.
-static void testStPhylogeny_reconciliationCostAtMostBinary_random(CuTest *testCase) {
-    for (int64_t testNum = 0; testNum < 1000; testNum++) {
-        int64_t numSpecies = st_randomInt64(4, 10);
-        stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
-        stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
-        int64_t numGenes = st_randomInt64(4, 30);
-        stMatrix_destruct(matrix);
-        matrix = getRandomDistanceMatrix(numGenes);
-        stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
-        stMatrix_destruct(matrix);
-
-        stTree *reconciledAtMostBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledAtMostBinary);
-
-        stTree *reconciledBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledBinary);
-
-        // Assign genes to random species.
-        stHash *leafToSpeciesAtMostBinary = stHash_construct();
-        stHash *leafToSpeciesBinary = stHash_construct();
-        for(int64_t i = 0; i < numGenes; i++) {
-            stTree *geneAtMostBinary = stPhylogeny_getLeafByIndex(reconciledAtMostBinary, i);
-            stTree *geneBinary = stPhylogeny_getLeafByIndex(reconciledBinary, i);
-            stTree *species = stPhylogeny_getLeafByIndex(speciesTree, st_randomInt64(0, numSpecies));
-            stHash_insert(leafToSpeciesAtMostBinary, geneAtMostBinary, species);
-            stHash_insert(leafToSpeciesBinary, geneBinary, species);
-        }
-
-        stPhylogeny_reconcileAtMostBinary(reconciledAtMostBinary,
-                                          leafToSpeciesAtMostBinary, true);
-        int64_t myDups = 0, myLosses = 0;
-        stPhylogeny_reconciliationCostAtMostBinary(reconciledAtMostBinary,
-                                                   &myDups, &myLosses);
-        int64_t spiDups = 0, spiLosses = 0;
-        stPhylogeny_reconciliationCostBinary(reconciledBinary, speciesTree,
-                                             leafToSpeciesBinary, &spiDups,
-                                             &spiLosses);
-        stPhylogeny_reconcileBinary(reconciledBinary, speciesTree,
-                                    leafToSpeciesBinary, true);
-
-        CuAssertIntEquals(testCase, myDups, spiDups);
-        CuAssertIntEquals(testCase, myLosses, spiLosses);
-    }
-}
-
-// Temp test to make sure reconciliationCostBinary and
-// reconciliationCostAtMostBinary give the same solution.
-static void testStPhylogeny_rootAndReconcileAtMostBinary_random(CuTest *testCase) {
-    for (int64_t testNum = 0; testNum < 1000; testNum++) {
-        int64_t numSpecies = st_randomInt64(4, 10);
-        stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
-        stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
-        int64_t numGenes = st_randomInt64(4, 30);
-        stMatrix_destruct(matrix);
-        matrix = getRandomDistanceMatrix(numGenes);
-        stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
-        stMatrix_destruct(matrix);
-
-        stTree *reconciledAtMostBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledAtMostBinary);
-
-        stTree *reconciledBinary = stTree_reRoot(geneTree, 0.0);
-        stPhylogeny_addStIndexedTreeInfo(reconciledBinary);
-
-        // Assign genes to random species.
-        stHash *leafToSpeciesAtMostBinary = stHash_construct();
-        stHash *leafToSpeciesBinary = stHash_construct();
-        for(int64_t i = 0; i < numGenes; i++) {
-            stTree *geneAtMostBinary = stPhylogeny_getLeafByIndex(reconciledAtMostBinary, i);
-            stTree *geneBinary = stPhylogeny_getLeafByIndex(reconciledBinary, i);
-            stTree *species = stPhylogeny_getLeafByIndex(speciesTree, st_randomInt64(0, numSpecies));
-            stHash_insert(leafToSpeciesAtMostBinary, geneAtMostBinary, species);
-            stHash_insert(leafToSpeciesBinary, geneBinary, species);
-        }
-
-        stPhylogeny_rootAndReconcileAtMostBinary(reconciledAtMostBinary,
-                                                 leafToSpeciesAtMostBinary);
-        stPhylogeny_rootAndReconcileBinary(reconciledBinary, speciesTree,
-                                           leafToSpeciesBinary);
-        stPhylogeny_reconcileBinary(reconciledBinary, speciesTree,
-                                    leafToSpeciesBinary, true);
-        stPhylogeny_reconcileAtMostBinary(reconciledAtMostBinary,
-                                          leafToSpeciesAtMostBinary, true);
-        CuAssertTrue(testCase, stTree_equals(reconciledBinary, reconciledAtMostBinary));
-    }
-}
-
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
-    (void) testSimpleNeighborJoin;
-    (void) testSimpleBootstrapPartitionScoring;
-    (void) testSimpleBootstrapReconciliationScoring;
-    (void) testRandomNeighborJoin;
-    (void) testRandomBootstraps;
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
     SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
@@ -1173,10 +1047,7 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testSimpleJoinCosts);
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
-    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_simpleTests);
-    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileBinary_random);
-    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_random);
-    SUITE_ADD_TEST(suite, testStPhylogeny_reconciliationCostAtMostBinary_random);
-    SUITE_ADD_TEST(suite, testStPhylogeny_rootAndReconcileAtMostBinary_random);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
     return suite;
 }

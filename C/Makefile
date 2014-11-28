@@ -9,13 +9,11 @@ libInternalHeaders = impl/*.h
 libTests = tests/sonLib*.c tests/st*
 quickTreeObjects = ../externalTools/quicktree_1.1/obj/buildtree.o ../externalTools/quicktree_1.1/obj/cluster.o ../externalTools/quicktree_1.1/obj/distancemat.o ../externalTools/quicktree_1.1/obj/options.o ../externalTools/quicktree_1.1/obj/sequence.o ../externalTools/quicktree_1.1/obj/tree.o ../externalTools/quicktree_1.1/obj/util.o
 quickTreeLibPath = ../externalTools/quicktree_1.1/include/
-spimapReconLib = ${libPath}/spimapRecon.a
-spimapLibPath = ../externalTools/spimap/src/
 
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
 cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl} -I${quickTreeLibPath}
-cppflags += ${kyotoTycoonIncl} -I${spimapLibPath}
+cppflags += ${kyotoTycoonIncl}
 
 all : ${libPath}/sonLib.a ${testProgs}
 
@@ -52,11 +50,10 @@ ${libPath}/%.h: inc/%.h
 	cp $< $@.tmp
 	mv $@.tmp $@
 
-${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${libPath}/$(notdir $l)) ${libInternalHeaders} ${spimapReconLib}
+${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${libPath}/$(notdir $l)) ${libInternalHeaders}
 	@mkdir -p $(dir $@)
 	${cxx} ${cflags} -I inc -I ${libPath}/  -c ${libSources}
 	${cpp} ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
-	ar x ${spimapReconLib}
 	ar rc sonLib.a *.o ${quickTreeObjects}
 	ranlib sonLib.a 
 	rm *.o
