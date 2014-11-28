@@ -670,11 +670,11 @@ static void populateSpeciesToIndex(stTree *speciesTree, stHash *speciesToIndex) 
     stList_destruct(bfQueue);
 }
 
-// Get the number of nodes between a descendant and its
-// ancestor. (Exclusive of both the ancestor and its descendant, so if
-// the descendant is a direct child of the ancestor, that counts as
-// 0.)
-static int64_t numNodesToAncestor(stTree *descendant, stTree *ancestor) {
+// Get the number of nodes between a descendant and its ancestor that
+// could cause losses, i.e. that have more than one child. (Exclusive
+// of both the ancestor and its descendant, so if the descendant is a
+// direct child of the ancestor, that counts as 0.)
+static int64_t numSkipsToAncestor(stTree *descendant, stTree *ancestor) {
     if (descendant == ancestor) {
         return 0;
     }
@@ -684,7 +684,9 @@ static int64_t numNodesToAncestor(stTree *descendant, stTree *ancestor) {
         if (curNode == ancestor) {
             return ret;
         }
-        ret++;
+        if (stTree_getChildNumber(curNode) != 1) {
+            ret++;
+        }
     }
 
     // Shouldn't get here.
@@ -741,7 +743,7 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
 
             // Calculate the minimum number of losses implied when
             // joining species i and j.
-            int64_t numLosses = numNodesToAncestor(species_i, mrca) + numNodesToAncestor(species_j, mrca);
+            int64_t numLosses = numSkipsToAncestor(species_i, mrca) + numSkipsToAncestor(species_j, mrca);
             if ((species_i == mrca || species_j == mrca) && (species_i != species_j)) {
                 // An "extra" loss on the other child of the MRCA.
                 numLosses++;
@@ -1089,7 +1091,7 @@ static void fillInReconciliationInfo(stTree *gene, stTree *recon,
             reconInfo->event = SPECIATION;
         }
         if (relabelAncestors) {
-            stTree_setLabel(gene, stString_copy(stTree_getLabel(recon)));
+            stTree_setLabel(gene, stTree_getLabel(recon));
         }
     }
 }
@@ -1138,11 +1140,12 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
         (*dups)++;
     }
     // Count losses.
-    // Look at all this node's children. If the children's
-    // recons aren't direct children of this node's recon, then
-    // count N losses, where N is the number of nodes "skipped" on the
-    // way to this node's recon (plus one if this is a dup and the
-    // children's recons are not equal.)
+    // Look at all this node's children. If the children's recons
+    // aren't direct children of this node's recon, then count N
+    // losses, where N is the number of nodes "skipped" on the way to
+    // this node's recon (plus one if this is a dup and the children's
+    // recons are not equal). Nodes that have only one child should
+    // not count as "skipped".
     if (stTree_getChildNumber(reconciledTree) != 0) {
         stTree *leftChild = stTree_getChild(reconciledTree, 0);
         stPhylogenyInfo *leftInfo = stTree_getClientData(leftChild);
@@ -1159,10 +1162,10 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
         stTree *rightSpecies = rightRecon->species;
 
         if (stTree_getParent(leftSpecies) != species) {
-            *losses += numNodesToAncestor(leftSpecies, species);
+            *losses += numSkipsToAncestor(leftSpecies, species);
         }
         if (stTree_getParent(rightSpecies) != species) {
-            *losses += numNodesToAncestor(rightSpecies, species);
+            *losses += numSkipsToAncestor(rightSpecies, species);
         }
         if (leftSpecies != rightSpecies && recon->event == DUPLICATION) {
             (*losses)++;

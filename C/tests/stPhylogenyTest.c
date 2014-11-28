@@ -973,6 +973,62 @@ static void testStPhylogeny_rootAndReconcileBinary_random(CuTest *testCase) {
     }
 }
 
+/*
+ * Test that the atMostBinary reconciliation functions work correctly
+ * with trees that have nodes that have in-degree 1, out-degree 1.
+ */
+static void testStPhylogeny_reconcileAtMostBinary_degree2Nodes(CuTest *testCase) {
+    stTree *speciesTree = stTree_parseNewickString("(((A,B)F)G,((C,D)H,(E)I)J)K;");
+    // First test a gene tree that similar to the species tree, but A
+    // and B are children of G now, and E is a child of J. It should
+    // have no reconciliation cost and the best root should be the
+    // current one.
+    stTree *geneTree = stTree_parseNewickString("((A,B)G,((C,D)H,E)J)K;");
+    // Create the leaf->species hash (mapping A->A, B->B, etc.)
+    stHash *leafToSpecies = stHash_construct();
+    for (char label = 'A'; label <= 'E'; label++) {
+        char labelStr[2];
+        labelStr[0] = label;
+        labelStr[1] = '\0';
+        stTree *leaf = stTree_findChild(geneTree, labelStr);
+        stTree *species = stTree_findChild(speciesTree, labelStr);
+        stHash_insert(leafToSpecies, leaf, species);
+    }
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, true);
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
+    CuAssertIntEquals(testCase, 0, dups);
+    CuAssertIntEquals(testCase, 0, losses);
+
+    stHash_destruct(leafToSpecies);
+    stPhylogenyInfo_destructOnTree(geneTree);
+    stTree_destruct(geneTree);
+
+    // Check that if E is gone we still get a (single) loss.
+    geneTree = stTree_parseNewickString("((A,B)F,(C,D)H)K;");
+    // Create the leaf->species hash (mapping A->A, B->B, etc.)
+    leafToSpecies = stHash_construct();
+    for (char label = 'A'; label <= 'D'; label++) {
+        char labelStr[2];
+        labelStr[0] = label;
+        labelStr[1] = '\0';
+        stTree *leaf = stTree_findChild(geneTree, labelStr);
+        stTree *species = stTree_findChild(speciesTree, labelStr);
+        stHash_insert(leafToSpecies, leaf, species);
+    }
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, true);
+    dups = 0;
+    losses = 0;
+    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
+    CuAssertIntEquals(testCase, 0, dups);
+    CuAssertIntEquals(testCase, 1, losses);
+
+    stHash_destruct(leafToSpecies);
+    stPhylogenyInfo_destructOnTree(geneTree);
+    stTree_destruct(geneTree);
+    stTree_destruct(speciesTree);
+}
+
 // Temp test to make sure reconcileBinary and reconcileAtMostBinary
 // give the same solution.
 static void testStPhylogeny_reconcileAtMostBinary_random(CuTest *testCase) {
@@ -1108,6 +1164,7 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     (void) testSimpleBootstrapReconciliationScoring;
     (void) testRandomNeighborJoin;
     (void) testRandomBootstraps;
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
     SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
     SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring);
