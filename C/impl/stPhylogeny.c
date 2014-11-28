@@ -168,7 +168,7 @@ static stTree *quickTreeToStTreeR(struct Tnode *tNode) {
     stTree_setBranchLength(ret, tNode->distance);
 
     // Can remove if needed, probably not useful except for testing.
-    char *label = stString_print("%u", tNode->nodenumber);
+    char *label = stString_print_r("%u", tNode->nodenumber);
     stTree_setLabel(ret, label);
     free(label);
 
@@ -448,7 +448,7 @@ stTree *stPhylogeny_neighborJoin(stMatrix *distances, stList *outgroups) {
     struct Cluster **clusters = st_malloc(numSequences * sizeof(struct Cluster *));
     for (i = 0; i < numSequences; i++) {
         struct Sequence *seq = empty_Sequence();
-        seq->name = stString_print("%" PRIi64, i);
+        seq->name = stString_print_r("%" PRIi64, i);
         clusters[i] = single_Sequence_Cluster(seq);
     }
     clusterGroup->clusters = clusters;
@@ -885,7 +885,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     for (int64_t i = 0; i < numLeaves; i++) {
         // Initialize nodes.
         nodes[i] = stTree_construct();
-        char *name = stString_print("%" PRIi64, i);
+        char *name = stString_print_r("%" PRIi64, i);
         stTree_setLabel(nodes[i], name);
         free(name);
     }

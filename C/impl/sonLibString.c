@@ -45,6 +45,23 @@ char *stString_print(const char *string, ...) {
     return stString_copy(cA);
 }
 
+char *stString_print_r(const char *string, ...) {
+    va_list ap;
+    va_start(ap, string);
+    int64_t i = vsnprintf(NULL, 0, string, ap);
+    va_end(ap);
+
+    assert(i >= 0);
+    int64_t arraySize = i + 1;
+    char *ret = st_malloc(sizeof(char) * arraySize);
+    va_start(ap, string);
+    i = vsnprintf(ret, arraySize, string, ap);
+    assert(i+1 == arraySize);
+    va_end(ap);
+
+    return ret;
+}
+
 char *stString_getNextWord(char **string) {
     while(**string != '\0' && isspace(**string)) {
         (*string)++;
