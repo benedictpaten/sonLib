@@ -42,6 +42,16 @@ double *stMatrix_getCell(stMatrix *matrix, int64_t indexN, int64_t indexM);
 stMatrix *stMatrix_add(stMatrix *matrix1, stMatrix *matrix2);
 
 /*
+ * Multiples two matrices, one of which is i x j and the other is j x k producing and i x k matrix.
+ */
+stMatrix *stMatrix_multiply(stMatrix *matrix1, stMatrix *matrix2);
+
+/*
+ *  Multiples a an n x n square matrix with a n length vector to produce a n length output vector.
+ */
+double *stMatrix_multiplyVector(stMatrix *matrix1, double *vector);
+
+/*
  * Clone the matrix.
  */
 stMatrix *stMatrix_clone(stMatrix *matrix);
@@ -55,6 +65,11 @@ void stMatrix_scale(stMatrix *matrix, double scaleFactor, double addFactor);
  * Returns true iff the matrices have the same dimensions and are all values are within close+/- of each other.
  */
 bool stMatrix_equal(stMatrix *matrix1, stMatrix *matrix2, double close);
+
+/*
+ * Return a n*n matrix representing a Jukes-Cantor substitution matrix for n characters.
+ */
+stMatrix *stMatrix_jukesCantor(double distance, int64_t n);
 
 #ifdef __cplusplus
 }

@@ -49,6 +49,35 @@ double *stMatrix_getCell(stMatrix *matrix, int64_t indexN, int64_t indexM) {
     return &(matrix->M[indexN * matrix->m + indexM]);
 }
 
+stMatrix *stMatrix_multiply(stMatrix *matrix1, stMatrix *matrix2) {
+    if(stMatrix_m(matrix1) != stMatrix_n(matrix2)) {
+        stThrow(stExcept_new("MATRIX_EXCEPTION", "Matrices do not have equal length dimensions (%" PRIi64  "%" PRIi64 ") to multiply", stMatrix_m(matrix1), stMatrix_n(matrix2)));
+    }
+    stMatrix *matrix3 = stMatrix_construct(stMatrix_n(matrix1), stMatrix_m(matrix2));
+    for(int64_t i=0; i<stMatrix_n(matrix1); i++) {
+        for(int64_t j=0; j<stMatrix_m(matrix2); j++) {
+            double *cell = stMatrix_getCell(matrix3, i, j);
+            for(int64_t k=0; k<stMatrix_m(matrix1); k++) {
+                *cell += *stMatrix_getCell(matrix1, i, k) * *stMatrix_getCell(matrix2, k, j);
+            }
+        }
+    }
+    return matrix3;
+}
+
+double *stMatrix_multiplyVector(stMatrix *matrix, double *vector) {
+    if(stMatrix_m(matrix) != stMatrix_n(matrix)) {
+        stThrow(stExcept_new("MATRIX_EXCEPTION", "Matrix is not a square matrix (%" PRIi64  "%" PRIi64 ") to multiply", stMatrix_m(matrix), stMatrix_n(matrix)));
+    }
+    double *vector2 = st_calloc(stMatrix_n(matrix), sizeof(double));
+    for(int64_t i=0; i<stMatrix_n(matrix); i++) {
+        for(int64_t j=0; j<stMatrix_m(matrix); j++) {
+            vector2[i] += *stMatrix_getCell(matrix, i, j) * vector[j];
+        }
+    }
+    return vector2;
+}
+
 stMatrix *stMatrix_add(stMatrix *matrix1, stMatrix *matrix2) {
     assert(matrix1->n == matrix2->n);
     assert(matrix1->m == matrix2->m);
@@ -84,3 +113,14 @@ bool stMatrix_equal(stMatrix *matrix1, stMatrix *matrix2, double close) {
     }
     return 1;
 }
+
+stMatrix *stMatrix_jukesCantor(double distance, int64_t n) {
+    stMatrix *jkMatrix = stMatrix_construct(n, n);
+    for(int64_t i=0; i<n; i++) {
+        for(int64_t j=0; j<n; j++) {
+            *stMatrix_getCell(jkMatrix, i, j) = i == j ? 1.0/n + ((n-1.0)/n) * exp(-n*distance/(n-1.0)) : 1.0/n - (1.0/n) * exp(-n*distance/(n-1.0)); //Jukes-Cantor calculation
+        }
+    }
+    return jkMatrix;
+}
+
