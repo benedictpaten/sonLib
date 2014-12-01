@@ -908,36 +908,6 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
     }
 }
 
-static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest *testCase) {
-    // First off -- sanity check that reconciling a gene tree equal to
-    // a species tree is a no-op.
-    int64_t numLeaves = st_randomInt64(3, 300);
-    stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
-    stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
-    stTree *geneTree = stTree_clone(speciesTree);
-    stHash *leafToSpecies = stHash_construct();
-    for(int64_t i = 0; i < numLeaves; i++) {
-        stTree *gene = stPhylogeny_getLeafByIndex(geneTree, i);
-        stTree *species = stPhylogeny_getLeafByIndex(speciesTree, i);
-        stHash_insert(leafToSpecies, gene, species);
-    }
-    stTree *rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree,
-                                                                  leafToSpecies);
-    CuAssertTrue(testCase, stTree_equals(rooted, geneTree));
-    // Check that the cost is 0.
-    int64_t dups = 0, losses = 0;
-    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
-    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
-    CuAssertTrue(testCase, dups == 0);
-    CuAssertTrue(testCase, losses == 0);
-
-    stPhylogenyInfo_destructOnTree(speciesTree);
-    stMatrix_destruct(matrix);
-    stTree_destruct(speciesTree);
-    stTree_destruct(geneTree);
-    stTree_destruct(rooted);
-}
-
 // Globals for checkMinimalReconScore
 stTree *globalSpeciesTree;
 stHash *globalLeafToSpecies;
@@ -976,6 +946,54 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     stPhylogenyInfo_destructOnTree(newRootedTree);
     stTree_destruct(newRootedTree);
     stHash_destructIterator(hashIt);
+}
+
+static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest *testCase) {
+    // First off -- sanity check that reconciling a gene tree equal to
+    // a species tree is a no-op.
+    int64_t numLeaves = st_randomInt64(3, 300);
+    stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
+    stTree *speciesTree = stPhylogeny_neighborJoin(matrix, NULL);
+    stTree *geneTree = stTree_clone(speciesTree);
+    stHash *leafToSpecies = stHash_construct();
+    for(int64_t i = 0; i < numLeaves; i++) {
+        stTree *gene = stPhylogeny_getLeafByIndex(geneTree, i);
+        stTree *species = stPhylogeny_getLeafByIndex(speciesTree, i);
+        stHash_insert(leafToSpecies, gene, species);
+    }
+    stTree *rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree,
+                                                                  leafToSpecies);
+    CuAssertTrue(testCase, stTree_equals(rooted, geneTree));
+    // Check that the cost is 0.
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
+    stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
+    CuAssertTrue(testCase, dups == 0);
+    CuAssertTrue(testCase, losses == 0);
+
+    stPhylogenyInfo_destructOnTree(speciesTree);
+    stMatrix_destruct(matrix);
+    stTree_destruct(speciesTree);
+    stTree_destruct(geneTree);
+    stTree_destruct(rooted);
+    stHash_destruct(leafToSpecies);
+
+    // Test an annoying example that didn't get rooted right.
+    stTree *foo = stTree_parseNewickString("(((0:1,1:1):1,2:1):1,3:1);");
+    speciesTree = stTree_parseNewickString("((mouse,rat)mr,human)mrh;");
+    leafToSpecies = stHash_construct();
+    stHash_insert(leafToSpecies, stTree_findChild(foo, "0"), stTree_findChild(speciesTree, "rat"));
+    stHash_insert(leafToSpecies, stTree_findChild(foo, "1"), stTree_findChild(speciesTree, "mouse"));
+    stHash_insert(leafToSpecies, stTree_findChild(foo, "2"), stTree_findChild(speciesTree, "human"));
+    stHash_insert(leafToSpecies, stTree_findChild(foo, "3"), stTree_findChild(speciesTree, "human"));
+    rooted = stPhylogeny_rootByReconciliationAtMostBinary(foo, leafToSpecies);
+    CuAssertStrEquals(testCase, "((0:1,1:1):0.5,(2:1,3:2):0.5);", stTree_getNewickTreeString(rooted));
+    stPhylogenyInfo_destructOnTree(foo);
+    stTree_destruct(foo);
+    stTree_destruct(speciesTree);
+    stTree_destruct(rooted);
+    stHash_destruct(leafToSpecies);
+    
 }
 
 // Make sure that the tree given by rootByReconciliationAtMostBinary
@@ -1107,5 +1125,5 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests);
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
-    return suite;
+     return suite;
 }

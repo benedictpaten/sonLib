@@ -694,6 +694,16 @@ static int64_t numSkipsToAncestor(stTree *descendant, stTree *ancestor) {
     return -INT64_MAX;
 }
 
+// Get the number of losses in a (left,right)parent; subtree
+static int64_t lossesInSubtree(stTree *parent, stTree *left, stTree *right) {
+    int64_t ret = 0;
+    ret += numSkipsToAncestor(left, parent) + numSkipsToAncestor(right, parent);
+    if ((left == parent || right == parent) && (left != right)) {
+        ret++;
+    }
+    return ret;
+}
+
 // Compute join costs for a species tree for use in guided
 // neighbor-joining. These costs are calculated by penalizing
 // according to the number of dups and losses implied by the
@@ -743,11 +753,7 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree, stHash *speciesToInd
 
             // Calculate the minimum number of losses implied when
             // joining species i and j.
-            int64_t numLosses = numSkipsToAncestor(species_i, mrca) + numSkipsToAncestor(species_j, mrca);
-            if ((species_i == mrca || species_j == mrca) && (species_i != species_j)) {
-                // An "extra" loss on the other child of the MRCA.
-                numLosses++;
-            }
+            int64_t numLosses = lossesInSubtree(mrca, species_i, species_j);
             *stMatrix_getCell(ret, i, j) += costPerLoss * numLosses;
             if (j != i) {
                 *stMatrix_getCell(ret, j, i) += costPerLoss * numLosses;
@@ -1164,15 +1170,7 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
         assert(rightRecon != NULL);
         stTree *rightSpecies = rightRecon->species;
 
-        if (stTree_getParent(leftSpecies) != species) {
-            *losses += numSkipsToAncestor(leftSpecies, species);
-        }
-        if (stTree_getParent(rightSpecies) != species) {
-            *losses += numSkipsToAncestor(rightSpecies, species);
-        }
-        if (leftSpecies != rightSpecies && recon->event == DUPLICATION) {
-            (*losses)++;
-        }
+        *losses += lossesInSubtree(species, leftSpecies, rightSpecies);
     }
 
     for (int64_t i = 0; i < stTree_getChildNumber(reconciledTree); i++) {
@@ -1247,10 +1245,11 @@ void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
 
     // Now find the new cost in losses.
     int64_t curRootLosses = prevRootLosses;
-    curRootLosses -= numSkipsToAncestor(curSpecies, parentOldSpecies) + numSkipsToAncestor(siblingSpecies, parentOldSpecies);
-    curRootLosses -= numSkipsToAncestor(prevRootParentSpecies, oldRootSpecies) + numSkipsToAncestor(parentOldSpecies, oldRootSpecies);
-    curRootLosses += numSkipsToAncestor(curSpecies, newRootSpecies) + numSkipsToAncestor(parentNewSpecies, newRootSpecies);
-    curRootLosses += numSkipsToAncestor(siblingSpecies, parentNewSpecies) + numSkipsToAncestor(prevRootParentSpecies, parentNewSpecies);
+    curRootLosses -= lossesInSubtree(parentOldSpecies, curSpecies, siblingSpecies);
+    curRootLosses -= lossesInSubtree(oldRootSpecies, prevRootParentSpecies, parentOldSpecies);
+    assert(curRootLosses >= 0);
+    curRootLosses += lossesInSubtree(newRootSpecies, curSpecies, parentNewSpecies);
+    curRootLosses += lossesInSubtree(parentNewSpecies, siblingSpecies, prevRootParentSpecies);
 
     if (curRootDups < *bestDups || (curRootDups == *bestDups && curRootLosses < *bestLosses)) {
         *bestDups = curRootDups;
