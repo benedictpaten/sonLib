@@ -1186,8 +1186,10 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
 // curRoot is the child of the branch to root on.
 void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
                                                     stTree *prevRootParentSpecies,
-                                                    int64_t prevRootCost,
-                                                    int64_t *bestCost,
+                                                    int64_t prevRootDups,
+                                                    int64_t prevRootLosses,
+                                                    int64_t *bestDups,
+                                                    int64_t *bestLosses,
                                                     stTree **bestRoot) {
     // The difference between the tree rooted at this branch and the
     // one that was rooted previous to this is just the reconciliation
@@ -1211,6 +1213,9 @@ void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
     stPhylogenyInfo *siblingInfo = stTree_getClientData(sibling);
     assert(siblingInfo != NULL && siblingInfo->recon != NULL);
     stTree *siblingSpecies = siblingInfo->recon->species;
+    // Call this the parent's new species for consistency, although
+    // now it's the sibling in the new tree. The name is confusing
+    // either way.
     stTree *parentNewSpecies = stTree_getMRCA(prevRootParentSpecies, siblingSpecies);
 
     // Next, the new root's recon is just the MRCA of our parent's
@@ -1221,34 +1226,48 @@ void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
     stTree *curSpecies = curInfo->recon->species;
     stTree *newRootSpecies = stTree_getMRCA(curSpecies, parentNewSpecies);
 
-    int64_t curRootCost = prevRootCost;
+    // Find the new cost in dups. This is just (# of old dups) - (old root
+    // was dup? 1 : 0) - (parent used to be dup? 1 : 0) + (new root is
+    // dup? 1 : 0) + (parent (now sibling) is now dup? 1 : 0)
+    int64_t curRootDups = prevRootDups;
     if (parentOldSpecies == curSpecies || parentOldSpecies == siblingSpecies) {
-        curRootCost--;
+        curRootDups--;
     }
     stTree *oldRootSpecies = stTree_getMRCA(prevRootParentSpecies,
                                             parentOldSpecies);
     if (oldRootSpecies == prevRootParentSpecies || oldRootSpecies == parentOldSpecies) {
-        curRootCost--;
+        curRootDups--;
     }
     if (newRootSpecies == curSpecies || newRootSpecies == parentNewSpecies) {
-        curRootCost++;
+        curRootDups++;
     }
     if (parentNewSpecies == siblingSpecies || parentNewSpecies == prevRootParentSpecies) {
-        curRootCost++;
+        curRootDups++;
     }
-    if (curRootCost < *bestCost) {
-        *bestCost = curRootCost;
+
+    // Now find the new cost in losses.
+    int64_t curRootLosses = prevRootLosses;
+    curRootLosses -= numSkipsToAncestor(curSpecies, parentOldSpecies) + numSkipsToAncestor(siblingSpecies, parentOldSpecies);
+    curRootLosses -= numSkipsToAncestor(prevRootParentSpecies, oldRootSpecies) + numSkipsToAncestor(parentOldSpecies, oldRootSpecies);
+    curRootLosses += numSkipsToAncestor(curSpecies, newRootSpecies) + numSkipsToAncestor(parentNewSpecies, newRootSpecies);
+    curRootLosses += numSkipsToAncestor(siblingSpecies, parentNewSpecies) + numSkipsToAncestor(prevRootParentSpecies, parentNewSpecies);
+
+    if (curRootDups < *bestDups || (curRootDups == *bestDups && curRootLosses < *bestLosses)) {
+        *bestDups = curRootDups;
+        *bestLosses = curRootLosses;
         *bestRoot = curRoot;
     }
     for (int64_t i = 0; i < stTree_getChildNumber(curRoot); i++) {
         stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(curRoot, i),
                                                        parentNewSpecies,
-                                                       curRootCost, bestCost,
-                                                       bestRoot);
+                                                       curRootDups,
+                                                       curRootLosses, bestDups,
+                                                       bestLosses, bestRoot);
     }
 }
 
-// Return a copy of geneTree that is rooted to minimize duplications.
+// Return a copy of geneTree that is rooted to minimize duplications,
+// with the amount of losses as tiebreaker between roots.
 // NOTE: the returned tree does *not* have reconciliation info set,
 // and this function will reconcile geneTree, resetting any
 // reconciliation information that potentially already exists.
@@ -1260,7 +1279,8 @@ stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
     int64_t dups = 0, losses = 0;
     stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups, &losses);
     stTree *bestRoot = geneTree;
-    int64_t bestCost = dups;
+    int64_t bestDups = dups;
+    int64_t bestLosses = losses;
     if (stTree_getChildNumber(geneTree) == 0) {
         return stTree_clone(geneTree);
     } else {
@@ -1274,13 +1294,17 @@ stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
         for (int64_t i = 0; i < stTree_getChildNumber(leftChild); i++) {
             stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(leftChild, i),
                                                            rightChildSpecies,
-                                                           dups, &bestCost,
+                                                           dups, losses,
+                                                           &bestDups,
+                                                           &bestLosses,
                                                            &bestRoot);
         }
         for (int64_t i = 0; i < stTree_getChildNumber(rightChild); i++) {
             stPhylogeny_rootByReconciliationAtMostBinary_R(stTree_getChild(rightChild, i),
                                                            leftChildSpecies,
-                                                           dups, &bestCost,
+                                                           dups, losses,
+                                                           &bestDups,
+                                                           &bestLosses,
                                                            &bestRoot);
         }
         return stTree_reRoot(bestRoot, stTree_getBranchLength(bestRoot)/2);

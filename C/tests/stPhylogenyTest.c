@@ -942,6 +942,7 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
 stTree *globalSpeciesTree;
 stHash *globalLeafToSpecies;
 int64_t bestDups;
+int64_t bestLosses;
 
 // Check that the tree rooted above this node doesn't have a lower cost
 // than the "best" cost.
@@ -967,6 +968,9 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     int64_t dups = 0, losses = 0;
     stPhylogeny_reconciliationCostAtMostBinary(newRootedTree, &dups, &losses);
     CuAssertTrue(testCase, dups >= bestDups);
+    if (dups == bestDups) {
+        CuAssertTrue(testCase, losses >= bestLosses);
+    }
     CuAssertTrue(testCase, dups + losses >= 0);
     stHash_destruct(myLeafToSpecies);
     stPhylogenyInfo_destructOnTree(newRootedTree);
@@ -974,8 +978,9 @@ static void checkMinimalReconScore(stTree *tree, CuTest *testCase) {
     stHash_destructIterator(hashIt);
 }
 
-// Make sure that the tree given by rootByReconciliationAtMostBinary is a tree with
-// the lowest possible reconciliation cost (in terms of dups).
+// Make sure that the tree given by rootByReconciliationAtMostBinary
+// is a tree with the lowest possible dup cost, with loss cost as
+// tiebreaker.
 static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *testCase) {
     for(int64_t testNum = 0; testNum < 10; testNum++) {
         int64_t numSpecies = st_randomInt64(3, 100);
@@ -1015,6 +1020,7 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *test
         int64_t dups = 0, losses = 0;
         stPhylogeny_reconciliationCostAtMostBinary(rooted, &dups, &losses);
         bestDups = dups;
+        bestLosses = losses;
         CuAssertTrue(testCase, bestDups >= 0);
         CuAssertTrue(testCase, losses >= 0);
 
