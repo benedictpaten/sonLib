@@ -65,7 +65,7 @@ stMatrix *stMatrix_multiply(stMatrix *matrix1, stMatrix *matrix2) {
     return matrix3;
 }
 
-double *stMatrix_multiplyVector(stMatrix *matrix, double *vector) {
+double *stMatrix_multiplySquareMatrixAndColumnVector(stMatrix *matrix, double *vector) {
     if(stMatrix_m(matrix) != stMatrix_n(matrix)) {
         stThrow(stExcept_new("MATRIX_EXCEPTION", "Matrix is not a square matrix (%" PRIi64  "%" PRIi64 ") to multiply", stMatrix_m(matrix), stMatrix_n(matrix)));
     }

@@ -47,9 +47,9 @@ stMatrix *stMatrix_add(stMatrix *matrix1, stMatrix *matrix2);
 stMatrix *stMatrix_multiply(stMatrix *matrix1, stMatrix *matrix2);
 
 /*
- *  Multiples a an n x n square matrix with a n length vector to produce a n length output vector.
+ *  Multiples a an n x n square matrix with a n length column vector to produce a n length output vector.
  */
-double *stMatrix_multiplyVector(stMatrix *matrix1, double *vector);
+double *stMatrix_multiplySquareMatrixAndColumnVector(stMatrix *matrix1, double *vector);
 
 /*
  * Clone the matrix.

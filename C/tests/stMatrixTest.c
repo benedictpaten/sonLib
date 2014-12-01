@@ -80,12 +80,12 @@ void test_stMatrixScale(CuTest *testCase) {
 
 void test_stMatrixEqual(CuTest *testCase) {
     for (int64_t test = 0; test < 100; test++) {
-        int64_t n = st_randomInt64(0, 10);
-        int64_t m = st_randomInt64(0, 10);
+        int64_t n = st_randomInt64(1, 10);
+        int64_t m = st_randomInt64(1, 10);
         stMatrix *matrix1 = getRandomMatrix(n, m);
         stMatrix *matrix2 = stMatrix_clone(matrix1);
         CuAssertTrue(testCase, stMatrix_equal(matrix1, matrix2, 0.0));
-        stMatrix_scale(matrix1, 0.0, 1.0);
+        stMatrix_scale(matrix1, 1.0, 1.0);
         CuAssertTrue(testCase, !stMatrix_equal(matrix1, matrix2, 0.0));
         CuAssertTrue(testCase, stMatrix_equal(matrix1, matrix2, 1.0));
         CuAssertTrue(testCase, !stMatrix_equal(matrix1, matrix2, 0.99));
@@ -125,9 +125,9 @@ void test_stMatrixMultiplyVector(CuTest *testCase) {
     *stMatrix_getCell(m, 1, 1) = 5.0;
     v[0] = 2.0;
     v[1] = 3.0;
-    double *v2 = stMatrix_multiplyVector(m, v);
-    CuAssertDblEquals(testCase, v[0], 7.0, 0.00001);
-    CuAssertDblEquals(testCase, v[1], 21.0, 0.00001);
+    double *v2 = stMatrix_multiplySquareMatrixAndColumnVector(m, v);
+    CuAssertDblEquals(testCase, v2[0], 7.0, 0.00001);
+    CuAssertDblEquals(testCase, v2[1], 21.0, 0.00001);
     stMatrix_destruct(m);
     free(v);
     free(v2);
@@ -140,8 +140,8 @@ void test_stMatrixJukesCantor(CuTest *testCase) {
     CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 0), *stMatrix_getCell(jukesCantorMatrix, 1, 1), 0.0);
     CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 1), *stMatrix_getCell(jukesCantorMatrix, 1, 0), 0.0);
 
-    CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 0), 0.5 + 0.5*exp(-2*2.0), 0.0);
-    CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 1), 0.5 - 0.5*exp(-2*2.0), 0.0);
+    CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 0), 0.5 + 0.5*exp(-1), 0.0);
+    CuAssertDblEquals(testCase, *stMatrix_getCell(jukesCantorMatrix, 0, 1), 0.5 - 0.5*exp(-1), 0.0);
     stMatrix_destruct(jukesCantorMatrix);
 }
 

@@ -345,7 +345,6 @@ void testSimpleBootstrapReconciliationScoring(CuTest *testCase)
 
 static stMatrix *getRandomDistanceMatrix(int64_t size) {
     int64_t i, j;
-    assert(size > 3);
     stMatrix *ret = stMatrix_construct(size, size);
     for (i = 0; i < size; i++) {
         for (j = 0; j <= i; j++) {
