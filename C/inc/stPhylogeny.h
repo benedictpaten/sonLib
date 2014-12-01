@@ -157,36 +157,31 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
                                           int64_t **speciesMRCAMatrix,
                                           stTree *speciesTree);
 
-// (Re)root a gene tree to minimize dups.
-// leafToSpecies is a hash from leaves of geneTree to leaves of speciesTree.
-// Both trees must be binary.
-// TODO: maybe should set stReconciliationInfo.
-stTree *stPhylogeny_rootAndReconcileBinary(stTree *geneTree, stTree *speciesTree,
-                                           stHash *leafToSpecies);
-
+// Reconcile a gene tree (without rerooting), set the proper
+// stReconcilationInfo (as an entry of stPhylogenyInfo) as client data
+// on all nodes, and optionally set the labels of the ancestors to the
+// labels of their reconciliation in the species tree.
+//
+// The gene tree must be binary, and the species tree must be
+// "at-most-binary", i.e. it must have no nodes with more than 3
+// children, but may have nodes with only one child.
 void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
                                        bool relabelAncestors);
 
-// Reconcile a gene tree (without rerooting). If client data is
-// present, it's assumed to be stPhylogenyInfo, and its reconciliation
-// subinfo is set. If no client data is present, stReconcilationInfo
-// is set as client data on all nodes.  Optionally set the labels of
-// the ancestors to the labels of the species tree.
-void stPhylogeny_reconcileBinary(stTree *geneTree, stTree *speciesTree,
-                                 stHash *leafToSpecies, bool relabelAncestors);
-
-// Calculate the reconciliation cost in dups and losses.
-// TODO: does not use any existing stReconciliationInfo.
-void stPhylogeny_reconciliationCostBinary(stTree *geneTree, stTree *speciesTree,
-                                          stHash *leafToSpecies, int64_t *dups,
-                                          int64_t *losses);
-
+// For a tree that has already been reconciled by
+// reconcileAtMostBinary, calculates the number of dups and losses
+// implied by the reconciliation. dups and losses must be set to 0
+// before calling.
 void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
                                                 int64_t *dups,
                                                 int64_t *losses);
 
-stTree *stPhylogeny_rootAndReconcileAtMostBinary(stTree *geneTree,
-                                                 stHash *leafToSpecies);
+// Return a copy of geneTree that is rooted to minimize duplications.
+// NOTE: the returned tree does *not* have reconciliation info set,
+// and this function will reconcile geneTree, resetting any
+// reconciliation information that potentially already exists.
+stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
+                                                     stHash *leafToSpecies);
 
 #ifdef __cplusplus
 }

@@ -28,9 +28,16 @@ extern "C" {
 char *stString_copy(const char *string);
 
 /*
- * Like printf, but into a new string.
+ * Like printf, but into a new string. Use stString_print_r instead
+ * unless you absolutely need to avoid the overhead of (sometimes)
+ * making an extra vsnprintf call.
  */
 char *stString_print(const char *string, ...);
+
+/*
+ * Like stString_print, but reentrant.
+ */
+char *stString_print_r(const char *string, ...);
 
 /*
  * Compare two strings for equality.  NULL is considered a valid value and
