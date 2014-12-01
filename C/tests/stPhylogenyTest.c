@@ -639,16 +639,64 @@ static stTree *getRandomBinaryTree(int64_t maxDepth, int64_t *numLeaves) {
     return ret;
 }
 
-/* // Test that the join costs are equal to what the reconciliation cost */
-/* // functions would suggest. */
-/* static void testJoinCosts_random(CuTest *testCase) { */
-/*     for (int64_t testNum = 0; testNum < 100; testNum++) { */
-/*         int64_t numSpeciesLeaves; */
-/*         stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 4), */
-/*                                                   &numSpeciesLeaves); */
-        
-/*     } */
-/* } */
+// Test that the join costs are equal to what the reconciliation cost
+// functions would suggest.
+static void testJoinCosts_random(CuTest *testCase) {
+    for (int64_t testNum = 0; testNum < 100; testNum++) {
+        int64_t numSpeciesLeaves = 0;
+        stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 4),
+                                                  &numSpeciesLeaves);
+        int64_t numSpecies = stTree_getNumNodes(speciesTree);
+        stHash *speciesToIndex = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+        double dupCost = st_random();
+        double lossCost = st_random();
+        stMatrix *joinCosts = stPhylogeny_computeJoinCosts(speciesTree,
+                                                           speciesToIndex,
+                                                           dupCost, lossCost);
+        stHash *indexToSpecies = stHash_invert(speciesToIndex, (uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, NULL, NULL);
+        for (int64_t i = 0; i < numSpecies; i++) {
+            for (int64_t j = 0; j < numSpecies; j++) {
+                // Check that the tree joining these two nodes really
+                // would get the same join cost according to the
+                // reconciliation cost functions.
+                stTree *geneTree = stTree_parseNewickString("(I,J)MRCA;");
+                stTree *iNode = stTree_findChild(geneTree, "I");
+                assert(iNode != NULL);
+                stTree *jNode = stTree_findChild(geneTree, "J");
+                assert(jNode != NULL);
+                // Construct the initial reconciliation for the leaves
+                // of the gene tree.
+                stHash *leafToSpecies = stHash_construct();
+                stIntTuple *query = stIntTuple_construct1(i);
+                stTree *iSpecies = stHash_search(indexToSpecies, query);
+                assert(iSpecies != NULL);
+                stIntTuple_destruct(query);
+                stHash_insert(leafToSpecies, iNode, iSpecies);
+                query = stIntTuple_construct1(j);
+                stTree *jSpecies = stHash_search(indexToSpecies, query);
+                assert(jSpecies != NULL);
+                stIntTuple_destruct(query);
+                stHash_insert(leafToSpecies, jNode, jSpecies);
+                // Reconcile the tree and calculate the join cost we expect.
+                stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
+                int64_t dups = 0, losses = 0;
+                stPhylogeny_reconciliationCostAtMostBinary(geneTree, &dups,
+                                                           &losses);
+                double expectedCost = dupCost * dups + lossCost * losses;
+                double actualCost = *stMatrix_getCell(joinCosts, i, j);
+                CuAssertDblEquals(testCase, *stMatrix_getCell(joinCosts, i, j),
+                                  *stMatrix_getCell(joinCosts, i, j), 0.01);
+                CuAssertDblEquals(testCase, expectedCost, actualCost, 0.01);
+                stHash_destruct(leafToSpecies);
+                stPhylogenyInfo_destructOnTree(geneTree);
+                stTree_destruct(geneTree);
+            }
+        }
+        stHash_destruct(indexToSpecies);
+        stHash_destruct(speciesToIndex);
+        stTree_destruct(speciesTree);
+    }
+}
 
 static stMatrix *getRandomSimilarityMatrix(int64_t size, int64_t maxNumSimilarities, int64_t maxNumDifferences) {
     stMatrix *ret = stMatrix_construct(size, size);
@@ -884,6 +932,7 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
     CuAssertTrue(testCase, losses == 0);
 
     stPhylogenyInfo_destructOnTree(speciesTree);
+    stMatrix_destruct(matrix);
     stTree_destruct(speciesTree);
     stTree_destruct(geneTree);
     stTree_destruct(rooted);
@@ -972,11 +1021,13 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *test
         // Now check all possible roots and confirm that there isn't a
         // better one.
         testOnTree(testCase, geneTree, checkMinimalReconScore);
+        stPhylogenyInfo_destructOnTree(rooted);
         stTree_destruct(rooted);
         stPhylogenyInfo_destructOnTree(geneTree);
         stTree_destruct(geneTree);
         stPhylogenyInfo_destructOnTree(globalSpeciesTree);
         stTree_destruct(globalSpeciesTree);
+        stHash_destruct(myLeafToSpecies);
     }
 }
 
@@ -1038,6 +1089,7 @@ static void testStPhylogeny_reconcileAtMostBinary_degree2Nodes(CuTest *testCase)
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testJoinCosts_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
     SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
