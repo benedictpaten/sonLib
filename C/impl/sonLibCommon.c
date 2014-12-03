@@ -149,8 +149,8 @@ void st_errnoAbort(char *format, ...) {
 
 static int64_t reverse8Bytes(int64_t in) {
     int64_t out;
-    char *inByte = &in;
-    char *outByte = &out;
+    char *inByte = (char *) &in;
+    char *outByte = (char *) &out;
     // looped for conciseness, hopefully it will be unrolled in
     // practice.
     for (int64_t i = 0; i < sizeof(int64_t); i++) {
