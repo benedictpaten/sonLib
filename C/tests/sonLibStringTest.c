@@ -121,6 +121,15 @@ static void test_stString_reverseComplement(CuTest *testCase) {
     CuAssertIntEquals(testCase, 'n', stString_reverseComplement('n'));
 }
 
+static void test_stString_splitByString(CuTest *testCase) {
+    stList *fields = stString_splitByString("aba", "a");
+    CuAssertStrEquals(testCase, "", stList_get(fields, 0));
+    CuAssertStrEquals(testCase, "b", stList_get(fields, 1));
+    CuAssertStrEquals(testCase, "", stList_get(fields, 2));
+
+    stList_destruct(fields);
+}
+
 CuSuite* sonLib_stStringTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stString_copy);
@@ -132,6 +141,7 @@ CuSuite* sonLib_stStringTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stString_split);
     SUITE_ADD_TEST(suite, test_stString_getSubString);
     SUITE_ADD_TEST(suite, test_stString_reverseComplement);
+    SUITE_ADD_TEST(suite, test_stString_splitByString);
     return suite;
 }
 

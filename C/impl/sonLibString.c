@@ -162,6 +162,22 @@ stList *stString_split(const char *string) {
     return tokens;
 }
 
+stList *stString_splitByString(const char *string, const char *delim) {
+    const char *curTokenStart = string;
+    const char *curTokenEnd;
+    size_t tokenLength = strlen(delim);
+    assert(tokenLength > 0);
+    stList *ret = stList_construct3(0, free);
+    while ((curTokenEnd = strstr(curTokenStart, delim)) != NULL) {
+        assert(curTokenEnd > curTokenStart);
+        stList_append(ret, stString_getSubString(curTokenStart, 0, curTokenEnd - curTokenStart));
+        curTokenStart = curTokenEnd + tokenLength;
+    }
+    stList_append(ret, stString_copy(curTokenStart));
+
+    return ret;
+}
+
 char *stString_getSubString(const char *cA, int64_t start, int64_t length) {
     char *cA2 = memcpy(st_malloc(sizeof(char) * (length + 1)), cA + start, length);
     cA2[length] = '\0';

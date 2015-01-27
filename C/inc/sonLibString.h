@@ -97,6 +97,14 @@ char *stString_join2(const char *pad, stList *strings);
 stList *stString_split(const char *string);
 
 /*
+ * Splits a string by a delimiter string (length > 0). Note that
+ * delimiters on either end of the string are still used to split into
+ * 0-length substrings, as in python's split method. E.g.:
+ * stString_splitByString("aba", "a") yields ["", "b", ""]
+ */
+stList *stString_splitByString(const char *string, const char *delim);
+
+/*
  * Gets a substring of a given string.
  */
 char *stString_getSubString(const char *cA, int64_t start, int64_t length);
