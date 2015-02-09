@@ -124,7 +124,7 @@ class NXTree(object):
             root = self.rootId
         bfQueue = [root]
         while len(bfQueue) > 0:
-            node = bfQueue.pop()
+            node = bfQueue.pop(0)
             yield node
             for child in self.getChildren(node):
                 bfQueue.append(child)
@@ -156,6 +156,25 @@ class NXTree(object):
         if len(self.getChildren(parentId)) == 1 and \
            self.hasParent(parentId) is True:
             self.removeDegree2Vertex(parentId)
+
+    def removeEdge(self, parentId, childId):
+        self.nxDg.remove_edge(parentId, childId)
+        
+    def reroot(self, newRootId):
+        flipEdges = []
+        node = newRootId        
+        while self.hasParent(node) is True:
+            parent = self.getParent(node)
+            flipEdges.append((parent, node))
+            node = parent
+        for edge in flipEdges:
+            self.nxDg.add_edge(edge[1], edge[0])
+            self.nxDg[edge[1]][edge[0]] = self.nxDg[edge[0]][edge[1]]
+            self.nxDg.remove_edge(edge[0], edge[1])
+        self.rootId = newRootId
+
+        
+
             
                 
                 

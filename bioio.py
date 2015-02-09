@@ -20,6 +20,8 @@ from tree import BinaryTree
 from misc import close
 import subprocess
 import array
+import xml.etree.cElementTree as ET
+from xml.dom import minidom  # For making stuff pretty
 
 DEFAULT_DISTANCE = 0.001
 
@@ -624,7 +626,7 @@ def padWord(word, length=25):
     if len(word) < length:
         return word + " "*(length-len(word))
     return word
-
+    
 #########################################################
 #########################################################
 #########################################################
@@ -647,10 +649,24 @@ def catFiles(filesToCat, catFile):
         system("cat %s >> %s" % (" ".join(filesToCat[:maxCat]), catFile))
         filesToCat = filesToCat[maxCat:]
 
+def prettyXml(elem):
+    """ Return a pretty-printed XML string for the ElementTree Element.
+    """
+    roughString = ET.tostring(elem, "utf-8")
+    reparsed = minidom.parseString(roughString)
+    return reparsed.toprettyxml(indent="  ")
+
+def isNewer(firstFile, secondFile):
+    """Returns True if the first file was modified more recently than the second file (used os.path.getctime)
+    """
+    assert os.path.exists(firstFile)
+    assert os.path.exists(secondFile)
+    return os.path.getctime(firstFile) > os.path.getctime(secondFile)
+
 #########################################################
 #########################################################
 #########################################################
-#fasta functions
+#fasta/fastq functions
 #########################################################
 #########################################################
 #########################################################
@@ -675,9 +691,16 @@ def fastaEncodeHeader(attributes):
         assert len(str(i).split()) == 1
     return "|".join([ str(i) for i in attributes ])
 
-def fastaRead(fileHandle):
+def _getFileHandle(fileHandleOrFile, mode="r"):
+    if isinstance(fileHandleOrFile, "".__class__):
+        return open(fileHandleOrFile, mode)
+    else:
+        return fileHandleOrFile
+
+def fastaRead(fileHandleOrFile):
     """iteratively a sequence for each '>' it encounters, ignores '#' lines
     """
+    fileHandle = _getFileHandle(fileHandleOrFile)
     line = fileHandle.readline()
     while line != '':
         if line[0] == '>':
@@ -686,7 +709,7 @@ def fastaRead(fileHandle):
             seq = array.array('c')
             while line != '' and line[0] != '>':
                 if line[0] != '#':
-                    seq.extend([ i for i in line[:-1] if i != '\t' and i != ' ' ])
+                    seq.extend([ i for i in line[:-1] if not i.isspace() ]) #The white-space check is to remove any annoying trailing characters.
                 line = fileHandle.readline()
             for i in seq:
                 #For safety and sanity I only allows roman alphabet characters in fasta sequences.
@@ -695,10 +718,13 @@ def fastaRead(fileHandle):
             yield name, seq.tostring()
         else:
             line = fileHandle.readline()
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
 
-def fastaWrite(fileHandle, name, seq):
+def fastaWrite(fileHandleOrFile, name, seq, mode="w"):
     """Writes out fasta file
     """
+    fileHandle = _getFileHandle(fileHandleOrFile, mode)
     assert seq.__class__ == "".__class__
     for i in seq:
         assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences.
@@ -706,6 +732,57 @@ def fastaWrite(fileHandle, name, seq):
     chunkSize = 100
     for i in xrange(0, len(seq), chunkSize):
         fileHandle.write("%s\n" % seq[i:i+chunkSize])
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
+        
+def fastqRead(fileHandleOrFile):
+    """Reads a fastq file iteratively
+    """
+    fileHandle = _getFileHandle(fileHandleOrFile)
+    line = fileHandle.readline()
+    while line != '':
+        if line[0] == '@':
+            name = line[1:-1]
+            seq = fileHandle.readline()[:-1]
+            plus = fileHandle.readline()
+            if plus[0] != '+':
+                raise RuntimeError("Got unexpected line: %s" % plus)
+            qualValues = [ ord(i) for i in fileHandle.readline()[:-1] ]
+            if len(seq) != len(qualValues):
+                logger.critical("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s, ignoring returning None" % (len(seq), len(qualValues), name))
+                qualValues = None
+            else:
+                for i in qualValues:
+                    if i < 33 or i > 126:
+                        raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
+            for i in seq:
+                #For safety and sanity I only allows roman alphabet characters in fasta sequences.
+                if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'):
+                    raise RuntimeError("Invalid FASTQ character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
+            yield name, seq, qualValues
+        line = fileHandle.readline()
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
+
+def fastqWrite(fileHandleOrFile, name, seq, qualValues, mode="w"):
+    """Writes out fastq file. If qualValues is None or '*' then prints a '*' instead.
+    """
+    fileHandle = _getFileHandle(fileHandleOrFile, mode)
+    assert seq.__class__ == "".__class__
+    for i in seq:
+        if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'): #For safety and sanity I only allows roman alphabet characters in fasta sequences.
+            raise RuntimeError("Invalid FASTQ character, ASCII code = \'%d\', char = '%s' found in input sequence %s" % (ord(i), i, name))
+    if qualValues != None and qualValues != '*':
+        if len(seq) != len(qualValues):
+            raise RuntimeError("Got a mismatch between the number of sequence characters (%s) and number of qual values (%s) for sequence: %s " % (len(seq), len(qualValues), name))
+        for i in qualValues:
+            if i < 33 or i > 126:
+                raise RuntimeError("Got a qual value out of range %s (range is 33 to 126)" % i)
+        fileHandle.write("@%s\n%s\n+\n%s\n" % (name, seq, "".join([ chr(i) for i in qualValues ])))
+    else:
+        fileHandle.write("@%s\n%s\n+\n*\n" % (name, seq))
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
 
 def _getMultiFastaOffsets(fasta):
     """Reads in columns of multiple alignment and returns them iteratively
@@ -1080,11 +1157,12 @@ def cigarReadFromString(line):
         return PairwiseAlignment(m[4], start2, end2, strand2, m[0], start1, end1, strand1, float(m[8]), ops)
     return None
 
-def cigarRead(fileHandle):
+def cigarRead(fileHandleOrFile):
     """Reads a list of pairwise alignments into a pairwise alignment structure.
 
     Query and target are reversed!
     """
+    fileHandle = _getFileHandle(fileHandleOrFile)
     #p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+(.*)\\s*)*")
     p = re.compile("cigar:\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+(.+)\\s+([0-9]+)\\s+([0-9]+)\\s+([\\+\\-\\.])\\s+([^\\s]+)(\\s+(.*)\\s*)*")
     line = fileHandle.readline()
@@ -1093,6 +1171,8 @@ def cigarRead(fileHandle):
         if pA != None:
             yield pA
         line = fileHandle.readline()
+    if isinstance(fileHandleOrFile, "".__class__):
+        fileHandle.close()
 
 def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
     """Writes out the pairwiseAlignment to the file stream.

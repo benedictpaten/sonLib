@@ -6,6 +6,7 @@
 
 import unittest
 import random
+import copy
 
 import networkx as NX
 from sonLib.nxtree import NXTree
@@ -36,7 +37,39 @@ class TestCase(unittest.TestCase):
             dfs = [x for x in nxTree.postOrderTraversal()]
             assert len(set(dfs)) == len(nxTree.nxDg.nodes())
             bfs = [x for x in nxTree.breadthFirstTraversal()]
-            assert len(set(bfs)) == len(nxTree.nxDg.nodes())        
+            assert len(set(bfs)) == len(nxTree.nxDg.nodes())
+
+    def testReroot(self):
+        tree = NX.DiGraph()
+        edges = [(1,2), (1,3), (2,4), (2,5), (5,6), (5,7), (5,8)]
+        for edge in edges:
+            tree.add_edge(edge[0], edge[1])
+        nxTree = NXTree(tree)
+        nxTree.setWeight(1, 2, 3.1)
+        to = [x for x in nxTree.breadthFirstTraversal()]
+
+        testTree = copy.deepcopy(nxTree)
+        testTree.reroot(1)
+        t = [x for x in testTree.breadthFirstTraversal()]
+        assert t == to
+        
+        testTree = copy.deepcopy(nxTree)
+        testTree.reroot(2)
+        t = [x for x in testTree.breadthFirstTraversal()]
+        assert t[0] == 2
+        assert sorted(t[1:4]) == [1,4,5]
+        assert sorted(t[4:]) == [3,6,7,8]
+        assert testTree.getWeight(2, 1) == 3.1
+
+        testTree = copy.deepcopy(nxTree)
+        testTree.reroot(7)
+        t = [x for x in testTree.breadthFirstTraversal()]
+        assert t[0] == 7
+        assert t[1] == 5
+        assert sorted(t[2:5]) == [2,6,8]
+        assert sorted(t[5:7]) == [1,4]
+        assert t[7] == 3
+        
 
 def randomTreeSet():
     trees = []
