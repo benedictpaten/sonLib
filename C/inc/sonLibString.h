@@ -110,9 +110,16 @@ stList *stString_splitByString(const char *string, const char *delim);
 char *stString_getSubString(const char *cA, int64_t start, int64_t length);
 
 /*
- * Reverse complements an upper or lower case ACTG character, treats all other characters as unknown and returns them unmodified.
+ * Gives the reverse complement of string of this string. Assumes string is DNA,
+ * uses iupac ambiguity characters. Preserves case. For non iupac characters the original
+ * character is returned.
  */
-char stString_reverseComplement(char nucleotide);
+char *stString_reverseComplementString(const char *string);
+
+/*
+ * As stString_reverseComplementString, but for a single character.
+ */
+char stString_reverseComplementChar(char c);
 
 #ifdef __cplusplus
 }

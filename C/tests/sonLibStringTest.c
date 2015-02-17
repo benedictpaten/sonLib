@@ -108,17 +108,53 @@ static void test_stString_getSubString(CuTest *testCase) {
     free(cA);
 }
 
-static void test_stString_reverseComplement(CuTest *testCase) {
-    CuAssertIntEquals(testCase, 'T', stString_reverseComplement('A'));
-    CuAssertIntEquals(testCase, 't', stString_reverseComplement('a'));
-    CuAssertIntEquals(testCase, 'A', stString_reverseComplement('T'));
-    CuAssertIntEquals(testCase, 'a', stString_reverseComplement('t'));
-    CuAssertIntEquals(testCase, 'C', stString_reverseComplement('G'));
-    CuAssertIntEquals(testCase, 'c', stString_reverseComplement('g'));
-    CuAssertIntEquals(testCase, 'G', stString_reverseComplement('C'));
-    CuAssertIntEquals(testCase, 'g', stString_reverseComplement('c'));
-    CuAssertIntEquals(testCase, 'N', stString_reverseComplement('N'));
-    CuAssertIntEquals(testCase, 'n', stString_reverseComplement('n'));
+
+void test_stString_reverseComplementChar(CuTest* testCase) {
+    CuAssertTrue(testCase, stString_reverseComplementChar('A') == 'T');
+    CuAssertTrue(testCase, stString_reverseComplementChar('T') == 'A');
+    CuAssertTrue(testCase, stString_reverseComplementChar('G') == 'C');
+    CuAssertTrue(testCase, stString_reverseComplementChar('C') == 'G');
+    CuAssertTrue(testCase, stString_reverseComplementChar('a') == 't');
+    CuAssertTrue(testCase, stString_reverseComplementChar('t') == 'a');
+    CuAssertTrue(testCase, stString_reverseComplementChar('g') == 'c');
+    CuAssertTrue(testCase, stString_reverseComplementChar('c') == 'g');
+    CuAssertTrue(testCase, stString_reverseComplementChar('N') == 'N');
+    CuAssertTrue(testCase, stString_reverseComplementChar('X') == 'X');
+
+    CuAssertTrue(testCase, stString_reverseComplementChar('w') == 'w');
+    CuAssertTrue(testCase, stString_reverseComplementChar('W') == 'W');
+    CuAssertTrue(testCase, stString_reverseComplementChar('s') == 's');
+    CuAssertTrue(testCase, stString_reverseComplementChar('S') == 'S');
+
+    CuAssertTrue(testCase, stString_reverseComplementChar('m') == 'k');
+    CuAssertTrue(testCase, stString_reverseComplementChar('M') == 'K');
+    CuAssertTrue(testCase, stString_reverseComplementChar('k') == 'm');
+    CuAssertTrue(testCase, stString_reverseComplementChar('K') == 'M');
+
+    CuAssertTrue(testCase, stString_reverseComplementChar('r') == 'y');
+    CuAssertTrue(testCase, stString_reverseComplementChar('R') == 'Y');
+    CuAssertTrue(testCase, stString_reverseComplementChar('y') == 'r');
+    CuAssertTrue(testCase, stString_reverseComplementChar('Y') == 'R');
+
+    CuAssertTrue(testCase, stString_reverseComplementChar('b') == 'v');
+    CuAssertTrue(testCase, stString_reverseComplementChar('B') == 'V');
+    CuAssertTrue(testCase, stString_reverseComplementChar('v') == 'b');
+    CuAssertTrue(testCase, stString_reverseComplementChar('V') == 'B');
+
+    CuAssertTrue(testCase, stString_reverseComplementChar('d') == 'h');
+    CuAssertTrue(testCase, stString_reverseComplementChar('D') == 'H');
+    CuAssertTrue(testCase, stString_reverseComplementChar('h') == 'd');
+    CuAssertTrue(testCase, stString_reverseComplementChar('H') == 'D');
+
+}
+
+void test_stString_reverseComplementString(CuTest* testCase) {
+    char *cA = stString_reverseComplementString("ACTG");
+    CuAssertStrEquals(testCase, cA, "CAGT");
+    free(cA);
+    cA = stString_reverseComplementString("");
+    CuAssertStrEquals(testCase, cA, "");
+    free(cA);
 }
 
 static void test_stString_splitByString(CuTest *testCase) {
@@ -140,7 +176,8 @@ CuSuite* sonLib_stStringTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stString_join2);
     SUITE_ADD_TEST(suite, test_stString_split);
     SUITE_ADD_TEST(suite, test_stString_getSubString);
-    SUITE_ADD_TEST(suite, test_stString_reverseComplement);
+    SUITE_ADD_TEST(suite, test_stString_reverseComplementChar);
+    SUITE_ADD_TEST(suite, test_stString_reverseComplementString);
     SUITE_ADD_TEST(suite, test_stString_splitByString);
     return suite;
 }
