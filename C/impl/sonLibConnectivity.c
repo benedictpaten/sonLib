@@ -53,6 +53,10 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
     // Remove an edge from the graph and update the connected components.
 }
 
+// Might be cool to be able to add or remove several edges at once, if there is a way to
+// make that more efficient than adding them one at a time. Depends on the details of 
+// the algorithm you use.
+
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
     // Remove a node (and all its edges) from the graph and update the connected components.
 }
