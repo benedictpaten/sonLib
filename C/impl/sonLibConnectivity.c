@@ -76,7 +76,7 @@ void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator 
     // Return the next node of the connected component, or NULL if all have been traversed.
 }
 
-void *stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it) {
+void stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it) {
     // Free the iterator data structure.
 }
 
@@ -90,6 +90,6 @@ stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentI
     // Return the next connected component in the graph, or NULL if all have been traversed.
 }
 
-void *stConnectedComponentIterator_destruct(stConnectedComponentIterator *it) {
+void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it) {
     // Free the iterator data structure.
 }
