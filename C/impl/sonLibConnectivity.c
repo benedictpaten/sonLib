@@ -46,7 +46,7 @@ static void adjList_destruct(struct adjacency *adjList) {
 }
 
 stConnectivity *stConnectivity_construct(void) {
-    stConnectivity *connectivity = calloc(sizeof(struct _stConnectivity));
+    stConnectivity *connectivity = calloc(1, sizeof(struct _stConnectivity));
     connectivity->nodesToAdjList = stHash_construct2(NULL, (void (*)(void *)) adjList_destruct);
 
     return connectivity;
@@ -233,6 +233,8 @@ static void computeConnectedComponents(stConnectivity *connectivity) {
                     isSubset = false;
                 }
             }
+            stSet_destructIterator(myNodeIt);
+
             if (isSubset) {
                 assert(overlap == true);
                 // Quit early.
@@ -257,6 +259,8 @@ static void computeConnectedComponents(stConnectivity *connectivity) {
             componentsHead = newComponent;
         }
     }
+
+    stHash_destructIterator(nodeIt);
 
     connectivity->connectedComponentCache = componentsHead;
 }
