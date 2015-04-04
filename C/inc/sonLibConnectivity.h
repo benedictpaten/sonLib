@@ -22,12 +22,12 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
 
 void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator *it);
 
-void *stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it);
+void stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it);
 
 stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stConnectivity *connectivity);
 
 stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentIterator *it);
 
-void *stConnectedComponentIterator_destruct(stConnectedComponentIterator *it);
+void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it);
 
 #endif

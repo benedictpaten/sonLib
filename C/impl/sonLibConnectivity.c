@@ -35,18 +35,21 @@ struct adjacency {
     struct adjacency *next;
 };
 
-// Exported methods
-
-stConnectivity *stConnectivity_construct(void) {
-    stConnectivity *connectivity = malloc(sizeof(struct _stConnectivity));
-    connectivity->nodesToAdjList = stHash_construct2(NULL, (void (*)(void *)) stList_destruct);
-
-    return connectivity;
+// Destroy an adjacency linked list.
+static void adjList_destruct(struct adjacency *adjList) {
+    assert(adjList->prev == NULL);
+    while (adjList != NULL) {
+        struct adjacency *next = adjList->next;
+        free(adjList);
+        adjList = next;
+    }
 }
 
-void stConnectivity_destruct(stConnectivity *connectivity) {
-    stHash_destruct(connectivity->nodesToAdjList);
-    free(connectivity);
+stConnectivity *stConnectivity_construct(void) {
+    stConnectivity *connectivity = calloc(sizeof(struct _stConnectivity));
+    connectivity->nodesToAdjList = stHash_construct2(NULL, (void (*)(void *)) adjList_destruct);
+
+    return connectivity;
 }
 
 static void invalidateCache(stConnectivity *connectivity) {
@@ -60,6 +63,12 @@ static void invalidateCache(stConnectivity *connectivity) {
         }
         connectivity->connectedComponentCache = NULL;
     }
+}
+
+void stConnectivity_destruct(stConnectivity *connectivity) {
+    invalidateCache(connectivity);
+    stHash_destruct(connectivity->nodesToAdjList);
+    free(connectivity);
 }
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
@@ -88,6 +97,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
         newEdge1->next = adjList1;
         adjList1->prev = newEdge1;
     }
+    stHash_remove(connectivity->nodesToAdjList, node1);
     stHash_insert(connectivity->nodesToAdjList, node1, newEdge1);
 
     struct adjacency *adjList2 = stHash_search(connectivity->nodesToAdjList, node2);
@@ -97,6 +107,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
         newEdge2->next = adjList2;
         adjList2->prev = newEdge2;
     }
+    stHash_remove(connectivity->nodesToAdjList, node2);
     stHash_insert(connectivity->nodesToAdjList, node2, newEdge2);
 }
 
@@ -111,6 +122,7 @@ static void removeEdgeFromAdjList(stConnectivity *connectivity, void *node, stru
     if (adj->prev != NULL) {
         adj->prev->next = adj->next;
     } else {
+        stHash_remove(connectivity->nodesToAdjList, node);
         stHash_insert(connectivity->nodesToAdjList, node, adj->next);
     }
     free(adj);
@@ -171,6 +183,7 @@ static void removeComponent(stConnectedComponent **head, stConnectedComponent *c
             break;
         }
         prevComponent = curComponent;
+        curComponent = curComponent->next;
     }
 }
 
@@ -286,9 +299,11 @@ stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stCon
 }
 
 stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentIterator *it) {
-    assert(it->cur != NULL);
-    it->cur = it->cur->next;
-    return it->cur;
+    stConnectedComponent *ret = it->cur;
+    if (ret != NULL) {
+        it->cur = it->cur->next;
+    }
+    return ret;
 }
 
 void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it) {
