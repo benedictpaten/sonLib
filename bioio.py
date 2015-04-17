@@ -910,16 +910,16 @@ def mutateSequence(seq, distance):
         i += 1
     return "".join(l)
 
-def reverseComplement(seq):
-    seq = list(seq)
-    seq.reverse()
-    dNA = { 'A':'T', 'T':'A', 'C':'G', 'G':'C', 'a':'t', 't':'a', 'c':'g', 'g':'c' }
-    def fn(i):
-        if i in dNA:
-            return dNA[i]
-        return i
-    return "".join([ fn(i) for i in seq ])
+_reverseComplementDict = { 'A':'T', 'T':'A', 'C':'G', 'G':'C', 
+                          'a':'t', 't':'a', 'c':'g', 'g':'c' }
 
+def reverseComplementChar(x):
+    assert len(x) == 1
+    return _reverseComplementDict[x] if x in \
+                        _reverseComplementDict else x
+
+def reverseComplement(seq):
+    return "".join(map(lambda x : reverseComplementChar(x), seq[::-1]))
 
 #########################################################
 #########################################################
