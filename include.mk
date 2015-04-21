@@ -29,14 +29,14 @@ cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG
 cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG
 
 #Debug flags (slow)
-cflags_dbg = -Wall -Werror --pedantic -g -fno-inline
-cppflags_dbg = -Wall -g -O0 -fno-inline 
+cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG -Wno-error=unused-result
+cppflags_dbg = -Wall -g -O0 -fno-inline -UNDEBUG
 
 #Ultra Debug flags (really slow)
-cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline
+cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG
 
 #Profile flags
-cflags_prof = -Wall -Werror --pedantic -pg -O3 -g
+cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -Wno-error=unused-result
 
 #for cpp code: don't use pedantic, or Werror
 cppflags = ${cppflags_opt} 

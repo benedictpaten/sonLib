@@ -72,6 +72,76 @@ stTree *stTree_clone(stTree *root) {
     return tree_clonetree(root, NULL);
 }
 
+// Set client data to NULL (optionally recursively).
+static void stTree_clearClientData(stTree *tree, bool recursive) {
+    stTree_setClientData(tree, NULL);
+    if (recursive) {
+        for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+            stTree_clearClientData(stTree_getChild(tree, i), true);
+        }
+    }
+}
+
+// clone this node, make its supertree a child, and clone all children
+// other than oldNode, leaving this node as a child of nodeToAddTo
+static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
+                                  stTree *nodeToAddTo,
+                                  double branchLength) {
+    if(stTree_getParent(node) != NULL) {
+        // This node isn't the root
+        stTree *clonedNode = stTree_cloneNode(node);
+        stTree_setParent(clonedNode, nodeToAddTo);
+        stTree_setBranchLength(clonedNode, branchLength);
+        // Clone its children (other than oldNode) and their subtrees
+        for(int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stTree *child = stTree_getChild(node, i);
+            if(child != oldNode) {
+                stTree *clonedChild = stTree_clone(child);
+                stTree_setParent(clonedChild, clonedNode);
+            }
+        }
+        
+        // Recurse on the parent of this node.
+        tree_cloneFlippedTree(stTree_getParent(node), node,
+                              clonedNode, stTree_getBranchLength(node));
+    } else {
+        // We have to treat the root specially, because we're going to
+        // eliminate it. Just add all the other children of the root
+        // as children of nodeToAddTo.
+        for(int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stTree *child = stTree_getChild(node, i);
+            if(child != oldNode) {
+                stTree *clonedChild = stTree_clone(child);
+                stTree_setParent(clonedChild, nodeToAddTo);
+                stTree_setBranchLength(clonedChild, stTree_getBranchLength(child) + branchLength);
+            }
+        }
+    }
+}
+
+// Return a new tree rooted a given distance above the given node.
+stTree *stTree_reRoot(stTree *node, double distanceAbove) {
+    if(stTree_getParent(node) == NULL) {
+        // This node is already the root.
+        stTree *newRoot = stTree_clone(node);
+        stTree_clearClientData(newRoot, true);
+        return newRoot;
+    }
+
+    assert(stTree_getBranchLength(node) >= distanceAbove);
+
+    stTree *newRoot = stTree_construct();
+    // This node and its children (if any) are fine already.
+    stTree *clonedNode = stTree_clone(node);
+    stTree_setParent(clonedNode, newRoot);
+    stTree_setBranchLength(clonedNode, distanceAbove);
+    tree_cloneFlippedTree(stTree_getParent(node), node, newRoot,
+                          stTree_getBranchLength(node) - distanceAbove);
+    // Having the same client data can be a problem
+    stTree_clearClientData(newRoot, true);
+    return newRoot;
+}
+
 stTree *stTree_getParent(stTree *tree) {
     return tree->parent;
 }
@@ -95,6 +165,9 @@ stTree *stTree_getChild(stTree *tree, int64_t i) {
 }
 
 stTree *stTree_findChild(stTree *tree, const char *label) {
+    if (tree->label != NULL && strcmp(tree->label, label) == 0) {
+        return tree;
+    }
     for (int i = 0; i < stList_length(tree->nodes); i++) {
         stTree *node = (stTree *)stList_get(tree->nodes, i);
         if ((node->label != NULL) && (strcmp(node->label, label) == 0)) {
@@ -313,4 +386,26 @@ void stTree_setChild(stTree *tree, int64_t i, stTree *child) {
     assert(i >= 0);
     assert(i < stTree_getChildNumber(tree));
     stList_set(tree->nodes, i, child);
+}
+
+stTree *stTree_getMRCA(stTree *node1, stTree *node2) {
+    // Find all of node 1's parents (inclusive of node 1)
+    stSet *parents = stSet_construct();
+    stTree *curNode = node1;
+    do {
+        stSet_insert(parents, curNode);
+    } while ((curNode = stTree_getParent(curNode)) != NULL);
+
+    // Find the first parent of node 2 that is a parent of node 1
+    stTree *ret = NULL;
+    curNode = node2;
+    do {
+        if (stSet_search(parents, curNode) != NULL) {
+            ret = curNode;
+            break;
+        }
+    } while ((curNode = stTree_getParent(curNode)) != NULL);
+
+    stSet_destruct(parents);
+    return ret;
 }

@@ -60,6 +60,7 @@ typedef struct _stConnectivity stConnectivity;
 typedef struct _stConnectedComponent stConnectedComponent;
 typedef struct _stConnectedComponentIterator stConnectedComponentIterator;
 typedef struct _stConnectedComponentNodeIterator stConnectedComponentNodeIterator;
+typedef struct _stMatrix stMatrix;
 
 #ifdef __cplusplus
 }

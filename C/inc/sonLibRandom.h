@@ -50,6 +50,18 @@ double st_random(void);
  */
 void *st_randomChoice(stList *list);
 
+/*
+ * Gets a random upper-case A,C,G, T character.
+ * If includeNs is true, may additionally return an N.
+ * If useLowerCase then return the character as lower case, is useRandomCase then may return either lower or upper case.
+ */
+char stRandom_getRandomNucleotide(bool includeNs, bool useLowerCase, bool useRandomCase);
+
+/*
+ * Get a random string of nucleotide characters using st_randomGetRandomNucleotide(), with same arguments.
+ */
+char *stRandom_getRandomDNAString(int64_t length, bool includeNs, bool useLowerCase, bool useRandomCase);
+
 #ifdef __cplusplus
 }
 #endif

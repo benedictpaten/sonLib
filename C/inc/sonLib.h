@@ -33,5 +33,7 @@
 #include "stGraph.h"
 #include "stPosetAlignment.h"
 #include "sonLibConnectivity.h"
-
+#include "stMatrix.h"
+#include "stPhylogeny.h"
+#include "stThreadPool.h"
 #endif /* SONLIB_H_ */

@@ -146,3 +146,59 @@ void st_errnoAbort(char *format, ...) {
     fprintf(stderr, ": %s\n", strerror(errno));
     exit(1);
 }
+
+static int64_t reverse8Bytes(int64_t in) {
+    int64_t out;
+    char *inByte = (char *) &in;
+    char *outByte = (char *) &out;
+    // looped for conciseness, hopefully it will be unrolled in
+    // practice.
+    for (int64_t i = 0; i < sizeof(int64_t); i++) {
+        outByte[i] = inByte[sizeof(int64_t) - i];
+    }
+    return out;
+}
+
+int64_t st_nativeInt64FromLittleEndian(int64_t in) {
+    static const int64_t one = 1;
+    if (*(char *)&one == 0) {
+        // big-endian
+        return reverse8Bytes(in);
+    } else {
+        // little-endian
+        return in;
+    }
+}
+
+int64_t st_nativeInt64ToLittleEndian(int64_t in) {
+    static const int64_t one = 1;
+    if (*(char *)&one == 0) {
+        // big-endian
+        return reverse8Bytes(in);
+    } else {
+        // little-endian
+        return in;
+    }
+}
+
+int64_t st_nativeInt64ToBigEndian(int64_t in) {
+    static const int64_t one = 1;
+    if (*(char *)&one == 0) {
+        // big-endian
+        return in;
+    } else {
+        // little-endian
+        return reverse8Bytes(in);
+    }
+}
+
+int64_t st_nativeInt64FromBigEndian(int64_t in) {
+    static const int64_t one = 1;
+    if (*(char *)&one == 0) {
+        // big-endian
+        return in;
+    } else {
+        // little-endian
+        return reverse8Bytes(in);
+    }
+}
