@@ -102,6 +102,18 @@ def logFile(fileName, printFunction=logger.info):
         printFunction("%s:\t%s" % (shortName, line))
         line = fileHandle.readline()
     fileHandle.close()
+    
+def logStream(fileHandle, shortName, printFunction=logger.info):
+    """Writes out a formatted version of the given log stream.
+    """
+    printFunction("Reporting file: %s" % shortName)
+    line = fileHandle.readline()
+    while line != '':
+        if line[-1] == '\n':
+            line = line[:-1]
+        printFunction("%s:\t%s" % (shortName, line))
+        line = fileHandle.readline()
+    fileHandle.close()
 
 def addLoggingOptions(parser):
     # Wrapper function that allows jobTree to be used with both the optparse and
