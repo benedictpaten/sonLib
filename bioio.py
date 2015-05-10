@@ -697,24 +697,27 @@ def _getFileHandle(fileHandleOrFile, mode="r"):
     else:
         return fileHandleOrFile
 
-def fastaRead(fileHandleOrFile):
-    """iteratively a sequence for each '>' it encounters, ignores '#' lines
+def fastaIanRead(fileHandleOrFile):
+    """iteratively yields a sequence for each '>' it encounters, ignores '#' lines
     """
     fileHandle = _getFileHandle(fileHandleOrFile)
     line = fileHandle.readline()
+    chars_to_remove = "\n "
+    valid_chars = {x for x in string.ascii_letters + "-"}
     while line != '':
         if line[0] == '>':
             name = line[1:-1]
             line = fileHandle.readline()
             seq = array.array('c')
             while line != '' and line[0] != '>':
+                line = line.translate(None, chars_to_remove)
                 if line[0] != '#':
-                    seq.extend([ i for i in line[:-1] if not i.isspace() ]) #The white-space check is to remove any annoying trailing characters.
+                    seq.extend(line)
                 line = fileHandle.readline()
-            for i in seq:
-                #For safety and sanity I only allows roman alphabet characters in fasta sequences.
-                if not ((i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-'):
-                    raise RuntimeError("Invalid FASTA character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
+            try:
+                assert all(x in valid_chars for x in seq)
+            except AssertionError:
+                raise RuntimeError("Invalid FASTA character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
             yield name, seq.tostring()
         else:
             line = fileHandle.readline()
