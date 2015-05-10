@@ -20,6 +20,7 @@ from tree import BinaryTree
 from misc import close
 import subprocess
 import array
+import string
 import xml.etree.cElementTree as ET
 from xml.dom import minidom  # For making stuff pretty
 
@@ -717,7 +718,8 @@ def fastaIanRead(fileHandleOrFile):
             try:
                 assert all(x in valid_chars for x in seq)
             except AssertionError:
-                raise RuntimeError("Invalid FASTA character, ASCII code = \'%d\', found in input sequence %s" % (ord(i), name))
+                bad_chars = {x for x in seq if x not in valid_chars}
+                raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
             yield name, seq.tostring()
         else:
             line = fileHandle.readline()
