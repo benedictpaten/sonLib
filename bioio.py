@@ -698,7 +698,7 @@ def _getFileHandle(fileHandleOrFile, mode="r"):
     else:
         return fileHandleOrFile
 
-def fastaIanRead(fileHandleOrFile):
+def fastaRead(fileHandleOrFile):
     """iteratively yields a sequence for each '>' it encounters, ignores '#' lines
     """
     fileHandle = _getFileHandle(fileHandleOrFile)
