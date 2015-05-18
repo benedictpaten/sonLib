@@ -1110,6 +1110,103 @@ static void testStPhylogeny_reconcileAtMostBinary_degree2Nodes(CuTest *testCase)
     stTree_destruct(speciesTree);
 }
 
+// Build a leaf to species hash using the labels of the leaves,
+// assuming that the label format is 'species-gene'.
+static stHash *buildLeafToSpeciesUsingDashSeparator(stTree *geneTree, stTree *speciesTree) {
+    stHash *leafToSpecies = stHash_construct();
+    stList *dfStack = stList_construct();
+    stList_append(dfStack, geneTree);
+    while (stList_length(dfStack) != 0) {
+        stTree *node = stList_pop(dfStack);
+        for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stList_append(dfStack, stTree_getChild(node, i));
+        }
+        if (stTree_getChildNumber(node) == 0) {
+            // Assign the leaves to their species by using the first
+            // '-'-separated token.
+            stList *tokens = stString_splitByString(stTree_getLabel(node), "-");
+            char *speciesName = stList_get(tokens, 0);
+            stTree *species = stTree_findChild(speciesTree, speciesName);
+            assert(species != NULL);
+            stHash_insert(leafToSpecies, node, species);
+            stList_destruct(tokens);
+        }
+    }
+    stList_destruct(dfStack);
+    return leafToSpecies;
+}
+
+static void testStPhylogeny_reconcileNonBinary(CuTest *testCase) {
+    // TEST 1: "exercise5" tree provided with Notung.
+    stTree *speciesTree = stTree_parseNewickString("((tasmanian_devil,opossum,bandicoot,kangaroo)Metatheria,((mouse,human)Euarchontoglires,cow)Boreoeutheria)Theria;");
+    stTree *geneTree = stTree_parseNewickString("((((opossum-gene1,tasmanian_devil-gene1),kangaroo-gene1),((mouse-gene,human-gene),cow-gene)),((opossum-gene2,kangaroo-gene2),(bandicoot-gene3,kangaroo-gene3)));");
+    // Assign the initial reconciliation
+    stHash *leafToSpecies = buildLeafToSpeciesUsingDashSeparator(geneTree, speciesTree);
+
+    // Do the reconciliation and check that the mapping matches.
+    stPhylogeny_reconcileNonBinary(geneTree, leafToSpecies, true);
+    char *testNewick = stTree_getNewickTreeString(geneTree);
+    CuAssertStrEquals(testCase, "((((opossum-gene1,tasmanian_devil-gene1)Metatheria,kangaroo-gene1)Metatheria,((mouse-gene,human-gene)Euarchontoglires,cow-gene)Boreoeutheria)Theria,((opossum-gene2,kangaroo-gene2)Metatheria,(bandicoot-gene3,kangaroo-gene3)Metatheria)Metatheria)Theria;", testNewick);
+    free(testNewick);
+
+    // Check that the ILSed node in the tree is not marked as a
+    // duplication (since it's only a conditional duplication).
+    stTree *node = stTree_getMRCA(stTree_findChild(geneTree, "opossum-gene1"), stTree_findChild(geneTree, "kangaroo-gene1"));
+    stPhylogenyInfo *info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == SPECIATION);
+
+    // Check that the duplication along lineage "2" is correctly identified.
+    node = stTree_getMRCA(stTree_findChild(geneTree, "opossum-gene2"), stTree_findChild(geneTree, "kangaroo-gene3"));
+    info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == DUPLICATION);
+
+    // Check that the duplication in the root is correctly identified.
+    node = geneTree;
+    info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == DUPLICATION);
+
+    // Clean up.
+    stPhylogenyInfo_destructOnTree(geneTree);
+    stTree_destruct(geneTree);
+    stTree_destruct(speciesTree);
+    stHash_destruct(leafToSpecies);
+
+    // TEST 2: Fig 3 in Notung paper.
+    speciesTree = stTree_parseNewickString("(A,B,(C,D)Beta)Alpha;");
+    geneTree = stTree_parseNewickString("(A-g1,((B-g3,C-g3),D-g2));");
+
+    leafToSpecies = buildLeafToSpeciesUsingDashSeparator(geneTree, speciesTree);
+
+    // Reconcile and check the reconciliation gene->species
+    // assignments are correct
+    stPhylogeny_reconcileNonBinary(geneTree, leafToSpecies, true);
+    testNewick = stTree_getNewickTreeString(geneTree);
+    CuAssertStrEquals(testCase, "(A-g1,((B-g3,C-g3)Alpha,D-g2)Alpha)Alpha;", testNewick);
+    free(testNewick);
+
+    // Even though there are 3 nodes reconciled to Alpha, there should
+    // be only one duplication node, and it should be where the "g3"
+    // and "g2" lineages coalesce.
+
+    node = stTree_getMRCA(stTree_findChild(geneTree, "B-g3"), stTree_findChild(geneTree, "C-g3"));
+    info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == SPECIATION);
+
+    node = stTree_getMRCA(stTree_findChild(geneTree, "B-g3"), stTree_findChild(geneTree, "D-g2"));
+    info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == DUPLICATION);
+
+    node = stTree_getMRCA(stTree_findChild(geneTree, "B-g3"), stTree_findChild(geneTree, "A-g1"));
+    info = stTree_getClientData(node);
+    CuAssertTrue(testCase, info->recon->event == SPECIATION);
+
+    // Clean up.
+    stPhylogenyInfo_destructOnTree(geneTree);
+    stTree_destruct(geneTree);
+    stTree_destruct(speciesTree);
+    stHash_destruct(leafToSpecies);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testJoinCosts_random);
@@ -1124,5 +1221,6 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests);
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
-     return suite;
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileNonBinary);
+    return suite;
 }

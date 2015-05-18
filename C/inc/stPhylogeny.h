@@ -183,6 +183,12 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
 stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
                                                      stHash *leafToSpecies);
 
+// Reconcile a binary gene tree to a species tree that may include
+// polytomies. Based on the method used by NOTUNG, described in
+// Vernot, Stolzer, Goldman, Durand, J Comput Biol 2008.
+void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies,
+                                    bool relabelAncestors);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1065,6 +1065,7 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 // Fills in stReconciliationInfo, creating the containing
 // stPhylogenyInfo if necessary.
 static void fillInReconciliationInfo(stTree *gene, stTree *recon,
+                                     stReconciliationEvent event,
                                      bool relabelAncestors) {
     stPhylogenyInfo *info = stTree_getClientData(gene);
     if (info == NULL) {
@@ -1077,22 +1078,9 @@ static void fillInReconciliationInfo(stTree *gene, stTree *recon,
         info->recon = reconInfo;
     }
     reconInfo->species = recon;
-    if (stTree_getChildNumber(gene) == 0) {
-        reconInfo->event = LEAF;
-    } else {
-        assert(stTree_getChildNumber(gene) == 2);
-        stPhylogenyInfo *leftInfo = stTree_getClientData(stTree_getChild(gene, 0));
-        stTree *leftRecon = leftInfo->recon->species;
-        stPhylogenyInfo *rightInfo = stTree_getClientData(stTree_getChild(gene, 1));
-        stTree *rightRecon = rightInfo->recon->species;
-        if (leftRecon == recon || rightRecon == recon) {
-            reconInfo->event = DUPLICATION;
-        } else {
-            reconInfo->event = SPECIATION;
-        }
-        if (relabelAncestors) {
-            stTree_setLabel(gene, stTree_getLabel(recon));
-        }
+    reconInfo->event = event;
+    if (stTree_getChildNumber(gene) != 0 && relabelAncestors) {
+        stTree_setLabel(gene, stTree_getLabel(recon));
     }
 }
 
@@ -1102,18 +1090,25 @@ static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
     assert(stTree_getChildNumber(gene) == 0 ||
            stTree_getChildNumber(gene) == 2);
     stTree *recon;
+    stReconciliationEvent event;
     if (stTree_getChildNumber(gene) == 0) {
         // Leaves are already reconciled.
         recon = stHash_search(leafToSpecies, gene);
         assert(recon != NULL);
+        event = LEAF;
     } else {
         stTree *leftRecon = stPhylogeny_reconcileAtMostBinary_R(
             stTree_getChild(gene, 0), leafToSpecies, relabelAncestors);
         stTree *rightRecon = stPhylogeny_reconcileAtMostBinary_R(
             stTree_getChild(gene, 1), leafToSpecies, relabelAncestors);
         recon = stTree_getMRCA(leftRecon, rightRecon);
+        if (recon == leftRecon || recon == rightRecon) {
+            event = DUPLICATION;
+        } else {
+            event = SPECIATION;
+        }
     }
-    fillInReconciliationInfo(gene, recon, relabelAncestors);
+    fillInReconciliationInfo(gene, recon, event, relabelAncestors);
     return recon;
 }
 
@@ -1308,4 +1303,88 @@ stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
         }
         return stTree_reRoot(bestRoot, stTree_getBranchLength(bestRoot)/2);
     }
+}
+
+static stSet *climb(stTree *childGene, stTree *childLCARecon, stTree *parentGene,
+                    stTree *parentLCARecon, stHash *N) {
+    stSet *childN = stHash_search(N, childGene);
+    assert(childN != NULL);
+    if (stSet_search(childN, parentLCARecon)) {
+        return childN;
+    }
+
+    for (int64_t i = 0; i < stTree_getChildNumber(parentLCARecon); i++) {
+        if (stSet_search(childN, stTree_getChild(parentLCARecon, i))) {
+            return childN;
+        }
+    }
+
+    stSetIterator *setIt = stSet_getIterator(childN);
+    stTree *x = stSet_getNext(setIt);
+    stSet_destructIterator(setIt);
+
+    while (stTree_getParent(x) != parentLCARecon) {
+        x = stTree_getParent(x);
+    }
+
+    stSet *ret = stSet_construct();
+    stSet_insert(ret, x);
+    stSet_destruct(childN);
+    return ret;
+}
+
+static stTree *stPhylogeny_reconcileNonBinary_R(stTree *gene, stHash *leafToSpecies,
+                                                stHash *N, bool relabelAncestors) {
+    stTree *LCARecon;
+    stReconciliationEvent event;
+    if (stTree_getChildNumber(gene) == 0) {
+        // Leaves are already reconciled.
+        LCARecon = stHash_search(leafToSpecies, gene);
+        assert(LCARecon != NULL);
+        stSet *myN = stSet_construct();
+        stSet_insert(myN, LCARecon);
+        stHash_insert(N, gene, myN);
+        event = LEAF;
+    } else {
+        // Internal node
+        // Calculate the LCA mapping
+        stTree *leftLCARecon = stPhylogeny_reconcileNonBinary_R(
+            stTree_getChild(gene, 0), leafToSpecies, N, relabelAncestors);
+        stTree *rightLCARecon = stPhylogeny_reconcileNonBinary_R(
+            stTree_getChild(gene, 1), leafToSpecies, N, relabelAncestors);
+        LCARecon = stTree_getMRCA(leftLCARecon, rightLCARecon);
+        // Calculate if this is a required duplication. We don't
+        // really care if it's a conditional duplication.
+        stSet *leftN = climb(stTree_getChild(gene, 0), leftLCARecon,
+                             gene, LCARecon, N);
+        stSet *rightN = climb(stTree_getChild(gene, 1), rightLCARecon,
+                             gene, LCARecon, N);
+        stSet *myN = stSet_getUnion(leftN, rightN);
+        stHash_insert(N, gene, myN);
+        stSet *intersect = stSet_getIntersection(leftN, rightN);
+        if (stSet_size(intersect) != 0) {
+            // This node is a required duplication
+            event = DUPLICATION;
+        } else {
+            // This event is a conditional duplication or a
+            // speciation.
+            event = SPECIATION;
+        }
+        stSet_destruct(leftN);
+        stSet_destruct(rightN);
+        stSet_destruct(intersect);
+        if (stTree_getParent(gene) == NULL) {
+            stSet_destruct(myN);
+        }
+    }
+    fillInReconciliationInfo(gene, LCARecon, event, relabelAncestors);
+    return LCARecon;
+}
+
+void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies, bool relabelAncestors) {
+    // TODO: this hash is likely unnecessary and values could probably
+    // be passed up along the tree by stPhylogeny_reconcile_R.
+    stHash *N = stHash_construct();
+    stPhylogeny_reconcileNonBinary_R(geneTree, leafToSpecies, N, relabelAncestors);
+    stHash_destruct(N);
 }
