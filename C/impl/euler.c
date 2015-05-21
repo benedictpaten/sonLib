@@ -1,4 +1,6 @@
 #include "sonLibGlobalsInternal.h"
+
+
 /*represents the Euler Tour Tree of an undirected graph. The Euler Tour
  * is stored in a balanced binary tree where each node in the BST represents one 
  * traversal of an edge
@@ -30,10 +32,10 @@
  *
  *
  * Graph representation:
- * V_left_out   ___  W_left_out  ___
- * <---------- |   |<-----------|   |
- *             | V |            | W |
- * ----------> |___|----------->|___|
+ * V_left_out   ____  W_left_out  ___
+ * <---------- |    |<-----------|   |
+ *             | V  |            | W |
+ * ----------> |____|----------->|___|
  *  V_right_in       W_right_in
  *
  *  Undirected edges are represented as two directed half-edges.
@@ -64,9 +66,10 @@ struct stEulerHalfEdge {
 
 struct stEulerTour {
 	stList *vertices;
-	stList *forward_edges;
-	stList *backward_edges;
+	stList *forwardEdges;
+	stList *backwardEdges;
 	 
+	struct treap *tree;
 	int nComponents;
 }
 
@@ -118,6 +121,11 @@ int stEulerVertex_isSingleton(struct stEulerVertex *vertex) {
 
 
 /*Euler Half Edge methods ------------------------------------------------- */
+struct stEulerHalfEdge_construct() {
+	struct stEulerHalfEdge *newEdge = st_malloc(sizeof(struct stEulerHalfEdge));
+	return(newEdge);
+}
+
 
 int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex *vertex) {
 	return (edge->from == vertex || edge->to == vertex);
@@ -132,8 +140,8 @@ struct stEulerTour_construct() {
 	struct stEulerTour *et = st_malloc(sizeof(struct stEulerTree));
 
 	et->vertices = stList_construct();
-	et->forward_edges = stList_construct();
-	et->backward_edges = stList_construct();
+	et->forwardEdges = stList_construct();
+	et->backwardEdges = stList_construct();
 	et->nComponents = 0;
 	return(et);
 }
@@ -199,6 +207,202 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 		//already root
 	}
 }
+int stEulerTour_link(struct stEulerTour *et, struct stEulerVertex *vertex, 
+		struct stEulerVertex *other, int edgeID) {
+	assert(vertex != other);
+	assert(!stEulerVertex_connected(vertex, other));
+	et->nComponents--;
+	if(stList_length(et->forwardEdges) <= edgeID) {
+		assert(stList_length(et->backwardEdges <= edgeID));
+	}
+	if(!stList_get(et->forwardEdges, edgeID)) {
+		struct stEulerHalfEdge *newForwardEdge = stEulerHalfEdge_construct();
+		newForwardEdge->isForward = true;
+		struct stEulerHalfEdge *newBackwardEdge = stEulerHalfEdge_construct();
+		newBackwardEdge->isForward = false;
 
+		newForwardEdge->index = edgeID;
+		newBackwardEdge->index = edgeID;
+		newForwardEdge->from = vertex;
+		newForwardEdge->to = other;
+
+		newBackwardEdge->from = other;
+		newBackwardEdge->to = vertex;
+
+		newForwardEdge->node = treap_construct(newForwardEdge);
+		newBackwardEdge->node = treap_construct(newBackwardEdge);
+
+		stList_set(et->forwardEdges, edgeID, newForwardEdge);
+		stList_set(et->backwardEdges, edgeID, newBackwardEdge);
+	}
+	stEulerTour_makeRoot(et, vertex);
+	stEulerTour_makeRoot(et, other);
+	
+	struct treap *f = NULL;
+	if (vertex->leftIn->node) {
+		f = treap_findMin(vertex->leftIn->node);
+	}
+
+	struct treap *tleft = NULL;
+	if (f) {
+		treap_concat(f, stList_get(et->forwardEdges, edgeID)->node);
+	}
+	else {
+		vertex->leftIn = et->stList_get(et->forwardEdges, edgeID);
+	}
+	if (other->leftIn) {
+		assert(treap_findRoot(other->leftIn->node) == 
+				treap_findRoot(other->rightOut->node));
+		treap_concat(stList_get(et->forwardEdges, edgeID)->node, 
+				other->leftIn->node);
+	}
+	else {
+		other->leftIn = stList_get(et->forwardEdges, edgeID);
+	}
+	if (other->rightOut) {
+		treap_concat(other->rightOut->node, stList_get(et->backwardEdges, edgeID)->node);
+	}
+	else {
+		other->rightIn = stList_get(et->backwardEdges, edgeID);
+		treap_concat(vertex->leftIn->node, stList_get(et->backwardEdges, edgeID)->node);
+	}
+	if (tleft) {
+		treap_concat(stList_get(et->backwardEdges, edgeID)->node, tleft);
+		vertex->rightIn = tleft->value;
+	}
+	else {
+		vertex->rightIn = stList_get(et->backwardEdges, edgeID);
+	}
+		
+	assert(stEulerTour_connected(vertex, other));
+	return(edgeID);
+}
+
+
+
+/*remove an edge from the graph and update the tour, possibly splitting into another tour.
+ *
+ * Graph:
+ *           y1        z1
+ *	   C--------D----------E
+ *        / \ y2       z2     /
+ *       /   \               /               
+ *    w1/w2 x1\x2         u1/u2
+ *     /       \     v1    /
+ *    A         B---------F
+ *                   v2
+ *
+ * Euler tour: w1->x1->v1->v2->x2->y1->z1->z2->y2->w2
+ *                       y1
+ *                    /      \
+ *                   /        \
+ *                  v2        z2
+ *                 /   \     /   \
+ *                /     \   /     \
+ *               x1    x2  z1     w2
+ *              /   \             /
+ *             /     \           /
+ *          w1       v1         y2
+ *
+ * Remove y:
+ * 
+ * tree1: w1->x1->v1->v2->x2  tree2: w2
+
+ */
+
+void stEulerTour_cut(struct stEulerTour *et, int edgeID) {
+	et->nComponents++;
+
+	//get the two halves of this edge
+	struct stEulerHalfEdge *f = stList_get(et->forwardEdges, edgeID);
+	struct stEulerHalfEdge *b = stList_get(et->backwardEdges, edgeID);
+	
+	assert(treap_findRoot(f->node) == treap_findRoot(b->node));
+
+	//f should point to the first half of this edge to be traversed,
+	//and b should point to the half that is traversed second.
+	if (treap_compare(f->node, b->node) > 0) {
+		//swap f and b
+		struct stEulerHalfEdge *temp = f;
+		f = b;
+		b = temp;
+	}
+
+	struct stEulerVertex *from = f->from;
+	struct stEulerVertex *to = f->to;
+	
+	assert(stEulerTour_connected(f->from, f->to));
+
+	struct treap *fprev = treap_prev(f->node);
+	struct treap *bnext = treap_next(b->node);
+	struct treap *fnext = treap_next(f->node);
+	struct treap *bprev = treap_prev(b->node);
+
+	/*              fprev    ____      f       ____      fnext
+	 *tour start ---------->|from|----------->|to  |-------->
+	 *tour end   <----------|____|<-----------|____|<--------
+	 *               bnext             b                 bprev
+	 *                          
+	 *                          
+	 *                  
+	 *
+	 */
+
+	//get the part of the tour that happened before reaching the first half of this
+	//edge and the part that happened after reaching the second half.
+	struct treap *tree1 = treap_splitBefore(f->node);
+	struct treap *tree2 = treap_splitAfter(b->node);
+
+	if (tree1 && tree2) {
+		treap_concat(tree1, tree2);
+	}
+	if (stEulerHalfEdge_contains(fnext->value, from) && 
+			stEulerHalfEdge_contains(fnext->value, to)) {
+
+		//
+		if((bnext || fprev) && !(bnext && fprev)) {
+			if (!bnext) {
+				bnext = treap_findMin(fprev);
+			}
+			else {
+				fprev = treap_findMax(bnext);
+			}
+		}
+		if (bnext) {
+			if(stEulerHalfEdge_contains(bnext->value, from)) {
+				from->leftOut = bnext->value;
+				from->rightIn = fprev->value;
+				to->leftOut = NULL;
+				to->rightIn = NULL;
+			}
+			else {
+				to->leftOut = bnext->value;
+				to->rightIn = fprev->value;
+				from->leftOut = NULL;
+				from->rightIn = NULL;
+			}
+		}
+		else {
+			//make both vertices singletons
+			from->leftOut = NULL;
+			from->rightIn = NULL;
+			to->leftOut = NULL;
+			to->rightIn = NULL;
+		}	
+	}
+	else if (stEulerHalfEdge_contains(fnext->value, from)) {
+		from->leftOut = fnext->value;
+		from->rightIn = bprev->value;
+		if (
+
+
+
+
+
+	
+	
+
+
+		
 
 

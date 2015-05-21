@@ -25,13 +25,14 @@ struct treap {
 	struct treap *left;
 	struct treap *right;
 };
-struct treap *treap_construct() {
+struct treap *treap_construct(void *value) {
 	//strand(time(0));
 	struct treap *node = st_malloc(sizeof(struct treap));
-	node->key = LONG_MIN;
+	node->key = 0;
 	node->priority = rand();
 	node->left = node->right = node->parent = NULL;
 	node->count = 1;
+	node->value = value;
 	return(node);
 }
 
@@ -149,6 +150,72 @@ int treap_contains(struct treap *tree, struct treap *node) {
 	struct treap *closestNode = treap_binarySearch(node->key, tree);
 	return(closestNode->key == node->key);
 }
+int treap_depth(struct treap *node) {
+	int depth = 0;
+	while(node->parent) {
+		node = node->parent;
+		depth++;
+	}
+	return(depth);
+}
+
+/*compares two nodes without using their keys. O(lgn) */
+int treap_compare(struct treap* a, struct treap *b) {
+	if (a == b) {
+		return 0;
+	}
+	assert(treap_findRoot(a) == treap_findRoot(b));
+	int depthA = treap_depth(a);
+	int depthB = treap_depth(b);
+	
+	while (depthA > depthB) {
+		if (a->parent == b) {
+			if (a == b->left) {
+				return -1;
+			} else {
+				assert(a == b->right);
+				return 1;
+			}
+		}
+		a = a->parent;
+		depthA--;
+		
+	}
+	while (depthB > depthA) {
+		if (b->parent == a) {
+			if (b == a->left) {
+				return 1;
+			} else {
+				assert(b == a->right);
+				return -1;
+			}
+		}
+		b = b->parent;
+		depthB--;
+	}
+	assert(depthA == depthB);
+	int depth = depthA;
+	while (depth) {
+		assert(a != b);
+		if (a->parent == b->parent) {
+			if (a == a->parent->left) {
+				assert(b == a->parent->right);
+				return -1;
+			} else {
+				assert(b == a->parent->left);
+				assert(a == a->parent->right);
+				return 1;
+			}
+		}
+		a = a->parent;
+		b = b->parent;
+		depth--;
+	}
+	assert(a && b);
+	assert(!a->parent);
+	assert(!b->parent);
+	return 0;
+}
 
 
 /*Restores the heap property by using tree 
@@ -170,8 +237,7 @@ void treap_moveUp(struct treap *node) {
  * a binary search for the key. Then restore the heap property. */
 struct treap *treap_insert(long key, void *value, struct treap *node) {
 	node = treap_findRoot(node);	
-	struct treap *newNode = treap_construct();
-	newNode->value = value;
+	struct treap *newNode = treap_construct(value);
 	newNode->key = key;
 
 	struct treap *parent = treap_binarySearch(key, root);
