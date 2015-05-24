@@ -64,14 +64,11 @@ static void test_stTreap_rotations(CuTest *testCase) {
 }
 static void test_stTreap_split(CuTest *testCase) {
 	setup();
-	assert(1 == 0);
 	struct treap *splitPoint = treap_next(t);
 	splitPoint = treap_next(splitPoint);
 	CuAssertStrEquals(testCase, splitPoint->value, "b");
 
-	splitPoint->priority = INT_MAX;
-	treap_moveUp(splitPoint);
-
+	
 	struct treap *beforeSplit = treap_splitBefore(splitPoint);
 
 	CuAssertStrEquals(testCase, treap_print(beforeSplit), "ta");
