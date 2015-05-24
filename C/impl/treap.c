@@ -1,30 +1,10 @@
 #include "sonLibGlobalsInternal.h"
-#include <time.h>
-#include <cmath.h>
-#include <stdlib.h>
+#include "treap.h"
 /*Implementation of a balanced binary tree. The binary tree property is maintained with 
  * respect to the keys, while the heap property is maintained for the priority values, which
  * are generated randomly for each element as it is inserted into the tree. The randomized
  * priority values make the treap highly likely to be balanced. */
 
-struct treap {
-	//heap property is maintained for the priority, so highest priority is at the top
-	//of the tree.
-	int priority;
-
-	//number of nodes below and including this one
-	int count;
-
-	//ordering of the keys is maintained from left to right. Keys don't have to be used
-	//if all insertions are done through merges, and ordering will still be maintained
-	//by the other operations
-	long key;
-	void *value;
-
-	struct treap *parent;
-	struct treap *left;
-	struct treap *right;
-};
 struct treap *treap_construct(void *value) {
 	//strand(time(0));
 	struct treap *node = st_malloc(sizeof(struct treap));
@@ -35,6 +15,31 @@ struct treap *treap_construct(void *value) {
 	node->value = value;
 	return(node);
 }
+void treap_destructRecurse(struct treap *root) {
+	if(root->left) {
+		treap_destructRecurse(root->left);
+	}
+	if(root->right) {
+		treap_destructRecurse(root->right);
+	}
+	//free(root->value);
+	free(root);
+}
+void treap_destruct(struct treap *node) {
+	node = treap_findRoot(node);
+	treap_destructRecurse(node);
+}
+char *treap_print(struct treap *node) {
+	node = treap_findMin(node);
+	struct treap *root = treap_findRoot(node);
+	char *path = st_calloc(root->count + 1, 1);
+	while(node) {
+		strcat(path, node->value);
+		node = treap_next(node);
+	}
+	return(path);
+}
+
 
 /*Left tree rotation at node u, which preserves the in-order traversal:
  *      
@@ -49,7 +54,7 @@ struct treap *treap_construct(void *value) {
  */
 void treap_rotateLeft(struct treap *u) {
 	struct treap *w = u->right;
-	assert(w);
+	if(!w) return;
 	w->parent = u->parent;
 	if(w->parent) {
 		if(w->parent->left == u) {
@@ -66,9 +71,12 @@ void treap_rotateLeft(struct treap *u) {
 	u->parent = w;
 	w->left = u;
 
+
 	u->count -= w->count;
-	u->count += b->count;
-	w->count -= b->count;
+	if(u->right) {
+		u->count += u->right->count;
+		w->count -= u->right->count;
+	}
 	w->count += u->count;
 }
 
@@ -84,6 +92,7 @@ void treap_rotateLeft(struct treap *u) {
  */
 void treap_rotateRight(struct treap *u) {
 	struct treap *w = u->left;
+	assert(w);
 	w->parent = u->parent;
 	if(w->parent) {
 		if(w->parent->left == u) {
@@ -101,8 +110,10 @@ void treap_rotateRight(struct treap *u) {
 	w->right = u;
 	
 	u->count -= w->count;
-	u->count += b->count;
-	w->count -= b->count;
+	if(u->left) {
+		u->count += u->left->count;
+		w->count -= u->left->count;
+	}
 	w->count += u->count;
 
 }
@@ -224,10 +235,11 @@ int treap_compare(struct treap* a, struct treap *b) {
 void treap_moveUp(struct treap *node) {
 	while(node->parent && (node->priority > node->parent->priority)) {
 		if(node->parent->left == node) {
-			treap_rotateLeft(node->parent);
+			treap_rotateRight(node->parent);
+
 		}
 		else {
-			treap_rotateRight(node->parent);
+			treap_rotateLeft(node->parent);
 		}
 	}
 }
@@ -240,7 +252,7 @@ struct treap *treap_insert(long key, void *value, struct treap *node) {
 	struct treap *newNode = treap_construct(value);
 	newNode->key = key;
 
-	struct treap *parent = treap_binarySearch(key, root);
+	struct treap *parent = treap_binarySearch(key, node);
 	if(parent->key == key) {
 		//duplicate
 		free(newNode);
@@ -300,9 +312,10 @@ int treap_remove(long key, struct treap *tree) {
 	}
 	free(rmnode);
 	//update parent counts
-	while(parent) {
-		parent->count -= 1;
-		parent = parent->parent;
+	struct treap *p = rmnode->parent;
+	while(p) {
+		p->count -= 1;
+		p = p->parent;
 	}
 	//successfully deleted the node
 	return(1);
@@ -310,11 +323,10 @@ int treap_remove(long key, struct treap *tree) {
 
 /*The node with the minimum key is stored as the leftmost leaf */
 struct treap *treap_findMin(struct treap *node) {
-	struct treap *root = treap_findRoot(node);
-	while(root->left) {
-		root = root->left;
+	while(node->left) {
+		node = node->left;
 	}
-	return(root);
+	return(node);
 }
 struct treap *treap_findMax(struct treap *node) {
 	struct treap *root = treap_findRoot(node);
@@ -332,8 +344,11 @@ struct treap *treap_splitAfter(struct treap *node) {
 	treap_moveUp(node);
 	assert(node->parent == NULL); //node should now be the new root of the treap
 	struct treap *rightSubtree = node->right;
-	rightSubtree->parent = NULL;
-	node->right = NULL;
+	if(rightSubtree) {
+		node->count -= rightSubtree->count;
+		rightSubtree->parent = NULL;
+		node->right = NULL;
+	}
 	return(rightSubtree);
 }
 
@@ -341,10 +356,15 @@ struct treap *treap_splitAfter(struct treap *node) {
 struct treap *treap_splitBefore(struct treap *node) {
 	node->priority = INT_MAX;
 	treap_moveUp(node);
+	assert(node);
+	assert(treap_findRoot(node) == node);
 	assert(node->parent == NULL);
 	struct treap *leftSubtree = node->left;
-	leftSubtree->parent = NULL;
-	node->left = NULL;
+	if(leftSubtree) {
+		node->count -= leftSubtree->count;
+		leftSubtree->parent = NULL;
+		node->left = NULL;
+	}
 	return(leftSubtree);
 }
 
@@ -354,24 +374,25 @@ struct treap *treap_next(struct treap *node) {
 	if(node->right != NULL) {
 		return(treap_findMin(node->right));
 	}
-	struct node *p = node->parent;
+	struct treap *p = node->parent;
 	while(p != NULL && (node == p->right)) {
 		node = p;
 		p = p->parent;
 	}
 	return(p);
 }
-
-/*returns an upper bound on the size of the tree. */
-int treap_size(struct treap *tree) {
-	tree = treap_findRoot(tree);
-	int height = 0;
-	while(tree->left) {
-		tree = tree->left;
-		height++;
+struct treap *treap_prev(struct treap *node) {
+	if(node->left) {
+		return(treap_findMax(node->left));
 	}
-	return(pow(2, height));
+	struct treap *p = node->parent;
+	while(p && (node == p->left)) {
+		node = p;
+		p = p->parent;
+	}
+	return(p);
 }
+
 
 struct treap *treap_concat(struct treap *a, struct treap *b) {
 	if(!a || !b) {
@@ -384,7 +405,7 @@ struct treap *treap_concat(struct treap *a, struct treap *b) {
 	//while(ta->right) {
 	//	ta = ta->right;
 	//}
-	struct treap *rb = findRoot(b);
+	struct treap *rb = treap_findRoot(b);
 
 	//a and b shouldn't already be concatenated
 	assert(rb != ra);
@@ -395,7 +416,7 @@ struct treap *treap_concat(struct treap *a, struct treap *b) {
 	//	sb = sb->left;
 	//}
 	struct treap *r = treap_concatRecurse(ra, rb);
-	r->parent = NULL;
+	assert(r->parent = NULL);
 	return(r);
 }
 
@@ -409,7 +430,7 @@ struct treap *treap_concat(struct treap *a, struct treap *b) {
  *       /  \                /        are numbers)
  *      a3  c2            y1
  * 
- * concatRecurse(d10, w8)
+ * concatRecurse(d10, x8)
  *
  *                 d10
  *                /    \
@@ -444,15 +465,22 @@ struct treap *treap_concatRecurse(struct treap *a, struct treap *b) {
 		return(a);
 	}
 	else if (a->priority > b->priority) {
+		if(a->right) {
+			a->count -= a->right->count;
+		}
 		a->right = treap_concatRecurse(a->right, b);
+		a->count += a->right->count;
 		a->right->parent = a;
 		return(a);
 	}
 	else {
+		if(b->left) {
+			b->count -= b->left->count;
+		}
+
 		b->left = treap_concatRecurse(a, b->left);
+		b->count += b->left->count;
 		b->left->parent = b;
 		return(b);
 	}
 }
-
-

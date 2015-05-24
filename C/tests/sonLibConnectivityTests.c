@@ -142,3 +142,4 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
     return suite;
 }
+
