@@ -76,6 +76,9 @@ static void test_stTreap_split(CuTest *testCase) {
 
 	treap_concat(beforeSplit, splitPoint);
 	CuAssertStrEquals(testCase, treap_print(t), "tabcdef");
+	struct treap *aftersplit = treap_next(t);
+	struct treap *after = treap_splitAfter(aftersplit);
+	CuAssertStrEquals(testCase, treap_print(after), "bcdef");
 
 
 	teardown();

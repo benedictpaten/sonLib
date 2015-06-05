@@ -30,9 +30,9 @@ void treap_destruct(struct treap *node) {
 	treap_destructRecurse(node);
 }
 char *treap_print(struct treap *node) {
-	node = treap_findMin(node);
-	struct treap *root = treap_findRoot(node);
-	char *path = st_calloc(root->count + 1, 1);
+	//node = treap_findMin(node);
+	//struct treap *root = treap_findRoot(node);
+	char *path = st_calloc(node->count + 1, 1);
 	while(node) {
 		strcat(path, node->value);
 		node = treap_next(node);
@@ -323,6 +323,7 @@ int treap_remove(long key, struct treap *tree) {
 
 /*The node with the minimum key is stored as the leftmost leaf */
 struct treap *treap_findMin(struct treap *node) {
+	assert(node);
 	while(node->left) {
 		node = node->left;
 	}
@@ -343,6 +344,7 @@ struct treap *treap_splitAfter(struct treap *node) {
 	node->priority = INT_MAX;
 	treap_moveUp(node);
 	assert(node->parent == NULL); //node should now be the new root of the treap
+	assert(treap_findRoot(node) == node);
 	struct treap *rightSubtree = node->right;
 	if(rightSubtree) {
 		node->count -= rightSubtree->count;
@@ -371,6 +373,7 @@ struct treap *treap_splitBefore(struct treap *node) {
 /*returns the next node in an in-order traversal of the treap
  * starting at node. */
 struct treap *treap_next(struct treap *node) {
+	assert(node);
 	if(node->right != NULL) {
 		return(treap_findMin(node->right));
 	}
