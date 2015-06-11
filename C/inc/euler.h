@@ -53,6 +53,6 @@ struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *val
 void stEulerTour_destruct(struct stEulerTour *et);
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex);
 int stEulerTour_link(struct stEulerTour *et, struct stEulerVertex *vertex, 
-		struct stEulerVertex *other, int edgeID);
+		struct stEulerVertex *other);
 void stEulerTour_cut(struct stEulerTour *et, int edgeID);
 #endif

@@ -39,6 +39,7 @@ struct treap *treap_findMin(struct treap *node);
 struct treap *treap_findMax(struct treap *node);
 struct treap *treap_splitAfter(struct treap *node);
 struct treap *treap_splitBefore(struct treap *node);
+void treap_chooseNewPriority(struct treap *node);
 struct treap *treap_next(struct treap *node);
 struct treap *treap_prev(struct treap *node);
 struct treap *treap_concat(struct treap *a, struct treap *b);

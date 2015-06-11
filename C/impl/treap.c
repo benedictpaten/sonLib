@@ -344,13 +344,13 @@ struct treap *treap_splitAfter(struct treap *node) {
 	node->priority = INT_MAX;
 	treap_moveUp(node);
 	assert(node->parent == NULL); //node should now be the new root of the treap
-	assert(treap_findRoot(node) == node);
 	struct treap *rightSubtree = node->right;
 	if(rightSubtree) {
 		node->count -= rightSubtree->count;
 		rightSubtree->parent = NULL;
 		node->right = NULL;
 	}
+	treap_chooseNewPriority(node);
 	return(rightSubtree);
 }
 
@@ -367,7 +367,25 @@ struct treap *treap_splitBefore(struct treap *node) {
 		leftSubtree->parent = NULL;
 		node->left = NULL;
 	}
+	treap_chooseNewPriority(node);
 	return(leftSubtree);
+}
+//choose a priority value for a node after moving it to the root
+void treap_chooseNewPriority(struct treap *node) {
+	int pleft = 0;
+	int pright = 0;
+	if (node->left) {
+		pleft = node->left->priority;
+	}
+	if (node->right) {
+		pright = node->right->priority;
+	}
+	if (pleft > pright) {
+		node->priority = pleft + 1;
+	}
+	else {
+		node->priority = pright + 1;
+	}
 }
 
 /*returns the next node in an in-order traversal of the treap

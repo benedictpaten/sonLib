@@ -31,8 +31,9 @@ static void test_stTreap_ordering(CuTest *testCase) {
 
 	struct treap *root = treap_findRoot(t);
 	CuAssertTrue(testCase, root->count == 7);
-
-	char *tour = treap_print(root);
+	
+	struct treap *first = treap_findMin(root);
+	char *tour = treap_print(first);
 	CuAssertStrEquals(testCase, tour, "tabcdef");
 	free(tour);
 
@@ -76,8 +77,12 @@ static void test_stTreap_split(CuTest *testCase) {
 
 	treap_concat(beforeSplit, splitPoint);
 	CuAssertStrEquals(testCase, treap_print(t), "tabcdef");
+
+
 	struct treap *aftersplit = treap_next(t);
+	CuAssertStrEquals(testCase, aftersplit->value, "a");
 	struct treap *after = treap_splitAfter(aftersplit);
+	CuAssertTrue(testCase, after);
 	CuAssertStrEquals(testCase, treap_print(after), "bcdef");
 
 
