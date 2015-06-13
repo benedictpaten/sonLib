@@ -22,7 +22,7 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	struct stEulerVertex *c = stEulerTour_createVertex(et, (void*)"c");
 	struct stEulerVertex *d = stEulerTour_createVertex(et, (void*)"d");
 
-	stEulerTour_link(et, a, b);
+	stEulerTour_linkVertices(et, a, b);
 	CuAssertTrue(testCase, stEulerVertex_connected(a, b));
 	CuAssertTrue(testCase, !stEulerVertex_connected(b, c));
 	CuAssertTrue(testCase, !stEulerVertex_connected(a, c));
@@ -46,8 +46,8 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	 *       c
 	 */
 	
-	stEulerTour_link(et, a, c);
-	stEulerTour_link(et, d, a);
+	stEulerTour_linkVertices(et, a, c);
+	stEulerTour_linkVertices(et, d, a);
 	CuAssertStrEquals(testCase, stEulerVertex_print(a), "dacaba");
 	teardown();
 }
@@ -58,15 +58,15 @@ static void test_stEulerTour_cut(CuTest *testCase) {
 	struct stEulerVertex *c = stEulerTour_createVertex(et, (void*)"c");
 	struct stEulerVertex *d = stEulerTour_createVertex(et, (void*)"d");
 	struct stEulerVertex *e = stEulerTour_createVertex(et, (void*)"e");
-	stEulerTour_link(et, a, b);
-	stEulerTour_link(et, a, c);
-	stEulerTour_link(et, a, d);
-	stEulerTour_link(et, b, e);
+	stEulerTour_linkVertices(et, a, b);
+	stEulerTour_linkVertices(et, a, c);
+	stEulerTour_linkVertices(et, a, d);
+	stEulerTour_linkVertices(et, b, e);
 	stEulerTour_cut(et, 0);
 	CuAssertTrue(testCase, et->nComponents == 2);
 	CuAssertTrue(testCase, !stEulerVertex_connected(a, b));
-	printf("%s\n", stEulerVertex_print(a));
-	printf("%s\n", stEulerVertex_print(b));
+	//printf("%s\n", stEulerVertex_print(a));
+	//printf("%s\n", stEulerVertex_print(b));
 	teardown();
 }
 

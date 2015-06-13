@@ -34,5 +34,6 @@
 #include "stPosetAlignment.h"
 #include "treap.h"
 #include "euler.h"
+#include "sonLibConnectivity.h"
 
 #endif /* SONLIB_H_ */

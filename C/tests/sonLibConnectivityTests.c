@@ -134,12 +134,22 @@ static void test_stConnectivity_removeNodesAndEdges(CuTest *testCase) {
 
     teardown();
 }
+static void test_stConnectivity_connected(CuTest *testCase) {
+	setup();
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 3));
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 3, (void*) 5));
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 4, (void*) 7));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 2, (void*) 4));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 2, (void*) 3));
+	teardown();
+}
 
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
-    SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
-    SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
+    //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
+    //SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
+    //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
+	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
     return suite;
 }
 
