@@ -156,6 +156,17 @@ int stEulerTour_connected(struct stEulerTour *et, int a, int b) {
 	struct stEulerVertex *node2 = stList_get(et->vertices, b);
 	return(stEulerVertex_connected(node1, node2));
 }
+
+/*returns the size of the component that vertex v is in. */
+int stEulerTour_size(struct stEulerTour *et, int v) {
+	struct stEulerVertex *vertex = stList_get(et->vertices, v);
+	if(!vertex->leftOut) {
+		return(1);
+	}
+
+	int tour_length = treap_size(vertex->leftOut->node);
+	return (tour_length/2 + 1);
+}
 struct treap *stEulerTour_getForwardEdgeNode(struct stEulerTour *et, int edgeID) {
 	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge*)stList_get(et->forwardEdges, 
 			edgeID);

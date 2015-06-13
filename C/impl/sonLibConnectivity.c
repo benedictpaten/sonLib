@@ -181,8 +181,72 @@ int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *no
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	return(stEulerTour_connected(et_lowest, a, b));
 }
+bool visit(stConnectivity *connectivity, int w, int otherTreeVertex, int removedEdge, 
+		int level, int replacementEdge) {
+	if(stList_get(connectivity->seen, w)) {
+		return false;
+	}
+	stList_set(connectivity->seen, w, false);
+	int k, j = 0;
+	stList *w_incident = stList_get(connectivity->incident_edges, w);
+	int w_incident_length = stList_length(w_incident);
+
+	for (k = 0; k < w_incident_length; k++) {
+		int incidentID = stList_get(w_incident, k);
+		struct stDynamicEdge *incidentEdge = stList_get(connectivity->edges, incidentID);
+		if (incidentID == removedEdge || incidentEdge->in_forest || !incidentEdge->enabled) {
+			//remove
+			if(w == incidentEdge->from) {
+				incidentEdge->incident_from = false;
+			}
+			else {
+				incidentEdge->incident_to = false;
+			}
+			continue;
+		}
+	}
+	return(true);
+}
+int stConnectivity_findEdge(stConnectivity *connectivity, void *node1, void *node2) {	
+	int a = *(int*)stHash_search(connectivity->nodes, node1);
+	int b = *(int*)stHash_search(connectivity->nodes, node2);
+	stList *incident_a = stList_get(connectivity->incident_edges, a);
+	stList *incident_b = stList_get(connectivity->incident_edges, b);
+	int edgeID = -1;
+	stListIterator *iter_a = stList_getIterator(incident_a);
+	stListIterator *iter_b = stList_getIterator(incident_b);
+	int a_id, b_id;
+	while((a_id = stList_getNext(iter_a))) {
+		while((b_id = stList_getNext(iter_b))) {
+				if (a_id == b_id) {
+					edgeID = a_id;
+				}
+		}
+	}
+	return(edgeID);
+}
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
-    // Remove an edge from the graph and update the connected components.
+	int edgeID = stConnectivity_findEdge(connectivity, node1, node2);
+	if(edgeID == -1) return; //edge not in graph
+	struct stDynamicEdge *edge = stList_get(connectivity->edges, edgeID);
+	int u = edge->from;
+	int v = edge->to;
+	bool foundReplacement = false;
+	for (int i = edge->level; !foundReplacement && i < connectivity->nLevels; i++) {
+		struct stEulerTour *et_i = stList_get(connectivity->et, i);
+		stEulerTour_cut(et_i, edgeID);
+
+		//set u equal to id of the vertex in the smaller of the two components that have just
+		//been created by deleting the edge
+		if(stEulerTour_size(et_i, u) <= stEulerTour_size(et_i, v)) {
+			int temp = u;
+			u = v; 
+			v = temp;
+		}
+		edge->in_forest = false;
+	}
+
+
 }
 
 // Might be cool to be able to add or remove several edges at once, if there is a way to
