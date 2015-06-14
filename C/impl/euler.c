@@ -48,10 +48,9 @@
 /*Euler Vertex methods ----------------------------------------------------- */
 
 
-struct stEulerVertex *stEulerVertex_construct(void *value) {
+struct stEulerVertex *stEulerVertex_construct(void *vertexID) {
 	struct stEulerVertex *v = st_malloc(sizeof(struct stEulerVertex));
-	v->index = 0;
-	v->value = value;
+	v->vertexID = vertexID;
 	v->visited = false;
 	v->leftOut = v->rightIn = NULL;
 	return(v);
@@ -62,13 +61,13 @@ void stEulerVertex_destruct(struct stEulerVertex *vertex) {
 }
 char *stEulerVertex_print(struct stEulerVertex *vertex) {
 	struct treap *startNode = stEulerVertex_incidentEdgeA(vertex);
-	if(!startNode) return(vertex->value);
+	if(!startNode) return(vertex->vertexID);
 	startNode = treap_findRoot(startNode);
 	startNode = treap_findMin(startNode);
 	char *tour = st_calloc(startNode->count, 1);
 	while(startNode) {
 		struct stEulerHalfEdge *edge = (struct stEulerHalfEdge*)startNode->value;
-		strcat(tour, edge->from->value);
+		strcat(tour, edge->from->vertexID);
 		startNode = treap_next(startNode);
 	}
 	return(tour);
@@ -130,7 +129,6 @@ int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex 
 	return (edge->from == vertex || edge->to == vertex);
 }
 void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge) {
-	//free(edge->value);
 	free(edge);
 }
 
@@ -139,27 +137,37 @@ void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge) {
 struct stEulerTour *stEulerTour_construct() {
 	struct stEulerTour *et = st_malloc(sizeof(struct stEulerTour));
 
-	et->vertices = stList_construct3(0, (void(*)(void*))stEulerVertex_destruct);
-	et->forwardEdges = stList_construct3(0, (void(*)(void*))stEulerHalfEdge_destruct);
-	et->backwardEdges = stList_construct3(0, (void(*)(void*))stEulerHalfEdge_destruct);
+	et->vertices = stHash_construct2(0, (void(*)(void*))stEulerVertex_destruct);
+	et->forwardEdges = stHash_construct();
 	et->nComponents = 0;
 	return(et);
 }
 void stEulerTour_destruct(struct stEulerTour *et) {
-	stList_destruct(et->vertices);
-	stList_destruct(et->forwardEdges);
-	stList_destruct(et->backwardEdges);
+	stHash_destruct(et->vertices);
+	stList *incidentEdgeLists = stHash_getValues(et->forwardEdges);
+	stListIterator *it = stList_getIterator(incidentEdgeLists);
+	stHash *incidentEdgeHash;
+	while((incidentEdgeHash = stList_getNext(it))) {
+			stList *edges = stHash_getValues(incidentEdgeHash);
+			stListIterator *edgeIt = stList_getIterator(edges);
+			struct stEulerHalfEdge *edge;
+			while((edge = stList_getNext(edgeIt))) {
+						stEulerHalfEdge_destruct(edge);
+			}
+			stList_destructIterator(edgeIt);
+	}
+	stList_destructIterator(it);
 	free(et);
 }
-int stEulerTour_connected(struct stEulerTour *et, int a, int b) {
-	struct stEulerVertex *node1 = stList_get(et->vertices, a);
-	struct stEulerVertex *node2 = stList_get(et->vertices, b);
+int stEulerTour_connected(struct stEulerTour *et, void *a, void *b) {
+	struct stEulerVertex *node1 = stHash_search(et->vertices, a);
+	struct stEulerVertex *node2 = stHash_search(et->vertices, b);
 	return(stEulerVertex_connected(node1, node2));
 }
 
 /*returns the size of the component that vertex v is in. */
-int stEulerTour_size(struct stEulerTour *et, int v) {
-	struct stEulerVertex *vertex = stList_get(et->vertices, v);
+int stEulerTour_size(struct stEulerTour *et, void *v) {
+	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
 	if(!vertex->leftOut) {
 		return(1);
 	}
@@ -167,29 +175,14 @@ int stEulerTour_size(struct stEulerTour *et, int v) {
 	int tour_length = treap_size(vertex->leftOut->node);
 	return (tour_length/2 + 1);
 }
-struct treap *stEulerTour_getForwardEdgeNode(struct stEulerTour *et, int edgeID) {
-	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge*)stList_get(et->forwardEdges, 
-			edgeID);
-	if(edge) {
-		return(edge->node);
-	}
-	return(NULL);
-}
-struct treap *stEulerTour_getBackwardEdgeNode(struct stEulerTour *et, int edgeID) {
-	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge*)stList_get(et->backwardEdges, 
-			edgeID);
-	if(edge) {
-		return(edge->node);
-	}
-	return(NULL);
-}
 
-struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *value) {
-	struct stEulerVertex *newVertex = stEulerVertex_construct(value);
-	newVertex->index = stList_length(et->vertices);
+
+struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID) {
+	struct stEulerVertex *newVertex = stEulerVertex_construct(vertexID);
 	newVertex->owner = et;
 	et->nComponents++;
-	stList_append(et->vertices, newVertex);
+	stHash_insert(et->vertices, vertexID, newVertex);
+	stHash_insert(et->forwardEdges, vertexID, stHash_construct());
 	return(newVertex);
 }
 
@@ -263,18 +256,17 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 		treap_concat(rightSubtree, f->node);
 	}
 }
-int stEulerTour_linkVertices(struct stEulerTour *et, struct stEulerVertex *vertex, 
-		struct stEulerVertex *other) {
+void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
+	struct stEulerVertex *vertex = stHash_search(et->vertices, u);
+	struct stEulerVertex *other = stHash_search(et->vertices, v);
 	et->nComponents--;
-	int edgeID = stList_length(et->forwardEdges);
-	//if(!stList_get(et->forwardEdges, edgeID)) {
 	struct stEulerHalfEdge *newForwardEdge = stEulerHalfEdge_construct();
 	newForwardEdge->isForwardEdge = true;
 	struct stEulerHalfEdge *newBackwardEdge = stEulerHalfEdge_construct();
 	newBackwardEdge->isForwardEdge = false;
+	newBackwardEdge->inverse = newForwardEdge;
+	newForwardEdge->inverse = newBackwardEdge;
 
-	newForwardEdge->index = edgeID;
-	newBackwardEdge->index = edgeID;
 	newForwardEdge->from = vertex;
 	newForwardEdge->to = other;
 
@@ -283,9 +275,10 @@ int stEulerTour_linkVertices(struct stEulerTour *et, struct stEulerVertex *verte
 
 	newForwardEdge->node = treap_construct(newForwardEdge);
 	newBackwardEdge->node = treap_construct(newBackwardEdge);
+	
+	stHash *u_incident = (stHash*)stHash_search(et->forwardEdges, u);
 
-	stList_append(et->forwardEdges, newForwardEdge);
-	stList_append(et->backwardEdges, newBackwardEdge);
+	stHash_insert(u_incident, v, newForwardEdge);
 	//}
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
@@ -308,41 +301,34 @@ int stEulerTour_linkVertices(struct stEulerTour *et, struct stEulerVertex *verte
 	*/
 	struct treap *tleft = NULL;
 	if (f) {
-		treap_concat(f, stEulerTour_getForwardEdgeNode(et, edgeID));
+		treap_concat(f, newForwardEdge->node);
 	}
 	else {
-		vertex->leftOut = stList_get(et->forwardEdges, edgeID);
+		vertex->leftOut = newForwardEdge;
 	}
 	if (other->leftOut) {
-		treap_concat(stEulerTour_getForwardEdgeNode(et, edgeID), other->leftOut->node);
+		treap_concat(newForwardEdge->node, other->leftOut->node);
 	}
 	else {
-		other->leftOut = stList_get(et->forwardEdges, edgeID);
+		other->leftOut = newForwardEdge;
 	}
 	if (other->rightIn) {
-		treap_concat(other->rightIn->node, stEulerTour_getBackwardEdgeNode(et, edgeID));
+		treap_concat(other->rightIn->node, newBackwardEdge->node);
 	}
 	else {
-		other->rightIn = stList_get(et->backwardEdges, edgeID);
-		treap_concat(vertex->leftOut->node, stEulerTour_getBackwardEdgeNode(et, edgeID));
-		//treap_concat(vertex->leftOut->node, other->rightIn->node);
+		other->rightIn = newBackwardEdge;
+		treap_concat(vertex->leftOut->node, newBackwardEdge->node);
 	}
 	if (tleft) {
-		treap_concat(stEulerTour_getBackwardEdgeNode(et, edgeID), tleft);
+		treap_concat(newBackwardEdge->node, tleft);
 		vertex->rightIn = tleft->value;
 	}
 	else {
-		vertex->rightIn = stList_get(et->backwardEdges, edgeID);
+		vertex->rightIn = newBackwardEdge;
 	}
-		
 	assert(stEulerVertex_connected(vertex, other));
-	return(edgeID);
 }
-int stEulerTour_link(struct stEulerTour *et, int a, int b) {
-	struct stEulerVertex *vertex1 = stList_get(et->vertices, a);
-	struct stEulerVertex *vertex2 = stList_get(et->vertices, b);
-	return(stEulerTour_linkVertices(et, vertex1, vertex2));
-}
+
 
 /*remove an edge from the graph, splitting into two Euler tours.
  *
@@ -377,12 +363,13 @@ int stEulerTour_link(struct stEulerTour *et, int a, int b) {
  *
  */
 
-void stEulerTour_cut(struct stEulerTour *et, int edgeID) {
+void stEulerTour_cut(struct stEulerTour *et, void *vertex1, void *vertex2) {
 	et->nComponents++;
 
 	//get the two halves of this edge
-	struct stEulerHalfEdge *f = stList_get(et->forwardEdges, edgeID);
-	struct stEulerHalfEdge *b = stList_get(et->backwardEdges, edgeID);
+	stHash *vertex1_incident = (stHash*) stHash_search(et->forwardEdges, vertex1);
+	struct stEulerHalfEdge *f = stHash_search(vertex1_incident, vertex2);
+	struct stEulerHalfEdge *b = f->inverse;
 	
 	assert(treap_findRoot(f->node) == treap_findRoot(b->node));
 
@@ -514,16 +501,5 @@ void stEulerTour_cut(struct stEulerTour *et, int edgeID) {
 		to->rightIn = NULL;
 	}
 }
-
-
-
-
-
-
-	
-	
-
-
-		
 
 

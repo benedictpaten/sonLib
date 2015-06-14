@@ -4,20 +4,19 @@
 struct stEulerVertex {
 	struct stEulerHalfEdge *leftOut; //first time this vertex is visited in tour
 	struct stEulerHalfEdge *rightIn; //second time vertex is visited
-	void *value;
 	struct stEulerTour *owner;
 
-	int index; //index into the Euler Tree's list of vertices
+	void *vertexID; //index into the Euler Tree's hashtable of vertices
 	int visited;
 };
 
 struct stEulerHalfEdge {
-	int value;
-	int index; //index into the Euler Tree's list of edges
+	void *edgeID; //index into the Euler Tree's list of edges
 	int isForwardEdge;
 
 	struct stEulerVertex *from;
 	struct stEulerVertex *to;
+	struct stEulerHalfEdge *inverse;
 
 	//node in treap for this half-edge.
 	struct treap *node;
@@ -27,15 +26,14 @@ struct stEulerHalfEdge {
 };
 
 struct stEulerTour {
-	stList *vertices;
-	stList *forwardEdges;
-	stList *backwardEdges;
+	stHash *vertices;
+	stHash *forwardEdges;
 	 
 	struct treap *tree;
 	int nComponents;
 };
 
-struct stEulerVertex *stEulerVertex_construct(void *value);
+struct stEulerVertex *stEulerVertex_construct(void *vertexID);
 void stEulerVertex_destruct(struct stEulerVertex *vertex);
 char *stEulerVertex_print(struct stEulerVertex *vertex);
 struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex);
@@ -47,15 +45,11 @@ struct stEulerHalfEdge *stEulerHalfEdge_construct(void);
 void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge);
 int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex *vertex);
 struct stEulerTour *stEulerTour_construct();
-int stEulerTour_connected(struct stEulerTour *et, int a, int b);
-int stEulerTour_size(struct stEulerTour *et, int v);
-struct treap *stEulerTour_getForwardEdgeNode(struct stEulerTour *et, int edgeID);
-struct treap *stEulerTour_getBackwardEdgeNode(struct stEulerTour *et, int edgeID);
-struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *value);
+int stEulerTour_connected(struct stEulerTour *et, void *a, void *b);
+int stEulerTour_size(struct stEulerTour *et, void *v);
+struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID);
 void stEulerTour_destruct(struct stEulerTour *et);
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex);
-int stEulerTour_linkVertices(struct stEulerTour *et, struct stEulerVertex *vertex, 
-		struct stEulerVertex *other);
-int stEulerTour_link(struct stEulerTour *et, int a, int b);
-void stEulerTour_cut(struct stEulerTour *et, int edgeID);
+void stEulerTour_link(struct stEulerTour *et, void *u, void *v);
+void stEulerTour_cut(struct stEulerTour *et, void *u, void *v);
 #endif
