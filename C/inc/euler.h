@@ -47,6 +47,10 @@ int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex 
 struct stEulerTour *stEulerTour_construct();
 int stEulerTour_connected(struct stEulerTour *et, void *u, void *v);
 int stEulerTour_size(struct stEulerTour *et, void *v);
+struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
+		struct stEulerHalfEdge *edge);
+struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v);
+struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v);
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID);
 void stEulerTour_destruct(struct stEulerTour *et);
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex);

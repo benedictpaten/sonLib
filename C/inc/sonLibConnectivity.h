@@ -8,11 +8,15 @@ stConnectivity *stConnectivity_construct(void);
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
 
 struct stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
+struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v);
 void stConnectivity_destruct(stConnectivity *connectivity);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2);
+
+struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
+		struct stDynamicEdge *removedEdge, int level);
 
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 

@@ -141,6 +141,21 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 4, (void*) 7));
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 2, (void*) 4));
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 2, (void*) 3));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 3, (void*) 4));
+
+	stConnectivity_removeEdge(connectivity, (void*) 5, (void*) 6);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 5, (void*) 6));
+	stConnectivity_removeEdge(connectivity, (void*) 1, (void*) 2);
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 3));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 3, (void*) 4));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 4, (void*) 2));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
+	stConnectivity_removeEdge(connectivity, (void*) 3, (void*)4);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
+	stConnectivity_addEdge(connectivity, (void*) 3, (void*) 4);
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 3, (void*) 4));
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
 	teardown();
 }
 

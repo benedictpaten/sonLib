@@ -69,8 +69,8 @@ static void test_stEulerTour_cut(CuTest *testCase) {
 	stEulerTour_cut(et, (void*)"a", (void*)"b");
 	CuAssertTrue(testCase, et->nComponents == 2);
 	CuAssertTrue(testCase, !stEulerVertex_connected(a, b));
-	//printf("%s\n", stEulerVertex_print(a));
-	//printf("%s\n", stEulerVertex_print(b));
+	stEulerTour_link(et, (void*)"a", (void*)"b");
+	CuAssertTrue(testCase, stEulerVertex_connected(a, b));
 	teardown();
 }
 

@@ -34,7 +34,7 @@
  *
  *
  * Graph representation:
- *                          ____  V_right_in  ___   W_right_in
+ *               V_right_in ____  W_right_in  ___
  *tour end  ...<---------- |    |<-----------|   |<---------
  *                         | V  |            | W |
  *tour start ...---------> |____|----------->|___|--------->
@@ -175,6 +175,25 @@ int stEulerTour_size(struct stEulerTour *et, void *v) {
 	int tour_length = treap_size(vertex->leftOut->node);
 	return (tour_length/2 + 1);
 }
+struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
+		struct stEulerHalfEdge *edge) {
+
+	struct treap *startNode = edge->node;
+	struct treap *next = treap_next(startNode);
+	if(!next) {
+		return(NULL);
+	}
+	return(next->value);
+}
+struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v) {
+	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
+	return(vertex->leftOut);
+}
+struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v) {
+	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
+	vertex = stEulerVertex_findRoot(vertex);
+	return(vertex->leftOut);
+}
 
 
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID) {
@@ -198,14 +217,6 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 	}
 
 
-	/*
-	 *	      _____	 f      ______    fnext     _____
-	 *tour start |Other|---------->|vertex|----------->|  ?  |-------->
-	 *tour end   |_____|<----------|______|<-----------|_____|<--------
-	 *                       b                bprev
-	 *
-	 *
-	 */
 	struct stEulerHalfEdge *f = vertex->leftOut;
 	struct stEulerHalfEdge *b = vertex->rightIn;
 	if(treap_compare(f->node, b->node) > 0) {
@@ -279,7 +290,7 @@ void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	stHash *u_incident = (stHash*)stHash_search(et->forwardEdges, u);
 
 	stHash_insert(u_incident, v, newForwardEdge);
-	//}
+
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
 	
@@ -289,16 +300,6 @@ void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	}
 
                     
-	/*
-	*                  _______  Vertex_right_in  _______   Other_right_in
-	*     <-----------|       |<----------------|       |<-------------
-	*                 | Vertex|                 | Other |
-	*     ----------->|_______|---------------->|_______|
-	* Vertex_left_out           Other_left_out
-	*
-	* forward_edges[edgeID] = Vertex_left_out = Other_left_out
-	*
-	*/
 	struct treap *tleft = NULL;
 	if (f) {
 		treap_concat(f, newForwardEdge->node);
@@ -500,6 +501,7 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 		to->leftOut = NULL;
 		to->rightIn = NULL;
 	}
+	stHash_remove(vertex1_incident, v);
 }
 
 
