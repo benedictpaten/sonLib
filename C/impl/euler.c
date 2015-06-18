@@ -194,6 +194,9 @@ struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v
 	vertex = stEulerVertex_findRoot(vertex);
 	return(vertex->leftOut);
 }
+struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
+	return(stHash_search(et->vertices, v));
+}
 
 
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID) {

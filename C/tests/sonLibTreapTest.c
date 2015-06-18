@@ -82,7 +82,7 @@ static void test_stTreap_split(CuTest *testCase) {
 	struct treap *aftersplit = treap_next(t);
 	CuAssertStrEquals(testCase, aftersplit->value, "a");
 	struct treap *after = treap_splitAfter(aftersplit);
-	CuAssertTrue(testCase, after);
+	CuAssertTrue(testCase, after != NULL);
 	CuAssertStrEquals(testCase, treap_print(after), "bcdef");
 
 
@@ -91,12 +91,7 @@ static void test_stTreap_split(CuTest *testCase) {
 static void test_stTreap_heapProperty(CuTest *testCase) {
 	setup();
 	
-	struct treap *r = treap_findRoot(t);
-	int rleft = 0;
-	int rright = 0;
-	if(r->left) rleft = r->left->count;
-	if(r->right) rright = r->right->count;
-
+	
 	struct treap *iter = t;
 	while(iter) {
 		if(iter->parent) CuAssertTrue(testCase, iter->parent->priority > iter->priority);

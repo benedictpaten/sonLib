@@ -158,6 +158,17 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
 	teardown();
 }
+static void test_stConnectivity_nodeIterator(CuTest *testCase) {
+	setup();
+	stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)1);
+	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
+	void *node;
+	while((node = stConnectedComponentNodeIterator_getNext(it))) {
+		printf("%d", node);
+	}
+
+	teardown();
+}
 
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
