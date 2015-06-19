@@ -271,6 +271,11 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 }
 
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
+	stConnectedComponent *node1Component = stConnectivity_getConnectedComponent(connectivity,
+				node1);
+	stConnectedComponent *node2Component = stConnectivity_getConnectedComponent(connectivity,
+				node2);
+
 	stHash *incident_node1 = stHash_search(connectivity->edges, node1);
 	stHash *incident_node2 = stHash_search(connectivity->edges, node2);
 	struct stDynamicEdge *edge = stHash_search(incident_node1, node2);
@@ -331,10 +336,6 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		}
 	}
 	if(componentsDisconnected) {
-		stConnectedComponent *node1Component = stConnectivity_getConnectedComponent(connectivity,
-				node1);
-		stConnectedComponent *node2Component = stConnectivity_getConnectedComponent(connectivity,
-				node2);
 		//remove the old component containing both node1 and node2 from the component hash. This
 		//large component will be indexed by either a node from node1's new component or node2's
 		//new component
@@ -400,20 +401,19 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
 
 void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator *it) {
     // Return the next node of the connected component, or NULL if all have been traversed.
-	struct stEulerVertex *tourVertex = stEulerTour_getVertex(it->et, it->currentNode);
-	if(!tourVertex->leftOut) {
-		return(NULL);
-	}
-	tourVertex = tourVertex->leftOut->to;
-	if(stHash_search(it->seen, tourVertex) == SEEN_TRUE) {
-		return(stConnectedComponentNodeIterator_getNext(it));
-	}
-	stHash_insert(it->seen, tourVertex, SEEN_TRUE);
-	return(tourVertex->vertexID);
+	void *nextNode = stEulerTour_getNextVertex(it->et, it->currentNode);
+	it->currentNode = nextNode;
+	//if(stHash_search(it->seen, it->currentNode)) {
+	//	return(stConnectedComponentNodeIterator_getNext(it));
+	//}
+	stHash_insert(it->seen, nextNode, SEEN_TRUE);
+	return(nextNode);
 }
 
 void stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it) {
     // Free the iterator data structure.
+	stHash_destruct(it->seen);
+	free(it);
 }
 
 stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stConnectivity *connectivity) {

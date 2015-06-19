@@ -197,7 +197,17 @@ struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
 	return(stHash_search(et->vertices, v));
 }
-
+void *stEulerTour_getNextVertex(struct stEulerTour *et, void *v) {
+	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
+	struct stEulerHalfEdge *nextEdge;
+	if(vertex->leftOut->from == vertex) {
+		nextEdge = vertex->leftOut;
+	}
+	else {
+		nextEdge = vertex->rightIn;
+	}
+	return(nextEdge->to->vertexID);
+}
 
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID) {
 	struct stEulerVertex *newVertex = stEulerVertex_construct(vertexID);
@@ -207,8 +217,6 @@ struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *ver
 	stHash_insert(et->forwardEdges, vertexID, stHash_construct());
 	return(newVertex);
 }
-
-
 
 /*Move a vertex to the beginning of the tour. */
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) {

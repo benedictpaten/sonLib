@@ -163,9 +163,12 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)1);
 	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
 	void *node;
-	while((node = stConnectedComponentNodeIterator_getNext(it))) {
-		printf("%d", node);
-	}
+	//while((node = stConnectedComponentNodeIterator_getNext(it))) {
+	//	printf("%d", node);
+	//}
+	struct stEulerTour *et = stList_get(connectivity->et, connectivity->nLevels - 1);
+	struct stEulerVertex *startVertex = stEulerTour_getVertex(et, (void*)1);
+	printf("tour = %s\n", stEulerVertex_print(startVertex));
 
 	teardown();
 }
@@ -176,6 +179,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
 	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
     return suite;
 }
 
