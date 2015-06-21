@@ -21,6 +21,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node);
+struct stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity);
 stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivity, void *node);
 
 stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *connectivity, void *node);

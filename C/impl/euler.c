@@ -59,7 +59,7 @@ void stEulerVertex_destruct(struct stEulerVertex *vertex) {
 	//free(vertex->value);
 	free(vertex);
 }
-char *stEulerVertex_print(struct stEulerVertex *vertex) {
+char *stEulerVertex_getTour(struct stEulerVertex *vertex) {
 	struct treap *startNode = stEulerVertex_incidentEdgeA(vertex);
 	if(!startNode) return(vertex->vertexID);
 	startNode = treap_findRoot(startNode);
@@ -72,7 +72,17 @@ char *stEulerVertex_print(struct stEulerVertex *vertex) {
 	}
 	return(tour);
 }	
-
+void stEulerVertex_print(struct stEulerVertex *vertex) {
+	struct treap *startNode = stEulerVertex_incidentEdgeA(vertex);
+	if(!startNode) return;
+	startNode = treap_findRoot(startNode);
+	startNode = treap_findMin(startNode);
+	while(startNode) {
+		struct stEulerHalfEdge *edge = (struct stEulerHalfEdge*)startNode->value;
+		printf("%d", (int)edge->from->vertexID);
+		startNode = treap_next(startNode);
+	}
+}
 /*Returns the half-edge coming into this vertex on the first traversal.*/
 struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex) {
 	if(vertex->leftOut) {
@@ -112,6 +122,7 @@ struct stEulerVertex *stEulerVertex_findRoot(struct stEulerVertex *vertex) {
 	if(!nodeInTour) {
 		return(vertex);
 	}
+	nodeInTour = treap_findRoot(nodeInTour);
 	struct treap *firstEdgeNode = treap_findMin(nodeInTour);
 	struct stEulerHalfEdge *firstEdge = (struct stEulerHalfEdge*)(firstEdgeNode->value);
 	struct stEulerVertex *r = firstEdge->from;
@@ -152,7 +163,8 @@ void stEulerTour_destruct(struct stEulerTour *et) {
 			stListIterator *edgeIt = stList_getIterator(edges);
 			struct stEulerHalfEdge *edge;
 			while((edge = stList_getNext(edgeIt))) {
-						stEulerHalfEdge_destruct(edge);
+				treap_nodeDestruct(edge->node);
+				stEulerHalfEdge_destruct(edge);
 			}
 			stList_destructIterator(edgeIt);
 	}
@@ -197,18 +209,6 @@ struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
 	return(stHash_search(et->vertices, v));
 }
-void *stEulerTour_getNextVertex(struct stEulerTour *et, void *v) {
-	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
-	struct stEulerHalfEdge *nextEdge;
-	if(vertex->leftOut->from == vertex) {
-		nextEdge = vertex->leftOut;
-	}
-	else {
-		nextEdge = vertex->rightIn;
-	}
-	return(nextEdge->to->vertexID);
-}
-
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID) {
 	struct stEulerVertex *newVertex = stEulerVertex_construct(vertexID);
 	newVertex->owner = et;

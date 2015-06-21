@@ -35,7 +35,8 @@ struct stEulerTour {
 
 struct stEulerVertex *stEulerVertex_construct(void *vertexID);
 void stEulerVertex_destruct(struct stEulerVertex *vertex);
-char *stEulerVertex_print(struct stEulerVertex *vertex);
+char *stEulerVertex_getTour(struct stEulerVertex *vertex);
+void stEulerVertex_print(struct stEulerVertex *vertex);
 struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex);
 struct treap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex);
 int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to);
@@ -52,7 +53,6 @@ struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et,
 struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v);
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v);
-void *stEulerTour_getNextVertex(struct stEulerTour *et, void *v);
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID);
 void stEulerTour_destruct(struct stEulerTour *et);
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex);

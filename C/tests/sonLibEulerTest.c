@@ -50,7 +50,7 @@ static void test_stEulerTour_link(CuTest *testCase) {
 
 	stEulerTour_link(et, (void*)"a", (void*)"c");
 	stEulerTour_link(et, (void*)"d", (void*)"a");
-	CuAssertStrEquals(testCase, stEulerVertex_print(a), "dacaba");
+	CuAssertStrEquals(testCase, stEulerVertex_getTour(a), "dacaba");
 	CuAssertTrue(testCase, stEulerVertex_connected(d, b));
 
 	teardown();

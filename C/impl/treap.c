@@ -29,6 +29,9 @@ void treap_destruct(struct treap *node) {
 	node = treap_findRoot(node);
 	treap_destructRecurse(node);
 }
+void treap_nodeDestruct(struct treap *node) {
+	free(node);
+}
 char *treap_print(struct treap *node) {
 	//node = treap_findMin(node);
 	//struct treap *root = treap_findRoot(node);

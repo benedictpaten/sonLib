@@ -22,6 +22,7 @@ struct treap {
 struct treap *treap_construct(void *value);
 void treap_destruct(struct treap *node);
 void treap_destructRecurse(struct treap *root);
+void treap_nodeDestruct(struct treap *node);
 void treap_rotateLeft(struct treap *u);
 void treap_rotateRight(struct treap *u);
 struct treap *treap_findRoot(struct treap *node);
