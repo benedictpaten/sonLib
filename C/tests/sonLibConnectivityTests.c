@@ -1,4 +1,5 @@
 #include "sonLibGlobalsTest.h"
+#include <inttypes.h>
 
 static stConnectivity *connectivity;
 

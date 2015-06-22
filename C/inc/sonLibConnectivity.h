@@ -5,11 +5,18 @@
  * Comments should probably go here
  */
 stConnectivity *stConnectivity_construct(void);
+void stConnectivity_destruct(stConnectivity *connectivity);
+
+struct stDynamicEdge *stDynamicEdge_construct();
+void stDynamicEdge_destruct(struct stDynamicEdge *edge);
+struct stDynamicNode *stDynamicNode_construct(void *nodeID);
+void stDynamicNode_destruct(struct stDynamicNode *node);
+
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
 
 struct stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
 struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v);
-void stConnectivity_destruct(stConnectivity *connectivity);
+void stConnectivity_removeEdgeFromHash(stConnectivity *connectivity, void *u, void *v);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 
@@ -37,5 +44,5 @@ stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stCon
 stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentIterator *it);
 
 void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it);
-
+void stConnectedComponent_destruct(stConnectedComponent *comp);
 #endif
