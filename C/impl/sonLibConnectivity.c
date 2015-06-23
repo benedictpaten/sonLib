@@ -105,7 +105,7 @@ stConnectivity *stConnectivity_construct(void) {
     connectivity->nLevels = 0;
     connectivity->nNodes = 0;
 	connectivity->nEdges = 0;
-	connectivity->connectedComponents = 
+	connectivity->connectedComponents =
 		stSet_construct2((void(*)(void*))stConnectedComponent_destruct);
 
     return(connectivity);
@@ -120,6 +120,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	
 
     stHash_destruct(connectivity->seen);
+	free(connectivity);
 }
 
 //add new levels to compensate for the addition of new nodes,
@@ -129,17 +130,17 @@ void resizeEulerTourList(stConnectivity *connectivity, int newsize) {
 	if (newsize <= stList_length(connectivity->et)) {
 		return;
 	}
-	struct stEulerTour *et_0 = stList_get(connectivity->et, 0);
-	stList *keys = stHash_getKeys(et_0->vertices);
-	int nVertices_0 = stList_length(keys);
-	for (int i = stList_length(connectivity->et); i < newsize; i++) {
-		struct stEulerTour *et_i = stEulerTour_construct();
-		for (int j = 0; j < nVertices_0; j++) {
-			void *vertexID_j = stList_get(keys, j);
-			stEulerTour_createVertex(et_i, vertexID_j);
+	while(stList_length(connectivity->et) < connectivity->nLevels) {
+		struct stEulerTour *newLevel = stEulerTour_construct();
+		stList *nodes = stHash_getKeys(connectivity->nodes);
+		stListIterator *it = stList_getIterator(nodes);
+		void *node;
+		while((node = stList_getNext(it))) {
+			stEulerTour_createVertex(newLevel, node);
 		}
-		stList_append(connectivity->et, et_i);
-		   	
+		stList_append(connectivity->et, newLevel);
+		stList_destructIterator(it);
+		stList_destruct(nodes);
 	}
 }
 void resizeIncidentEdgeList(stList *incident, int newsize) {
@@ -157,6 +158,7 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	
 	stSet_insert(connectivity->connectedComponents, stConnectedComponent_construct(connectivity, 
 				node));
+	stHash_insert(connectivity->nodes, node, stDynamicNode_construct(node));
 
     connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
     resizeEulerTourList(connectivity, connectivity->nLevels);
@@ -165,7 +167,7 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 		struct stEulerTour *et_i = stList_get(connectivity->et, i);
 		stEulerTour_createVertex(et_i, node);
 	}
-	stHash_insert(connectivity->nodes, node, stDynamicNode_construct(node));
+	
 }
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
