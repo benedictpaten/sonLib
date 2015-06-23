@@ -163,6 +163,19 @@ struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et,
 	}
 	return(next->value);
 }
+struct stEulerHalfEdge *stEulerTour_getEdge(struct stEulerTour *et, void *u, void *v) {
+	void *lower = (u < v) ? u : v;
+	void *higher = (u < v) ? v : u;
+	struct stEulerVertex *lowerVertex = stHash_search(et->vertices, lower);
+	return(stHash_search(lowerVertex->forwardEdges, higher));
+}
+void stEulerTour_deleteEdge(struct stEulerTour *et, void *u, void *v) {
+	void *lower = (u < v) ? u : v;
+	void *higher = (u < v) ? v : u;
+	struct stEulerVertex *lowerVertex = stHash_search(et->vertices, lower);
+	struct stEulerHalfEdge *removedEdge = stHash_remove(lowerVertex->forwardEdges, higher);
+	stEulerHalfEdge_destruct(removedEdge);
+}
 struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
 	return(vertex->leftOut);
@@ -260,9 +273,13 @@ void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	newBackwardEdge->from = other;
 	newBackwardEdge->to = vertex;
 
-	stHash *u_incident = vertex->forwardEdges;
+	struct stEulerVertex *lower = (u < v) ? u : v;
+	struct stEulerVertex *higher = (u < v) ? v : u;
 
-	stHash_insert(u_incident, v, newForwardEdge);
+	struct stEulerVertex *lowerVertex = stHash_search(et->vertices, lower);
+	stHash *lower_incident = lowerVertex->forwardEdges;
+
+	stHash_insert(lower_incident, higher, newForwardEdge);
 
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
@@ -341,8 +358,7 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 	et->nComponents++;
 
 	//get the two halves of this edge
-	struct stEulerVertex *uvertex = stHash_search(et->vertices, u);
-	struct stEulerHalfEdge *f = stHash_search(uvertex->forwardEdges, v);
+	struct stEulerHalfEdge *f = stEulerTour_getEdge(et, u, v);
 	struct stEulerHalfEdge *b = f->inverse;
 	
 	assert(treap_findRoot(f->node) == treap_findRoot(b->node));
@@ -474,7 +490,7 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 		to->leftOut = NULL;
 		to->rightIn = NULL;
 	}
-	stHash_remove(uvertex->forwardEdges, v);
+	stEulerTour_deleteEdge(et, u, v);
 }
 
 

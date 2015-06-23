@@ -178,7 +178,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
 	SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
-	//SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
     return suite;
 }

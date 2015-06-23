@@ -58,7 +58,9 @@ static void test_stTreap_rotations(CuTest *testCase) {
 
 	treap_rotateRight(newRoot);
 	CuAssertTrue(testCase, treap_findRoot(t) == r);
-	CuAssertStrEquals(testCase, treap_print(t), "tabcdef");
+	char *rotatedTour = treap_print(t);
+	CuAssertStrEquals(testCase, rotatedTour, "tabcdef");
+	free(rotatedTour);
 
 
 	teardown();
@@ -72,18 +74,26 @@ static void test_stTreap_split(CuTest *testCase) {
 	
 	struct treap *beforeSplit = treap_splitBefore(splitPoint);
 
-	CuAssertStrEquals(testCase, treap_print(beforeSplit), "ta");
-	CuAssertStrEquals(testCase, treap_print(splitPoint), "bcdef");
+	char *beforeSplitStr = treap_print(beforeSplit);
+	char *splitPointStr = treap_print(splitPoint);
+	CuAssertStrEquals(testCase, beforeSplitStr, "ta");
+	CuAssertStrEquals(testCase, splitPointStr, "bcdef");
+	free(beforeSplitStr);
+	free(splitPointStr);
 
 	treap_concat(beforeSplit, splitPoint);
-	CuAssertStrEquals(testCase, treap_print(t), "tabcdef");
+	char *recombinedTourStr = treap_print(t);
+	CuAssertStrEquals(testCase, recombinedTourStr, "tabcdef");
+	free(recombinedTourStr);
 
 
 	struct treap *aftersplit = treap_next(t);
 	CuAssertStrEquals(testCase, aftersplit->value, "a");
 	struct treap *after = treap_splitAfter(aftersplit);
 	CuAssertTrue(testCase, after != NULL);
-	CuAssertStrEquals(testCase, treap_print(after), "bcdef");
+	char *afterSplitStr = treap_print(after);
+	CuAssertStrEquals(testCase, afterSplitStr, "bcdef");
+	free(afterSplitStr);
 
 
 	teardown();
