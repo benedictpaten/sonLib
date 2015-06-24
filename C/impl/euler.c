@@ -82,6 +82,8 @@ int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to
 	if(from == to) {
 		return(true);
 	}
+	if(stEulerVertex_isSingleton(from)) return 0;
+	if(stEulerVertex_isSingleton(to)) return 0;
 	struct treap *fromNode = stEulerVertex_incidentEdgeA(from);
 	struct treap *toNode = stEulerVertex_incidentEdgeA(to);
 	if(fromNode == NULL || toNode == NULL) {
