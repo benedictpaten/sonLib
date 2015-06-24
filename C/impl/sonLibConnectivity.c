@@ -173,6 +173,7 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
     // Add an edge to the graph and update the connected components.
     // NB: The ordering of node1 and node2 shouldn't matter as this is an undirected graph.
+	if(node1 == node2) return;
 	connectivity->nEdges++;
 	struct stDynamicEdge *newEdge = stDynamicEdge_construct();
 	newEdge->from = node1;
