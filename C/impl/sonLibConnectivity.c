@@ -117,7 +117,6 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stList_destruct(connectivity->et);
 	stHash_destruct(connectivity->nodes);
 	stSet_destruct(connectivity->connectedComponents);
-	
 
     stHash_destruct(connectivity->seen);
 	free(connectivity);
@@ -126,8 +125,8 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 //add new levels to compensate for the addition of new nodes,
 //and copy nodes from level 0 to the new levels so that all
 //levels have the same nodes
-void resizeEulerTourList(stConnectivity *connectivity, int newsize) {
-	if (newsize <= stList_length(connectivity->et)) {
+void resizeEulerTourList(stConnectivity *connectivity) {
+	if (connectivity->nLevels <= stList_length(connectivity->et)) {
 		return;
 	}
 	while(stList_length(connectivity->et) < connectivity->nLevels) {
@@ -153,6 +152,9 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
     // Add an isolated node to the graph. This should end up in a new
     // connected component with only one member.
 	connectivity->nNodes++;
+	connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
+    resizeEulerTourList(connectivity);
+
 
 	stHash_insert(connectivity->seen, node, SEEN_FALSE);
 	
@@ -160,8 +162,6 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 				node));
 	stHash_insert(connectivity->nodes, node, stDynamicNode_construct(node));
 
-    connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
-    resizeEulerTourList(connectivity, connectivity->nLevels);
     for(int i = 0; i < connectivity->nLevels; i++) {
 		//Add a new disconnected node to the Euler tour on level i
 		struct stEulerTour *et_i = stList_get(connectivity->et, i);
@@ -197,7 +197,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 		stConnectedComponent *higherComponent = stConnectivity_getConnectedComponent(connectivity,
 				higher);
 		stSet_remove(connectivity->connectedComponents, higherComponent);
-		//stConnectedComponent_destruct(higherComponent);
+		stConnectedComponent_destruct(higherComponent);
 
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
@@ -230,8 +230,8 @@ void stConnectivity_removeEdgeFromHash(stConnectivity *connectivity, void *u, vo
 	void *lower = (u < v) ? u : v;
 	void *higher = (u < v) ? v : u;
 	struct stDynamicNode *lowerNode = stHash_search(connectivity->nodes, lower);
-	stHash_remove(lowerNode->incidentEdges, higher);
-	//stDynamicEdge_destruct(removedEdge);
+	struct stDynamicEdge *removedEdge  = stHash_remove(lowerNode->incidentEdges, higher);
+	stDynamicEdge_destruct(removedEdge);
 }
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
@@ -370,7 +370,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		//large component will be indexed by either a node from node1's new component or node2's
 		//new component
 		stSet_remove(connectivity->connectedComponents, componentWithBothNodes);
-		//stConnectedComponent_destruct(componentWithBothNodes);
+		stConnectedComponent_destruct(componentWithBothNodes);
 		stSet_insert(connectivity->connectedComponents, 
 				stConnectedComponent_construct(connectivity, node1));
 		stSet_insert(connectivity->connectedComponents, 
@@ -406,11 +406,11 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 	stConnectedComponentIterator *it = stConnectivity_getConnectedComponentIterator(connectivity);
 	while((component = stConnectedComponentIterator_getNext(it))) {
 		if(stConnectivity_connected(connectivity, component->nodeInComponent, node)) {
-			return(component);
+			break;
 		}
 	}
 	stConnectedComponentIterator_destruct(it);
-	return(NULL);
+	return(component);
 }
 
 stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnectedComponent 

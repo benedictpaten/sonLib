@@ -172,14 +172,6 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	
 	teardown();
 }
-static void test_listDestructors(CuTest *testCase) {
-	stConnectivity *connectivity = stConnectivity_construct();
-	stHash *hash = stHash_construct2(NULL, (void(*)(void*))stEulerVertex_destruct);
-	struct stEulerVertex *vertex = stEulerVertex_construct((void*)"a");
-	stHash_insert(hash, (void*)"a", vertex);
-	stHash_destruct(hash);
-	stConnectivity_destruct(connectivity);
-}
 
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
@@ -188,7 +180,6 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
 	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
-	//SUITE_ADD_TEST(suite, test_listDestructors);
     return suite;
 }
 
