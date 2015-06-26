@@ -161,7 +161,7 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 }
 static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	setup();
-	stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)1);
+	stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)4);
 	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
 	void *node;
 	while(1) {

@@ -3,8 +3,8 @@
 
 int main() {
 	clock_t start = clock();
-	int nNodes = 100000;
-	int nEdges = 1000;
+	int nNodes = 200000;
+	int nEdges = 100000;
 	stList *nodes = stList_construct();
 
 	stConnectivity *connectivity = stConnectivity_construct();
@@ -28,6 +28,16 @@ int main() {
 	clock_t afterEdges = clock();
 	double t2 = (double)(afterEdges - afterNodes)/CLOCKS_PER_SEC;
 	printf("Adding edges took %f seconds.\n", t2);
+
+
+	for (int i = 0; i < nEdges; i++) {
+		void *node1 = stList_get(nodes, rand() % nNodes);
+		void *node2 = stList_get(nodes, rand() % nNodes);
+		stConnectivity_connected(connectivity, node1, node2);
+	}
+	clock_t afterQueries = clock();
+	double t3 = (double)(afterQueries - afterEdges)/CLOCKS_PER_SEC;
+	printf("%d connectivity queries took %f seconds\n", nEdges, t3);
 	stConnectivity_destruct(connectivity);
 
 }

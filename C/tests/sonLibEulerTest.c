@@ -65,12 +65,25 @@ static void test_stEulerTour_cut(CuTest *testCase) {
 	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)"a", (void*)"b"));
 	teardown();
 }
-
+static void test_stEulerTour_next(CuTest *testCase) {
+	setup();
+	stEulerTour_link(et, (void*)"a", (void*)"b");
+	stEulerTour_link(et, (void*)"a", (void*)"c");
+	stEulerTour_link(et, (void*)"a", (void*)"d");
+	//stEulerTour_link(et, (void*)"b", (void*)"e");
+	stEulerTour_startTour(et, (void*) "c");
+	void *node;
+	while((node = stEulerTour_stepTour(et))) {
+		printf("%s\n", node);
+	}
+	teardown();
+}
 
 
 CuSuite *sonLib_stEulerTestSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stEulerTour_link);
 	SUITE_ADD_TEST(suite, test_stEulerTour_cut);
+	//SUITE_ADD_TEST(suite, test_stEulerTour_next);
 	return suite;
 }

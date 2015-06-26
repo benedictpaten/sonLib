@@ -96,17 +96,6 @@ int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to
 int stEulerVertex_isSingleton(struct stEulerVertex *vertex) {
 	return(!(vertex->leftOut));
 }
-struct stEulerVertex *stEulerVertex_findRoot(struct stEulerVertex *vertex) {
-	struct treap *nodeInTour = stEulerVertex_incidentEdgeA(vertex);
-	if(!nodeInTour) {
-		return(vertex);
-	}
-	nodeInTour = treap_findRoot(nodeInTour);
-	struct treap *firstEdgeNode = treap_findMin(nodeInTour);
-	struct stEulerHalfEdge *firstEdge = (struct stEulerHalfEdge*)(firstEdgeNode->value);
-	struct stEulerVertex *r = firstEdge->from;
-	return(r);
-}
 
 /*Euler Half Edge methods ------------------------------------------------- */
 struct stEulerHalfEdge *stEulerHalfEdge_construct() {
@@ -139,6 +128,12 @@ void stEulerTour_destruct(struct stEulerTour *et) {
 	stHash_destruct(et->vertices);
 	free(et);
 }
+struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
+	struct stEulerVertex *vertex = stEulerTour_getVertex(et, v);
+	struct treap *treapNode = stEulerVertex_incidentEdgeA(vertex);
+	if(!treapNode) return(NULL);
+	return(treap_findMin(treap_findRoot(treapNode)));
+}
 int stEulerTour_connected(struct stEulerTour *et, void *u, void *v) {
 	struct stEulerVertex *node1 = stHash_search(et->vertices, u);
 	struct stEulerVertex *node2 = stHash_search(et->vertices, v);
@@ -165,6 +160,26 @@ struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et,
 	}
 	return(next->value);
 }
+
+/*starts a tour at the fist occurrence of node v in the tour of its
+ * connected component. */
+void stEulerTour_startTour(struct stEulerTour *et, void *v) {
+	et->currentEdgeNode = stEulerTour_findRoot(et, v);
+}
+void *stEulerTour_stepTour(struct stEulerTour *et) {
+	/*if(et->startVertex) {
+		void *temp = et->startVertex;
+		et->startVertex = NULL;
+		return(temp);
+	}*/
+	if(!et->currentEdgeNode) return(NULL);
+	struct stEulerHalfEdge *currentEdge = (struct stEulerHalfEdge *) et->currentEdgeNode->value;
+	void *vertexToReturn = currentEdge->from->vertexID;
+
+	et->currentEdgeNode = treap_next(et->currentEdgeNode);
+	return(vertexToReturn);
+}
+
 struct stEulerHalfEdge *stEulerTour_getEdge(struct stEulerTour *et, void *u, void *v) {
 	void *lower = (u < v) ? u : v;
 	void *higher = (u < v) ? v : u;
@@ -183,9 +198,10 @@ struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void 
 	return(vertex->leftOut);
 }
 struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v) {
-	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
-	vertex = stEulerVertex_findRoot(vertex);
-	return(vertex->leftOut);
+	struct treap *root = stEulerTour_findRoot(et, v);
+	if(!root) return(NULL);
+	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) root->value;
+	return(edge);
 }
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
 	return(stHash_search(et->vertices, v));
@@ -196,6 +212,15 @@ struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *ver
 	et->nComponents++;
 	stHash_insert(et->vertices, vertexID, newVertex);
 	return(newVertex);
+}
+struct stEulerHalfEdge *stEulerTour_getNextEdge(struct stEulerTour *et, 
+		struct stEulerHalfEdge *edge) {
+	if(!edge) return NULL;
+
+	struct treap *nextTreapNode = treap_next(edge->node);
+	if(!nextTreapNode) return NULL;
+	struct stEulerHalfEdge *nextEdge = (struct stEulerHalfEdge *) nextTreapNode->value;
+	return(nextEdge);
 }
 
 /*Move a vertex to the beginning of the tour. */
