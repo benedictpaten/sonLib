@@ -36,7 +36,7 @@ stIncidentEdgeList *stIncidentEdgeList_construct(void *edge, void(*destructEdge)
 	return list;
 }
 void stIncidentEdgeList_destruct(stIncidentEdgeList *list) {
-	while(list->next) {
+	while(list && list->next) {
 		list = list->next;
 		if(list->prev->edge && list->destructEdge) {
 			list->destructEdge(list->prev->edge);
@@ -44,8 +44,10 @@ void stIncidentEdgeList_destruct(stIncidentEdgeList *list) {
 
 		free(list->prev);
 	}
-	if(list->edge && list->destructEdge) list->destructEdge(list->edge);
-	free(list);
+	if(list && list->edge && list->destructEdge) {
+		list->destructEdge(list->edge);
+		free(list);
+	}
 }
 void stEdgeContainer_addNode(stEdgeContainer *container, void *n) {
 	stHash_insert(container->edges, n, stIncidentEdgeList_construct(NULL, container->destructEdge));
@@ -100,6 +102,17 @@ void *stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 	void *removedEdge = incident->edge;
 	free(incident);
 	return(removedEdge);
+}
+stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v) {
+	stIncidentEdgeList *incident = stHash_search(container->edges, v);
+	stList *incidentList = stList_construct();
+	while(incident) {
+		if(incident->edge) {
+			stList_append(incidentList, incident->toNode);
+		}
+		incident = incident->next;
+	}
+	return incidentList;
 }
 
 

@@ -9,8 +9,6 @@ void stConnectivity_destruct(stConnectivity *connectivity);
 
 struct stDynamicEdge *stDynamicEdge_construct();
 void stDynamicEdge_destruct(struct stDynamicEdge *edge);
-struct stDynamicNode *stDynamicNode_construct(void *nodeID);
-void stDynamicNode_destruct(struct stDynamicNode *node);
 
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
 

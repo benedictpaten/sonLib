@@ -165,11 +165,6 @@ void stEulerTour_startTour(struct stEulerTour *et, void *v) {
 	et->currentEdgeNode = stEulerTour_findRoot(et, v);
 }
 void *stEulerTour_stepTour(struct stEulerTour *et) {
-	/*if(et->startVertex) {
-		void *temp = et->startVertex;
-		et->startVertex = NULL;
-		return(temp);
-	}*/
 	if(!et->currentEdgeNode) return(NULL);
 	struct stEulerHalfEdge *currentEdge = (struct stEulerHalfEdge *) et->currentEdgeNode->value;
 	void *vertexToReturn = currentEdge->from->vertexID;
@@ -177,20 +172,6 @@ void *stEulerTour_stepTour(struct stEulerTour *et) {
 	et->currentEdgeNode = treap_next(et->currentEdgeNode);
 	return(vertexToReturn);
 }
-/*
-struct stEulerHalfEdge *stEulerTour_getEdge(struct stEulerTour *et, void *u, void *v) {
-	void *lower = (u < v) ? u : v;
-	void *higher = (u < v) ? v : u;
-	struct stEulerVertex *lowerVertex = stHash_search(et->vertices, lower);
-	return(stHash_search(lowerVertex->forwardEdges, higher));
-}
-void stEulerTour_deleteEdge(struct stEulerTour *et, void *u, void *v) {
-	void *lower = (u < v) ? u : v;
-	void *higher = (u < v) ? v : u;
-	struct stEulerVertex *lowerVertex = stHash_search(et->vertices, lower);
-	struct stEulerHalfEdge *removedEdge = stHash_remove(lowerVertex->forwardEdges, higher);
-	stEulerHalfEdge_destruct(removedEdge);
-}*/
 struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
 	return(vertex->leftOut);

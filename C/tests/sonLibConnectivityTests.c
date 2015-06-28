@@ -172,6 +172,9 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	
 	teardown();
 }
+static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
+	teardown();
+}
 
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
