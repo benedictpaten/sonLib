@@ -5,7 +5,7 @@
 #define SEEN_TRUE (void*) 1
 #define SEEN_FALSE (void*) 0
 
-// Data structures
+//Public data structures
 
 struct _stConnectivity {
     // Data structure keeping track of the nodes, edges, and connected
@@ -17,6 +17,7 @@ struct _stConnectivity {
     stList *et; //list of the Euler Tour Trees for each level in the graph
     int nLevels;
 	stHash *connectedComponents;
+	stEdgeContainer *edges;
 
 };
 
@@ -49,6 +50,7 @@ struct _stConnectedComponentNodeIterator {
 	struct stEulerHalfEdge *currentEdge;
 	struct stEulerTour *et;
 };
+//Prive data structures
 struct stDynamicEdge {
 	void *edgeID;
 	void *from;
@@ -61,11 +63,10 @@ struct stDynamicEdge {
 };
 struct stDynamicNode {
 	stList *incidentEdgeList;
-	stHash *incidentEdges;
 	void *nodeID;
 };
 
-// Exported methods
+//Node and edge representation
 struct stDynamicEdge *stDynamicEdge_construct() {
 	struct stDynamicEdge *edge = st_malloc(sizeof(struct stDynamicEdge));
 	edge->from = NULL;
@@ -82,16 +83,16 @@ void stDynamicEdge_destruct(struct stDynamicEdge *edge) {
 }
 struct stDynamicNode *stDynamicNode_construct(void *nodeID) {
 	struct stDynamicNode *node = st_malloc(sizeof(struct stDynamicNode));
-	node->incidentEdges = stHash_construct2(NULL, (void(*)(void*))stDynamicEdge_destruct);
 	node->incidentEdgeList = stList_construct();
 	node->nodeID = nodeID;
 	return(node);
 }
 void stDynamicNode_destruct(struct stDynamicNode *node) {
-	stHash_destruct(node->incidentEdges);
 	stList_destruct(node->incidentEdgeList);
 	free(node);
 }
+
+// Exported methods ----------------------------------------------------------------------
 
 stConnectivity *stConnectivity_construct(void) {
     // Initialize the data structure with an empty graph with 0 nodes.
@@ -109,6 +110,7 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nEdges = 0;
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
+	connectivity->edges = stEdgeContainer_construct();
 
     return(connectivity);
 
@@ -123,6 +125,8 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
     stHash_destruct(connectivity->seen);
 	free(connectivity);
 }
+
+	
 
 //add new levels to compensate for the addition of new nodes,
 //and copy nodes from level 0 to the new levels so that all
@@ -160,9 +164,10 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 
 	stHash_insert(connectivity->seen, node, SEEN_FALSE);
 	
-	stHash_insert(connectivity->connectedComponents, node, stConnectedComponent_construct(connectivity, 
-				node));
+	stHash_insert(connectivity->connectedComponents, node, 
+			stConnectedComponent_construct(connectivity, node));
 	stHash_insert(connectivity->nodes, node, stDynamicNode_construct(node));
+	stEdgeContainer_addNode(connectivity->edges, node);
 
     for(int i = 0; i < connectivity->nLevels; i++) {
 		//Add a new disconnected node to the Euler tour on level i
@@ -181,12 +186,8 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	newEdge->from = node1;
 	newEdge->to = node2;
 	newEdge->level = connectivity->nLevels - 1;
-	void *lower = (node1 < node2) ? node1 : node2;
-	void *higher = (node1 < node2) ? node2 : node1;
-	struct stDynamicNode *lowerNode = stHash_search(connectivity->nodes, lower);
-	stHash *lowerNode_incident = lowerNode->incidentEdges;
-	stHash_insert(lowerNode_incident, higher, newEdge);
-
+	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
+	stEdgeContainer_addEdge(connectivity->edges, node2, node1, newEdge);
 	struct stDynamicNode *dynamicNode1 = stHash_search(connectivity->nodes, node1);
 	struct stDynamicNode *dynamicNode2 = stHash_search(connectivity->nodes, node2);
 	stList *node1_incident_edgelist = dynamicNode1->incidentEdgeList;
@@ -197,10 +198,10 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 		//remove the connected component for node 2 from the list of connected components. The
 		//component that now contains node1 and node2 will have a pointer to a node in node1's
 		//original component before the merge
-		stConnectedComponent *higherComponent = stConnectivity_getConnectedComponent(connectivity,
-				higher);
-		stHash_remove(connectivity->connectedComponents, higherComponent->nodeInComponent);
-		stConnectedComponent_destruct(higherComponent);
+		stConnectedComponent *node2Component = stConnectivity_getConnectedComponent(connectivity,
+				node2);
+		stHash_remove(connectivity->connectedComponents, node2Component->nodeInComponent);
+		stConnectedComponent_destruct(node2Component);
 
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
@@ -223,19 +224,6 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 }
 
-struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v) {
-	void *lower = (u < v) ? u : v;
-	void *higher = (u < v) ? v : u;
-	struct stDynamicNode *lowerNode = stHash_search(connectivity->nodes, lower);
-	return(stHash_search(lowerNode->incidentEdges, higher));
-}
-void stConnectivity_removeEdgeFromHash(stConnectivity *connectivity, void *u, void *v) {
-	void *lower = (u < v) ? u : v;
-	void *higher = (u < v) ? v : u;
-	struct stDynamicNode *lowerNode = stHash_search(connectivity->nodes, lower);
-	struct stDynamicEdge *removedEdge  = stHash_remove(lowerNode->incidentEdges, higher);
-	stDynamicEdge_destruct(removedEdge);
-}
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	return(stEulerTour_connected(et_lowest, node1, node2));
@@ -255,7 +243,8 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 	struct stEulerTour *et_level = stList_get(connectivity->et, level);
 	for(k = 0; k < w_incident_length; k++) {
 		void *e_wk_node2 = stList_get(w_incident, k);
-		struct stDynamicEdge *e_wk = stConnectivity_getEdge(connectivity, w, e_wk_node2);
+		struct stDynamicEdge *e_wk = (struct stDynamicNode *)stEdgeContainer_getEdge(connectivity->edges, 
+				w, e_wk_node2);
 		if (e_wk == removedEdge || e_wk->in_forest || !e_wk->enabled) {
 			//remove
 			if(w == e_wk->from) {
@@ -278,8 +267,8 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 				}
 				for(k = k+1; k < w_incident_length; k++) {
 					void *e_toRemove_node2 = stList_get(w_incident, k);
-					struct stDynamicEdge *e_toRemove = stConnectivity_getEdge(connectivity,
-							w, e_toRemove_node2);
+					struct stDynamicEdge *e_toRemove = 
+						(struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, w, e_toRemove_node2);
 					if(e_toRemove == removedEdge || e_toRemove->in_forest || 
 							!e_toRemove->enabled) {
 						if (w == e_toRemove->from) {
@@ -311,7 +300,8 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	stConnectedComponent *componentWithBothNodes = 
 		stConnectivity_getConnectedComponent(connectivity, node1);
-	struct stDynamicEdge *edge = stConnectivity_getEdge(connectivity, node1, node2);
+	struct stDynamicEdge *edge = (struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, 
+			node1, node2);
 	if(!edge->in_forest) {
 		return;
 	}
@@ -334,7 +324,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		//go through each edge in the tour on level i
 		struct stEulerHalfEdge *tourEdge = stEulerTour_getFirstEdge(et_i, node2);
 		while(tourEdge) {
-			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, 
+			struct stDynamicEdge *treeEdge = (struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, 
 					tourEdge->from->vertexID, tourEdge->to->vertexID);
 			if(treeEdge->level == i) {
 				treeEdge->level--;
@@ -380,7 +370,11 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 				stConnectedComponent_construct(connectivity, node2));
 	}
 	edge->level = connectivity->nLevels;
-	stConnectivity_removeEdgeFromHash(connectivity, node1, node2);
+	struct stDynamicEdge *removed1 = 
+		(struct stDynamicEdge *)stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
+	struct stDynamicEdge *removed2 =
+		(struct stDynamicEdge *)stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
+	stDynamicEdge_destruct(removed1);
 
 }
 struct stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
@@ -407,7 +401,7 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
     // the graph is modified, this pointer can be invalidated
 	stConnectedComponent *comp = stConnectedComponent_construct(connectivity, node);
 	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
-	stConnectedComponent *foundComponent;
+	stConnectedComponent *foundComponent = NULL;
 	while(node) {
 		foundComponent = stHash_search(connectivity->connectedComponents, node);
 		if(foundComponent) {
