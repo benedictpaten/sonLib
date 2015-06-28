@@ -8,7 +8,6 @@ struct stEulerVertex {
 
 	void *vertexID; //index into the Euler Tree's hashtable of vertices
 	int visited;
-	stHash *forwardEdges;
 };
 
 struct stEulerHalfEdge {
@@ -28,9 +27,8 @@ struct stEulerHalfEdge {
 
 struct stEulerTour {
 	stHash *vertices;
-	struct treap *currentNode;
 	struct treap *currentEdgeNode;
-	void *startVertex;
+	stEdgeContainer *edges;
 	 
 	int nComponents;
 };

@@ -110,7 +110,7 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nEdges = 0;
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
-	connectivity->edges = stEdgeContainer_construct();
+	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))stDynamicEdge_destruct);
 
     return(connectivity);
 

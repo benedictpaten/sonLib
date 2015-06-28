@@ -176,7 +176,7 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
-	//SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
+	SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
 	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);

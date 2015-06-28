@@ -33,7 +33,7 @@ int sonLibRunAllTests(void) {
     //CuSuiteAddSuite(suite, sonLib_stTreapTestSuite());
 	CuSuiteAddSuite(suite, sonLib_stEdgeContainerTestSuite());
 
-    //CuSuiteAddSuite(suite, sonLib_stEulerTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stEulerTestSuite());
     CuSuiteAddSuite(suite, sonLib_stConnectivityTestSuite());
 	/*CuSuiteAddSuite(suite, sonLibGraphTestSuite());
     CuSuiteAddSuite(suite, stPosetAlignmentTestSuite());
