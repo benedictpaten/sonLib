@@ -40,15 +40,16 @@ struct _stConnectedComponentIterator {
     // Iterator data structure for components in the graph.
 	int cur;
 	stConnectivity *connectivity;
-	stHashIterator *componentIterator;
+	stList *componentList;
+	stListIterator *componentIterator;
 };
 
 struct _stConnectedComponentNodeIterator {
     // Iterator for nodes in a component
 	struct treap *currentTreapNode;
 	stHash *seen;
-	struct stEulerHalfEdge *currentEdge;
 	struct stEulerTour *et;
+	void *currentNode;
 };
 //Prive data structures
 struct stDynamicEdge {
@@ -404,13 +405,15 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
 	struct stEulerTour *et = stConnectivity_getTopLevel(component->connectivity);
 	it->et = et;
 	it->seen = stHash_construct();
+	it->currentNode = component->nodeInComponent;
 	stEulerTour_startTour(it->et, component->nodeInComponent);
 	return(it);
 }
 
 void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator *it) {
     // Return the next node of the connected component, or NULL if all have been traversed.
-	void *currentNode = stEulerTour_stepTour(it->et);
+	void *currentNode = it->currentNode;
+	it->currentNode = stEulerTour_stepTour(it->et);
 
 	if(stHash_search(it->seen, currentNode)) {
 		return(stConnectedComponentNodeIterator_getNext(it));
@@ -431,20 +434,22 @@ stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stCon
     // graph. Again, if the graph is modified while the iterator is
     // active, it's ok for it to break.
 	stConnectedComponentIterator *it = st_malloc(sizeof(stConnectedComponentIterator));
-	it->componentIterator = stHash_getIterator(connectivity->connectedComponents);
+	it->componentList = stHash_getValues(connectivity->connectedComponents);
+	it->componentIterator = stList_getIterator(it->componentList);
 	it->connectivity = connectivity;
 	return(it);
 }
 
 stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentIterator *it) {
     // Return the next connected component in the graph, or NULL if all have been traversed.
-	stConnectedComponent *next = stHash_getNext(it->componentIterator);
+	stConnectedComponent *next = stList_getNext(it->componentIterator);
 	return(next);
 }
 
 void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it) {
     // Free the iterator data structure.
-	stHash_destructIterator(it->componentIterator);
+	stList_destructIterator(it->componentIterator);
+	stList_destruct(it->componentList);
 	free(it);
 }
 void stConnectedComponent_destruct(stConnectedComponent *comp) {

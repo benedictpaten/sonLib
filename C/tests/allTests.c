@@ -30,7 +30,7 @@ CuSuite* sonLib_stEdgeContainerTestSuite(void);
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
-    //CuSuiteAddSuite(suite, sonLib_stTreapTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stTreapTestSuite());
 	CuSuiteAddSuite(suite, sonLib_stEdgeContainerTestSuite());
 
     CuSuiteAddSuite(suite, sonLib_stEulerTestSuite());

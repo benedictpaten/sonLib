@@ -173,6 +173,62 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
+	int nNodes = 30;
+	int nEdges = 20;
+	stList *nodes = stList_construct();
+	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
+	connectivity = stConnectivity_construct();
+	//add nodes
+	for (int i = 0; i < nNodes; i++) {
+		void *node = st_malloc(1);
+		stNaiveConnectivity_addNode(naive, node);
+		stConnectivity_addNode(connectivity, node);
+		stList_append(nodes, node);
+	}
+	//add edges
+	for (int i = 0; i < nEdges; i++) {
+		void *node1 = stList_get(nodes, rand() % nNodes);
+		void *node2 = stList_get(nodes, rand() % nNodes);
+		if (node1 == node2) continue;
+		stConnectivity_addEdge(connectivity, node1, node2);
+		stNaiveConnectivity_addEdge(naive, node1, node2);
+	}
+	//check number of connected components
+	stList *components = stList_construct();
+	stConnectedComponentIterator *it = stConnectivity_getConnectedComponentIterator(connectivity);
+	stConnectedComponent *comp;
+	while((comp = stConnectedComponentIterator_getNext(it))) {
+		stList_append(components, comp);
+	}
+	stConnectedComponentIterator_destruct(it);
+
+	stList *trueComponents = stList_construct();
+	stNaiveConnectedComponentIterator *itNaive = stNaiveConnectivity_getConnectedComponentIterator(naive);
+	stNaiveConnectedComponent *naiveComp;
+	while((naiveComp = stNaiveConnectedComponentIterator_getNext(itNaive))) {
+		stList_append(trueComponents, naiveComp);
+	}
+	stNaiveConnectedComponentIterator_destruct(itNaive);
+	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
+	//check the nodes in each component
+	for (int i = 0; i < stList_length(components); i++) {
+		stNaiveConnectedComponent *truecomponent_i = stList_get(trueComponents, i);
+		stSet *trueNodesInComponent = stNaiveConnectedComponent_getNodes(truecomponent_i);
+		void *nodeInComponent = stList_get(stSet_getList(trueNodesInComponent), 0);
+		
+		stSet *nodesInComponent = stSet_construct();
+		stConnectedComponent *comp_i = stConnectivity_getConnectedComponent(connectivity, nodeInComponent);
+		stConnectedComponentNodeIterator *nodeIt = 
+			stConnectedComponent_getNodeIterator(comp_i);
+		void *node;
+		while((node = stConnectedComponentNodeIterator_getNext(nodeIt))) {
+			stSet_insert(nodesInComponent, node);
+		}
+		stConnectedComponentNodeIterator_destruct(nodeIt);
+
+		CuAssertTrue(testCase, setsEqual(nodesInComponent, trueNodesInComponent));
+	}
+	
 	teardown();
 }
 
@@ -183,6 +239,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
 	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
+	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
     return suite;
 }
 

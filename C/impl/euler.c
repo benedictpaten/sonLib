@@ -128,6 +128,10 @@ void stEulerTour_destruct(struct stEulerTour *et) {
 }
 struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stEulerTour_getVertex(et, v);
+	if(!vertex) {
+		fprintf(stderr, "Warning: vertex does not exist\n");
+		return(NULL);
+	}
 	struct treap *treapNode = stEulerVertex_incidentEdgeA(vertex);
 	if(!treapNode) return(NULL);
 	return(treap_findMin(treap_findRoot(treapNode)));

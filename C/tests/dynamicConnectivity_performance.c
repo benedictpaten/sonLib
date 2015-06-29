@@ -3,7 +3,7 @@
 
 int main() {
 	clock_t start = clock();
-	int nNodes = 200000;
+	int nNodes = 1000000;
 	int nEdges = 100000;
 	stList *nodes = stList_construct();
 
