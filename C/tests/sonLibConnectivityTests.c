@@ -241,7 +241,7 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stList_append(trueComponents, naiveComp);
 	}
 	stNaiveConnectedComponentIterator_destruct(itNaive);
-	printf("experimental components: %d, true components: %d\n", stList_length(components), 
+	//printf("experimental components: %d, true components: %d\n", stList_length(components), 
 			stList_length(trueComponents));
 	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
 	//check the nodes in each component
@@ -271,9 +271,9 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
-	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	//SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
-	//SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
+	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
     return suite;
 }
 
