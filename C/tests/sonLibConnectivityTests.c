@@ -1,5 +1,6 @@
 #include "sonLibGlobalsTest.h"
 #include <inttypes.h>
+#include <time.h>
 
 static stConnectivity *connectivity;
 
@@ -137,6 +138,14 @@ static void test_stConnectivity_removeNodesAndEdges(CuTest *testCase) {
 }
 static void test_stConnectivity_connected(CuTest *testCase) {
 	setup();
+	/*
+     *  1--2
+     *  |  |
+     *  3--4
+     *
+     *  5--6--7
+     */
+
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 3));
 	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 3, (void*) 5));
 	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 4, (void*) 7));
@@ -173,9 +182,11 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
-	int nNodes = 30;
-	int nEdges = 20;
+	srand(time(NULL));
+	int nNodes = 50;
+	int nEdges = 30;
 	int nEdgesToRemove = 5;
+	int nQueries = 200;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
 	connectivity = stConnectivity_construct();
@@ -203,6 +214,16 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stNaiveConnectivity_removeEdge(naive, node1, node2);
 		nEdgesToRemove--;
 	}
+	//check connectivity queries
+	for (int i = 0; i < nQueries; i++) {
+		void *node1 = stList_get(nodes, rand() % nNodes);
+		void *node2 = stList_get(nodes, rand() % nNodes);
+		stNaiveConnectedComponent *comp1 = stNaiveConnectivity_getConnectedComponent(naive, node1);
+		stNaiveConnectedComponent *comp2 = stNaiveConnectivity_getConnectedComponent(naive, node2);
+		bool naiveConnected = comp1 == comp2;
+		CuAssertTrue(testCase, naiveConnected == stConnectivity_connected(connectivity, node1, node2));
+	}
+	
 	
 	//check number of connected components
 	stList *components = stList_construct();
@@ -250,9 +271,9 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
-	//SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
-	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
+	//SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
     return suite;
 }
 
