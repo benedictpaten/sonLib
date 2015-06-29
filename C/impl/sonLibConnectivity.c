@@ -1,6 +1,7 @@
 // Dynamically keeps track of the connected components in an
 // undirected graph.
 #include "sonLibGlobalsInternal.h"
+#include <assert.h>
 
 #define SEEN_TRUE (void*) 1
 #define SEEN_FALSE (void*) 0
@@ -293,7 +294,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			node1, node2);
 	if(!edge) return(false);
 	if(!edge->in_forest) {
-		return;
+		return(true);
 	}
 	struct stDynamicEdge *replacementEdge = NULL;
 	bool componentsDisconnected = true;
@@ -365,6 +366,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	struct stDynamicEdge *removed2 =
 		(struct stDynamicEdge *)stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
 	stDynamicEdge_destruct(removed1);
+	return(true);
 
 }
 struct stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {

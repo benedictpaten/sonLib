@@ -166,7 +166,20 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 	stConnectivity_addEdge(connectivity, (void*) 3, (void*) 4);
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 3, (void*) 4));
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
-	teardown();
+
+	/*teardown();
+	connectivity = stConnectivity_construct();
+	stConnectivity_addNode(connectivity, (void*) 1);
+	stConnectivity_addNode(connectivity, (void*) 2);
+	stConnectivity_addNode(connectivity, (void*) 3);
+	stConnectivity_addNode(connectivity, (void*) 4);
+	stConnectivity_addEdge(connectivity, (void*) 1, (void *) 2);
+	stConnectivity_addEdge(connectivity, (void*) 1, (void*) 3);
+	stConnectivity_addEdge(connectivity, (void*) 1, (void*) 4);
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*)1, (void*)3));
+	stConnectivity_removeEdge(connectivity, (void*) 1, (void*) 3);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*)1, (void*) 3));
+	teardown();*/
 }
 static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	setup();
@@ -186,13 +199,14 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	int nNodes = 50;
 	int nEdges = 30;
 	int nEdgesToRemove = 5;
-	int nQueries = 200;
+	int nQueries = 1000;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
 	connectivity = stConnectivity_construct();
 	//add nodes
 	for (int i = 0; i < nNodes; i++) {
-		void *node = st_malloc(1);
+		int *node = st_malloc(1);
+		*node = i;
 		stNaiveConnectivity_addNode(naive, node);
 		stConnectivity_addNode(connectivity, node);
 		stList_append(nodes, node);
@@ -215,14 +229,15 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		nEdgesToRemove--;
 	}
 	//check connectivity queries
-	for (int i = 0; i < nQueries; i++) {
+	/*for (int i = 0; i < nQueries; i++) {
 		void *node1 = stList_get(nodes, rand() % nNodes);
 		void *node2 = stList_get(nodes, rand() % nNodes);
+		if(node1 == node2) continue;
 		stNaiveConnectedComponent *comp1 = stNaiveConnectivity_getConnectedComponent(naive, node1);
 		stNaiveConnectedComponent *comp2 = stNaiveConnectivity_getConnectedComponent(naive, node2);
 		bool naiveConnected = comp1 == comp2;
 		CuAssertTrue(testCase, naiveConnected == stConnectivity_connected(connectivity, node1, node2));
-	}
+	}*/
 	
 	
 	//check number of connected components
@@ -242,7 +257,7 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	}
 	stNaiveConnectedComponentIterator_destruct(itNaive);
 	//printf("experimental components: %d, true components: %d\n", stList_length(components), 
-			stList_length(trueComponents));
+	//		stList_length(trueComponents));
 	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
 	//check the nodes in each component
 	for (int i = 0; i < stList_length(components); i++) {
@@ -271,7 +286,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
-	//SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
 	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
     return suite;
