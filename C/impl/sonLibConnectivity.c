@@ -277,11 +277,12 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 
 }
 
-void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
+bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	stConnectedComponent *componentWithBothNodes = 
 		stConnectivity_getConnectedComponent(connectivity, node1);
 	struct stDynamicEdge *edge = (struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, 
 			node1, node2);
+	if(!edge) return(false);
 	if(!edge->in_forest) {
 		return;
 	}

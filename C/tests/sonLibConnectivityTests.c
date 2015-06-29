@@ -175,6 +175,7 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	int nNodes = 30;
 	int nEdges = 20;
+	int nEdgesToRemove = 5;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
 	connectivity = stConnectivity_construct();
@@ -193,6 +194,16 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stConnectivity_addEdge(connectivity, node1, node2);
 		stNaiveConnectivity_addEdge(naive, node1, node2);
 	}
+	//remove edges
+	while (nEdgesToRemove > 0) {
+		void *node1 = stList_get(nodes, rand() % nNodes);
+		void *node2 = stList_get(nodes, rand() % nNodes);
+		if(node1 == node2) continue;
+		if(!stConnectivity_removeEdge(connectivity, node1, node2)) continue;
+		stNaiveConnectivity_removeEdge(naive, node1, node2);
+		nEdgesToRemove--;
+	}
+	
 	//check number of connected components
 	stList *components = stList_construct();
 	stConnectedComponentIterator *it = stConnectivity_getConnectedComponentIterator(connectivity);
@@ -209,6 +220,8 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stList_append(trueComponents, naiveComp);
 	}
 	stNaiveConnectedComponentIterator_destruct(itNaive);
+	printf("experimental components: %d, true components: %d\n", stList_length(components), 
+			stList_length(trueComponents));
 	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
 	//check the nodes in each component
 	for (int i = 0; i < stList_length(components); i++) {
@@ -235,9 +248,9 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 CuSuite *sonLib_stConnectivityTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
     //SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
-	SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
+	//SUITE_ADD_TEST(suite, test_stConnectivity_connectedComponents);
     //SUITE_ADD_TEST(suite, test_stConnectivity_removeNodesAndEdges);
-	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
+	//SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	//SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
 	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
     return suite;

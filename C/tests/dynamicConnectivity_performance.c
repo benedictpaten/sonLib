@@ -2,6 +2,7 @@
 #include <time.h>
 
 int main() {
+	srand(time(NULL));
 	clock_t start = clock();
 	int nNodes = 1000000;
 	int nEdges = 100000;
