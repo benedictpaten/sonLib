@@ -19,7 +19,6 @@ struct _stConnectivity {
     int nLevels;
 	stHash *connectedComponents;
 	stEdgeContainer *edges;
-	stHash *incidentEdges;
 
 };
 
@@ -101,7 +100,6 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
 	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))stDynamicEdge_destruct);
-	connectivity->incidentEdges = stHash_construct();
 
     return(connectivity);
 
@@ -112,7 +110,6 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stList_destruct(connectivity->et);
 	stSet_destruct(connectivity->nodes);
 	stHash_destruct(connectivity->connectedComponents);
-	stHash_destruct(connectivity->incidentEdges);
 
     stHash_destruct(connectivity->seen);
 	free(connectivity);
@@ -157,7 +154,6 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	
 	stHash_insert(connectivity->connectedComponents, node, 
 			stConnectedComponent_construct(connectivity, node));
-	stHash_insert(connectivity->incidentEdges, node, stList_construct());
 	//stEdgeContainer_addNode(connectivity->edges, node);
 
     for(int i = 0; i < connectivity->nLevels; i++) {
@@ -180,11 +176,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
 	stEdgeContainer_addEdge(connectivity->edges, node2, node1, newEdge);
 
-	stList *node1_incident = stHash_search(connectivity->incidentEdges, node1);
-	stList *node2_incident = stHash_search(connectivity->incidentEdges, node2);
-	stList_append(node1_incident, newEdge);
-	stList_append(node2_incident, newEdge);
-			
+				
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
 		//remove the connected component for node 2 from the list of connected components. The
@@ -224,16 +216,16 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		return(NULL);
 	}
 	stHash_insert(connectivity->seen, w, SEEN_TRUE);
-	stList *w_incident = stHash_search(connectivity->incidentEdges, w);
+	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, w);
 	int w_incident_length = stList_length(w_incident);
 
 	int k, j = 0;
 
 	struct stEulerTour *et_level = stList_get(connectivity->et, level);
 	for(k = 0; k < w_incident_length; k++) {
-		struct stDynamicEdge *e_wk = stList_get(w_incident, k);
-		//struct stDynamicEdge *e_wk = (struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, 
-				//w, e_wk_node2);
+		void *e_wk_node2 = stList_get(w_incident, k);
+		struct stDynamicEdge *e_wk = (struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, 
+				w, e_wk_node2);
 		if (e_wk == removedEdge || e_wk->in_forest || !e_wk->enabled) {
 			//remove
 			if(w == e_wk->from) {
@@ -255,9 +247,9 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 					e_wk->incident_to = false;
 				}
 				for(k = k+1; k < w_incident_length; k++) {
-					struct stDynamicEdge *e_toRemove = stList_get(w_incident, k);
-					//struct stDynamicEdge *e_toRemove = 
-					//	(struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, w, e_toRemove_node2);
+					struct stDynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
+					struct stDynamicEdge *e_toRemove = 
+						(struct stDynamicEdge *)stEdgeContainer_getEdge(connectivity->edges, w, e_toRemove_node2);
 					if(e_toRemove == removedEdge || e_toRemove->in_forest || 
 							!e_toRemove->enabled) {
 						if (w == e_toRemove->from) {
@@ -268,7 +260,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 						}
 						continue;
 					}
-					stList_set(w_incident, j++, e_toRemove);
+					stList_set(w_incident, j++, e_toRemove_node2);
 
 				}
 				resizeIncidentEdgeList(w_incident, j);
@@ -278,11 +270,11 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 				e_wk->level--;
 			}
 		}
-		stList_set(w_incident, j++, e_wk);
+		stList_set(w_incident, j++, e_wk_node2);
 
 	}
 	resizeIncidentEdgeList(w_incident, j);
-	//stList_destruct(w_incident);
+	stList_destruct(w_incident);
 	return(NULL);
 
 }

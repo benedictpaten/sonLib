@@ -121,6 +121,14 @@ struct stEulerTour *stEulerTour_construct() {
 	et->nComponents = 0;
 	return(et);
 }
+void stEulerTour_printTour(struct stEulerTour *et, void *v) {
+	stEulerTour_startTour(et, v);
+	while(v) {
+		printf("%d ", v);
+		v = stEulerTour_stepTour(et);
+	}
+}
+
 void stEulerTour_destruct(struct stEulerTour *et) {
 	stHash_destruct(et->vertices);
 	stEdgeContainer_destruct(et->edges);
