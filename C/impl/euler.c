@@ -147,13 +147,14 @@ void stEulerTour_destruct(struct stEulerTour *et) {
 		free(et);
 	}
 }
+/*
 struct stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, void *v) {
 	struct stEulerHalfEdge *edge = stEdgeContainer_getEdge(edges, u, v);
 	if(!edge) {
 		edge = stEdgeContainer_getEdge(edges, v, u);
 	}
 	return(edge);
-}
+}*/
 struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stEulerTour_getVertex(et, v);
 	if(!vertex) {
@@ -329,7 +330,7 @@ void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	newBackwardEdge->to = vertex;
 
 	stEdgeContainer_addEdge(et->forwardEdges, u, v, newForwardEdge);
-	stEdgeContainer_addEdge(et->backwardEdges, u, v, newBackwardEdge);
+	stEdgeContainer_addEdge(et->backwardEdges, v, u, newBackwardEdge);
 	
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
@@ -422,10 +423,13 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 
 	//get the two halves of this edge
 	assert(stEulerTour_connected(et, u, v));
-	struct stEulerHalfEdge *f = stEulerTour_getEdge(et->forwardEdges, u, v);
-	struct stEulerHalfEdge *b = stEulerTour_getEdge(et->backwardEdges, u, v);
+	struct stEulerHalfEdge *f = stEdgeContainer_getEdge(et->forwardEdges, u, v);
+	if(!f) f = stEdgeContainer_getEdge(et->forwardEdges, v, u);
+	struct stEulerHalfEdge *b = stEdgeContainer_getEdge(et->backwardEdges, u, v);
+	if(!b) b = stEdgeContainer_getEdge(et->backwardEdges, v, u);
 	assert(f);
 	assert(b);
+	assert(b->inverse->inverse == b);
 	struct stEulerVertex *from = f->from;
 	struct stEulerVertex *to = f->to;
 	
@@ -607,7 +611,9 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 	assert(treap_size(f->node) == 1);
 	assert(treap_size(b->node) == 1);
 	stEdgeContainer_deleteEdge(et->forwardEdges, u, v);
+	stEdgeContainer_deleteEdge(et->forwardEdges, v, u);
 	stEdgeContainer_deleteEdge(et->backwardEdges, u, v);
+	stEdgeContainer_deleteEdge(et->backwardEdges, v, u);
 }
 //------------------------------------------------------------------
 // Tour iterators

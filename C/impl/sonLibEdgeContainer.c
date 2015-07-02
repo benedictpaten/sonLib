@@ -110,12 +110,35 @@ stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v)
 	stIncidentEdgeList *incident = stHash_search(container->edges, v);
 	stList *incidentList = stList_construct();
 	while(incident) {
-		if(incident->edge) {
+		//if(incident->edge) {
 			stList_append(incidentList, incident->toNode);
-		}
+		//}
 		incident = incident->next;
 	}
 	return incidentList;
 }
+void stEdgeContainer_setIncidentEdgeList(stEdgeContainer *container, void *u, stList *incidentEdges) {
+	stHash_remove(container->edges, u);
+	if(stList_length(incidentEdges) == 0) return;
 
+	stIncidentEdgeList *u_incident_new = NULL;
+	stListIterator *it = stList_getIterator(incidentEdges);
+	void *v;
+	while((v = stList_getNext(it))) {
+		stIncidentEdgeList *vlist = stIncidentEdgeList_construct(NULL, NULL);
+		vlist->toNode = v;
+		vlist->prev = NULL;
+		vlist->next = NULL;
+		if(u_incident_new) {
+			u_incident_new->next = vlist;
+			vlist->prev = u_incident_new;
+		}
+		u_incident_new = vlist;
+	}
+	stList_destructIterator(it);
+	while(u_incident_new->prev) {
+		u_incident_new = u_incident_new->prev;
+	}
+	stHash_insert(container->edges, u, u_incident_new);
+}
 

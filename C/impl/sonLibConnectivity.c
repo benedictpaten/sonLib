@@ -174,10 +174,11 @@ struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void 
 	return(edge);
 }
 
-void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
+bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
     // Add an edge to the graph and update the connected components.
     // NB: The ordering of node1 and node2 shouldn't matter as this is an undirected graph.
-	if(node1 == node2) return;
+	if(node1 == node2) return(false);
+	if(stEdgeContainer_getEdge(connectivity->edges, node1, node2)) return(false);
 	connectivity->nEdges++;
 	struct stDynamicEdge *newEdge = stDynamicEdge_construct();
 	newEdge->from = node1;
@@ -187,7 +188,6 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
-		printf("adding to forest\n");
 		//remove the connected component for node 2 from the list of connected components. The
 		//component that now contains node1 and node2 will have a pointer to a node in node1's
 		//original component before the merge
@@ -198,7 +198,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
-		return;
+		return(true);
 	}
 	else {
 		newEdge->in_forest = false;
@@ -214,6 +214,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 		}
 	}
+	return(true);
 
 }
 
@@ -294,7 +295,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		stList_set(w_incident, j++, e_wk_node2);
 
 	}
-	resizeIncidentEdgeList(w_incident, j);
+	//resizeIncidentEdgeList(w_incident, j);
 	stList_destruct(w_incident);
 	return(NULL);
 
@@ -307,6 +308,11 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			node1, node2);
 	if(!edge) return(false);
 	if(!edge->in_forest) {
+		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
+		stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
+		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
+		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
+
 		return(true);
 	}
 	assert(edge->level > 0);
@@ -341,8 +347,11 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 					tourEdge->from->vertexID, tourEdge->to->vertexID);
 			if(treeEdge->level == i) {
 				treeEdge->level--;
+				assert(treeEdge->level >= 0);
 				struct stEulerTour *et_te = stList_get(connectivity->et, treeEdge->level);
+				assert(!stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
 				stEulerTour_link(et_te, treeEdge->from, treeEdge->to);
+				assert(stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
 			}
 			for (int n = 0; !replacementEdge && n < 2; n++) {
 				void *w = n ? treeEdge->to : treeEdge->from;
@@ -367,6 +376,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			for(int h = replacementEdge->level + 1; h < connectivity->nLevels; h++) {
 				struct stEulerTour *et_h = stList_get(connectivity->et, h);
 				stEulerTour_cut(et_h, node1, node2);
+				assert(!stEulerTour_connected(et_h, node1, node2));
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
 			}
 		}
@@ -385,6 +395,8 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	edge->level = connectivity->nLevels;
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
+	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
+	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
 	return(true);
 
 }

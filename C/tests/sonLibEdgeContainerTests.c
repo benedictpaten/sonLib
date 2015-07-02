@@ -44,11 +44,34 @@ static void test_stEdgeContainer_deleteEdge(CuTest *testCase) {
 	char *b = (char*)stEdgeContainer_getEdge(container, (void*)1, (void*)3);
 	CuAssertStrEquals(testCase, b, "b");
 	teardown();
+	setup();
+	stEdgeContainer_deleteEdge(container, (void*)1, (void*)3);
+	CuAssertTrue(testCase, !stEdgeContainer_getEdge(container, (void*)1, (void*)3));
+	char *a = (char*)stEdgeContainer_getEdge(container, (void*)1, (void*)2);
+	CuAssertStrEquals(testCase, a, "a");
+	teardown();
+}
+static void test_stEdgeContainer_edgeList(CuTest *testCase) {
+	setup();
+	stList *list = stEdgeContainer_getIncidentEdgeList(container, (void*)1);
+	stEdgeContainer_setIncidentEdgeList(container, (void*)1, list);
+	
+	stList *list2 = stEdgeContainer_getIncidentEdgeList(container, (void*)1);
+	for(int i = 0; i < stList_length(list); i++) {
+		CuAssertTrue(testCase, stList_get(list, i) == stList_get(list2, i));
+	}
+	stList *list3 = stEdgeContainer_getIncidentEdgeList(container, (void*)3);
+	stEdgeContainer_setIncidentEdgeList(container, (void*)3, list3);
+	stList *list4 = stEdgeContainer_getIncidentEdgeList(container, (void*)3);
+	CuAssertTrue(testCase, stList_get(list3, 0) == stList_get(list4, 0));
+
+	teardown();
 }
 
 CuSuite *sonLib_stEdgeContainerTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_getEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_deleteEdge);
+	SUITE_ADD_TEST(suite, test_stEdgeContainer_edgeList);
     return suite;
 }
