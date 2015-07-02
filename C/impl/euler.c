@@ -147,6 +147,13 @@ void stEulerTour_destruct(struct stEulerTour *et) {
 		free(et);
 	}
 }
+struct stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, void *v) {
+	struct stEulerHalfEdge *edge = stEdgeContainer_getEdge(edges, u, v);
+	if(!edge) {
+		edge = stEdgeContainer_getEdge(edges, v, u);
+	}
+	return(edge);
+}
 struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stEulerTour_getVertex(et, v);
 	if(!vertex) {
@@ -290,7 +297,7 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 	}
 
 	//f is now guaranteed to be before b in the tour
-	assert(treap_compare(f->node, b->node) < 0);
+	//assert(treap_compare(f->node, b->node) < 0);
 	struct treap *rightSubtree = treap_splitAfter(f->node);
 
 	if(rightSubtree) {
@@ -415,8 +422,8 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 
 	//get the two halves of this edge
 	assert(stEulerTour_connected(et, u, v));
-	struct stEulerHalfEdge *f = stEdgeContainer_getEdge(et->forwardEdges, u, v);
-	struct stEulerHalfEdge *b = stEdgeContainer_getEdge(et->backwardEdges, u, v);
+	struct stEulerHalfEdge *f = stEulerTour_getEdge(et->forwardEdges, u, v);
+	struct stEulerHalfEdge *b = stEulerTour_getEdge(et->backwardEdges, u, v);
 	assert(f);
 	assert(b);
 	struct stEulerVertex *from = f->from;

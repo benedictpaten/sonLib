@@ -56,7 +56,7 @@ struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v);
 void *stEulerTour_findRootNode(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
 		struct stEulerHalfEdge *edge);
-struct stEulerHalfEdge *stEulerTour_getEdge(struct stEulerTour *et, void *u, void *v);
+struct stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, void *v);
 void stEulerTour_deleteEdge(struct stEulerTour *et, void *u, void *v);
 struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v);

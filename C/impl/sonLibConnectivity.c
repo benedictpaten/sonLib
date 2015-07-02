@@ -187,6 +187,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 	struct stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
+		printf("adding to forest\n");
 		//remove the connected component for node 2 from the list of connected components. The
 		//component that now contains node1 and node2 will have a pointer to a node in node1's
 		//original component before the merge
@@ -308,10 +309,19 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	if(!edge->in_forest) {
 		return(true);
 	}
+	assert(edge->level > 0);
+	for (int i = 0; i < edge->level; i++) {
+		struct stEulerTour *et_i = stList_get(connectivity->et, i);
+		assert(!stEulerTour_connected(et_i, node1, node2));
+	}
+	struct stEulerTour *et_top = stConnectivity_getTopLevel(connectivity);
+	assert(stEulerTour_connected(et_top, node1, node2));
+
 	struct stDynamicEdge *replacementEdge = NULL;
 	bool componentsDisconnected = true;
 	for (int i = edge->level; !replacementEdge && i < connectivity->nLevels; i++) {
 		struct stEulerTour *et_i = stList_get(connectivity->et, i);
+		assert(stEulerTour_connected(et_i, node1, node2));
 		stEulerTour_cut(et_i, node1, node2);
 
 		//set node1 equal to id of the vertex in the smaller of the two components that have just

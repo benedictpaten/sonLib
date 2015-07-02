@@ -214,10 +214,10 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
-	//srand(time(NULL));
-	int nNodes = 15;
-	int nEdges = 8;
-	int nEdgesToRemove = 5;
+	srand(time(NULL));
+	int nNodes = 100;
+	int nEdges = 50;
+	int nEdgesToRemove = 35;
 	int nQueries = 1000;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
@@ -226,28 +226,28 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	for (int i = 1; i <= nNodes; i++) {
 		int *node = malloc(1); //st_malloc(sizeof(int));
 		*node = i;
-		//printf("adding %d\n", *node);
+		printf("adding %d\n", *node);
 		stNaiveConnectivity_addNode(naive, node);
 		stConnectivity_addNode(connectivity, node);
 		stList_append(nodes, node);
 	}
 	//add edges
 	for (int i = 0; i < nEdges; i++) {
-		void *node1 = stList_get(nodes, rand() % nNodes);
-		void *node2 = stList_get(nodes, rand() % nNodes);
-		//printf("connecting %p and %p\n", node1, node2);
+		int *node1 = stList_get(nodes, rand() % nNodes);
+		int *node2 = stList_get(nodes, rand() % nNodes);
+		printf("connecting %d and %d\n", *node1, *node2);
 		if (node1 == node2) continue;
 		stConnectivity_addEdge(connectivity, node1, node2);
 		stNaiveConnectivity_addEdge(naive, node1, node2);
 	}
 	//remove edges
 	while (nEdgesToRemove > 0) {
-		void *node1 = stList_get(nodes, rand() % nNodes);
-		void *node2 = stList_get(nodes, rand() % nNodes);
+		int *node1 = stList_get(nodes, rand() % nNodes);
+		int *node2 = stList_get(nodes, rand() % nNodes);
 		if(node1 == node2) continue;
 		if(!stConnectivity_removeEdge(connectivity, node1, node2)) continue;
 		stNaiveConnectivity_removeEdge(naive, node1, node2);
-		//printf("removing %p and %p\n", node1, node2);
+		printf("removing %d and %d\n", *node1, *node2);
 		nEdgesToRemove--;
 	}
 	//check connectivity queries
