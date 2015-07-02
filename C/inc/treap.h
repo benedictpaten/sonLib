@@ -27,6 +27,7 @@ void treap_rotateLeft(struct treap *u);
 void treap_rotateRight(struct treap *u);
 struct treap *treap_findRoot(struct treap *node);
 char *treap_print(struct treap *node);
+char *treap_printBackwards(struct treap *node);
 int treap_size(struct treap *node);
 struct treap *treap_binarySearch(long key, struct treap *root);
 int treap_contains(struct treap *tree, struct treap *node);

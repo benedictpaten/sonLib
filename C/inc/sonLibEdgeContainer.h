@@ -8,7 +8,7 @@ void stIncidentEdgeList_destruct(stIncidentEdgeList *list);
 void stEdgeContainer_addNode(stEdgeContainer *container, void *n);
 void *stEdgeContainer_getEdge(stEdgeContainer *container, void *u, void *v);
 void stEdgeContainer_addEdge(stEdgeContainer *container, void *node1, void *node2, void *edge);
-void *stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v);
+void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v);
 stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v);
 
 

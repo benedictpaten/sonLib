@@ -33,12 +33,22 @@ void treap_nodeDestruct(struct treap *node) {
 	free(node);
 }
 char *treap_print(struct treap *node) {
-	//node = treap_findMin(node);
-	//struct treap *root = treap_findRoot(node);
-	char *path = st_calloc(node->count + 1, 1);
+	node = treap_findRoot(node);
+	node = treap_findMin(node);
+	char *path = st_calloc(treap_size(node) + 1, 1);
 	while(node) {
 		strcat(path, node->value);
 		node = treap_next(node);
+	}
+	return(path);
+}
+char *treap_printBackwards(struct treap *node) {
+	node = treap_findRoot(node);
+	node = treap_findMax(node);
+	char *path = st_calloc(treap_size(node) + 1, 1);
+	while(node) {
+		strcat(path, node->value);
+		node = treap_prev(node);
 	}
 	return(path);
 }
@@ -333,11 +343,10 @@ struct treap *treap_findMin(struct treap *node) {
 	return(node);
 }
 struct treap *treap_findMax(struct treap *node) {
-	struct treap *root = treap_findRoot(node);
-	while(root->right) {
-		root = root->right;
+	while(node->right) {
+		node = node->right;
 	}
-	return(root);
+	return(node);
 }
 /*splits the treap containing a node into two treaps, one whose
  * keys are all less than that of the node, and one whose keys are all
@@ -406,6 +415,7 @@ struct treap *treap_next(struct treap *node) {
 	return(p);
 }
 struct treap *treap_prev(struct treap *node) {
+	assert(node);
 	if(node->left) {
 		return(treap_findMax(node->left));
 	}
@@ -440,7 +450,7 @@ struct treap *treap_concat(struct treap *a, struct treap *b) {
 	//	sb = sb->left;
 	//}
 	struct treap *r = treap_concatRecurse(ra, rb);
-	assert(r->parent = NULL);
+	r->parent = NULL;
 	return(r);
 }
 

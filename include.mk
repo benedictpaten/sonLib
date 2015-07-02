@@ -42,7 +42,7 @@ cflags_prof = -Wall -Werror --pedantic -pg -O3 -g
 cppflags = ${cppflags_opt} 
 
 #Flags to use
-cflags = ${cflags_opt} 
+cflags = ${cflags_dbg} 
 
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib

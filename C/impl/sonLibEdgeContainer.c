@@ -36,19 +36,17 @@ stIncidentEdgeList *stIncidentEdgeList_construct(void *edge, void(*destructEdge)
 	return list;
 }
 void stIncidentEdgeList_destruct(stIncidentEdgeList *list) {
-	while(list && list->next) {
-		list = list->next;
-		if(list->prev->edge && list->destructEdge) {
-			list->destructEdge(list->prev->edge);
+	while(list != NULL) {
+		stIncidentEdgeList *next = list->next;
+		if(list->destructEdge) {
+			list->destructEdge(list->edge);
 		}
-
-		free(list->prev);
-	}
-	if(list && list->edge && list->destructEdge) {
-		list->destructEdge(list->edge);
 		free(list);
+		list = next;
 	}
+
 }
+
 void stEdgeContainer_addNode(stEdgeContainer *container, void *n) {
 	stHash_insert(container->edges, n, stIncidentEdgeList_construct(NULL, container->destructEdge));
 }
@@ -81,14 +79,20 @@ void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void 
 }
 
 //delete an edge from the list and return it, so it can be destructed
-void *stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
+void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, u);
 
-	while(incident && incident->toNode != v) {
+	while(incident != NULL) {
+		if(incident->toNode == v) {
+			break;
+		}
 		incident = incident->next;
 	}
 
-	if(!incident) return(NULL); //edge isn't in the list
+	if(!incident) return; //edge isn't in the list
+	if(incident->next != NULL) {
+		incident->next->prev = incident->prev;
+	}
 	if(incident->prev != NULL) {
 		incident->prev->next = incident->next;
 	}
@@ -96,12 +100,11 @@ void *stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 		stHash_remove(container->edges, u);
 		stHash_insert(container->edges, u, incident->next);
 	}
-	if(incident->next != NULL) {
-		incident->next->prev = incident->prev;
+
+	if(incident->destructEdge) {
+		incident->destructEdge(incident->edge);
 	}
-	void *removedEdge = incident->edge;
 	free(incident);
-	return(removedEdge);
 }
 stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, v);

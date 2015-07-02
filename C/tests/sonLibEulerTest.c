@@ -5,11 +5,11 @@ struct stEulerTour *et;
 static void setup(void) {
 	et = stEulerTour_construct();
 
-	stEulerTour_createVertex(et, (void*)"a");
-	stEulerTour_createVertex(et, (void*)"b");
-	stEulerTour_createVertex(et, (void*)"c");
-	stEulerTour_createVertex(et, (void*)"d");
-	stEulerTour_createVertex(et, (void*)"e");
+	stEulerTour_createVertex(et, (void*)1);
+	stEulerTour_createVertex(et, (void*)2);
+	stEulerTour_createVertex(et, (void*)3);
+	stEulerTour_createVertex(et, (void*)4);
+	stEulerTour_createVertex(et, (void*)5);
 
 }
 static void teardown(void) {
@@ -18,12 +18,15 @@ static void teardown(void) {
 
 static void test_stEulerTour_link(CuTest *testCase) {
 	setup();
+	struct stEulerVertex *a = stEulerTour_getVertex(et, (void*)1);
+	struct stEulerVertex *b = stEulerTour_getVertex(et, (void*)2);
 
-	stEulerTour_link(et, (void*)"a", (void*)"b");
-	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)"a", (void*)"b"));
-	/*	
-	CuAssertTrue(testCase, !stEulerVertex_connected(b, c));
-	CuAssertTrue(testCase, !stEulerVertex_connected(a, c));
+
+	stEulerTour_link(et, (void*)1, (void*)2);
+	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)1, (void*)2));
+
+	CuAssertTrue(testCase, !stEulerTour_connected(et, (void*)2, (void*)3));
+	CuAssertTrue(testCase, !stEulerTour_connected(et, (void*)1, (void*)3));
 
 	CuAssertTrue(testCase, a->leftOut->to == b);
 	CuAssertTrue(testCase, a->leftOut->from == a);
@@ -34,10 +37,9 @@ static void test_stEulerTour_link(CuTest *testCase) {
 
 	CuAssertTrue(testCase, treap_next(a->leftOut->node) == b->rightIn->node);
 
-	CuAssertTrue(testCase, stEulerVertex_findRoot(a) == a);
-	CuAssertTrue(testCase, stEulerVertex_findRoot(b) == a);
+	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)1) == (void*)1);
+	CuAssertTrue(testCase, (char*)stEulerTour_findRootNode(et, (void*)2) == (void*)1);
 
-	*/
 	
 	/*
 	 *  d--a--b
@@ -45,37 +47,71 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	 *       c
 	 */
 
-	stEulerTour_link(et, (void*)"a", (void*)"c");
-	stEulerTour_link(et, (void*)"e", (void*)"d");
+	stEulerTour_link(et, (void*)1, (void*)3);
+	stEulerTour_link(et, (void*)2, (void*)4);
 	//CuAssertStrEquals(testCase, stEulerVertex_getTour(a), "dacaba");
-	//CuAssertTrue(testCase, stEulerTour_connected(et, (void*)"d", (void*)"b"));
+	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)4, (void*)2));
 
+	teardown();
+}
+static bool setsEqual(stSet *set1, stSet *set2) {
+    stSet *diff = stSet_getDifference(set1, set2);
+    size_t size = stSet_size(diff);
+    stSet_destruct(diff);
+    return size == 0;
+}
+
+static void test_stEulerTour_multipleIncidentEdges(CuTest *testCase) {
+	setup();
+	stSet *trueNodes = stSet_construct();
+	stEulerTour_link(et, (void*)1, (void*)2);
+	stEulerTour_link(et, (void*)1, (void*)3);
+	stEulerTour_link(et, (void*)1, (void*)4);
+	stSet_insert(trueNodes, (void*)1);
+	stSet_insert(trueNodes, (void*)2);
+	stSet_insert(trueNodes, (void*)3);
+	stSet_insert(trueNodes, (void*)4);
+	//stEulerTour_printTour(et, (void*)1);
+
+	stEulerTour_cut(et, (void*)1, (void*)2);
+	stSet_remove(trueNodes, (void*)2);
+	//stEulerTour_printTour(et, (void*)1);
+
+	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)1, (void*)3));
+	stSet *nodes = stEulerTour_getNodesInComponent(et, (void*)1);
+	CuAssertTrue(testCase, setsEqual(nodes, trueNodes));
+	stEulerTour_cut(et, (void*)1, (void*)4);
+	//stEulerTour_printTour(et, (void*)1);
+	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)1, (void*)3));
 	teardown();
 }
 static void test_stEulerTour_cut(CuTest *testCase) {
 	setup();
-	stEulerTour_link(et, (void*)"a", (void*)"b");
-	stEulerTour_link(et, (void*)"a", (void*)"c");
-	stEulerTour_link(et, (void*)"a", (void*)"d");
-	stEulerTour_link(et, (void*)"b", (void*)"e");
-	stEulerTour_cut(et, (void*)"a", (void*)"b");
+	stEulerTour_link(et, (void*)1, (void*)2);
+	stEulerTour_link(et, (void*)1, (void*)3);
+	stEulerTour_link(et, (void*)1, (void*)4);
+	stEulerTour_link(et, (void*)2, (void*)5);
+	stEulerTour_cut(et, (void*)1, (void*)2);
 	CuAssertTrue(testCase, et->nComponents == 2);
-	CuAssertTrue(testCase, !stEulerTour_connected(et, (void*)"a", (void*)"b"));
-	stEulerTour_link(et, (void*)"a", (void*)"b");
-	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)"a", (void*)"b"));
+	CuAssertTrue(testCase, !stEulerTour_connected(et, (void*)1, (void*)2));
+	stEulerTour_link(et, (void*)1, (void*)2);
+	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)1, (void*)2));
 	teardown();
 }
 static void test_stEulerTour_next(CuTest *testCase) {
 	setup();
-	stEulerTour_link(et, (void*)"a", (void*)"b");
-	stEulerTour_link(et, (void*)"a", (void*)"c");
-	stEulerTour_link(et, (void*)"a", (void*)"d");
-	//stEulerTour_link(et, (void*)"b", (void*)"e");
-	stEulerTour_startTour(et, (void*) "c");
+	/*
+	stEulerTour_link(et, (void*)1, (void*)2);
+	stEulerTour_link(et, (void*)1, (void*)3);
+	stEulerTour_link(et, (void*)1, (void*)4);
+	//stEulerTour_link(et, (void*)2, (void*)5);
+	struct stEulerTourIterator *it = stEulerTour_getIterator(et, (void*) 3);
 	void *node;
-	while((node = stEulerTour_stepTour(et))) {
-		printf("%s\n", node);
+	while((node = stEulerTourIterator_getNext(it))) {
+		printf("%p \n", node);
 	}
+	stEulerTourIterator_destruct(it);
+	*/
 	teardown();
 }
 
@@ -84,6 +120,7 @@ CuSuite *sonLib_stEulerTestSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stEulerTour_link);
 	SUITE_ADD_TEST(suite, test_stEulerTour_cut);
-	//SUITE_ADD_TEST(suite, test_stEulerTour_next);
+	SUITE_ADD_TEST(suite, test_stEulerTour_next);
+	SUITE_ADD_TEST(suite, test_stEulerTour_multipleIncidentEdges);
 	return suite;
 }

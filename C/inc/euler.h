@@ -27,10 +27,14 @@ struct stEulerHalfEdge {
 
 struct stEulerTour {
 	stHash *vertices;
-	struct treap *currentEdgeNode;
-	stEdgeContainer *edges;
+	stEdgeContainer *forwardEdges;
+	stEdgeContainer *backwardEdges;
 	 
 	int nComponents;
+};
+struct stEulerTourIterator {
+	void *currentVertex;
+	struct treap *currentEdgeNode;
 };
 
 struct stEulerVertex *stEulerVertex_construct(void *vertexID);
@@ -39,14 +43,17 @@ struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex);
 struct treap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex);
 int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to);
 int stEulerVertex_isSingleton(struct stEulerVertex *vertex);
+//-------------------------------------------------------
 struct stEulerHalfEdge *stEulerHalfEdge_construct(void);
 void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge);
 int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex *vertex);
+//--------------------------------------------------
 struct stEulerTour *stEulerTour_construct();
 void stEulerTour_printTour(struct stEulerTour *et, void *v);
 int stEulerTour_connected(struct stEulerTour *et, void *u, void *v);
 int stEulerTour_size(struct stEulerTour *et, void *v);
 struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v);
+void *stEulerTour_findRootNode(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
 		struct stEulerHalfEdge *edge);
 struct stEulerHalfEdge *stEulerTour_getEdge(struct stEulerTour *et, void *u, void *v);
@@ -55,11 +62,14 @@ struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void 
 struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v);
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getNextEdge(struct stEulerTour *et, struct stEulerHalfEdge *edge);
-void stEulerTour_startTour(struct stEulerTour *et, void *v);
-void *stEulerTour_stepTour(struct stEulerTour *et);
 struct stEulerVertex *stEulerTour_createVertex(struct stEulerTour *et, void *vertexID);
 void stEulerTour_destruct(struct stEulerTour *et);
 void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex);
 void stEulerTour_link(struct stEulerTour *et, void *u, void *v);
 void stEulerTour_cut(struct stEulerTour *et, void *u, void *v);
+//-----------------------------------------------------------
+struct stEulerTourIterator *stEulerTour_getIterator(struct stEulerTour *et, void *v);
+void *stEulerTourIterator_getNext(struct stEulerTourIterator *it);
+void stEulerTourIterator_destruct(struct stEulerTourIterator *it);
+stSet *stEulerTour_getNodesInComponent(struct stEulerTour *et, void *v);
 #endif
