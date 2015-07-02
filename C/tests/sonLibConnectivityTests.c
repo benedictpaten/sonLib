@@ -214,11 +214,11 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
-	srand(time(NULL));
+	//srand(time(NULL));
 	int nNodes = 100;
-	int nEdges = 50;
-	int nEdgesToRemove = 35;
-	int nQueries = 1000;
+	int nEdges = 90;
+	int nEdgesToRemove = 80;
+	int nQueries = 10000;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
 	connectivity = stConnectivity_construct();
