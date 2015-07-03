@@ -20,7 +20,7 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
-		struct stDynamicEdge *removedEdge, int level);
+		struct stDynamicEdge *removedEdge, int level, stSet *seen);
 
 bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 

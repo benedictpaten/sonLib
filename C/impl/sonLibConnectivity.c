@@ -3,8 +3,7 @@
 #include "sonLibGlobalsInternal.h"
 #include <assert.h>
 
-#define SEEN_TRUE (void*) 1
-#define SEEN_FALSE (void*) 0
+#define SEEN (void*) 1
 
 //Public data structures
 
@@ -12,7 +11,6 @@ struct _stConnectivity {
     // Data structure keeping track of the nodes, edges, and connected
     // components.
     stSet *nodes;
-    stHash *seen;
     int nNodes;
 	int nEdges;
     stList *et; //list of the Euler Tour Trees for each level in the graph
@@ -76,7 +74,6 @@ void stDynamicEdge_destruct(struct stDynamicEdge *edge) {
 stConnectivity *stConnectivity_construct(void) {
     // Initialize the data structure with an empty graph with 0 nodes.
     stConnectivity *connectivity = st_malloc(sizeof(stConnectivity));
-    connectivity->seen = stHash_construct();
 	connectivity->nodes = stSet_construct();
 
     connectivity->et = stList_construct3(0, (void(*)(void*))stEulerTour_destruct);
@@ -104,7 +101,6 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stEdgeContainer_destruct(connectivity->edges);
 	stEdgeContainer_destruct(connectivity->incidentEdges);
 
-    stHash_destruct(connectivity->seen);
 	free(connectivity);
 }
 
@@ -148,7 +144,6 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 
 
 	stSet_insert(connectivity->nodes, node);
-	stHash_insert(connectivity->seen, node, SEEN_FALSE);
 	
 	stHash_insert(connectivity->connectedComponents, node, 
 			stConnectedComponent_construct(connectivity, node));
@@ -219,11 +214,11 @@ void print_list(stList *list) {
 	printf("\n");
 }
 struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
-		struct stDynamicEdge *removedEdge, int level) {
-	if(stHash_search(connectivity->seen, w) == SEEN_TRUE) {
+		struct stDynamicEdge *removedEdge, int level, stSet *seen) {
+	if(stSet_search(seen, w)) {
 		return(NULL);
 	}
-	stHash_insert(connectivity->seen, w, SEEN_TRUE);
+	stSet_insert(seen, w);
 	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, w);
 	int w_incident_length = stList_length(w_incident);
 
@@ -293,6 +288,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	struct stDynamicEdge *replacementEdge = NULL;
 	bool componentsDisconnected = true;
 	for (int i = edge->level; !replacementEdge && i < connectivity->nLevels; i++) {
+		stSet *seen = stSet_construct();
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		assert(stEulerTour_connected(et_i, node1, node2));
 		stEulerTour_cut(et_i, node1, node2);
@@ -305,7 +301,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			node2 = temp;
 		}
 		edge->in_forest = false;
-		replacementEdge = visit(connectivity, node2, node1, edge, i);
+		replacementEdge = visit(connectivity, node2, node1, edge, i, seen);
 
 		//go through each edge in the tour on level i
 		stEulerTourEdgeIterator *edgeIt = stEulerTour_getEdgeIterator(et_i, node2);
@@ -323,18 +319,11 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			}
 			for (int n = 0; !replacementEdge && n < 2; n++) {
 				void *w = n ? treeEdge->to : treeEdge->from;
-				replacementEdge = visit(connectivity, w, node1, edge, i);
+				replacementEdge = visit(connectivity, w, node1, edge, i, seen);
 			}
 		}
 		stEulerTourEdgeIterator_destruct(edgeIt);
-		stHash_insert(connectivity->seen, node2, SEEN_FALSE);
 		
-		stEulerTourIterator *it = stEulerTour_getIterator(et_i, node2);
-		void *tourNode;
-		while((tourNode = stEulerTourIterator_getNext(it))) {
-			stHash_insert(connectivity->seen, tourNode, SEEN_FALSE);
-		}
-		stEulerTourIterator_destruct(it);
 		if(replacementEdge) {
 			componentsDisconnected = false;
 			assert(replacementEdge->level == i);
@@ -347,6 +336,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
 			}
 		}
+		stSet_destruct(seen);
 	}
 	if(componentsDisconnected) {
 		//remove the old component containing both node1 and node2 from the component hash. This
@@ -426,7 +416,7 @@ void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator 
 	if(stHash_search(it->seen, currentNode)) {
 		return(stConnectedComponentNodeIterator_getNext(it));
 	}
-	stHash_insert(it->seen, currentNode, SEEN_TRUE);
+	stHash_insert(it->seen, currentNode, SEEN);
 	return(currentNode);
 
 }
