@@ -3,7 +3,6 @@
 #include "sonLibGlobalsInternal.h"
 #include <assert.h>
 
-#define SEEN (void*) 1
 
 //Public data structures
 
@@ -17,7 +16,8 @@ struct _stConnectivity {
     int nLevels;
 	stHash *connectedComponents;
 	stEdgeContainer *edges;
-	stEdgeContainer *incidentEdges;
+	stEdgeContainer *nonTreeIncidentEdges;
+	stEdgeContainer *allIncidentEdges;
 
 };
 
@@ -40,7 +40,7 @@ struct _stConnectedComponentIterator {
 struct _stConnectedComponentNodeIterator {
     // Iterator for nodes in a component
 	stTreap *currentTreapNode;
-	stHash *seen;
+	stSet *seen;
 	stEulerTourIterator *tourIterator;
 };
 //Private data structures
@@ -87,7 +87,8 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
 	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))stDynamicEdge_destruct);
-	connectivity->incidentEdges = stEdgeContainer_construct();
+	connectivity->nonTreeIncidentEdges = stEdgeContainer_construct();
+	connectivity->allIncidentEdges = stEdgeContainer_construct();
 
     return(connectivity);
 
@@ -99,7 +100,8 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stSet_destruct(connectivity->nodes);
 	stHash_destruct(connectivity->connectedComponents);
 	stEdgeContainer_destruct(connectivity->edges);
-	stEdgeContainer_destruct(connectivity->incidentEdges);
+	stEdgeContainer_destruct(connectivity->nonTreeIncidentEdges);
+	stEdgeContainer_destruct(connectivity->allIncidentEdges);
 
 	free(connectivity);
 }
@@ -175,6 +177,9 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	newEdge->to = node2;
 	newEdge->level = connectivity->nLevels - 1;
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
+	stEdgeContainer_addEdge(connectivity->allIncidentEdges, node1, node2, node2);
+	stEdgeContainer_addEdge(connectivity->allIncidentEdges, node2, node1, node1);
+
 
 	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
@@ -192,8 +197,8 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	}
 	else {
 		newEdge->in_forest = false;
-		stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
-		stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
+		stEdgeContainer_addEdge(connectivity->nonTreeIncidentEdges, node1, node2, node2);
+		stEdgeContainer_addEdge(connectivity->nonTreeIncidentEdges, node2, node1, node1);
 	}
 	return(true);
 
@@ -219,7 +224,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		return(NULL);
 	}
 	stSet_insert(seen, w);
-	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, w);
+	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->nonTreeIncidentEdges, w);
 	int w_incident_length = stList_length(w_incident);
 
 	int k, j = 0;
@@ -272,8 +277,10 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	if(!edge->in_forest) {
 		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 		stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
+		stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node1, node2);
+		stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node2, node1);
+		stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node1, node2);
+		stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node2, node1);
 
 		return(true);
 	}
@@ -352,8 +359,10 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	edge->level = connectivity->nLevels;
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
+	stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node1, node2);
+	stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node2, node1);
+	stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node1, node2);
+	stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node2, node1);
 	return(true);
 
 }
@@ -366,7 +375,22 @@ stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
 // the algorithm you use.
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
-    // Remove a node (and all its edges) from the graph and update the connected components.
+    // Remove a node (and all its edges) from the graph.
+	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->allIncidentEdges, node);
+	stListIterator *it = stList_getIterator(nodeIncident);
+	void *node2;
+	while((node2 = stList_getNext(it))) {
+		stConnectivity_removeEdge(connectivity, node, node2);
+	}
+	stList_destructIterator(it);
+	stList_destruct(nodeIncident);
+	stHash_remove(connectivity->connectedComponents, node);
+	stSet_remove(connectivity->nodes, node);
+	connectivity->nNodes--;
+	for(int i = 0; i < connectivity->nLevels; i++) {
+		stEulerTour *et_i = stList_get(connectivity->et, i);
+		stEulerTour_removeVertex(et_i, node);
+	}
 }
 stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivity, void *node) {
 	stConnectedComponent *component = st_malloc(sizeof(stConnectedComponent));
@@ -395,6 +419,9 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 			
 	return(foundComponent);
 }
+void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component) {
+	return(component->nodeInComponent);
+}
 
 stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnectedComponent 
 		*component) {
@@ -403,7 +430,7 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
     // modified while this iterator is active.
 	stConnectedComponentNodeIterator *it = st_malloc(sizeof(stConnectedComponentNodeIterator));
 	stEulerTour *et = stConnectivity_getTopLevel(component->connectivity);
-	it->seen = stHash_construct();
+	it->seen = stSet_construct();
 	it->tourIterator = stEulerTour_getIterator(et, component->nodeInComponent);
 	return(it);
 }
@@ -413,17 +440,17 @@ void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator 
 	//void *currentNode = it->currentNode;
 	void *currentNode = stEulerTourIterator_getNext(it->tourIterator);
 
-	if(stHash_search(it->seen, currentNode)) {
+	if(stSet_search(it->seen, currentNode)) {
 		return(stConnectedComponentNodeIterator_getNext(it));
 	}
-	stHash_insert(it->seen, currentNode, SEEN);
+	stSet_insert(it->seen, currentNode);
 	return(currentNode);
 
 }
 
 void stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it) {
     // Free the iterator data structure.
-	stHash_destruct(it->seen);
+	stSet_destruct(it->seen);
 	stEulerTourIterator_destruct(it->tourIterator);
 	free(it);
 }

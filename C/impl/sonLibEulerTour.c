@@ -189,14 +189,6 @@ void stEulerTour_destruct(stEulerTour *et) {
 		free(et);
 	}
 }
-/*
-stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, void *v) {
-	stEulerHalfEdge *edge = stEdgeContainer_getEdge(edges, u, v);
-	if(!edge) {
-		edge = stEdgeContainer_getEdge(edges, v, u);
-	}
-	return(edge);
-}*/
 stTreap *stEulerTour_findRoot(stEulerTour *et, void *v) {
 	stEulerVertex *vertex = stEulerTour_getVertex(et, v);
 	if(!vertex) {
@@ -241,15 +233,11 @@ stEulerVertex *stEulerTour_createVertex(stEulerTour *et, void *vertexID) {
 	stHash_insert(et->vertices, vertexID, newVertex);
 	return(newVertex);
 }
-stEulerHalfEdge *stEulerTour_getNextEdge(stEulerTour *et, 
-		stEulerHalfEdge *edge) {
-	if(!edge) return NULL;
-
-	stTreap *nextTreapNode = stTreap_next(edge->node);
-	if(!nextTreapNode) return NULL;
-	stEulerHalfEdge *nextEdge = (stEulerHalfEdge *) stTreap_getValue(nextTreapNode);
-	return(nextEdge);
+void stEulerTour_removeVertex(stEulerTour *et, void *vertexID) {
+	stHash_remove(et->vertices, vertexID);
+	et->nComponents--;
 }
+
 
 /*Move a vertex to the beginning of the tour. */
 void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {

@@ -49,7 +49,6 @@ static bool setsEqual(stSet *set1, stSet *set2) {
 
 static void test_stConnectivity_newNodeShouldGoInANewComponent(CuTest *testCase) {
     setup();
-	/*
     stConnectivity_addNode(connectivity, (void *) 0xDEADBEEF);
     stConnectedComponent *component = stConnectivity_getConnectedComponent(connectivity, (void *) 0xDEADBEEF);
     stConnectedComponentNodeIterator *nodeIt = stConnectedComponent_getNodeIterator(component);
@@ -62,7 +61,6 @@ static void test_stConnectivity_newNodeShouldGoInANewComponent(CuTest *testCase)
     CuAssertIntEquals(testCase, 1, i);
 
     stConnectedComponentNodeIterator_destruct(nodeIt);
-	*/
     teardown();
 }
 
@@ -119,7 +117,6 @@ static void test_stConnectivity_connectedComponents(CuTest *testCase) {
 
 static void test_stConnectivity_removeNodesAndEdges(CuTest *testCase) {
     setup();
-	/*
 
     stConnectivity_removeNode(connectivity, (void *) 6);
     stConnectivity_removeEdge(connectivity, (void *) 1, (void *) 2);
@@ -136,7 +133,6 @@ static void test_stConnectivity_removeNodesAndEdges(CuTest *testCase) {
     CuAssertIntEquals(testCase, 4, stList_length(components));
 
     stList_destruct(components);
-	*/
 
     teardown();
 }
