@@ -1,5 +1,11 @@
 // Dynamically keeps track of the connected components in an
-// undirected graph.
+// undirected graph. Adapted from the implementation at www.github.com/sambayless/monosat. The algorithm was 
+// described by Mikkel Thorup in "Near-optimal Fully Dynamic Graph Connectivity", 2001. 
+//
+// The graph has log(n_nodes) levels, and each edge in the graph is assigned a level, starting at level
+// (n_levels - 1) when the edge is added. On each level i, a spanning forest is maintained using edges of 
+// level at least i. The spanning forest is represented by an Euler Tour tree of the graph. The Euler Tour
+// tree represents a tour of the graph by a balanced binary search tree of the edges. 
 #include "sonLibGlobalsInternal.h"
 #include <assert.h>
 
@@ -15,23 +21,36 @@ struct _stConnectivity {
 	stList *et; //list of the Euler Tour Trees for each level in the graph
 	int nLevels;
 	stHash *connectedComponents;
+	
+	//stores every edge in the graph. Each edge object stores the level of the edge and
+	//whether or not it's in the spanning forest. For nodes a and b, the edge object is stored
+	//in either (a, b) or (b, a), but not both. Both possibilities are checked when getting the
+	//edge.
 	stEdgeContainer *edges;
+
+	//stores all non-tree edges incident to each node. Used when trying to find a replacement
+	//edge after removing a tree edge.
 	stEdgeContainer *nonTreeIncidentEdges;
+
+	//stores all edges incident to each node. For nodes a and b, both (a,b) and (b,a) are stored,
+	//but each only has a pointer to the second node, rather than an edge object. Used for
+	//finding all edges incident to a node when removing it. This is redundant
+	//and should eventually be fixed, but I can't figure out how to not doubly free the edge objects
+	//if both (a,b) and (b,a) are stored in the main edge container.
 	stEdgeContainer *allIncidentEdges;
 
 };
 
 struct _stConnectedComponent {
-	// Data structure representing a connected component. nodeInComponent points
-	// to an arbitrary node within the component.
-	void *nodeInComponent;
+	// Data structure representing a connected component. 
+	
+	void *nodeInComponent; //an arbitrary node in the component
 	stConnectivity *connectivity;
 
 };
 
 struct _stConnectedComponentIterator {
 	// Iterator data structure for components in the graph.
-	int cur;
 	stConnectivity *connectivity;
 	stList *componentList;
 	stListIterator *componentIterator;
@@ -39,8 +58,12 @@ struct _stConnectedComponentIterator {
 
 struct _stConnectedComponentNodeIterator {
 	// Iterator for nodes in a component
-	stTreap *currentTreapNode;
+	
+	//set of the nodes that have already been visited in the Euler Tour. The Euler Tour visits each node
+	//at least twice, but the iterator should only return each node once.
 	stSet *seen;
+
+	//Euler Tour iterator for this connected component on the top level. 
 	stEulerTourIterator *tourIterator;
 };
 //Private data structures
@@ -52,6 +75,8 @@ struct stDynamicEdge {
 	//whether or not this edge is part of the spanning forest on the top level. 
 	bool in_forest; 	
 
+	//lower level edges are checked first when searching for a replacement edge.
+	//Changing the levels of edges appropriately saves time when removing future edges.
 	int level;
 };
 
