@@ -12,7 +12,7 @@ void stDynamicEdge_destruct(struct stDynamicEdge *edge);
 
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
 
-struct stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
+stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
 struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
@@ -25,7 +25,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node);
-struct stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity);
+stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity);
 stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivity, void *node);
 
 stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *connectivity, void *node);

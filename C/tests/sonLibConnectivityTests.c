@@ -181,19 +181,10 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 	stConnectivity_addEdge(connectivity, (void*) 1, (void*) 2);
 	stConnectivity_addEdge(connectivity, (void*) 1, (void*) 3);
 	stConnectivity_addEdge(connectivity, (void*) 1, (void*) 4);
-	struct stEulerTour *et = stConnectivity_getTopLevel(connectivity);
-	struct stEulerVertex *a = stEulerTour_getVertex(et, (void*)1);
-	CuAssertTrue(testCase, a->leftOut != NULL);
-	//stEulerTour_printTour(et, (void*)1);
+
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*)1, (void*)3));
 	stConnectivity_removeEdge(connectivity, (void*) 1, (void*) 4);
-	CuAssertTrue(testCase, a->rightIn != NULL);
-	CuAssertTrue(testCase, a->leftOut != NULL);
-	//printf("\n");
-	//stEulerTour_printTour(et, (void*)1);
 	stConnectivity_removeEdge(connectivity, (void*) 1, (void*) 2);
-	//printf("\n");
-	//stEulerTour_printTour(et, (void*)1);
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*)1, (void*) 3));
 	teardown();
 }
@@ -216,18 +207,17 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	srand(time(NULL));
 	//srand(4);
 	//srand(6789);
-	int nNodes = 100;
-	int nEdgesToAdd = 90;
-	int nEdgesToRemove = 30;
+	int nNodes = 400;
+	int nEdgesToAdd = 300;
+	int nEdgesToRemove = 100;
 	int nQueries = 10000;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
 	connectivity = stConnectivity_construct();
 	//add nodes
 	for (int i = 1; i <= nNodes; i++) {
-		int *node = malloc(1); //st_malloc(sizeof(int));
+		int *node = malloc(1);
 		*node = i;
-		//printf("adding %d\n", *node);
 		stNaiveConnectivity_addNode(naive, node);
 		stConnectivity_addNode(connectivity, node);
 		stList_append(nodes, node);

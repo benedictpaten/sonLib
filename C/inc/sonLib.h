@@ -33,7 +33,7 @@
 #include "stGraph.h"
 #include "stPosetAlignment.h"
 #include "sonLibTreap.h"
-#include "euler.h"
+#include "sonLibEulerTour.h"
 #include "sonLibConnectivity.h"
 #include "sonLibEdgeContainer.h"
 #include "sonLibNaiveConnectivity.h"
