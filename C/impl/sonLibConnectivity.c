@@ -24,15 +24,8 @@ struct _stConnectivity {
 };
 
 struct _stConnectedComponent {
-    // Data structure representing a connected component. It's OK
-    // if this just contains an ID that indexes into a different data
-    // structure or something--no need to keep the actual connected
-    // component structure in here.
-
-    // If the graph is modified, you can safely assume that the
-    // outside code has discarded all the pointers to connected
-    // components (please provide a destructor function so that the
-    // memory can be freed in that case).
+    // Data structure representing a connected component. nodeInComponent points
+	// to an arbitrary node within the component.
 	void *nodeInComponent;
 	stConnectivity *connectivity;
 
@@ -57,10 +50,10 @@ struct stDynamicEdge {
 	void *edgeID;
 	void *from;
 	void *to;
-	int in_forest;
-	int enabled;
-	int incident_from;
-	int incident_to;
+
+	//whether or not this edge is part of the spanning forest on the top level. 
+	bool in_forest; 	
+
 	int level;
 };
 
@@ -70,9 +63,6 @@ struct stDynamicEdge *stDynamicEdge_construct() {
 	edge->from = NULL;
 	edge->to = NULL;
 	edge->in_forest = false;
-	edge->enabled = true;
-	edge->incident_from = false;
-	edge->incident_to = false;
 	edge->level = 0;
 	return(edge);
 }
@@ -207,17 +197,8 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	}
 	else {
 		newEdge->in_forest = false;
-		if(!newEdge->incident_from) {
-			newEdge->incident_from = true;
-			stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
-
-
-		}
-		if(!newEdge->incident_to) {
-			newEdge->incident_to = true;
-			stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
-
-		}
+		stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
+		stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
 	}
 	return(true);
 
@@ -253,38 +234,19 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		void *e_wk_node2 = stList_get(w_incident, k);
 		struct stDynamicEdge *e_wk = stConnectivity_getEdge(connectivity, 
 				w, e_wk_node2);
-		if (e_wk == removedEdge || e_wk->in_forest || !e_wk->enabled) {
+		if (e_wk == removedEdge || e_wk->in_forest) {
 			//remove
-			if(w == e_wk->from) {
-				e_wk->incident_from = false;
-			}
-			else {
-				e_wk->incident_to = false;
-			}
 			continue;
 		}
 		if (e_wk->level == level) {
 			void *otherNode = e_wk->from == w ? e_wk->to: e_wk->from;
 			if (stEulerTour_connected(et_level, otherTreeVertex, otherNode)) {
 				//remove e_wk
-				if(w == e_wk->from) {
-					e_wk->incident_from = false;
-				}
-				else {
-					e_wk->incident_to = false;
-				}
 				for(k = k+1; k < w_incident_length; k++) {
 					struct stDynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
 					struct stDynamicEdge *e_toRemove = stConnectivity_getEdge(connectivity, 
 							w, e_toRemove_node2);
-					if(e_toRemove == removedEdge || e_toRemove->in_forest || 
-							!e_toRemove->enabled) {
-						if (w == e_toRemove->from) {
-							e_toRemove->incident_from = false;
-						}
-						else {
-							e_toRemove->incident_to = false;
-						}
+					if(e_toRemove == removedEdge || e_toRemove->in_forest) {
 						continue;
 					}
 					stList_set(w_incident, j++, e_toRemove_node2);

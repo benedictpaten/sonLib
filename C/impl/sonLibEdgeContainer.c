@@ -11,6 +11,7 @@ struct _stIncidentEdgeList {
 	void *toNode;
 	void (*destructEdge)(void *);
 };
+
 stEdgeContainer *stEdgeContainer_construct() {
 	stEdgeContainer *container = st_malloc(sizeof(stEdgeContainer));
 	container->edges = stHash_construct2(NULL, (void(*)(void*))stIncidentEdgeList_destruct);
