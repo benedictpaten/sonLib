@@ -193,27 +193,6 @@ int stEulerTour_size(struct stEulerTour *et, void *v) {
 	int tour_length = stTreap_size(vertex->leftOut->node);
 	return (tour_length/2 + 1);
 }
-struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
-		struct stEulerHalfEdge *edge) {
-
-	stTreap *startNode = edge->node;
-	stTreap *next = stTreap_next(startNode);
-	if(!next) {
-		return(NULL);
-	}
-	return(stTreap_getValue(next));
-}
-
-struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v) {
-	struct stEulerVertex *vertex = stHash_search(et->vertices, v);
-	return(vertex->leftOut);
-}
-struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v) {
-	stTreap *root = stEulerTour_findRoot(et, v);
-	if(!root) return(NULL);
-	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) stTreap_getValue(root);
-	return(edge);
-}
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
 	return(stHash_search(et->vertices, v));
 }
