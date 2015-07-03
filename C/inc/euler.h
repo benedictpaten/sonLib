@@ -36,6 +36,9 @@ struct stEulerTourIterator {
 	void *currentVertex;
 	struct treap *currentEdgeNode;
 };
+struct stEulerTourEdgeIterator {
+	struct treap *currentEdgeNode;
+};
 
 struct stEulerVertex *stEulerVertex_construct(void *vertexID);
 void stEulerVertex_destruct(struct stEulerVertex *vertex);
@@ -47,6 +50,8 @@ int stEulerVertex_isSingleton(struct stEulerVertex *vertex);
 struct stEulerHalfEdge *stEulerHalfEdge_construct(void);
 void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge);
 int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex *vertex);
+void *stEulerHalfEdge_getFrom(struct stEulerHalfEdge *edge);
+void *stEulerHalfEdge_getTo(struct stEulerHalfEdge *edge);
 //--------------------------------------------------
 struct stEulerTour *stEulerTour_construct();
 void stEulerTour_printTour(struct stEulerTour *et, void *v);
@@ -72,4 +77,8 @@ struct stEulerTourIterator *stEulerTour_getIterator(struct stEulerTour *et, void
 void *stEulerTourIterator_getNext(struct stEulerTourIterator *it);
 void stEulerTourIterator_destruct(struct stEulerTourIterator *it);
 stSet *stEulerTour_getNodesInComponent(struct stEulerTour *et, void *v);
+//-------------------------------------------------------------
+struct stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(struct stEulerTour *et, void *v);
+struct stEulerHalfEdge *stEulerTourEdgeIterator_getNext(struct stEulerTourEdgeIterator *it); 
+void stEulerTourEdgeIterator_destruct(struct stEulerTourEdgeIterator *it);
 #endif

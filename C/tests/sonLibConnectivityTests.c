@@ -213,9 +213,9 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
-	//srand(time(NULL));
+	srand(time(NULL));
 	//srand(4);
-	srand(6789);
+	//srand(6789);
 	int nNodes = 100;
 	int nEdgesToAdd = 90;
 	int nEdgesToRemove = 30;
@@ -239,7 +239,6 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		if(node1 >= node2) continue;
 		if(!stConnectivity_addEdge(connectivity, node1, node2)) continue;
 		stNaiveConnectivity_addEdge(naive, node1, node2);
-		printf("connecting %d and %d\n", *node1, *node2);
 		nEdgesToAdd--;
 	}
 	//remove edges
@@ -249,7 +248,6 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		if(node1 >= node2) continue;
 		if(!stConnectivity_removeEdge(connectivity, node1, node2)) continue;
 		stNaiveConnectivity_removeEdge(naive, node1, node2);
-		printf("removing %d and %d\n", *node1, *node2);
 		nEdgesToRemove--;
 	}
 	//check connectivity queries
@@ -263,7 +261,7 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		if(!naiveConnected == stConnectivity_connected(connectivity, node1, node2)) {
 			printf("%d and %d should be connected: %d\n", *node1, *node2, naiveConnected);
 		}
-		//CuAssertTrue(testCase, naiveConnected == stConnectivity_connected(connectivity, node1, node2));
+		CuAssertTrue(testCase, naiveConnected == stConnectivity_connected(connectivity, node1, node2));
 		nQueries--;
 	}
 	
@@ -284,8 +282,8 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stList_append(trueComponents, naiveComp);
 	}
 	stNaiveConnectedComponentIterator_destruct(itNaive);
-	printf("%d true components, %d experimental components\n", (int)stList_length(trueComponents), 
-			(int)stList_length(components));
+	//printf("%d true components, %d experimental components\n", (int)stList_length(trueComponents), 
+	//		(int)stList_length(components));
 	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
 	//check the nodes in each component
 	for (int i = 0; i < stList_length(components); i++) {

@@ -115,6 +115,12 @@ void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge) {
 		free(edge);
 	}
 }
+void *stEulerHalfEdge_getFrom(struct stEulerHalfEdge *edge) {
+	return(edge->from->vertexID);
+}
+void *stEulerHalfEdge_getTo(struct stEulerHalfEdge *edge) {
+	return(edge->to->vertexID);
+}
 
 
 /*Euler Tour methods ------------------------------------------------------ */
@@ -648,4 +654,18 @@ stSet *stEulerTour_getNodesInComponent(struct stEulerTour *et, void *v) {
 	}
 	stEulerTourIterator_destruct(it);
 	return(nodes);
+}
+struct stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(struct stEulerTour *et, void *v) {
+	struct stEulerTourEdgeIterator *it = st_malloc(sizeof(struct stEulerTourEdgeIterator));
+	it->currentEdgeNode = stEulerTour_findRoot(et, v);
+	return(it);
+}
+struct stEulerHalfEdge *stEulerTourEdgeIterator_getNext(struct stEulerTourEdgeIterator *it) {
+	if(!it->currentEdgeNode) return(NULL);
+	struct stEulerHalfEdge *edgeToReturn = (struct stEulerHalfEdge *)it->currentEdgeNode->value;
+	it->currentEdgeNode = treap_next(it->currentEdgeNode);
+	return(edgeToReturn);
+}
+void stEulerTourEdgeIterator_destruct(struct stEulerTourEdgeIterator *it) {
+	free(it);
 }

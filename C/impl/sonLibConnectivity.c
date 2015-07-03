@@ -341,10 +341,11 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		replacementEdge = visit(connectivity, node2, node1, edge, i);
 
 		//go through each edge in the tour on level i
-		struct stEulerHalfEdge *tourEdge = stEulerTour_getFirstEdge(et_i, node2);
-		while(tourEdge) {
+		struct stEulerTourEdgeIterator *edgeIt = stEulerTour_getEdgeIterator(et_i, node2);
+		struct stEulerHalfEdge *tourEdge;
+		while((tourEdge = stEulerTourEdgeIterator_getNext(edgeIt))) {
 			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, 
-					tourEdge->from->vertexID, tourEdge->to->vertexID);
+					stEulerHalfEdge_getFrom(tourEdge), stEulerHalfEdge_getTo(tourEdge));
 			if(treeEdge->level == i) {
 				treeEdge->level--;
 				assert(treeEdge->level >= 0);
@@ -357,17 +358,16 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 				void *w = n ? treeEdge->to : treeEdge->from;
 				replacementEdge = visit(connectivity, w, node1, edge, i);
 			}
-
-			tourEdge = stEulerTour_getNextEdgeInTour(et_i, tourEdge);
 		}
+		stEulerTourEdgeIterator_destruct(edgeIt);
 		stHash_insert(connectivity->seen, node2, SEEN_FALSE);
-
-		tourEdge = stEulerTour_getFirstEdge(et_i, node2);
-		while(tourEdge) {
-			stHash_insert(connectivity->seen, tourEdge->from, SEEN_FALSE);
-			stHash_insert(connectivity->seen, tourEdge->to, SEEN_FALSE);
-			tourEdge = stEulerTour_getNextEdgeInTour(et_i, tourEdge);
+		
+		struct stEulerTourIterator *it = stEulerTour_getIterator(et_i, node2);
+		void *tourNode;
+		while((tourNode = stEulerTourIterator_getNext(it))) {
+			stHash_insert(connectivity->seen, tourNode, SEEN_FALSE);
 		}
+		stEulerTourIterator_destruct(it);
 		if(replacementEdge) {
 			componentsDisconnected = false;
 			assert(replacementEdge->level == i);

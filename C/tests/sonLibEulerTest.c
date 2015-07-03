@@ -111,6 +111,12 @@ static void test_stEulerTour_next(CuTest *testCase) {
 		printf("%p \n", node);
 	}
 	stEulerTourIterator_destruct(it);
+	struct stEulerTourEdgeIterator *edgeIt = stEulerTour_getEdgeIterator(et, (void*) 3);
+	struct stEulerHalfEdge *edge;
+	while((edge = stEulerTourEdgeIterator_getNext(edgeIt))) {
+		printf("%p->%p ", stEulerHalfEdge_getFrom(edge), stEulerHalfEdge_getTo(edge));
+	}
+	stEulerTourEdgeIterator_destruct(edgeIt);
 	*/
 	teardown();
 }
