@@ -124,7 +124,7 @@ void stTreap_rotateRight(stTreap *u) {
 	}
 	u->parent = w;
 	w->right = u;
-	
+
 	u->count -= w->count;
 	if(u->left) {
 		u->count += u->left->count;
@@ -194,7 +194,7 @@ int stTreap_compare(stTreap* a, stTreap *b) {
 	assert(stTreap_findRoot(a) == stTreap_findRoot(b));
 	int depthA = stTreap_depth(a);
 	int depthB = stTreap_depth(b);
-	
+
 	while (depthA > depthB) {
 		if (a->parent == b) {
 			if (a == b->left) {
@@ -206,7 +206,7 @@ int stTreap_compare(stTreap* a, stTreap *b) {
 		}
 		a = a->parent;
 		depthA--;
-		
+
 	}
 	while (depthB > depthA) {
 		if (b->parent == a) {

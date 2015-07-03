@@ -7,13 +7,13 @@
 //Public data structures
 
 struct _stConnectivity {
-    // Data structure keeping track of the nodes, edges, and connected
-    // components.
-    stSet *nodes;
-    int nNodes;
+	// Data structure keeping track of the nodes, edges, and connected
+	// components.
+	stSet *nodes;
+	int nNodes;
 	int nEdges;
-    stList *et; //list of the Euler Tour Trees for each level in the graph
-    int nLevels;
+	stList *et; //list of the Euler Tour Trees for each level in the graph
+	int nLevels;
 	stHash *connectedComponents;
 	stEdgeContainer *edges;
 	stEdgeContainer *nonTreeIncidentEdges;
@@ -22,7 +22,7 @@ struct _stConnectivity {
 };
 
 struct _stConnectedComponent {
-    // Data structure representing a connected component. nodeInComponent points
+	// Data structure representing a connected component. nodeInComponent points
 	// to an arbitrary node within the component.
 	void *nodeInComponent;
 	stConnectivity *connectivity;
@@ -30,7 +30,7 @@ struct _stConnectedComponent {
 };
 
 struct _stConnectedComponentIterator {
-    // Iterator data structure for components in the graph.
+	// Iterator data structure for components in the graph.
 	int cur;
 	stConnectivity *connectivity;
 	stList *componentList;
@@ -38,7 +38,7 @@ struct _stConnectedComponentIterator {
 };
 
 struct _stConnectedComponentNodeIterator {
-    // Iterator for nodes in a component
+	// Iterator for nodes in a component
 	stTreap *currentTreapNode;
 	stSet *seen;
 	stEulerTourIterator *tourIterator;
@@ -72,17 +72,17 @@ void stDynamicEdge_destruct(struct stDynamicEdge *edge) {
 // Exported methods ----------------------------------------------------------------------
 
 stConnectivity *stConnectivity_construct(void) {
-    // Initialize the data structure with an empty graph with 0 nodes.
-    stConnectivity *connectivity = st_malloc(sizeof(stConnectivity));
+	// Initialize the data structure with an empty graph with 0 nodes.
+	stConnectivity *connectivity = st_malloc(sizeof(stConnectivity));
 	connectivity->nodes = stSet_construct();
 
-    connectivity->et = stList_construct3(0, (void(*)(void*))stEulerTour_destruct);
-	
+	connectivity->et = stList_construct3(0, (void(*)(void*))stEulerTour_destruct);
+
 	//add level zero Euler Tour
 	stList_append(connectivity->et, stEulerTour_construct());
 
-    connectivity->nLevels = 0;
-    connectivity->nNodes = 0;
+	connectivity->nLevels = 0;
+	connectivity->nNodes = 0;
 	connectivity->nEdges = 0;
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
@@ -90,12 +90,12 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nonTreeIncidentEdges = stEdgeContainer_construct();
 	connectivity->allIncidentEdges = stEdgeContainer_construct();
 
-    return(connectivity);
+	return(connectivity);
 
 }
 
 void stConnectivity_destruct(stConnectivity *connectivity) {
-    // Free the memory for the data structure.
+	// Free the memory for the data structure.
 	stList_destruct(connectivity->et);
 	stSet_destruct(connectivity->nodes);
 	stHash_destruct(connectivity->connectedComponents);
@@ -106,7 +106,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	free(connectivity);
 }
 
-	
+
 
 //add new levels to compensate for the addition of new nodes,
 //and copy nodes from level 0 to the new levels so that all
@@ -131,10 +131,10 @@ void resizeIncidentEdgeList(stList *incident, int newsize) {
 		stList_remove(incident, newsize);
 	}
 }
-	
+
 void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
-    // Add an isolated node to the graph. This should end up in a new
-    // connected component with only one member.
+	// Add an isolated node to the graph. This should end up in a new
+	// connected component with only one member.
 	connectivity->nNodes++;
 
 	//only add levels if there are no edges in the graph yet. Adding levels after edges already
@@ -146,17 +146,17 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 
 
 	stSet_insert(connectivity->nodes, node);
-	
+
 	stHash_insert(connectivity->connectedComponents, node, 
 			stConnectedComponent_construct(connectivity, node));
 	//stEdgeContainer_addNode(connectivity->edges, node);
 
-    for(int i = 0; i < connectivity->nLevels; i++) {
+	for(int i = 0; i < connectivity->nLevels; i++) {
 		//Add a new disconnected node to the Euler tour on level i
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		stEulerTour_createVertex(et_i, node);
 	}
-	
+
 }
 struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	struct stDynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, node1, node2);
@@ -167,8 +167,8 @@ struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void 
 }
 
 bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
-    // Add an edge to the graph and update the connected components.
-    // NB: The ordering of node1 and node2 shouldn't matter as this is an undirected graph.
+	// Add an edge to the graph and update the connected components.
+	// NB: The ordering of node1 and node2 shouldn't matter as this is an undirected graph.
 	if(node1 == node2) return(false);
 	if(stEdgeContainer_getEdge(connectivity->edges, node1, node2)) return(false);
 	connectivity->nEdges++;
@@ -330,7 +330,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			}
 		}
 		stEulerTourEdgeIterator_destruct(edgeIt);
-		
+
 		if(replacementEdge) {
 			componentsDisconnected = false;
 			assert(replacementEdge->level == i);
@@ -375,7 +375,7 @@ stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
 // the algorithm you use.
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
-    // Remove a node (and all its edges) from the graph.
+	// Remove a node (and all its edges) from the graph.
 	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->allIncidentEdges, node);
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
@@ -401,8 +401,8 @@ stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivit
 
 stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *connectivity, 
 		void *node) {
-    // Get the connected component that this node is a member of. If
-    // the graph is modified, this pointer can be invalidated
+	// Get the connected component that this node is a member of. If
+	// the graph is modified, this pointer can be invalidated
 	stConnectedComponent *comp = stConnectedComponent_construct(connectivity, node);
 	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
 	stConnectedComponent *foundComponent = NULL;
@@ -416,7 +416,7 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 	}
 	stConnectedComponentNodeIterator_destruct(it);
 	stConnectedComponent_destruct(comp);
-			
+
 	return(foundComponent);
 }
 void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component) {
@@ -425,9 +425,9 @@ void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component) {
 
 stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnectedComponent 
 		*component) {
-    // Get an iterator over the nodes in a particular connected
-    // component. You can safely assume that the graph won't be
-    // modified while this iterator is active.
+	// Get an iterator over the nodes in a particular connected
+	// component. You can safely assume that the graph won't be
+	// modified while this iterator is active.
 	stConnectedComponentNodeIterator *it = st_malloc(sizeof(stConnectedComponentNodeIterator));
 	stEulerTour *et = stConnectivity_getTopLevel(component->connectivity);
 	it->seen = stSet_construct();
@@ -436,7 +436,7 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
 }
 
 void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator *it) {
-    // Return the next node of the connected component, or NULL if all have been traversed.
+	// Return the next node of the connected component, or NULL if all have been traversed.
 	//void *currentNode = it->currentNode;
 	void *currentNode = stEulerTourIterator_getNext(it->tourIterator);
 
@@ -449,16 +449,16 @@ void *stConnectedComponentNodeIterator_getNext(stConnectedComponentNodeIterator 
 }
 
 void stConnectedComponentNodeIterator_destruct(stConnectedComponentNodeIterator *it) {
-    // Free the iterator data structure.
+	// Free the iterator data structure.
 	stSet_destruct(it->seen);
 	stEulerTourIterator_destruct(it->tourIterator);
 	free(it);
 }
 
 stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stConnectivity *connectivity) {
-    // Get an iterator over the connected components in the
-    // graph. Again, if the graph is modified while the iterator is
-    // active, it's ok for it to break.
+	// Get an iterator over the connected components in the
+	// graph. Again, if the graph is modified while the iterator is
+	// active, it's ok for it to break.
 	stConnectedComponentIterator *it = st_malloc(sizeof(stConnectedComponentIterator));
 	it->componentList = stHash_getValues(connectivity->connectedComponents);
 	it->componentIterator = stList_getIterator(it->componentList);
@@ -467,13 +467,13 @@ stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stCon
 }
 
 stConnectedComponent *stConnectedComponentIterator_getNext(stConnectedComponentIterator *it) {
-    // Return the next connected component in the graph, or NULL if all have been traversed.
+	// Return the next connected component in the graph, or NULL if all have been traversed.
 	stConnectedComponent *next = stList_getNext(it->componentIterator);
 	return(next);
 }
 
 void stConnectedComponentIterator_destruct(stConnectedComponentIterator *it) {
-    // Free the iterator data structure.
+	// Free the iterator data structure.
 	stList_destructIterator(it->componentIterator);
 	stList_destruct(it->componentList);
 	free(it);

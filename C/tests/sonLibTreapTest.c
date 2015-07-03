@@ -31,16 +31,16 @@ static void test_stTreap_ordering(CuTest *testCase) {
 
 	stTreap *root = stTreap_findRoot(t);
 	CuAssertTrue(testCase, root->count == 7);
-	
+
 	char *tour = stTreap_print(t);
 	CuAssertStrEquals(testCase, tour, "tabcdef");
 	free(tour);
 
 	/*
-	char *reverseTour = stTreap_printBackwards(t);
-	CuAssertStrEquals(testCase, reverseTour, "fedcbat");
-	free(reverseTour);
-	*/
+	   char *reverseTour = stTreap_printBackwards(t);
+	   CuAssertStrEquals(testCase, reverseTour, "fedcbat");
+	   free(reverseTour);
+	   */
 
 	stTreap *temp = stTreap_next(t);
 	CuAssertTrue(testCase, stTreap_compare(t, temp) < 0);
@@ -52,7 +52,7 @@ static void test_stTreap_ordering(CuTest *testCase) {
 		node = stTreap_prev(node);
 	}
 	CuAssertTrue(testCase, node == t);
-	
+
 	teardown();
 }
 static void test_stTreap_rotations(CuTest *testCase) {
@@ -82,7 +82,7 @@ static void test_stTreap_split(CuTest *testCase) {
 	splitPoint = stTreap_next(splitPoint);
 	CuAssertStrEquals(testCase, splitPoint->value, "b");
 
-	
+
 	stTreap *beforeSplit = stTreap_splitBefore(splitPoint);
 
 	char *beforeSplitStr = stTreap_print(beforeSplit);
@@ -117,17 +117,17 @@ static void test_stTreap_split(CuTest *testCase) {
 }
 static void test_stTreap_heapProperty(CuTest *testCase) {
 	setup();
-	
-	
+
+
 	stTreap *iter = t;
 	while(iter) {
 		if(iter->parent) CuAssertTrue(testCase, iter->parent->priority > iter->priority);
 		iter = stTreap_next(iter);
 	}
-		
+
 	teardown();
 }
-		
+
 CuSuite *sonLib_stTreapTestSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stTreap_ordering);

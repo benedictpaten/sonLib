@@ -29,20 +29,20 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	CuAssertTrue(testCase, !stEulerTour_connected(et, (void*)1, (void*)3));
 
 	/*
-	CuAssertTrue(testCase, a->leftOut->to == b);
-	CuAssertTrue(testCase, a->leftOut->from == a);
-	CuAssertTrue(testCase, b->rightIn->from == b);
-	CuAssertTrue(testCase, a->rightIn->to == a);
-	CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, a->rightIn->node) < 0);
-	CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, b->leftOut->node) == 0);
+	   CuAssertTrue(testCase, a->leftOut->to == b);
+	   CuAssertTrue(testCase, a->leftOut->from == a);
+	   CuAssertTrue(testCase, b->rightIn->from == b);
+	   CuAssertTrue(testCase, a->rightIn->to == a);
+	   CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, a->rightIn->node) < 0);
+	   CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, b->leftOut->node) == 0);
 
-	CuAssertTrue(testCase, stTreap_next(a->leftOut->node) == b->rightIn->node);
-	*/
+	   CuAssertTrue(testCase, stTreap_next(a->leftOut->node) == b->rightIn->node);
+	   */
 
 	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)1) == (void*)1);
 	CuAssertTrue(testCase, (char*)stEulerTour_findRootNode(et, (void*)2) == (void*)1);
 
-	
+
 	/*
 	 *  d--a--b
 	 *      \
@@ -57,10 +57,10 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	teardown();
 }
 static bool setsEqual(stSet *set1, stSet *set2) {
-    stSet *diff = stSet_getDifference(set1, set2);
-    size_t size = stSet_size(diff);
-    stSet_destruct(diff);
-    return size == 0;
+	stSet *diff = stSet_getDifference(set1, set2);
+	size_t size = stSet_size(diff);
+	stSet_destruct(diff);
+	return size == 0;
 }
 
 static void test_stEulerTour_multipleIncidentEdges(CuTest *testCase) {
@@ -101,20 +101,20 @@ static void test_stEulerTour_cut(CuTest *testCase) {
 static void test_stEulerTour_next(CuTest *testCase) {
 	setup();
 	/*
-	stEulerTour_link(et, (void*)1, (void*)2);
-	stEulerTour_link(et, (void*)1, (void*)3);
-	stEulerTour_link(et, (void*)1, (void*)4);
+	   stEulerTour_link(et, (void*)1, (void*)2);
+	   stEulerTour_link(et, (void*)1, (void*)3);
+	   stEulerTour_link(et, (void*)1, (void*)4);
 	//stEulerTour_link(et, (void*)2, (void*)5);
 	stEulerTourIterator *it = stEulerTour_getIterator(et, (void*) 3);
 	void *node;
 	while((node = stEulerTourIterator_getNext(it))) {
-		printf("%p \n", node);
+	printf("%p \n", node);
 	}
 	stEulerTourIterator_destruct(it);
 	stEulerTourEdgeIterator *edgeIt = stEulerTour_getEdgeIterator(et, (void*) 3);
 	stEulerHalfEdge *edge;
 	while((edge = stEulerTourEdgeIterator_getNext(edgeIt))) {
-		printf("%p->%p ", stEulerHalfEdge_getFrom(edge), stEulerHalfEdge_getTo(edge));
+	printf("%p->%p ", stEulerHalfEdge_getFrom(edge), stEulerHalfEdge_getTo(edge));
 	}
 	stEulerTourEdgeIterator_destruct(edgeIt);
 	*/
