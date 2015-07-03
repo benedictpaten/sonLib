@@ -148,8 +148,13 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
     // Add an isolated node to the graph. This should end up in a new
     // connected component with only one member.
 	connectivity->nNodes++;
-	connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
-    resizeEulerTourList(connectivity);
+
+	//only add levels if there are no edges in the graph yet. Adding levels after edges already
+	//exist would require changing their levels
+	if(connectivity->nEdges == 0) {
+		connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
+		resizeEulerTourList(connectivity);
+	}
 
 
 	stSet_insert(connectivity->nodes, node);
