@@ -21,11 +21,9 @@ int stEulerTour_connected(stEulerTour *et, void *u, void *v);
 int stEulerTour_size(stEulerTour *et, void *v);
 stTreap *stEulerTour_findRoot(stEulerTour *et, void *v);
 void *stEulerTour_findRootNode(stEulerTour *et, void *v);
-stEulerHalfEdge *stEulerTour_getNextEdgeInTour(stEulerTour *et, 
-		stEulerHalfEdge *edge);
-stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, void *v);
 stEulerVertex *stEulerTour_getVertex(stEulerTour *et, void *v);
 stEulerVertex *stEulerTour_createVertex(stEulerTour *et, void *vertexID);
+void stEulerTour_removeVertex(stEulerTour *et, void *vertexID);
 void stEulerTour_destruct(stEulerTour *et);
 void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex);
 void stEulerTour_link(stEulerTour *et, void *u, void *v);
