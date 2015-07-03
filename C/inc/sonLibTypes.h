@@ -56,6 +56,7 @@ typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
 typedef struct _stEdge stEdge;
 typedef struct _stGraph stGraph;
 typedef struct _stPosetAlignment stPosetAlignment;
+typedef struct _stTreap stTreap;
 typedef struct _stConnectivity stConnectivity;
 typedef struct _stConnectedComponent stConnectedComponent;
 typedef struct _stConnectedComponentIterator stConnectedComponentIterator;

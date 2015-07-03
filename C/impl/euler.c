@@ -1,6 +1,4 @@
 #include "sonLibGlobalsInternal.h"
-#include "treap.h"
-#include "euler.h"
 
 
 /*represents the Euler Tour Tree of an undirected graph. The Euler Tour
@@ -62,7 +60,7 @@ void stEulerVertex_destruct(struct stEulerVertex *vertex) {
 	}
 }
 /*Returns the half-edge coming into this vertex on the first traversal.*/
-struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex) {
+stTreap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex) {
 	if(vertex->leftOut) {
 		return(vertex->leftOut->node);
 	}
@@ -71,7 +69,7 @@ struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex) {
 	}
 }
 /*Returns the half edge leaving this vertex on the second traversal. */
-struct treap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex) {
+stTreap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex) {
 	if(vertex->rightIn) {
 		return(vertex->rightIn->node);
 	}
@@ -83,13 +81,13 @@ int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to
 	if(from == to) {
 		return(true);
 	}
-	struct treap *fromNode = stEulerVertex_incidentEdgeA(from);
-	struct treap *toNode = stEulerVertex_incidentEdgeA(to);
+	stTreap *fromNode = stEulerVertex_incidentEdgeA(from);
+	stTreap *toNode = stEulerVertex_incidentEdgeA(to);
 	if(fromNode == NULL || toNode == NULL) {
 		return(false);
 	}
-	struct treap *a_root = treap_findRoot(fromNode);
-	struct treap *b_root = treap_findRoot(toNode);
+	stTreap *a_root = stTreap_findRoot(fromNode);
+	stTreap *b_root = stTreap_findRoot(toNode);
 	return(a_root == b_root);
 }
 int stEulerVertex_isSingleton(struct stEulerVertex *vertex) {
@@ -101,7 +99,7 @@ int stEulerVertex_isSingleton(struct stEulerVertex *vertex) {
 /*Euler Half Edge methods ------------------------------------------------- */
 struct stEulerHalfEdge *stEulerHalfEdge_construct() {
 	struct stEulerHalfEdge *newEdge = st_malloc(sizeof(struct stEulerHalfEdge));
-	newEdge->node = treap_construct(newEdge);
+	newEdge->node = stTreap_construct(newEdge);
 	return(newEdge);
 }
 
@@ -111,7 +109,7 @@ int stEulerHalfEdge_contains(struct stEulerHalfEdge *edge, struct stEulerVertex 
 }
 void stEulerHalfEdge_destruct(struct stEulerHalfEdge *edge) {
 	if(edge != NULL) {
-		treap_nodeDestruct(edge->node);
+		stTreap_nodeDestruct(edge->node);
 		free(edge);
 	}
 }
@@ -161,22 +159,22 @@ struct stEulerHalfEdge *stEulerTour_getEdge(stEdgeContainer *edges, void *u, voi
 	}
 	return(edge);
 }*/
-struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
+stTreap *stEulerTour_findRoot(struct stEulerTour *et, void *v) {
 	struct stEulerVertex *vertex = stEulerTour_getVertex(et, v);
 	if(!vertex) {
 		fprintf(stderr, "Warning: vertex does not exist\n");
 		return(NULL);
 	}
-	struct treap *treapNode = stEulerVertex_incidentEdgeA(vertex);
+	stTreap *treapNode = stEulerVertex_incidentEdgeA(vertex);
 	if(!treapNode) {
 		//printf("%d is singleton\n", v);
 		return(NULL);
 	}
-	return(treap_findMin(treap_findRoot(treapNode)));
+	return(stTreap_findMin(stTreap_findRoot(treapNode)));
 }
 void *stEulerTour_findRootNode(struct stEulerTour *et, void *v) {
-	struct treap *root = stEulerTour_findRoot(et, v);
-	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) root->value;
+	stTreap *root = stEulerTour_findRoot(et, v);
+	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) stTreap_getValue(root);
 	return(edge->from->vertexID);
 }
 int stEulerTour_connected(struct stEulerTour *et, void *u, void *v) {
@@ -192,18 +190,18 @@ int stEulerTour_size(struct stEulerTour *et, void *v) {
 		return(1);
 	}
 
-	int tour_length = treap_size(vertex->leftOut->node);
+	int tour_length = stTreap_size(vertex->leftOut->node);
 	return (tour_length/2 + 1);
 }
 struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
 		struct stEulerHalfEdge *edge) {
 
-	struct treap *startNode = edge->node;
-	struct treap *next = treap_next(startNode);
+	stTreap *startNode = edge->node;
+	stTreap *next = stTreap_next(startNode);
 	if(!next) {
 		return(NULL);
 	}
-	return(next->value);
+	return(stTreap_getValue(next));
 }
 
 struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void *v) {
@@ -211,9 +209,9 @@ struct stEulerHalfEdge *stEulerTour_getForwardEdge(struct stEulerTour *et, void 
 	return(vertex->leftOut);
 }
 struct stEulerHalfEdge *stEulerTour_getFirstEdge(struct stEulerTour *et, void *v) {
-	struct treap *root = stEulerTour_findRoot(et, v);
+	stTreap *root = stEulerTour_findRoot(et, v);
 	if(!root) return(NULL);
-	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) root->value;
+	struct stEulerHalfEdge *edge = (struct stEulerHalfEdge *) stTreap_getValue(root);
 	return(edge);
 }
 struct stEulerVertex *stEulerTour_getVertex(struct stEulerTour *et, void *v) {
@@ -230,9 +228,9 @@ struct stEulerHalfEdge *stEulerTour_getNextEdge(struct stEulerTour *et,
 		struct stEulerHalfEdge *edge) {
 	if(!edge) return NULL;
 
-	struct treap *nextTreapNode = treap_next(edge->node);
+	stTreap *nextTreapNode = stTreap_next(edge->node);
 	if(!nextTreapNode) return NULL;
-	struct stEulerHalfEdge *nextEdge = (struct stEulerHalfEdge *) nextTreapNode->value;
+	struct stEulerHalfEdge *nextEdge = (struct stEulerHalfEdge *) stTreap_getValue(nextTreapNode);
 	return(nextEdge);
 }
 
@@ -241,58 +239,58 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 	if(stEulerVertex_isSingleton(vertex)) {
 		return;
 	}
-	if(treap_size(vertex->leftOut->node) == 2) {
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(vertex)) ==
-				treap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
+	if(stTreap_size(vertex->leftOut->node) == 2) {
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) ==
+				stTreap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
 		return;
 	}
 
 
-	struct treap *ftreapNode = stEulerVertex_incidentEdgeA(vertex);
-	struct treap *btreapNode = stEulerVertex_incidentEdgeB(vertex);
-	struct stEulerHalfEdge *f = ftreapNode->value;
-	struct stEulerHalfEdge *b = btreapNode->value;
+	stTreap *ftreapNode = stEulerVertex_incidentEdgeA(vertex);
+	stTreap *btreapNode = stEulerVertex_incidentEdgeB(vertex);
+	struct stEulerHalfEdge *f = stTreap_getValue(ftreapNode);
+	struct stEulerHalfEdge *b = stTreap_getValue(btreapNode);
 	assert(f != b);
 	assert(f);
 	assert(b);
-	if(treap_compare(f->node, b->node) > 0) {
+	if(stTreap_compare(f->node, b->node) > 0) {
 		//swap the pointers to the half edges;
 		struct stEulerHalfEdge *temp = f;
 		f = b;
 		b = temp;
 	}
-	assert(treap_compare(f->node, b->node) < 0);
+	assert(stTreap_compare(f->node, b->node) < 0);
 
 	struct stEulerVertex *other = (f->to == vertex) ? f->from: f->to;
 	assert(other != vertex);
 
 	//the next edge traversed in the Euler tour
-	struct treap *nextNode = treap_next(f->node);
-	struct stEulerHalfEdge *next = (struct stEulerHalfEdge *)nextNode->value;
+	stTreap *nextNode = stTreap_next(f->node);
+	struct stEulerHalfEdge *next = (struct stEulerHalfEdge *)stTreap_getValue(nextNode);
 	
 	if(!stEulerHalfEdge_contains(next, vertex)) {
-		struct treap *fnodeprev = treap_prev(f->node);
+		stTreap *fnodeprev = stTreap_prev(f->node);
 
 		//if the previous node is null, vertex comes first in the tour (is the root)
 		//so do nothing.
 		if (!fnodeprev) {
-			assert(treap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
-					treap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
+			assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
+					stTreap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
 			return;
 		}
 		else {
-			f = fnodeprev->value;
+			f = stTreap_getValue(fnodeprev);
 		}
 	}
 	else if (stEulerHalfEdge_contains(next, other)) {
-		struct treap *next_next = treap_next(next->node);	
+		stTreap *next_next = stTreap_next(next->node);	
 		if(!next_next) {
-			next_next = treap_prev(f->node);
+			next_next = stTreap_prev(f->node);
 		}
 
 		if (next_next) {
 			struct stEulerHalfEdge *next_next_edge = 
-				(struct stEulerHalfEdge*)next_next->value;
+				(struct stEulerHalfEdge*)stTreap_getValue(next_next);
 			if(stEulerHalfEdge_contains(next_next_edge, vertex)) {
 				f = next;
 			} else {
@@ -304,17 +302,17 @@ void stEulerTour_makeRoot(struct stEulerTour *et, struct stEulerVertex *vertex) 
 	}
 
 	//f is now guaranteed to be before b in the tour
-	//assert(treap_compare(f->node, b->node) < 0);
-	struct treap *rightSubtree = treap_splitAfter(f->node);
+	//assert(stTreap_compare(f->node, b->node) < 0);
+	stTreap *rightSubtree = stTreap_splitAfter(f->node);
 
 	if(rightSubtree) {
-		assert(treap_findMax(treap_findRoot(f->node)) == f->node);
-		assert(treap_findRoot(rightSubtree) != treap_findRoot(f->node));
-		treap_concat(rightSubtree, f->node);
+		assert(stTreap_findMax(stTreap_findRoot(f->node)) == f->node);
+		assert(stTreap_findRoot(rightSubtree) != stTreap_findRoot(f->node));
+		stTreap_concat(rightSubtree, f->node);
 	}
-	assert(treap_findMax(treap_findRoot(f->node)) == f->node);
-	assert(treap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
-			treap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
+	assert(stTreap_findMax(stTreap_findRoot(f->node)) == f->node);
+	assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
+			stTreap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
 }
 void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	assert(u != v);
@@ -341,52 +339,52 @@ void stEulerTour_link(struct stEulerTour *et, void *u, void *v) {
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
 	
-	struct treap *f = NULL;
+	stTreap *f = NULL;
 	if (stEulerVertex_incidentEdgeA(vertex)) {
-		f = treap_findMin(treap_findRoot(stEulerVertex_incidentEdgeA(vertex)));
+		f = stTreap_findMin(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)));
 	}
 
                     
-	struct treap *tleft = NULL;
+	stTreap *tleft = NULL;
 	if (f) {
-		treap_concat(f, newForwardEdge->node);
+		stTreap_concat(f, newForwardEdge->node);
 	}
 	else {
 		vertex->leftOut = newForwardEdge;
 	}
 	if (stEulerVertex_incidentEdgeA(other)) {
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
-				treap_findRoot(stEulerVertex_incidentEdgeB(other)));
-		treap_concat(newForwardEdge->node, other->leftOut->node);
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
-				treap_findRoot(stEulerVertex_incidentEdgeB(other)));
-		assert(treap_findRoot(newForwardEdge->node) == treap_findRoot(stEulerVertex_incidentEdgeB(other)));
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
+				stTreap_findRoot(stEulerVertex_incidentEdgeB(other)));
+		stTreap_concat(newForwardEdge->node, other->leftOut->node);
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
+				stTreap_findRoot(stEulerVertex_incidentEdgeB(other)));
+		assert(stTreap_findRoot(newForwardEdge->node) == stTreap_findRoot(stEulerVertex_incidentEdgeB(other)));
 	}
 	else {
 		other->leftOut = newForwardEdge;
 	}
 	if (stEulerVertex_incidentEdgeB(other)) {
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
-				treap_findRoot(stEulerVertex_incidentEdgeB(other)));
-		treap_concat(other->rightIn->node, newBackwardEdge->node);
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
-				treap_findRoot(newBackwardEdge->node));
-		assert(treap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
-				treap_findRoot(newBackwardEdge->node));
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
+				stTreap_findRoot(stEulerVertex_incidentEdgeB(other)));
+		stTreap_concat(other->rightIn->node, newBackwardEdge->node);
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(other)) == 
+				stTreap_findRoot(newBackwardEdge->node));
+		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) == 
+				stTreap_findRoot(newBackwardEdge->node));
 
 	}
 	else {
 		other->rightIn = newBackwardEdge;
-		treap_concat(stEulerVertex_incidentEdgeA(vertex), newBackwardEdge->node);
+		stTreap_concat(stEulerVertex_incidentEdgeA(vertex), newBackwardEdge->node);
 	}
 	if (tleft) {
-		treap_concat(newBackwardEdge->node, tleft);
-		vertex->rightIn = tleft->value;
+		stTreap_concat(newBackwardEdge->node, tleft);
+		vertex->rightIn = stTreap_getValue(tleft);
 	}
 	else {
 		vertex->rightIn = newBackwardEdge;
 	}
-	assert(treap_findRoot(newForwardEdge->node) == treap_findRoot(newBackwardEdge->node));
+	assert(stTreap_findRoot(newForwardEdge->node) == stTreap_findRoot(newBackwardEdge->node));
 	assert(stEulerVertex_connected(vertex, other));
 }
 
@@ -440,11 +438,11 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 	struct stEulerVertex *to = f->to;
 	
 	assert(stEulerTour_connected(et, f->from->vertexID, f->to->vertexID));
-	assert(treap_findRoot(f->node) == treap_findRoot(b->node));
+	assert(stTreap_findRoot(f->node) == stTreap_findRoot(b->node));
 
 	//f should point to the first half of this edge to be traversed,
 	//and b should point to the half that is traversed second.
-	if (treap_compare(f->node, b->node) > 0) {
+	if (stTreap_compare(f->node, b->node) > 0) {
 		//swap f and b
 		struct stEulerHalfEdge *temp = f;
 		f = b;
@@ -452,12 +450,12 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 	}
 
 	
-	struct treap *p = treap_prev(f->node); //p
-	struct treap *n = treap_next(b->node); //n
-	struct treap *pn = treap_next(f->node); //pn
-	struct treap *nn = treap_prev(b->node); //nn
+	stTreap *p = stTreap_prev(f->node); //p
+	stTreap *n = stTreap_next(b->node); //n
+	stTreap *pn = stTreap_next(f->node); //pn
+	stTreap *nn = stTreap_prev(b->node); //nn
 
-	assert(treap_next(nn) == b->node);
+	assert(stTreap_next(nn) == b->node);
 
 	/*struct stEulerHalfEdge *p_edge = p->value;
 	struct stEulerHalfEdge *n_edge = n->value;
@@ -488,54 +486,56 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 
 	//get the part of the tour that happened before reaching the first half of this
 	//edge and the part that happened after reaching the second half.
-	struct treap *tree1 = treap_splitBefore(f->node);
-	assert(!tree1 || treap_findMax(tree1) == p);
+	stTreap *tree1 = stTreap_splitBefore(f->node);
+	assert(!tree1 || stTreap_findMax(tree1) == p);
 	if(tree1) {
-		assert(treap_findRoot(tree1) != treap_findRoot(f->node));
+		assert(stTreap_findRoot(tree1) != stTreap_findRoot(f->node));
 	}
-	struct treap *tree2 = treap_splitAfter(b->node);
-	assert(!tree2 || treap_findMin(tree2) == n);
+	stTreap *tree2 = stTreap_splitAfter(b->node);
+	assert(!tree2 || stTreap_findMin(tree2) == n);
 
 	if (tree1 && tree2) {
-		treap_concat(tree1, tree2);
+		stTreap_concat(tree1, tree2);
 	}
-	assert(!tree1 || treap_findRoot(tree1) != treap_findRoot(f->node));
-	assert(!tree2 || treap_findRoot(tree2) != treap_findRoot(b->node));
-	assert(!tree1 || treap_findRoot(tree1) != treap_findRoot(b->node));
-	assert(!tree2 || treap_findRoot(tree2) != treap_findRoot(f->node));
+	assert(!tree1 || stTreap_findRoot(tree1) != stTreap_findRoot(f->node));
+	assert(!tree2 || stTreap_findRoot(tree2) != stTreap_findRoot(b->node));
+	assert(!tree1 || stTreap_findRoot(tree1) != stTreap_findRoot(b->node));
+	assert(!tree2 || stTreap_findRoot(tree2) != stTreap_findRoot(f->node));
 
 	assert(pn);
 	assert(nn);
 
 	//choose new incident edges
-	if (stEulerHalfEdge_contains(pn->value, from) && 
-			stEulerHalfEdge_contains(pn->value, to)) {
+	if (stEulerHalfEdge_contains(stTreap_getValue(pn), from) && 
+			stEulerHalfEdge_contains(stTreap_getValue(pn), to)) {
 
 		if((n || p) && !(n && p)) {
 			if (!n) {
-				n = treap_findMin(treap_findRoot(p));
+				n = stTreap_findMin(stTreap_findRoot(p));
 			}
 			else {
-				p = treap_findMax(treap_findRoot(n));
+				p = stTreap_findMax(stTreap_findRoot(n));
 			}
 			assert(n != p);
 		}
 		if (n) {
 			assert(p);
-			assert(stEulerHalfEdge_contains(n->value, from) || stEulerHalfEdge_contains(n->value, to));
-			assert(stEulerHalfEdge_contains(p->value, from) || stEulerHalfEdge_contains(p->value, to));
-			if(stEulerHalfEdge_contains(n->value, from)) {
-				assert(stEulerHalfEdge_contains(p->value, from));
-				from->leftOut = n->value;
-				from->rightIn = p->value;
+			assert(stEulerHalfEdge_contains(stTreap_getValue(n), from) || 
+					stEulerHalfEdge_contains(stTreap_getValue(n), to));
+			assert(stEulerHalfEdge_contains(stTreap_getValue(p), from) || 
+					stEulerHalfEdge_contains(stTreap_getValue(p), to));
+			if(stEulerHalfEdge_contains(stTreap_getValue(n), from)) {
+				assert(stEulerHalfEdge_contains(stTreap_getValue(p), from));
+				from->leftOut = stTreap_getValue(n);
+				from->rightIn = stTreap_getValue(p);
 				to->leftOut = NULL;
 				to->rightIn = NULL;
 			}
 			else {
-				assert(stEulerHalfEdge_contains(n->value, to));
-				assert(stEulerHalfEdge_contains(p->value, to));
-				to->leftOut = n->value;
-				to->rightIn = p->value;
+				assert(stEulerHalfEdge_contains(stTreap_getValue(n), to));
+				assert(stEulerHalfEdge_contains(stTreap_getValue(p), to));
+				to->leftOut = stTreap_getValue(n);
+				to->rightIn = stTreap_getValue(p);
 				from->leftOut = NULL;
 				from->rightIn = NULL;
 			}
@@ -548,25 +548,25 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 			to->rightIn = NULL;
 		}	
 	}
-	else if (stEulerHalfEdge_contains(pn->value, from)) {
-		assert(stEulerHalfEdge_contains(nn->value, from));
-		from->leftOut = pn->value;
-		from->rightIn = nn->value;
+	else if (stEulerHalfEdge_contains(stTreap_getValue(pn), from)) {
+		assert(stEulerHalfEdge_contains(stTreap_getValue(nn), from));
+		from->leftOut = stTreap_getValue(pn);
+		from->rightIn = stTreap_getValue(nn);
 		if ((n || p) && !(n && p)) {
 			if(!n) {
-				n = treap_findMin(treap_findRoot(p));
+				n = stTreap_findMin(stTreap_findRoot(p));
 			}
 			else {
-				p = treap_findMax(treap_findRoot(n));
+				p = stTreap_findMax(stTreap_findRoot(n));
 			}
 			assert(n != p);
 		}
 		if (n) {
 			assert(p);
-			assert(stEulerHalfEdge_contains(n->value, to));
-			assert(stEulerHalfEdge_contains(p->value, to));
-			to->leftOut = n->value;
-			to->rightIn = p->value;
+			assert(stEulerHalfEdge_contains(stTreap_getValue(n), to));
+			assert(stEulerHalfEdge_contains(stTreap_getValue(p), to));
+			to->leftOut = stTreap_getValue(n);
+			to->rightIn = stTreap_getValue(p);
 		}
 		else {
 			//to is a singleton
@@ -574,25 +574,25 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 			to->rightIn = NULL;
 		}
 	}
-	else if (stEulerHalfEdge_contains(pn->value, to)) {
-		assert(stEulerHalfEdge_contains(nn->value, to));
-		to->leftOut = pn->value;
-		to->rightIn = nn->value;
+	else if (stEulerHalfEdge_contains(stTreap_getValue(pn), to)) {
+		assert(stEulerHalfEdge_contains(stTreap_getValue(nn), to));
+		to->leftOut = stTreap_getValue(pn);
+		to->rightIn = stTreap_getValue(nn);
 		if( (n || p) && !(n && p)) {
 			if(!n) {
-				n = treap_findMin(treap_findRoot(p));
+				n = stTreap_findMin(stTreap_findRoot(p));
 			}
 			else {
-				p = treap_findMax(treap_findRoot(n));
+				p = stTreap_findMax(stTreap_findRoot(n));
 			}
 			assert(n != p);
 		}
 		if (n) {
 			assert(p);
-			assert(stEulerHalfEdge_contains(n->value, from));
-			assert(stEulerHalfEdge_contains(p->value, from));
-			from->leftOut = n->value;
-			from->rightIn = p->value;
+			assert(stEulerHalfEdge_contains(stTreap_getValue(n), from));
+			assert(stEulerHalfEdge_contains(stTreap_getValue(p), from));
+			from->leftOut = stTreap_getValue(n);
+			from->rightIn = stTreap_getValue(p);
 		}
 		else {
 			//to is a singleton
@@ -600,22 +600,22 @@ void stEulerTour_cut(struct stEulerTour *et, void *u, void *v) {
 			from->rightIn = NULL;
 		}
 	}
-	treap_splitAfter(f->node);
-	treap_splitBefore(b->node);
+	stTreap_splitAfter(f->node);
+	stTreap_splitBefore(b->node);
 
 	if(stEulerVertex_incidentEdgeA(from) && 
-			(treap_size(stEulerVertex_incidentEdgeA(from)) == 1)) {
+			(stTreap_size(stEulerVertex_incidentEdgeA(from)) == 1)) {
 		//from is a singleton
 		from->leftOut = NULL;
 		from->rightIn = NULL;
 	}
 	if(stEulerVertex_incidentEdgeA(to) && 
-			(treap_size(stEulerVertex_incidentEdgeA(to)) == 1)) {
+			(stTreap_size(stEulerVertex_incidentEdgeA(to)) == 1)) {
 		to->leftOut = NULL;
 		to->rightIn = NULL;
 	}
-	assert(treap_size(f->node) == 1);
-	assert(treap_size(b->node) == 1);
+	assert(stTreap_size(f->node) == 1);
+	assert(stTreap_size(b->node) == 1);
 	stEdgeContainer_deleteEdge(et->forwardEdges, u, v);
 	stEdgeContainer_deleteEdge(et->forwardEdges, v, u);
 	stEdgeContainer_deleteEdge(et->backwardEdges, u, v);
@@ -635,11 +635,11 @@ void *stEulerTourIterator_getNext(struct stEulerTourIterator *it) {
 		it->currentVertex = NULL;
 		return(currentVertex);
 	}
-	struct stEulerHalfEdge *currentEdge = (struct stEulerHalfEdge *) it->currentEdgeNode->value;
+	struct stEulerHalfEdge *currentEdge = (struct stEulerHalfEdge *) stTreap_getValue(it->currentEdgeNode);
 	void *vertexToReturn = currentEdge->from->vertexID;
 	it->currentVertex = currentEdge->to->vertexID;
 
-	it->currentEdgeNode = treap_next(it->currentEdgeNode);
+	it->currentEdgeNode = stTreap_next(it->currentEdgeNode);
 	return(vertexToReturn);
 }
 void stEulerTourIterator_destruct(struct stEulerTourIterator *it) {
@@ -662,8 +662,8 @@ struct stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(struct stEulerTour *
 }
 struct stEulerHalfEdge *stEulerTourEdgeIterator_getNext(struct stEulerTourEdgeIterator *it) {
 	if(!it->currentEdgeNode) return(NULL);
-	struct stEulerHalfEdge *edgeToReturn = (struct stEulerHalfEdge *)it->currentEdgeNode->value;
-	it->currentEdgeNode = treap_next(it->currentEdgeNode);
+	struct stEulerHalfEdge *edgeToReturn = (struct stEulerHalfEdge *)stTreap_getValue(it->currentEdgeNode);
+	it->currentEdgeNode = stTreap_next(it->currentEdgeNode);
 	return(edgeToReturn);
 }
 void stEulerTourEdgeIterator_destruct(struct stEulerTourEdgeIterator *it) {

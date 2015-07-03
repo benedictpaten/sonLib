@@ -32,10 +32,10 @@ static void test_stEulerTour_link(CuTest *testCase) {
 	CuAssertTrue(testCase, a->leftOut->from == a);
 	CuAssertTrue(testCase, b->rightIn->from == b);
 	CuAssertTrue(testCase, a->rightIn->to == a);
-	CuAssertTrue(testCase, treap_compare(a->leftOut->node, a->rightIn->node) < 0);
-	CuAssertTrue(testCase, treap_compare(a->leftOut->node, b->leftOut->node) == 0);
+	CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, a->rightIn->node) < 0);
+	CuAssertTrue(testCase, stTreap_compare(a->leftOut->node, b->leftOut->node) == 0);
 
-	CuAssertTrue(testCase, treap_next(a->leftOut->node) == b->rightIn->node);
+	CuAssertTrue(testCase, stTreap_next(a->leftOut->node) == b->rightIn->node);
 
 	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)1) == (void*)1);
 	CuAssertTrue(testCase, (char*)stEulerTour_findRootNode(et, (void*)2) == (void*)1);

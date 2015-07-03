@@ -48,7 +48,7 @@ struct _stConnectedComponentIterator {
 
 struct _stConnectedComponentNodeIterator {
     // Iterator for nodes in a component
-	struct treap *currentTreapNode;
+	stTreap *currentTreapNode;
 	stHash *seen;
 	struct stEulerTourIterator *tourIterator;
 };

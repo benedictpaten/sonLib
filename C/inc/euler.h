@@ -19,7 +19,7 @@ struct stEulerHalfEdge {
 	struct stEulerHalfEdge *inverse;
 
 	//node in treap for this half-edge.
-	struct treap *node;
+	stTreap *node;
 
 	//edge position in Euler Tour
 	int rank;
@@ -34,16 +34,16 @@ struct stEulerTour {
 };
 struct stEulerTourIterator {
 	void *currentVertex;
-	struct treap *currentEdgeNode;
+	stTreap *currentEdgeNode;
 };
 struct stEulerTourEdgeIterator {
-	struct treap *currentEdgeNode;
+	stTreap *currentEdgeNode;
 };
 
 struct stEulerVertex *stEulerVertex_construct(void *vertexID);
 void stEulerVertex_destruct(struct stEulerVertex *vertex);
-struct treap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex);
-struct treap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex);
+stTreap *stEulerVertex_incidentEdgeA(struct stEulerVertex *vertex);
+stTreap *stEulerVertex_incidentEdgeB(struct stEulerVertex *vertex);
 int stEulerVertex_connected(struct stEulerVertex *from, struct stEulerVertex *to);
 int stEulerVertex_isSingleton(struct stEulerVertex *vertex);
 //-------------------------------------------------------
@@ -57,7 +57,7 @@ struct stEulerTour *stEulerTour_construct();
 void stEulerTour_printTour(struct stEulerTour *et, void *v);
 int stEulerTour_connected(struct stEulerTour *et, void *u, void *v);
 int stEulerTour_size(struct stEulerTour *et, void *v);
-struct treap *stEulerTour_findRoot(struct stEulerTour *et, void *v);
+stTreap *stEulerTour_findRoot(struct stEulerTour *et, void *v);
 void *stEulerTour_findRootNode(struct stEulerTour *et, void *v);
 struct stEulerHalfEdge *stEulerTour_getNextEdgeInTour(struct stEulerTour *et, 
 		struct stEulerHalfEdge *edge);

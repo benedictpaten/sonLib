@@ -1,55 +1,55 @@
 #include "sonLibGlobalsTest.h"
 
 
-struct treap *t;
+stTreap *t;
 
 static void teardown(void);
 
 static void setup(void) {
-	t = treap_construct((void*)"t");
-	struct treap *a = treap_construct((void*)"a");
-	struct treap *b = treap_construct((void*)"b");
-	struct treap *c = treap_construct((void*)"c");
-	struct treap *d = treap_construct((void*)"d");
-	struct treap *e = treap_construct((void*)"e");
-	struct treap *f = treap_construct((void*)"f");
-	treap_concat(t, a);
-	treap_concat(t, b);
-	treap_concat(t, c);
-	treap_concat(t, d);
-	treap_concat(t, e);
-	treap_concat(t, f);
+	t = stTreap_construct((void*)"t");
+	stTreap *a = stTreap_construct((void*)"a");
+	stTreap *b = stTreap_construct((void*)"b");
+	stTreap *c = stTreap_construct((void*)"c");
+	stTreap *d = stTreap_construct((void*)"d");
+	stTreap *e = stTreap_construct((void*)"e");
+	stTreap *f = stTreap_construct((void*)"f");
+	stTreap_concat(t, a);
+	stTreap_concat(t, b);
+	stTreap_concat(t, c);
+	stTreap_concat(t, d);
+	stTreap_concat(t, e);
+	stTreap_concat(t, f);
 
 }
 static void teardown(void) {
-	treap_destruct(t);
+	stTreap_destruct(t);
 }
 
 
 static void test_stTreap_ordering(CuTest *testCase) {
 	setup();
 
-	struct treap *root = treap_findRoot(t);
+	stTreap *root = stTreap_findRoot(t);
 	CuAssertTrue(testCase, root->count == 7);
 	
-	char *tour = treap_print(t);
+	char *tour = stTreap_print(t);
 	CuAssertStrEquals(testCase, tour, "tabcdef");
 	free(tour);
 
 	/*
-	char *reverseTour = treap_printBackwards(t);
+	char *reverseTour = stTreap_printBackwards(t);
 	CuAssertStrEquals(testCase, reverseTour, "fedcbat");
 	free(reverseTour);
 	*/
 
-	struct treap *temp = treap_next(t);
-	CuAssertTrue(testCase, treap_compare(t, temp) < 0);
-	CuAssertTrue(testCase, treap_compare(temp, t) > 0);
+	stTreap *temp = stTreap_next(t);
+	CuAssertTrue(testCase, stTreap_compare(t, temp) < 0);
+	CuAssertTrue(testCase, stTreap_compare(temp, t) > 0);
 
-	struct treap *node = treap_findMax(treap_findRoot(t));
+	stTreap *node = stTreap_findMax(stTreap_findRoot(t));
 	CuAssertStrEquals(testCase, node->value, "f");
-	while(treap_prev(node)) {
-		node = treap_prev(node);
+	while(stTreap_prev(node)) {
+		node = stTreap_prev(node);
 	}
 	CuAssertTrue(testCase, node == t);
 	
@@ -57,19 +57,19 @@ static void test_stTreap_ordering(CuTest *testCase) {
 }
 static void test_stTreap_rotations(CuTest *testCase) {
 	setup();
-	struct treap *r = treap_findRoot(t);
-	treap_rotateLeft(r);
-	struct treap *newRoot = treap_findRoot(t);
+	stTreap *r = stTreap_findRoot(t);
+	stTreap_rotateLeft(r);
+	stTreap *newRoot = stTreap_findRoot(t);
 	CuAssertTrue(testCase, newRoot->left == r);
 	CuAssertTrue(testCase, newRoot->count == 7);
 
-	char *newTour = treap_print(t);
+	char *newTour = stTreap_print(t);
 	CuAssertStrEquals(testCase, newTour, "tabcdef");
 	free(newTour);
 
-	treap_rotateRight(newRoot);
-	CuAssertTrue(testCase, treap_findRoot(t) == r);
-	char *rotatedTour = treap_print(t);
+	stTreap_rotateRight(newRoot);
+	CuAssertTrue(testCase, stTreap_findRoot(t) == r);
+	char *rotatedTour = stTreap_print(t);
 	CuAssertStrEquals(testCase, rotatedTour, "tabcdef");
 	free(rotatedTour);
 
@@ -78,37 +78,37 @@ static void test_stTreap_rotations(CuTest *testCase) {
 }
 static void test_stTreap_split(CuTest *testCase) {
 	setup();
-	struct treap *splitPoint = treap_next(t);
-	splitPoint = treap_next(splitPoint);
+	stTreap *splitPoint = stTreap_next(t);
+	splitPoint = stTreap_next(splitPoint);
 	CuAssertStrEquals(testCase, splitPoint->value, "b");
 
 	
-	struct treap *beforeSplit = treap_splitBefore(splitPoint);
+	stTreap *beforeSplit = stTreap_splitBefore(splitPoint);
 
-	char *beforeSplitStr = treap_print(beforeSplit);
-	char *splitPointStr = treap_print(splitPoint);
+	char *beforeSplitStr = stTreap_print(beforeSplit);
+	char *splitPointStr = stTreap_print(splitPoint);
 	CuAssertStrEquals(testCase, beforeSplitStr, "ta");
 	CuAssertStrEquals(testCase, splitPointStr, "bcdef");
 	free(beforeSplitStr);
 	free(splitPointStr);
 
-	treap_concat(beforeSplit, splitPoint);
-	char *recombinedTourStr = treap_print(t);
+	stTreap_concat(beforeSplit, splitPoint);
+	char *recombinedTourStr = stTreap_print(t);
 	CuAssertStrEquals(testCase, recombinedTourStr, "tabcdef");
 	free(recombinedTourStr);
 
-	struct treap *endNode = treap_findMax(treap_findRoot(t));
+	stTreap *endNode = stTreap_findMax(stTreap_findRoot(t));
 	CuAssertStrEquals(testCase, endNode->value, "f");
-	char *reverseTourStr = treap_printBackwards(endNode);
+	char *reverseTourStr = stTreap_printBackwards(endNode);
 	CuAssertStrEquals(testCase, reverseTourStr, "fedcbat");
 	free(reverseTourStr);
 
 
-	struct treap *aftersplit = treap_next(t);
+	stTreap *aftersplit = stTreap_next(t);
 	CuAssertStrEquals(testCase, aftersplit->value, "a");
-	struct treap *after = treap_splitAfter(aftersplit);
+	stTreap *after = stTreap_splitAfter(aftersplit);
 	CuAssertTrue(testCase, after != NULL);
-	char *afterSplitStr = treap_print(after);
+	char *afterSplitStr = stTreap_print(after);
 	CuAssertStrEquals(testCase, afterSplitStr, "bcdef");
 	free(afterSplitStr);
 
@@ -119,10 +119,10 @@ static void test_stTreap_heapProperty(CuTest *testCase) {
 	setup();
 	
 	
-	struct treap *iter = t;
+	stTreap *iter = t;
 	while(iter) {
 		if(iter->parent) CuAssertTrue(testCase, iter->parent->priority > iter->priority);
-		iter = treap_next(iter);
+		iter = stTreap_next(iter);
 	}
 		
 	teardown();

@@ -32,7 +32,7 @@
 #include "sonLibCache.h"
 #include "stGraph.h"
 #include "stPosetAlignment.h"
-#include "treap.h"
+#include "sonLibTreap.h"
 #include "euler.h"
 #include "sonLibConnectivity.h"
 #include "sonLibEdgeContainer.h"
