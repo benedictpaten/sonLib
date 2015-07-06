@@ -14,6 +14,7 @@ int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *no
 
 stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
 struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v);
+stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 

@@ -190,6 +190,9 @@ struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void 
 	}
 	return(edge);
 }
+stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
+	return connectivity->edges;
+}
 
 bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	// Add an edge to the graph and update the connected components.

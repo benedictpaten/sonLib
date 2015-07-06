@@ -67,11 +67,22 @@ static void test_stEdgeContainer_edgeList(CuTest *testCase) {
 
 	teardown();
 }
+static void test_stEdgeContainer_iterator(CuTest *testCase) {
+	setup();
+	stEdgeContainerIterator *it = stEdgeContainer_getIterator(container);
+	void *node1 = NULL;
+	void *node2 = NULL;
+	while(stEdgeContainer_getNext(it, &node1, &node2)) {
+		CuAssertTrue(testCase, stEdgeContainer_getEdge(container, node1, node2) != NULL);
+	}
+	teardown();
+}
 
 CuSuite *sonLib_stEdgeContainerTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_getEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_deleteEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_edgeList);
+	SUITE_ADD_TEST(suite, test_stEdgeContainer_iterator);
     return suite;
 }

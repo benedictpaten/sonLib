@@ -11,6 +11,12 @@ struct _stIncidentEdgeList {
 	void *toNode;
 	void (*destructEdge)(void *);
 };
+struct _stEdgeContainerIterator {
+	stHashIterator *nodeIterator;
+	stIncidentEdgeList *edge;
+	void *node;
+	stEdgeContainer *container;
+};
 
 stEdgeContainer *stEdgeContainer_construct() {
 	stEdgeContainer *container = st_malloc(sizeof(stEdgeContainer));
@@ -143,3 +149,22 @@ void stEdgeContainer_setIncidentEdgeList(stEdgeContainer *container, void *u, st
 	stHash_insert(container->edges, u, u_incident_new);
 }
 
+stEdgeContainerIterator *stEdgeContainer_getIterator(stEdgeContainer *container) {
+	stEdgeContainerIterator *it = st_malloc(sizeof(stEdgeContainerIterator));
+	it->nodeIterator = stHash_getIterator(container->edges);
+	it->edge = NULL;
+	it->node = NULL;
+	it->container = container;
+	return(it);
+}
+bool stEdgeContainer_getNext(stEdgeContainerIterator *it, void **node1, void **node2) {
+	if(it->edge == NULL) {
+		it->node = stHash_getNext(it->nodeIterator);
+		it->edge = stHash_search(it->container->edges, it->node);
+	}
+	if(!it->edge) return false;
+	*node1 = it->node;
+	*node2 = it->edge->toNode;
+	it->edge = it->edge->next;
+	return true;
+}
