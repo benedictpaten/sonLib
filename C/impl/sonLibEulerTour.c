@@ -665,11 +665,13 @@ stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(stEulerTour *et, void *v) {
 	it->currentEdgeNode = stEulerTour_findRoot(et, v);
 	return(it);
 }
-stEulerHalfEdge *stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it) {
-	if(!it->currentEdgeNode) return(NULL);
+bool stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it, void **node1, void **node2) {
+	if(!it->currentEdgeNode) return false;
 	stEulerHalfEdge *edgeToReturn = (stEulerHalfEdge *)stTreap_getValue(it->currentEdgeNode);
 	it->currentEdgeNode = stTreap_next(it->currentEdgeNode);
-	return(edgeToReturn);
+	*node1 = edgeToReturn->from->vertexID;
+	*node2 = edgeToReturn->to->vertexID;
+	return true;
 }
 void stEulerTourEdgeIterator_destruct(stEulerTourEdgeIterator *it) {
 	free(it);

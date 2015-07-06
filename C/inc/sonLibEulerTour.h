@@ -35,6 +35,6 @@ void stEulerTourIterator_destruct(stEulerTourIterator *it);
 stSet *stEulerTour_getNodesInComponent(stEulerTour *et, void *v);
 //-------------------------------------------------------------
 stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(stEulerTour *et, void *v);
-stEulerHalfEdge *stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it); 
+bool stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it, void **node1, void **node2); 
 void stEulerTourEdgeIterator_destruct(stEulerTourEdgeIterator *it);
 #endif

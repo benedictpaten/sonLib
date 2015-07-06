@@ -340,10 +340,10 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 
 		//go through each edge in the tour on level i
 		stEulerTourEdgeIterator *edgeIt = stEulerTour_getEdgeIterator(et_i, node2);
-		stEulerHalfEdge *tourEdge;
-		while((tourEdge = stEulerTourEdgeIterator_getNext(edgeIt))) {
-			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, 
-					stEulerHalfEdge_getFrom(tourEdge), stEulerHalfEdge_getTo(tourEdge));
+		void *from = NULL;
+		void *to = NULL;
+		while(stEulerTourEdgeIterator_getNext(edgeIt, &from, &to)) {
+			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, from, to);
 			if(treeEdge->level == i) {
 				treeEdge->level--;
 				assert(treeEdge->level >= 0);
