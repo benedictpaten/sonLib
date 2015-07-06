@@ -28,16 +28,13 @@ struct _stConnectivity {
 	//edge.
 	stEdgeContainer *edges;
 
-	//stores all non-tree edges incident to each node. Used when trying to find a replacement
-	//edge after removing a tree edge.
-	stEdgeContainer *nonTreeIncidentEdges;
 
 	//stores all edges incident to each node. For nodes a and b, both (a,b) and (b,a) are stored,
 	//but each only has a pointer to the second node, rather than an edge object. Used for
 	//finding all edges incident to a node when removing it. This is redundant
 	//and should eventually be fixed, but I can't figure out how to not doubly free the edge objects
 	//if both (a,b) and (b,a) are stored in the main edge container.
-	stEdgeContainer *allIncidentEdges;
+	stEdgeContainer *incidentEdges;
 
 };
 
@@ -112,8 +109,7 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->connectedComponents =
 		stHash_construct2(NULL, (void(*)(void*))stConnectedComponent_destruct);
 	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))stDynamicEdge_destruct);
-	connectivity->nonTreeIncidentEdges = stEdgeContainer_construct();
-	connectivity->allIncidentEdges = stEdgeContainer_construct();
+	connectivity->incidentEdges = stEdgeContainer_construct();
 
 	return(connectivity);
 
@@ -125,8 +121,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stSet_destruct(connectivity->nodes);
 	stHash_destruct(connectivity->connectedComponents);
 	stEdgeContainer_destruct(connectivity->edges);
-	stEdgeContainer_destruct(connectivity->nonTreeIncidentEdges);
-	stEdgeContainer_destruct(connectivity->allIncidentEdges);
+	stEdgeContainer_destruct(connectivity->incidentEdges);
 
 	free(connectivity);
 }
@@ -205,8 +200,8 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	newEdge->to = node2;
 	newEdge->level = connectivity->nLevels - 1;
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
-	stEdgeContainer_addEdge(connectivity->allIncidentEdges, node1, node2, node2);
-	stEdgeContainer_addEdge(connectivity->allIncidentEdges, node2, node1, node1);
+	stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
+	stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
 
 
 	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
@@ -225,8 +220,6 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	}
 	else {
 		newEdge->in_forest = false;
-		stEdgeContainer_addEdge(connectivity->nonTreeIncidentEdges, node1, node2, node2);
-		stEdgeContainer_addEdge(connectivity->nonTreeIncidentEdges, node2, node1, node1);
 	}
 	return(true);
 
@@ -252,7 +245,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		return(NULL);
 	}
 	stSet_insert(seen, w);
-	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->nonTreeIncidentEdges, w);
+	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, w);
 	int w_incident_length = stList_length(w_incident);
 
 	int k, j = 0;
@@ -305,10 +298,8 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	if(!edge->in_forest) {
 		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 		stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-		stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node2, node1);
-		stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node2, node1);
+		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
+		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
 
 		return(true);
 	}
@@ -387,10 +378,8 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	edge->level = connectivity->nLevels;
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-	stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->nonTreeIncidentEdges, node2, node1);
-	stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->allIncidentEdges, node2, node1);
+	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
+	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
 	return(true);
 
 }
@@ -404,7 +393,7 @@ stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	// Remove a node (and all its edges) from the graph.
-	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->allIncidentEdges, node);
+	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, node);
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
 	while((node2 = stList_getNext(it))) {
