@@ -1,7 +1,10 @@
 #include "sonLibGlobalsTest.h"
 #include <time.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-int main() {
+void dynamicConnectivity_basicPerformance() {
 	//srand(time(NULL));
 	clock_t start = clock();
 	int nNodes = 1000000;
@@ -55,3 +58,73 @@ int main() {
 	stConnectivity_destruct(connectivity);
 
 }
+double getMemoryUsage() {
+	FILE *status = fopen("/proc/self/statm", "r");
+	unsigned long size, resident, share, text, lib, data, dt;
+	if(7 != fscanf(status, "%lu %lu %lu %lu %lu %lu %lu", &size, &resident, &share, &text, &lib, &data, &dt)) {
+		fclose(status);
+		return -1;
+	}
+	fclose(status);
+	return (double) size * 4096/1024 * (1/1000) * (1/1000);
+}
+
+static void addNodesAndPlot(char *filename, int nNodes) {
+	FILE *f = fopen(filename, "w");
+    clock_t time;
+    int window = 100;
+	stConnectivity *connectivity = stConnectivity_construct();
+	stList *nodes = stList_construct();
+	for (int i = 0; i < nNodes; i++) {
+		void *node = malloc(1);
+		stList_append(nodes, node);
+	}
+
+	for (int i = 0; i < nNodes; i++) {
+		void *node = stList_get(nodes, i);
+		stConnectivity_addNode(connectivity, node);
+		if (i % window == 0) {
+			double t = (double)(clock() - time)/CLOCKS_PER_SEC;
+            double speed = (double)window/t;
+			double mem = getMemoryUsage();
+			fprintf(f, "%d %f %f\n", i, speed, mem);
+            time = clock();
+		}
+	}
+	stList_destruct(nodes);
+	stConnectivity_destruct(connectivity);
+	fclose(f);
+}
+static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
+    stConnectivity *connectivity = stConnectivity_construct();
+    FILE *f = fopen(filename, "w");
+    stList *nodes = stList_construct();
+    int window = 100;
+    clock_t time;
+    for (int i = 0; i < nNodes; i++) {
+        void *node = st_malloc(1);
+        stList_append(nodes, node);
+        stConnectivity_addNode(connectivity, node);
+    }
+    for (int i = 0; i < nEdges; i++) {
+        void *node1 = stList_get(nodes, rand() % nNodes);
+        void *node2 = stList_get(nodes, rand() % nNodes);
+        stConnectivity_addEdge(connectivity, node1, node2);
+        if (i % window == 0) {
+            double t = (double)(clock() - time)/CLOCKS_PER_SEC;
+            double speed = (double)window/t;
+            double mem = getMemoryUsage();
+            fprintf(f, "%d %f %f\n", i, speed, mem);
+            time = clock();
+        }
+    }
+    stList_destruct(nodes);
+    stConnectivity_destruct(connectivity);
+    fclose(f);
+}
+
+int main(int argc, char **argv) {
+	addNodesAndPlot("../dynamicConnectivity/addNodesPerformance.txt", 1000000);
+    addEdgesAndPlot("../dynamicConnectivity/addEdgesPerformance.txt", 100000, 50000);
+}
+

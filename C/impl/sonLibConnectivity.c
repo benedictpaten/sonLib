@@ -178,7 +178,10 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	}
 
 }
+
 struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *node1, void *node2) {
+	//check both (node1, node2) and (node2, node1) for the edge. It could be in either one, but
+	//not both.
 	struct stDynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, node1, node2);
 	if(edge == NULL) {
 		edge = stEdgeContainer_getEdge(connectivity->edges, node2, node1);
@@ -190,8 +193,6 @@ stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
 }
 
 bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	// Add an edge to the graph and update the connected components.
-	// NB: The ordering of node1 and node2 shouldn't matter as this is an undirected graph.
 	if(node1 == node2) return(false);
 	if(stEdgeContainer_getEdge(connectivity->edges, node1, node2)) return(false);
 	connectivity->nEdges++;
@@ -199,13 +200,19 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	newEdge->from = node1;
 	newEdge->to = node2;
 	newEdge->level = connectivity->nLevels - 1;
+	
+	//add the edge object as an incident edge to an arbitrary one of the nodes
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
+
+	//list the edge as incident to both nodes
 	stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
 	stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
 
 
 	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
+		//the two nodes are not already connected, so the new node will be pat of the spanning forest.
+
 		//remove the connected component for node 2 from the list of connected components. The
 		//component that now contains node1 and node2 will have a pointer to a node in node1's
 		//original component before the merge
@@ -214,11 +221,15 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 		stHash_remove(connectivity->connectedComponents, node2Component->nodeInComponent);
 		stConnectedComponent_destruct(node2Component);
 
+		//link the level N - 1 Euler Tours together, which corresponds to 
+		//adding a tree edge on level N - 1.
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
 		return(true);
 	}
 	else {
+		//the nodes were already connected, so the Euler tour doesn't need 
+		//to be updated, and the edge is not part of the spanning forest.
 		newEdge->in_forest = false;
 	}
 	return(true);
@@ -226,6 +237,8 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 }
 
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
+	//check whether node1 and node2 have the same root in the spanning forest
+	//on level N - 1.
 	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
 	return(stEulerTour_connected(et_lowest, node1, node2));
 }
@@ -239,12 +252,18 @@ void print_list(stList *list) {
 	stList_destructIterator(it);
 	printf("\n");
 }
-struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
+
+//Attempts to find a replacement edge connecting two nodes, after a tree edge has been deleted.
+//Searches the edges incident to node w for such a replacement edge.
+struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex,
 		struct stDynamicEdge *removedEdge, int level, stSet *seen) {
+
 	if(stSet_search(seen, w)) {
 		return(NULL);
 	}
 	stSet_insert(seen, w);
+
+	//get a list of all edges incident to node w, which are possible replacement tree edges.
 	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, w);
 	int w_incident_length = stList_length(w_incident);
 
@@ -256,13 +275,17 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 		struct stDynamicEdge *e_wk = stConnectivity_getEdge(connectivity, 
 				w, e_wk_node2);
 		if (e_wk == removedEdge || e_wk->in_forest) {
-			//remove
+			//This edge won't work because it's either already in the forest,
+			//or the edge that we're trying to replace.
 			continue;
 		}
 		if (e_wk->level == level) {
+
+			//Get e_wk's other node (not w)
 			void *otherNode = e_wk->from == w ? e_wk->to: e_wk->from;
 			if (stEulerTour_connected(et_level, otherTreeVertex, otherNode)) {
-				//remove e_wk
+				//e_wk connects the two components, so it is the desired replacement
+				//edge. 
 				for(k = k+1; k < w_incident_length; k++) {
 					struct stDynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
 					struct stDynamicEdge *e_toRemove = stConnectivity_getEdge(connectivity, 
@@ -277,18 +300,25 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 				return(e_wk);
 			}
 			else {
+				//the level of this edge can be increased since it does
+				//not connect to the other component. This leads to later time 
+				//savings because this edge will be tried sooner when searching
+				//for a lower level replacement edge. Decreasing the level of
+				//this edge pays for considering it as a replacement.
 				e_wk->level--;
 			}
 		}
 		stList_set(w_incident, j++, e_wk_node2);
 
 	}
-	//resizeIncidentEdgeList(w_incident, j);
 	stList_destruct(w_incident);
 	return(NULL);
 
 }
 
+//Remove an edge from the graph and update the connected components. If the edge was
+//a tree edge, attempt to find a replacement edge to keep node1 and node2 connected. The
+//replacement edge should have the highest possible level.
 bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	stConnectedComponent *componentWithBothNodes = 
 		stConnectivity_getConnectedComponent(connectivity, node1);
