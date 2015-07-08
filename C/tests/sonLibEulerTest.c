@@ -15,6 +15,34 @@ static void setup(void) {
 static void teardown(void) {
 	stEulerTour_destruct(et);
 }
+static void test_stEulerTour_makeRoot(CuTest *testCase) {
+	setup();
+	stEulerVertex *a = stEulerTour_getVertex(et, (void*)1);
+	stEulerVertex *b = stEulerTour_getVertex(et, (void*)2);
+
+
+	stEulerTour_link(et, (void*)1, (void*)2);
+	stEulerTour_makeRoot(et, a);
+	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)1) == (void*)1);
+	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)2) == (void*)1);
+	stEulerTour_makeRoot(et, b);
+	CuAssertTrue(testCase, stEulerTour_findRootNode(et, (void*)1) == (void*)2);
+	teardown();
+}
+
+static void test_stEulerTour_circle(CuTest *testCase) {
+	setup();
+	stEulerVertex *c = stEulerTour_getVertex(et, (void*)3);
+	stEulerVertex *d = stEulerTour_getVertex(et, (void*)4);
+	stEulerTour_link(et, (void*)1, (void*)2);
+	stEulerTour_link(et, (void*)1, (void*)3);
+	stEulerTour_link(et, (void*)2, (void*)4);
+	stEulerTour_cut(et, (void*)1, (void*)2);
+	stEulerTour_makeRoot(et, c);
+	stEulerTour_makeRoot(et, d);
+	stEulerTour_link(et, (void*)3, (void*)4);
+	teardown();
+}
 
 static void test_stEulerTour_link(CuTest *testCase) {
 	setup();
@@ -128,5 +156,7 @@ CuSuite *sonLib_stEulerTestSuite(void) {
 	SUITE_ADD_TEST(suite, test_stEulerTour_cut);
 	SUITE_ADD_TEST(suite, test_stEulerTour_next);
 	SUITE_ADD_TEST(suite, test_stEulerTour_multipleIncidentEdges);
+	SUITE_ADD_TEST(suite, test_stEulerTour_circle);
+	SUITE_ADD_TEST(suite, test_stEulerTour_makeRoot);
 	return suite;
 }

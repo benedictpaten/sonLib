@@ -17,6 +17,7 @@ void *stEulerHalfEdge_getTo(stEulerHalfEdge *edge);
 //--------------------------------------------------
 stEulerTour *stEulerTour_construct();
 void stEulerTour_printTour(stEulerTour *et, void *v);
+void stEulerTour_printEdgeTour(stEulerTour *et, void *v);
 int stEulerTour_connected(stEulerTour *et, void *u, void *v);
 int stEulerTour_size(stEulerTour *et, void *v);
 stTreap *stEulerTour_findRoot(stEulerTour *et, void *v);

@@ -180,6 +180,15 @@ void stEulerTour_printTour(stEulerTour *et, void *v) {
 	stEulerTourIterator_destruct(it);
 	printf("\n");
 }
+void stEulerTour_printEdgeTour(stEulerTour *et, void *v) {
+	stEulerTourEdgeIterator *it = stEulerTour_getEdgeIterator(et, v);
+	printf("edge tour: ");
+	void *node1, *node2;
+	while(stEulerTourEdgeIterator_getNext(it, &node1, &node2)) {
+		printf("%p->%p  ", node1, node2);
+	}
+	stEulerTourEdgeIterator_destruct(it);
+}
 
 void stEulerTour_destruct(stEulerTour *et) {
 	if(et != NULL) {
@@ -247,6 +256,11 @@ void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 	if(stTreap_size(vertex->leftOut->node) == 2) {
 		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) ==
 				stTreap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
+		stTreap *first = stTreap_findMin(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)));
+		stEulerHalfEdge *firstEdge = stTreap_getValue(first);
+		if(firstEdge->from == vertex) return;
+		stTreap *second = stTreap_splitAfter(first);
+		stTreap_concat(second, first);
 		return;
 	}
 
