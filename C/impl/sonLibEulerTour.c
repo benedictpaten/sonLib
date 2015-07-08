@@ -69,6 +69,7 @@ struct _stEulerTour {
 	stHash *vertices;
 	stEdgeContainer *forwardEdges;
 	stEdgeContainer *backwardEdges;
+	stSet *connectedComponents;
 
 	int nComponents;
 };
@@ -78,6 +79,9 @@ struct _stEulerTourIterator {
 };
 struct _stEulerTourEdgeIterator {
 	stTreap *currentEdgeNode;
+};
+struct _stEulerTourComponentIterator {
+	stSetIterator *it;
 };
 
 
@@ -166,9 +170,14 @@ stEulerTour *stEulerTour_construct() {
 	et->vertices = stHash_construct2(NULL, (void(*)(void*))stEulerVertex_destruct);
 	et->forwardEdges = stEdgeContainer_construct2((void(*)(void*))stEulerHalfEdge_destruct);
 	et->backwardEdges = stEdgeContainer_construct2((void(*)(void*))stEulerHalfEdge_destruct);
+	et->connectedComponents = stSet_construct();
 
 	et->nComponents = 0;
 	return(et);
+}
+bool stEulerTour_isSingleton(stEulerTour *et, void *v) {
+	stEulerVertex *vertex = stEulerTour_getVertex(et, v);
+	return stEulerVertex_isSingleton(vertex);
 }
 void stEulerTour_printTour(stEulerTour *et, void *v) {
 	stEulerTourIterator *it = stEulerTour_getIterator(et, v);
@@ -195,6 +204,7 @@ void stEulerTour_destruct(stEulerTour *et) {
 		stHash_destruct(et->vertices);
 		stEdgeContainer_destruct(et->forwardEdges);
 		stEdgeContainer_destruct(et->backwardEdges);
+		stSet_destruct(et->connectedComponents);
 		free(et);
 	}
 }
@@ -239,20 +249,35 @@ stEulerVertex *stEulerTour_createVertex(stEulerTour *et, void *vertexID) {
 	stEulerVertex *newVertex = stEulerVertex_construct(vertexID);
 	newVertex->owner = et;
 	et->nComponents++;
+	stSet_insert(et->connectedComponents, vertexID);
 	stHash_insert(et->vertices, vertexID, newVertex);
 	return(newVertex);
 }
 void stEulerTour_removeVertex(stEulerTour *et, void *vertexID) {
+	assert(stEulerTour_isSingleton(et, vertexID)); //remove all edges before removing the vertex
 	stHash_remove(et->vertices, vertexID);
+	stSet_remove(et->connectedComponents, vertexID);
 	et->nComponents--;
 }
 
+void *stEulerTour_getConnectedComponent(stEulerTour *et, void *nodeInComponent) {
+	if(stEulerTour_isSingleton(et, nodeInComponent)) {
+		return nodeInComponent;
+	}
+	return stEulerTour_findRootNode(et, nodeInComponent);
+}
 
 /*Move a vertex to the beginning of the tour. */
 void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 	if(stEulerVertex_isSingleton(vertex)) {
 		return;
 	}
+	//update this component's root node in the list of connected components
+	void *currentRoot = stEulerTour_findRootNode(et, vertex->vertexID);
+	stSet_remove(et->connectedComponents, currentRoot);
+	stSet_insert(et->connectedComponents, vertex->vertexID);
+
+	
 	if(stTreap_size(vertex->leftOut->node) == 2) {
 		assert(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)) ==
 				stTreap_findRoot(stEulerVertex_incidentEdgeB(vertex)));
@@ -358,6 +383,9 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
 
+	stSet_remove(et->connectedComponents, stEulerTour_getConnectedComponent(et, vertex->vertexID));
+	stSet_remove(et->connectedComponents, stEulerTour_getConnectedComponent(et, other->vertexID));
+
 	stTreap *f = NULL;
 	if (stEulerVertex_incidentEdgeA(vertex)) {
 		f = stTreap_findMin(stTreap_findRoot(stEulerVertex_incidentEdgeA(vertex)));
@@ -404,6 +432,7 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 		vertex->rightIn = newBackwardEdge;
 	}
 	assert(stTreap_findRoot(newForwardEdge->node) == stTreap_findRoot(newBackwardEdge->node));
+	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, vertex->vertexID));
 	assert(stEulerVertex_connected(vertex, other));
 }
 
@@ -443,6 +472,7 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 
 void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	et->nComponents++;
+	stSet_remove(et->connectedComponents, stEulerTour_getConnectedComponent(et, u));
 
 	//get the two halves of this edge
 	assert(stEulerTour_connected(et, u, v));
@@ -639,6 +669,9 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	stEdgeContainer_deleteEdge(et->forwardEdges, v, u);
 	stEdgeContainer_deleteEdge(et->backwardEdges, u, v);
 	stEdgeContainer_deleteEdge(et->backwardEdges, v, u);
+
+	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, u));
+	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, v));
 }
 //------------------------------------------------------------------
 // Tour iterators
@@ -688,5 +721,17 @@ bool stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it, void **node1, 
 	return true;
 }
 void stEulerTourEdgeIterator_destruct(stEulerTourEdgeIterator *it) {
+	free(it);
+}
+stEulerTourComponentIterator *stEulerTour_getComponentIterator(stEulerTour *et) {
+	stEulerTourComponentIterator *it = st_malloc(sizeof(stEulerTourComponentIterator));
+	it->it = stSet_getIterator(et->connectedComponents);
+	return it;
+}
+void *stEulerTourComponentIterator_getNext(stEulerTourComponentIterator *it) {
+	return(stSet_getNext(it->it));
+}
+void stEulerTourComponentIterator_destruct(stEulerTourComponentIterator *it) {
+	stSet_destructIterator(it->it);
 	free(it);
 }

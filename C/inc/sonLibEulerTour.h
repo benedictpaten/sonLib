@@ -16,6 +16,8 @@ void *stEulerHalfEdge_getFrom(stEulerHalfEdge *edge);
 void *stEulerHalfEdge_getTo(stEulerHalfEdge *edge);
 //--------------------------------------------------
 stEulerTour *stEulerTour_construct();
+bool stEulerTour_isSingleton(stEulerTour *et, void *v);
+void *stEulerTour_getConnectedComponent(stEulerTour *et, void *v);
 void stEulerTour_printTour(stEulerTour *et, void *v);
 void stEulerTour_printEdgeTour(stEulerTour *et, void *v);
 int stEulerTour_connected(stEulerTour *et, void *u, void *v);
@@ -38,4 +40,8 @@ stSet *stEulerTour_getNodesInComponent(stEulerTour *et, void *v);
 stEulerTourEdgeIterator *stEulerTour_getEdgeIterator(stEulerTour *et, void *v);
 bool stEulerTourEdgeIterator_getNext(stEulerTourEdgeIterator *it, void **node1, void **node2); 
 void stEulerTourEdgeIterator_destruct(stEulerTourEdgeIterator *it);
+//------------------------------------------------------------
+stEulerTourComponentIterator *stEulerTour_getComponentIterator(stEulerTour *et);
+void *stEulerTourComponentIterator_getNext(stEulerTourComponentIterator *it);
+void stEulerTourComponentIterator_destruct(stEulerTourComponentIterator *it);
 #endif

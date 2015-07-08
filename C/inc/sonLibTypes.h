@@ -62,6 +62,7 @@ typedef struct _stEulerHalfEdge stEulerHalfEdge;
 typedef struct _stEulerTour stEulerTour;
 typedef struct _stEulerTourIterator stEulerTourIterator;
 typedef struct _stEulerTourEdgeIterator stEulerTourEdgeIterator;
+typedef struct _stEulerTourComponentIterator stEulerTourComponentIterator;
 typedef struct _stConnectivity stConnectivity;
 typedef struct _stConnectedComponent stConnectedComponent;
 typedef struct _stConnectedComponentIterator stConnectedComponentIterator;
