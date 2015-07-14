@@ -192,7 +192,7 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	struct stDynamicEdge *newEdge = stDynamicEdge_construct();
 	newEdge->from = node1;
 	newEdge->to = node2;
-	newEdge->level = connectivity->nLevels - 1;
+	newEdge->level = 0;
 	
 	//add the edge object as an incident edge to an arbitrary one of the nodes
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
@@ -202,7 +202,7 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
 
 
-	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
+	stEulerTour *et_lowest = stConnectivity_getTopLevel(connectivity);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
 		//the two nodes are not already connected, so the new node will be pat of the spanning forest.
 
@@ -225,7 +225,7 @@ bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
 	//check whether node1 and node2 have the same root in the spanning forest
 	//on level N - 1.
-	stEulerTour *et_lowest = stList_get(connectivity->et, connectivity->nLevels - 1);
+	stEulerTour *et_lowest = stConnectivity_getTopLevel(connectivity);
 	return(stEulerTour_connected(et_lowest, node1, node2));
 }
 
@@ -291,7 +291,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 				//savings because this edge will be tried sooner when searching
 				//for a lower level replacement edge. Decreasing the level of
 				//this edge pays for considering it as a replacement.
-				e_wk->level--;
+				e_wk->level++;
 			}
 		}
 		stList_set(w_incident, j++, e_wk_node2);
@@ -317,16 +317,16 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 
 		return(true);
 	}
-	assert(edge->level > 0);
-	for (int i = 0; i < edge->level; i++) {
+	assert(edge->level < connectivity->nLevels - 1);
+	for (int i = edge->level + 1; i < connectivity->nLevels; i++) {
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		assert(!stEulerTour_connected(et_i, node1, node2));
 	}
-	stEulerTour *et_top = stConnectivity_getTopLevel(connectivity);
-	assert(stEulerTour_connected(et_top, node1, node2));
+	//stEulerTour *et_top = stConnectivity_getTopLevel(connectivity);
+	//assert(stEulerTour_connected(et_top, node1, node2));
 
 	struct stDynamicEdge *replacementEdge = NULL;
-	for (int i = edge->level; !replacementEdge && i < connectivity->nLevels; i++) {
+	for (int i = edge->level; !replacementEdge && i >= 0; i--) {
 		stSet *seen = stSet_construct();
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		assert(stEulerTour_connected(et_i, node1, node2));
@@ -349,8 +349,8 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		while(stEulerTourEdgeIterator_getNext(edgeIt, &from, &to)) {
 			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, from, to);
 			if(treeEdge->level == i) {
-				treeEdge->level--;
-				assert(treeEdge->level >= 0);
+				treeEdge->level++;
+				assert(treeEdge->level <= connectivity->nLevels - 1);
 				stEulerTour *et_te = stList_get(connectivity->et, treeEdge->level);
 				assert(!stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
 				stEulerTour_link(et_te, treeEdge->from, treeEdge->to);
@@ -367,7 +367,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			assert(replacementEdge->level == i);
 			stEulerTour_link(et_i, replacementEdge->from, replacementEdge->to);
 			replacementEdge->in_forest = true;
-			for(int h = replacementEdge->level + 1; h < connectivity->nLevels; h++) {
+			for(int h = replacementEdge->level - 1; h >= 0; h--) {
 				stEulerTour *et_h = stList_get(connectivity->et, h);
 				stEulerTour_cut(et_h, node1, node2);
 				assert(!stEulerTour_connected(et_h, node1, node2));
@@ -376,7 +376,6 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		}
 		stSet_destruct(seen);
 	}
-	edge->level = connectivity->nLevels;
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
 	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
@@ -385,7 +384,7 @@ bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 
 }
 stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
-	return(stList_get(connectivity->et, connectivity->nLevels - 1));
+	return stList_get(connectivity->et, 0);
 }
 
 // Might be cool to be able to add or remove several edges at once, if there is a way to

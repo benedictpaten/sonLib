@@ -125,6 +125,6 @@ static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
 
 int main(int argc, char **argv) {
 	addNodesAndPlot("../dynamicConnectivity/addNodesPerformance.txt", 100);
-    addEdgesAndPlot("../dynamicConnectivity/addEdgesPerformance.txt", 100000, 100000);
+    addEdgesAndPlot("../dynamicConnectivity/addEdgesPerformance.txt", 1000000, 100000);
 }
 

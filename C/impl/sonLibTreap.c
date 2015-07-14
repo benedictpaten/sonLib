@@ -249,7 +249,7 @@ int stTreap_compare(stTreap* a, stTreap *b) {
  * rotations to move a new node up until
  * its priority is less than that of its parent.*/
 void stTreap_moveUp(stTreap *node) {
-	while(node->parent && (node->priority > node->parent->priority)) {
+	while(node->parent && (node->priority >= node->parent->priority)) {
 		if(node->parent->left == node) {
 			stTreap_rotateRight(node->parent);
 
@@ -358,6 +358,7 @@ stTreap *stTreap_findMax(stTreap *node) {
 stTreap *stTreap_splitAfter(stTreap *node) {
 	node->priority = INT_MAX;
 	stTreap_moveUp(node);
+    assert(stTreap_findRoot(node) == node);
 	assert(node->parent == NULL); //node should now be the new root of the treap
 	stTreap *rightSubtree = node->right;
 	if(rightSubtree) {
