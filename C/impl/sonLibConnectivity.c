@@ -127,25 +127,27 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 //add new levels to compensate for the addition of new nodes,
 //and copy nodes from level 0 to the new levels so that all
 //levels have the same nodes
-void resizeEulerTourList(stConnectivity *connectivity) {
-	if (connectivity->nLevels <= stList_length(connectivity->et)) {
-		return;
+void addLevel(stConnectivity *connectivity) {
+	
+	stEulerTour *newLevel = stEulerTour_construct();
+	stSetIterator *it = stSet_getIterator(connectivity->nodes);
+	void *node;
+	while((node = stSet_getNext(it))) {
+		stEulerTour_createVertex(newLevel, node);
 	}
-	while(stList_length(connectivity->et) < connectivity->nLevels) {
-		stEulerTour *newLevel = stEulerTour_construct();
-		stSetIterator *it = stSet_getIterator(connectivity->nodes);
-		void *node;
-		while((node = stSet_getNext(it))) {
-			stEulerTour_createVertex(newLevel, node);
-		}
-		stList_append(connectivity->et, newLevel);
-		stSet_destructIterator(it);
-	}
+	stList_append(connectivity->et, newLevel);
+	stSet_destructIterator(it);
+}
+void removeLevel(stConnectivity *connectivity) {
+	stList_pop(connectivity->et);
 }
 void resizeIncidentEdgeList(stList *incident, int newsize) {
 	for(int i = newsize; i < stList_length(incident); i++) {
 		stList_remove(incident, newsize);
 	}
+}
+int getNLevels(int nNodes) {
+	return (int) ((int)(log(nNodes)/log(2)) + 1);
 }
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
@@ -153,11 +155,10 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	// connected component with only one member.
 	connectivity->nNodes++;
 
-	//only add levels if there are no edges in the graph yet. Adding levels after edges already
-	//exist would require changing their levels
-	if(connectivity->nEdges == 0) {
-		connectivity->nLevels = (int) ((int)(log(connectivity->nNodes)/log(2)) + 1);
-		resizeEulerTourList(connectivity);
+	//maintain log(n) levels in the graph
+	connectivity->nLevels = getNLevels(connectivity->nNodes);
+	while(stList_length(connectivity->et) < connectivity->nLevels) {
+		addLevel(connectivity);
 	}
 
 
@@ -402,7 +403,14 @@ void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	stList_destructIterator(it);
 	stList_destruct(nodeIncident);
 	stSet_remove(connectivity->nodes, node);
+	
+	//delete a level if necessary to preserve log(n) levels
 	connectivity->nNodes--;
+	connectivity->nLevels = getNLevels(connectivity->nNodes);
+	if(connectivity->nLevels < stList_length(connectivity->et)) {
+		removeLevel(connectivity);
+	}
+
 	for(int i = 0; i < connectivity->nLevels; i++) {
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		stEulerTour_removeVertex(et_i, node);
