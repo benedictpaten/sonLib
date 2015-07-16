@@ -161,6 +161,11 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 3, (void*) 4));
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 4, (void*) 2));
 	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
+
+	stConnectivity_removeEdge(connectivity, (void*) 2, (void*) 4);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
+	stConnectivity_addEdge(connectivity, (void*) 2, (void *) 4);
+
 	stConnectivity_removeEdge(connectivity, (void*) 3, (void*)4);
 	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 1, (void*) 2));
 	stConnectivity_addEdge(connectivity, (void*) 3, (void*) 4);
@@ -200,12 +205,12 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
-	srand(time(NULL));
-	//srand(4);
+	//srand(time(NULL));
+	srand(4);
 	//srand(6789);
-	int nNodes = 400;
-	int nEdgesToAdd = 300;
-	int nEdgesToRemove = 100;
+	int nNodes = 500;
+	int nEdgesToAdd = 500;
+	int nEdgesToRemove = 400;
 	int nQueries = 10000;
 	stList *nodes = stList_construct();
 	stNaiveConnectivity *naive = stNaiveConnectivity_construct();
@@ -223,16 +228,20 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		int *node1 = stList_get(nodes, rand() % nNodes);
 		int *node2 = stList_get(nodes, rand() % nNodes);
 		if(node1 >= node2) continue;
-		if(!stConnectivity_addEdge(connectivity, node1, node2)) continue;
+		CuAssertTrue(testCase, stConnectivity_hasEdge(connectivity, node1, node2) == stNaiveConnectivity_hasEdge(naive, node1, node2));
+		if(stConnectivity_hasEdge(connectivity, node1, node2)) continue;
+		stConnectivity_addEdge(connectivity, node1, node2);
 		stNaiveConnectivity_addEdge(naive, node1, node2);
 		nEdgesToAdd--;
 	}
 	//remove edges
-	while (nEdgesToRemove > 0) {
+	while(nEdgesToRemove > 0) {
 		int *node1 = stList_get(nodes, rand() % nNodes);
 		int *node2 = stList_get(nodes, rand() % nNodes);
 		if(node1 >= node2) continue;
-		if(!stConnectivity_removeEdge(connectivity, node1, node2)) continue;
+		CuAssertTrue(testCase, stConnectivity_hasEdge(connectivity, node1, node2) == stNaiveConnectivity_hasEdge(naive, node1, node2));
+		if(!stConnectivity_hasEdge(connectivity, node1, node2)) continue;
+		stConnectivity_removeEdge(connectivity, node1, node2);
 		stNaiveConnectivity_removeEdge(naive, node1, node2);
 		nEdgesToRemove--;
 	}

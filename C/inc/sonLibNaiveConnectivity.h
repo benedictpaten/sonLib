@@ -5,6 +5,7 @@ stSet *stNaiveConnectedComponent_getNodes(stNaiveConnectedComponent *comp);
 void stNaiveConnectivity_destruct(stNaiveConnectivity *connectivity);
 void stNaiveConnectivity_addNode(stNaiveConnectivity *connectivity, void *node);
 void stNaiveConnectivity_addEdge(stNaiveConnectivity *connectivity, void *node1, void *node2);
+bool stNaiveConnectivity_hasEdge(stNaiveConnectivity *connectivity, void *node1, void *node2);
 void stNaiveConnectivity_removeEdge(stNaiveConnectivity *connectivity, void *node1, void *node2);
 void stNaiveConnectivity_removeNode(stNaiveConnectivity *connectivity, void *node);
 stNaiveConnectedComponent *stNaiveConnectivity_getConnectedComponent(stNaiveConnectivity 

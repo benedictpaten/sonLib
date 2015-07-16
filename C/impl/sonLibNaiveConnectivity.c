@@ -130,6 +130,17 @@ static void removeEdgeFromAdjList(stNaiveConnectivity *connectivity, void *node,
     }
     free(adj);
 }
+bool stNaiveConnectivity_hasEdge(stNaiveConnectivity *connectivity, void *node1, void *node2) {
+	struct adjacency *adjList1 = stHash_search(connectivity->nodesToAdjList, node1);
+	if(!adjList1) return false;
+	while(adjList1 != NULL) {
+		if (adjList1->toNode == node2) {
+			return true;
+		}
+		adjList1 = adjList1->next;
+	}
+	return false;
+}
 
 void stNaiveConnectivity_removeEdge(stNaiveConnectivity *connectivity, void *node1, void *node2) {
     invalidateCache(connectivity);

@@ -18,12 +18,13 @@ stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 
-bool stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2);
+void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
 		struct stDynamicEdge *removedEdge, int level, stSet *seen);
 
-bool stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
+bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *node2);
+void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node);
 stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity);

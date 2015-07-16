@@ -361,6 +361,10 @@ void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	assert(u != v);
 	assert(!stEulerTour_connected(et, u, v));
+	assert(!stEdgeContainer_getEdge(et->forwardEdges, u, v));
+	assert(!stEdgeContainer_getEdge(et->forwardEdges, v, u));
+	assert(!stEdgeContainer_getEdge(et->backwardEdges, u, v));
+	assert(!stEdgeContainer_getEdge(et->backwardEdges, v, u));
 	stEulerVertex *vertex = stHash_search(et->vertices, u);
 	stEulerVertex *other = stHash_search(et->vertices, v);
 	et->nComponents--;
@@ -378,7 +382,7 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	newBackwardEdge->to = vertex;
 
 	stEdgeContainer_addEdge(et->forwardEdges, u, v, newForwardEdge);
-	stEdgeContainer_addEdge(et->backwardEdges, v, u, newBackwardEdge);
+	stEdgeContainer_addEdge(et->backwardEdges, u, v, newBackwardEdge);
 
 	stEulerTour_makeRoot(et, vertex);
 	stEulerTour_makeRoot(et, other);
@@ -477,11 +481,11 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	//get the two halves of this edge
 	assert(stEulerTour_connected(et, u, v));
 	stEulerHalfEdge *f = stEdgeContainer_getEdge(et->forwardEdges, u, v);
-	if(!f) f = stEdgeContainer_getEdge(et->forwardEdges, v, u);
+	if(f == NULL) f = stEdgeContainer_getEdge(et->forwardEdges, v, u);
 	stEulerHalfEdge *b = stEdgeContainer_getEdge(et->backwardEdges, u, v);
-	if(!b) b = stEdgeContainer_getEdge(et->backwardEdges, v, u);
-	assert(f);
-	assert(b);
+	if(b == NULL) b = stEdgeContainer_getEdge(et->backwardEdges, v, u);
+	assert(f != NULL);
+	assert(b != NULL);
 	assert(b->inverse->inverse == b);
 	stEulerVertex *from = f->from;
 	stEulerVertex *to = f->to;
@@ -505,23 +509,6 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	stTreap *nn = stTreap_prev(b->node); //nn
 
 	assert(stTreap_next(nn) == b->node);
-
-	/*stEulerHalfEdge *p_edge = p->value;
-	  stEulerHalfEdge *n_edge = n->value;
-	  stEulerHalfEdge *pn_edge = pn->value;
-	  stEulerHalfEdge *nn_edge = nn->value;
-	  void *n_from = n_edge->from->vertexID;
-	  void *n_to = n_edge->to->vertexID;
-	  void *pn_from = pn_edge->from->vertexID;
-	  void *pn_to = pn_edge->to->vertexID;
-	  void *nn_from = nn_edge->from->vertexID;
-	  void *nn_to = nn_edge->to->vertexID;
-	  printf("n: %p to %p\n", n_from, n_to);
-	  printf("pn: %p to %p\n", pn_from, pn_to);
-	  printf("nn: %p to %p\n", nn_from, nn_to);
-	  printf("f: %p to %p\n", f->from->vertexID, f->to->vertexID);
-	  printf("b: %p to %p\n", b->from->vertexID, b->to->vertexID);
-	  */
 
 	/*              p        ____      f       ____   pn
 	 *tour start ---------->|from|----------->|to  |-------->

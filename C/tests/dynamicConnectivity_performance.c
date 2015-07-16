@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void dynamicConnectivity_basicPerformance() {
+static void dynamicConnectivity_basicPerformance() {
 	//srand(time(NULL));
 	clock_t start = clock();
-	int nNodes = 1000000;
-	int nEdges = 100000;
-	int nEdgesToRemove =50000;
+	int nNodes = 500;
+	int nEdges = 500;
+	int nEdgesToRemove =450;
 	stList *nodes = stList_construct();
 
 	stConnectivity *connectivity = stConnectivity_construct();
@@ -124,6 +124,7 @@ static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
 }
 
 int main(int argc, char **argv) {
+	dynamicConnectivity_basicPerformance();
 	addNodesAndPlot("../dynamicConnectivity/addNodesPerformance.txt", 100);
     addEdgesAndPlot("../dynamicConnectivity/addEdgesPerformance.txt", 1000000, 100000);
 }
