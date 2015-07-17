@@ -212,7 +212,6 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
 		//the two nodes are not already connected, so the new node will be pat of the spanning forest.
 
-		printf("adding %p, %p as tree edge\n", node1, node2);
 
 		//link the level N - 1 Euler Tours together, which corresponds to 
 		//adding a tree edge on level N - 1.
@@ -223,7 +222,6 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	else {
 		//the nodes were already connected, so the Euler tour doesn't need 
 		//to be updated, and the edge is not part of the spanning forest.
-		printf("adding %p, %p as non-tree edge\n", node1, node2);
 		newEdge->in_forest = false;
 	}
 	return;
@@ -314,7 +312,6 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 //a tree edge, attempt to find a replacement edge to keep node1 and node2 connected. The
 //replacement edge should have the highest possible level.
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	printf("removing %p, %p\n", node1, node2);
 	struct stDynamicEdge *edge = stConnectivity_getEdge(connectivity, 
 			node1, node2);
 	assert(edge);
@@ -339,7 +336,6 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		stSet *seen = stSet_construct();
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		assert(stEulerTour_connected(et_i, node1, node2));
-		printf("cutting %p, %p on level %d\n", node1, node2, i);
 		stEulerTour_cut(et_i, node1, node2);
 
 		//set node1 equal to id of the vertex in the smaller of the two components that have just
@@ -363,8 +359,6 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 				assert(treeEdge->level <= connectivity->nLevels - 1);
 				stEulerTour *et_te = stList_get(connectivity->et, treeEdge->level);
 				assert(!stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
-				printf("linking %p, %p on level %d after level-up\n", treeEdge->from, treeEdge->to, treeEdge->level);
-				//treeEdge->in_forest = true;
 				stEulerTour_link(et_te, treeEdge->from, treeEdge->to);
 				assert(stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
 			}
@@ -379,14 +373,10 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			assert(replacementEdge->level == i);
 			stEulerTour_link(et_i, replacementEdge->from, replacementEdge->to);
 			replacementEdge->in_forest = true;
-			printf("adding %p, %p to forest\n", replacementEdge->from, replacementEdge->to);
-			printf("linking %p, %p on level %d as a replacement edge\n", replacementEdge->from, replacementEdge->to, i);
 			for(int h = replacementEdge->level - 1; h >= 0; h--) {
 				stEulerTour *et_h = stList_get(connectivity->et, h);
-				printf("cutting edge to replace (%p, %p) on level %d\n", node1, node2, h);
 				stEulerTour_cut(et_h, node1, node2);
 				assert(!stEulerTour_connected(et_h, node1, node2));
-				printf("linking %p, %p on level %d as a replacement edge\n", replacementEdge->from, replacementEdge->to, h);
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
 			}
 		}
