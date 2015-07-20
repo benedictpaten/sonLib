@@ -20,6 +20,7 @@ struct _stConnectivity {
 	int nEdges;
 	stList *et; //list of the Euler Tour Trees for each level in the graph
 	int nLevels;
+	stList *connectedComponentList;
 	
 	//stores every edge in the graph. Each edge object stores the level of the edge and
 	//whether or not it's in the spanning forest. For nodes a and b, the edge object is stored
@@ -101,6 +102,9 @@ stConnectivity *stConnectivity_construct(void) {
 
 	//add level zero Euler Tour
 	stList_append(connectivity->et, stEulerTour_construct());
+	connectivity->connectedComponentList = stList_construct3(0, 
+			(void(*)(void*))stConnectedComponent_destruct);
+
 
 	connectivity->nLevels = 0;
 	connectivity->nNodes = 0;
@@ -118,6 +122,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stSet_destruct(connectivity->nodes);
 	stEdgeContainer_destruct(connectivity->edges);
 	stEdgeContainer_destruct(connectivity->incidentEdges);
+	stList_destruct(connectivity->connectedComponentList);
 
 	free(connectivity);
 }
@@ -288,7 +293,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 					stList_set(w_incident, j++, e_toRemove_node2);
 
 				}
-				resizeIncidentEdgeList(w_incident, j);
+				stList_destruct(w_incident);
 				return(e_wk);
 			}
 			else {
@@ -312,6 +317,10 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 //a tree edge, attempt to find a replacement edge to keep node1 and node2 connected. The
 //replacement edge should have the highest possible level.
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
+	stList_destruct(connectivity->connectedComponentList);
+	connectivity->connectedComponentList = stList_construct3(0, 
+			(void(*)(void*))stConnectedComponent_destruct);
+
 	struct stDynamicEdge *edge = stConnectivity_getEdge(connectivity, 
 			node1, node2);
 	assert(edge);
@@ -435,6 +444,7 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 	stEulerTour *et_0 = stConnectivity_getTopLevel(connectivity);
 	void *compNode = stEulerTour_getConnectedComponent(et_0, node);
 	stConnectedComponent *comp = stConnectedComponent_construct(connectivity, compNode);
+	stList_append(connectivity->connectedComponentList, comp);
 	return comp;
 }
 void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component) {

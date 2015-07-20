@@ -277,14 +277,15 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stList_append(trueComponents, naiveComp);
 	}
 	stNaiveConnectedComponentIterator_destruct(itNaive);
-	//printf("%d true components, %d experimental components\n", (int)stList_length(trueComponents), 
-	//		(int)stList_length(components));
+	printf("%d true components, %d experimental components\n", (int)stList_length(trueComponents), 	(int)stList_length(components));
 	CuAssertTrue(testCase, stList_length(components) == stList_length(trueComponents));
 	//check the nodes in each component
 	for (int i = 0; i < stList_length(components); i++) {
 		stNaiveConnectedComponent *truecomponent_i = stList_get(trueComponents, i);
 		stSet *trueNodesInComponent = stNaiveConnectedComponent_getNodes(truecomponent_i);
-		void *nodeInComponent = stList_get(stSet_getList(trueNodesInComponent), 0);
+		stList *trueNodesInComponentList = stSet_getList(trueNodesInComponent);
+		void *nodeInComponent = stList_get(trueNodesInComponentList, 0);
+		stList_destruct(trueNodesInComponentList);
 
 		stSet *nodesInComponent = stSet_construct();
 		stConnectedComponent *comp_i = stConnectivity_getConnectedComponent(connectivity, nodeInComponent);
@@ -297,7 +298,10 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 		stConnectedComponentNodeIterator_destruct(nodeIt);
 
 		CuAssertTrue(testCase, setsEqual(nodesInComponent, trueNodesInComponent));
+		stSet_destruct(nodesInComponent);
 	}
+	stList_destruct(nodes);
+	stNaiveConnectivity_destruct(naive);
 
 	teardown();
 }

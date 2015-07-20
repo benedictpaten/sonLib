@@ -97,9 +97,7 @@ stEulerVertex *stEulerVertex_construct(void *vertexID) {
 	return(v);
 }
 void stEulerVertex_destruct(stEulerVertex *vertex) {
-	if(vertex != NULL) {
-		free(vertex);
-	}
+	free(vertex);
 }
 /*Returns the half-edge coming into this vertex on the first traversal.*/
 stTreap *stEulerVertex_incidentEdgeA(stEulerVertex *vertex) {
@@ -361,25 +359,19 @@ void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	assert(u != v);
 	assert(!stEulerTour_connected(et, u, v));
-	//assert(!stEdgeContainer_getEdge(et->forwardEdges, u, v));
-	//assert(!stEdgeContainer_getEdge(et->forwardEdges, v, u));
-	//assert(!stEdgeContainer_getEdge(et->backwardEdges, u, v));
-	//assert(!stEdgeContainer_getEdge(et->backwardEdges, v, u));
+	assert(!stEdgeContainer_getEdge(et->forwardEdges, u, v));
+	assert(!stEdgeContainer_getEdge(et->forwardEdges, v, u));
+	assert(!stEdgeContainer_getEdge(et->backwardEdges, u, v));
+	assert(!stEdgeContainer_getEdge(et->backwardEdges, v, u));
 	stEulerVertex *vertex = stHash_search(et->vertices, u);
 	stEulerVertex *other = stHash_search(et->vertices, v);
 	et->nComponents--;
 	
-	stEulerHalfEdge *newForwardEdge = stEdgeContainer_getEdge(et->forwardEdges, u, v);
-	if(!newForwardEdge) newForwardEdge = stEdgeContainer_getEdge(et->forwardEdges, v, u);
-	stEulerHalfEdge *newBackwardEdge = stEdgeContainer_getEdge(et->backwardEdges, u, v);
-	if(!newBackwardEdge) newBackwardEdge = stEdgeContainer_getEdge(et->backwardEdges, v, u);
 
-	if(!newForwardEdge) {
-		newForwardEdge = stEulerHalfEdge_construct();
-		newBackwardEdge = stEulerHalfEdge_construct();
-		stEdgeContainer_addEdge(et->forwardEdges, u, v, newForwardEdge);
-		stEdgeContainer_addEdge(et->backwardEdges, u, v, newBackwardEdge);
-	}
+	stEulerHalfEdge *newForwardEdge = stEulerHalfEdge_construct();
+	stEulerHalfEdge *newBackwardEdge = stEulerHalfEdge_construct();
+	stEdgeContainer_addEdge(et->forwardEdges, u, v, newForwardEdge);
+	stEdgeContainer_addEdge(et->backwardEdges, u, v, newBackwardEdge);
 
 	newForwardEdge->isForwardEdge = true;
 	newBackwardEdge->isForwardEdge = false;
@@ -645,8 +637,10 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 			from->rightIn = NULL;
 		}
 	}
-	stTreap_splitAfter(f->node);
-	stTreap_splitBefore(b->node);
+	stTreap *after = stTreap_splitAfter(f->node);
+	stTreap *before = stTreap_splitBefore(b->node);
+	if(before) assert(stTreap_next(before) != b->node);
+	if(after) assert(stTreap_prev(after) != f->node);
 
 	if(stEulerVertex_incidentEdgeA(from) && 
 			(stTreap_size(stEulerVertex_incidentEdgeA(from)) == 1)) {
@@ -665,10 +659,10 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	assert(stTreap_prev(f->node) == NULL);
 	assert(stTreap_next(b->node) == NULL);
 	assert(stTreap_prev(b->node) == NULL);
-	//stEdgeContainer_deleteEdge(et->forwardEdges, u, v);
-	//stEdgeContainer_deleteEdge(et->forwardEdges, v, u);
-	//stEdgeContainer_deleteEdge(et->backwardEdges, u, v);
-	//stEdgeContainer_deleteEdge(et->backwardEdges, v, u);
+	stEdgeContainer_deleteEdge(et->forwardEdges, u, v);
+	stEdgeContainer_deleteEdge(et->forwardEdges, v, u);
+	stEdgeContainer_deleteEdge(et->backwardEdges, u, v);
+	stEdgeContainer_deleteEdge(et->backwardEdges, v, u);
 
 	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, u));
 	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, v));
