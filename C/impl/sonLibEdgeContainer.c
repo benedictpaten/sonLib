@@ -65,7 +65,7 @@ void *stEdgeContainer_getEdge(stEdgeContainer *container, void *u, void *v) {
 		}
 		incidentEdge = incidentEdge->next;
 	}
-	return(NULL);
+	return NULL;
 }
 void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void *edge) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, u);
@@ -80,7 +80,7 @@ void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void 
 	}
 	while(incident->next) {
 		incident = incident->next;
-	}
+	;}
 	incident->next = newList;
 	newList->prev = incident;
 }
@@ -103,8 +103,10 @@ void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 	if(incident->prev != NULL) {
 		incident->prev->next = incident->next;
 	}
-	else {
+	if (incident->prev == NULL) {
 		stHash_remove(container->edges, u);
+	}
+	if(incident->next != NULL) {
 		stHash_insert(container->edges, u, incident->next);
 	}
 
