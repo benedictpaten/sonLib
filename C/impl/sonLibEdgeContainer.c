@@ -57,6 +57,16 @@ void stIncidentEdgeList_destruct(stIncidentEdgeList *list) {
 void stEdgeContainer_addNode(stEdgeContainer *container, void *n) {
 	stHash_insert(container->edges, n, stIncidentEdgeList_construct(NULL, container->destructEdge));
 }
+bool stEdgeContainer_hasEdge(stEdgeContainer *container, void *u, void *v) {
+	stIncidentEdgeList *incidentEdge = stHash_search(container->edges, u);
+	while(incidentEdge) {
+		if(incidentEdge->toNode == v) {
+			return true;
+		}
+		incidentEdge = incidentEdge->next;
+	}
+	return false;
+}
 void *stEdgeContainer_getEdge(stEdgeContainer *container, void *u, void *v) {
 	stIncidentEdgeList *incidentEdge = stHash_search(container->edges, u);
 	while (incidentEdge) {

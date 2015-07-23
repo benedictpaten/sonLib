@@ -37,5 +37,6 @@
 #include "sonLibConnectivity.h"
 #include "sonLibEdgeContainer.h"
 #include "sonLibNaiveConnectivity.h"
+#include "sonLibConnectivityDebug.h"
 
 #endif /* SONLIB_H_ */
