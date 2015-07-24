@@ -26,7 +26,7 @@ struct _stConnectivity {
 	//whether or not it's in the spanning forest. For nodes a and b, the edge object is stored
 	//in either (a, b) or (b, a), but not both. Both possibilities are checked when getting the
 	//edge.
-	stEdgeContainer *edges;
+	stNaiveEdgeContainer *edges;
 
 };
 
@@ -129,7 +129,8 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nLevels = 0;
 	connectivity->nNodes = 0;
 	connectivity->nEdges = 0;
-	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))DynamicEdge_destruct);
+	//connectivity->edges = stEdgeContainer_construct2((void(*)(void*))DynamicEdge_destruct);
+	connectivity->edges = stNaiveEdgeContainer_construct();
 
 	return(connectivity);
 
@@ -139,7 +140,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	// Free the memory for the data structure.
 	stList_destruct(connectivity->et);
 	stSet_destruct(connectivity->nodes);
-	stEdgeContainer_destruct(connectivity->edges);
+	stNaiveEdgeContainer_destruct(connectivity->edges);
 	stList_destruct(connectivity->connectedComponentList);
 
 	free(connectivity);
@@ -171,15 +172,12 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 }
 
 bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	return stEdgeContainer_hasEdge(connectivity->edges, node1, node2);
-}
-stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
-	return connectivity->edges;
+	return stNaiveEdgeContainer_hasEdge(connectivity->edges, node1, node2);
 }
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	assert(node1 != node2);
-	assert(!stEdgeContainer_getEdge(connectivity->edges, node1, node2));
+	assert(!stNaiveEdgeContainer_getEdge(connectivity->edges, node1, node2));
 	connectivity->nEdges++;
 	struct DynamicEdge *newEdge = DynamicEdge_construct();
 
@@ -189,7 +187,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	newEdge->level = 0;
 	
 	//add the edge object as an incident edge to an arbitrary one of the nodes
-	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
+	stNaiveEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
 
 
 	stEulerTour *et_lowest = getTopLevel(connectivity);
@@ -240,7 +238,7 @@ struct DynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTree
 	stSet_insert(seen, w);
 
 	//get a list of all edges incident to node w, which are possible replacement tree edges.
-	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, w);
+	stList *w_incident = stNaiveEdgeContainer_getIncidentEdgeList(connectivity->edges, w);
 	int w_incident_length = stList_length(w_incident);
 
 	int k, j = 0;
@@ -248,7 +246,7 @@ struct DynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTree
 	stEulerTour *et_level = stList_get(connectivity->et, level);
 	for(k = 0; k < w_incident_length; k++) {
 		void *e_wk_node2 = stList_get(w_incident, k);
-		struct DynamicEdge *e_wk = stEdgeContainer_getEdge(connectivity->edges, 
+		struct DynamicEdge *e_wk = stNaiveEdgeContainer_getEdge(connectivity->edges, 
 				w, e_wk_node2);
 		if (e_wk == removedEdge || e_wk->in_forest) {
 			//This edge won't work because it's either already in the forest,
@@ -264,7 +262,7 @@ struct DynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTree
 				//edge. 
 				for(k = k+1; k < w_incident_length; k++) {
 					struct DynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
-					struct DynamicEdge *e_toRemove = stEdgeContainer_getEdge(connectivity->edges, 
+					struct DynamicEdge *e_toRemove = stNaiveEdgeContainer_getEdge(connectivity->edges, 
 							w, e_toRemove_node2);
 					if(e_toRemove == removedEdge || e_toRemove->in_forest) {
 						continue;
@@ -300,12 +298,12 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	connectivity->connectedComponentList = stList_construct3(0, 
 			(void(*)(void*))stConnectedComponent_destruct);
 
-	struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, 
+	struct DynamicEdge *edge = stNaiveEdgeContainer_getEdge(connectivity->edges, 
 			node1, node2);
 	assert(edge);
 	if(!edge->in_forest) {
 		printf("removing %p, %p from connectivity\n", node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
+		stNaiveEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 
 		return;
 	}
@@ -341,7 +339,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		void *from = NULL;
 		void *to = NULL;
 		while(stEulerTourEdgeIterator_getNext(edgeIt, &from, &to)) {
-			struct DynamicEdge *treeEdge = stEdgeContainer_getEdge(connectivity->edges, from, to);
+			struct DynamicEdge *treeEdge = stNaiveEdgeContainer_getEdge(connectivity->edges, from, to);
 			if(treeEdge->level == i) {
 				treeEdge->level++;
 				assert(treeEdge->level <= connectivity->nLevels - 1);
@@ -372,7 +370,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		stSet_destruct(seen);
 	}
 	printf("removing %p, %p from connectivity\n", node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
+	stNaiveEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	return;
 
 }
@@ -383,7 +381,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	// Remove a node (and all its edges) from the graph.
-	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, node);
+	stList *nodeIncident = stNaiveEdgeContainer_getIncidentEdgeList(connectivity->edges, node);
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
 	while((node2 = stList_getNext(it))) {

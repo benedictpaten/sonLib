@@ -15,6 +15,7 @@ void stNaiveEdgeContainer_destruct(stNaiveEdgeContainer *container) {
 }
 void *stNaiveEdgeContainer_getEdge(stNaiveEdgeContainer *container, void *u, void *v) {
 	stHash *u_incident = stHash_search(container->edges, u);
+	if(!u_incident) return NULL;
 	return stHash_search(u_incident, v);
 }
 void stNaiveEdgeContainer_deleteEdge(stNaiveEdgeContainer *container, void *u, void *v) {
@@ -36,3 +37,6 @@ void stNaiveEdgeContainer_addEdge(stNaiveEdgeContainer *container, void *u, void
 	}
 	stHash_insert(u_incident, v, edge);
 }
+stList *stNaiveEdgeContainer_getIncidentEdgeList(stNaiveEdgeContainer *container, void *v) {
+	stHash *uincident = stHash_search(container->edges, u);
+	return stList_getValues
