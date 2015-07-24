@@ -7,27 +7,19 @@
 stConnectivity *stConnectivity_construct(void);
 void stConnectivity_destruct(stConnectivity *connectivity);
 
-struct stDynamicEdge *stDynamicEdge_construct();
-void stDynamicEdge_destruct(struct stDynamicEdge *edge);
-
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
 
-stEulerVertex *stConnectivity_getVertex(stConnectivity *connectivity, void *node);
-struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *u, void *v);
 stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2);
 
-struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex, 
-		struct stDynamicEdge *removedEdge, int level, stSet *seen);
 
 bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *node2);
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2);
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node);
-stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity);
 stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivity, void *node);
 
 stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *connectivity, void *node);

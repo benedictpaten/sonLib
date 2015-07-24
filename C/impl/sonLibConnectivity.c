@@ -28,14 +28,6 @@ struct _stConnectivity {
 	//edge.
 	stEdgeContainer *edges;
 
-
-	//stores all edges incident to each node. For nodes a and b, both (a,b) and (b,a) are stored,
-	//but each only has a pointer to the second node, rather than an edge object. Used for
-	//finding all edges incident to a node when removing it. This is redundant
-	//and should eventually be fixed, but I can't figure out how to not doubly free the edge objects
-	//if both (a,b) and (b,a) are stored in the main edge container.
-	stEdgeContainer *incidentEdges;
-
 };
 
 struct _stConnectedComponent {
@@ -63,8 +55,8 @@ struct _stConnectedComponentNodeIterator {
 	//Euler Tour iterator for this connected component on the top level. 
 	stEulerTourIterator *tourIterator;
 };
-//Private data structures
-struct stDynamicEdge {
+//Private data structures-----------------------------------
+struct DynamicEdge {
 	void *edgeID;
 	void *from;
 	void *to;
@@ -76,58 +68,21 @@ struct stDynamicEdge {
 	//Changing the levels of edges appropriately saves time when removing future edges.
 	int level;
 };
-
-//Node and edge representation
-struct stDynamicEdge *stDynamicEdge_construct() {
-	struct stDynamicEdge *edge = st_malloc(sizeof(struct stDynamicEdge));
+//private methods-------------------------------------------
+struct DynamicEdge *DynamicEdge_construct() {
+	struct DynamicEdge *edge = st_malloc(sizeof(struct DynamicEdge));
 	edge->from = NULL;
 	edge->to = NULL;
 	edge->in_forest = false;
 	edge->level = 0;
 	return(edge);
 }
-void stDynamicEdge_destruct(struct stDynamicEdge *edge) {
+void DynamicEdge_destruct(struct DynamicEdge *edge) {
 	free(edge);
 }
-
-
-// Exported methods ----------------------------------------------------------------------
-
-stConnectivity *stConnectivity_construct(void) {
-	// Initialize the data structure with an empty graph with 0 nodes.
-	stConnectivity *connectivity = st_malloc(sizeof(stConnectivity));
-	connectivity->nodes = stSet_construct();
-
-	connectivity->et = stList_construct3(0, (void(*)(void*))stEulerTour_destruct);
-
-	//add level zero Euler Tour
-	stList_append(connectivity->et, stEulerTour_construct());
-	connectivity->connectedComponentList = stList_construct3(0, 
-			(void(*)(void*))stConnectedComponent_destruct);
-
-
-	connectivity->nLevels = 0;
-	connectivity->nNodes = 0;
-	connectivity->nEdges = 0;
-	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))stDynamicEdge_destruct);
-	connectivity->incidentEdges = stEdgeContainer_construct();
-
-	return(connectivity);
-
+stEulerTour *getTopLevel(stConnectivity *connectivity) {
+	return stList_get(connectivity->et, 0);
 }
-
-void stConnectivity_destruct(stConnectivity *connectivity) {
-	// Free the memory for the data structure.
-	stList_destruct(connectivity->et);
-	stSet_destruct(connectivity->nodes);
-	stEdgeContainer_destruct(connectivity->edges);
-	stEdgeContainer_destruct(connectivity->incidentEdges);
-	stList_destruct(connectivity->connectedComponentList);
-
-	free(connectivity);
-}
-
-
 
 //add new levels to compensate for the addition of new nodes,
 //and copy nodes from level 0 to the new levels so that all
@@ -155,6 +110,43 @@ int getNLevels(int nNodes) {
 	return (int) ((int)(log(nNodes)/log(2)) + 1);
 }
 
+
+// Exported methods ----------------------------------------------------------------------
+
+stConnectivity *stConnectivity_construct(void) {
+	// Initialize the data structure with an empty graph with 0 nodes.
+	stConnectivity *connectivity = st_malloc(sizeof(stConnectivity));
+	connectivity->nodes = stSet_construct();
+
+	connectivity->et = stList_construct3(0, (void(*)(void*))stEulerTour_destruct);
+
+	//add level zero Euler Tour
+	stList_append(connectivity->et, stEulerTour_construct());
+	connectivity->connectedComponentList = stList_construct3(0, 
+			(void(*)(void*))stConnectedComponent_destruct);
+
+
+	connectivity->nLevels = 0;
+	connectivity->nNodes = 0;
+	connectivity->nEdges = 0;
+	connectivity->edges = stEdgeContainer_construct2((void(*)(void*))DynamicEdge_destruct);
+
+	return(connectivity);
+
+}
+
+void stConnectivity_destruct(stConnectivity *connectivity) {
+	// Free the memory for the data structure.
+	stList_destruct(connectivity->et);
+	stSet_destruct(connectivity->nodes);
+	stEdgeContainer_destruct(connectivity->edges);
+	stList_destruct(connectivity->connectedComponentList);
+
+	free(connectivity);
+}
+
+
+
 void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	// Add an isolated node to the graph. This should end up in a new
 	// connected component with only one member.
@@ -178,18 +170,8 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 
 }
 
-struct stDynamicEdge *stConnectivity_getEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	//check both (node1, node2) and (node2, node1) for the edge. It could be in either one, but
-	//not both.
-	struct stDynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, node1, node2);
-	if(edge == NULL) {
-		edge = stEdgeContainer_getEdge(connectivity->edges, node2, node1);
-	}
-	return(edge);
-}
 bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	if (stConnectivity_getEdge(connectivity, node1, node2)) return true;
-	return false;
+	return stEdgeContainer_hasEdge(connectivity->edges, node1, node2);
 }
 stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
 	return connectivity->edges;
@@ -198,22 +180,19 @@ stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	assert(node1 != node2);
 	assert(!stEdgeContainer_getEdge(connectivity->edges, node1, node2));
-	assert(!stEdgeContainer_getEdge(connectivity->edges, node2, node1));
 	connectivity->nEdges++;
-	struct stDynamicEdge *newEdge = stDynamicEdge_construct();
+	struct DynamicEdge *newEdge = DynamicEdge_construct();
+
 	newEdge->from = node1;
 	newEdge->to = node2;
+
 	newEdge->level = 0;
 	
 	//add the edge object as an incident edge to an arbitrary one of the nodes
 	stEdgeContainer_addEdge(connectivity->edges, node1, node2, newEdge);
 
-	//list the edge as incident to both nodes
-	stEdgeContainer_addEdge(connectivity->incidentEdges, node1, node2, node2);
-	stEdgeContainer_addEdge(connectivity->incidentEdges, node2, node1, node1);
 
-
-	stEulerTour *et_lowest = stConnectivity_getTopLevel(connectivity);
+	stEulerTour *et_lowest = getTopLevel(connectivity);
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
 		//the two nodes are not already connected, so the new node will be pat of the spanning forest.
 
@@ -236,7 +215,7 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
 	//check whether node1 and node2 have the same root in the spanning forest
 	//on level N - 1.
-	stEulerTour *et_lowest = stConnectivity_getTopLevel(connectivity);
+	stEulerTour *et_lowest = getTopLevel(connectivity);
 	return(stEulerTour_connected(et_lowest, node1, node2));
 }
 
@@ -252,8 +231,8 @@ void print_list(stList *list) {
 
 //Attempts to find a replacement edge connecting two nodes, after a tree edge has been deleted.
 //Searches the edges incident to node w for such a replacement edge.
-struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex,
-		struct stDynamicEdge *removedEdge, int level, stSet *seen) {
+struct DynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTreeVertex,
+		struct DynamicEdge *removedEdge, int level, stSet *seen) {
 
 	if(stSet_search(seen, w)) {
 		return(NULL);
@@ -261,7 +240,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 	stSet_insert(seen, w);
 
 	//get a list of all edges incident to node w, which are possible replacement tree edges.
-	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, w);
+	stList *w_incident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, w);
 	int w_incident_length = stList_length(w_incident);
 
 	int k, j = 0;
@@ -269,7 +248,7 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 	stEulerTour *et_level = stList_get(connectivity->et, level);
 	for(k = 0; k < w_incident_length; k++) {
 		void *e_wk_node2 = stList_get(w_incident, k);
-		struct stDynamicEdge *e_wk = stConnectivity_getEdge(connectivity, 
+		struct DynamicEdge *e_wk = stEdgeContainer_getEdge(connectivity->edges, 
 				w, e_wk_node2);
 		if (e_wk == removedEdge || e_wk->in_forest) {
 			//This edge won't work because it's either already in the forest,
@@ -284,8 +263,8 @@ struct stDynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTr
 				//e_wk connects the two components, so it is the desired replacement
 				//edge. 
 				for(k = k+1; k < w_incident_length; k++) {
-					struct stDynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
-					struct stDynamicEdge *e_toRemove = stConnectivity_getEdge(connectivity, 
+					struct DynamicEdge *e_toRemove_node2 = stList_get(w_incident, k);
+					struct DynamicEdge *e_toRemove = stEdgeContainer_getEdge(connectivity->edges, 
 							w, e_toRemove_node2);
 					if(e_toRemove == removedEdge || e_toRemove->in_forest) {
 						continue;
@@ -321,14 +300,12 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	connectivity->connectedComponentList = stList_construct3(0, 
 			(void(*)(void*))stConnectedComponent_destruct);
 
-	struct stDynamicEdge *edge = stConnectivity_getEdge(connectivity, 
+	struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, 
 			node1, node2);
 	assert(edge);
 	if(!edge->in_forest) {
+		printf("removing %p, %p from connectivity\n", node1, node2);
 		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
-		stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
 
 		return;
 	}
@@ -340,11 +317,13 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	//stEulerTour *et_top = stConnectivity_getTopLevel(connectivity);
 	//assert(stEulerTour_connected(et_top, node1, node2));
 
-	struct stDynamicEdge *replacementEdge = NULL;
+	struct DynamicEdge *replacementEdge = NULL;
 	for (int i = edge->level; !replacementEdge && i >= 0; i--) {
 		stSet *seen = stSet_construct();
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		assert(stEulerTour_connected(et_i, node1, node2));
+
+		printf("removing %p, %p on level %d\n", node1, node2, i);
 		stEulerTour_cut(et_i, node1, node2);
 
 		//set node1 equal to id of the vertex in the smaller of the two components that have just
@@ -362,7 +341,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		void *from = NULL;
 		void *to = NULL;
 		while(stEulerTourEdgeIterator_getNext(edgeIt, &from, &to)) {
-			struct stDynamicEdge *treeEdge = stConnectivity_getEdge(connectivity, from, to);
+			struct DynamicEdge *treeEdge = stEdgeContainer_getEdge(connectivity->edges, from, to);
 			if(treeEdge->level == i) {
 				treeEdge->level++;
 				assert(treeEdge->level <= connectivity->nLevels - 1);
@@ -384,6 +363,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			replacementEdge->in_forest = true;
 			for(int h = replacementEdge->level - 1; h >= 0; h--) {
 				stEulerTour *et_h = stList_get(connectivity->et, h);
+				printf("removing %p, %p on level %d\n", node1, node2, h);
 				stEulerTour_cut(et_h, node1, node2);
 				assert(!stEulerTour_connected(et_h, node1, node2));
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
@@ -391,15 +371,10 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		}
 		stSet_destruct(seen);
 	}
+	printf("removing %p, %p from connectivity\n", node1, node2);
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->edges, node2, node1);
-	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node1, node2);
-	stEdgeContainer_deleteEdge(connectivity->incidentEdges, node2, node1);
 	return;
 
-}
-stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
-	return stList_get(connectivity->et, 0);
 }
 
 // Might be cool to be able to add or remove several edges at once, if there is a way to
@@ -408,7 +383,7 @@ stEulerTour *stConnectivity_getTopLevel(stConnectivity *connectivity) {
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	// Remove a node (and all its edges) from the graph.
-	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->incidentEdges, node);
+	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, node);
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
 	while((node2 = stList_getNext(it))) {
@@ -441,7 +416,7 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 		void *node) {
 	// Get the connected component that this node is a member of. If
 	// the graph is modified, this pointer can be invalidated
-	stEulerTour *et_0 = stConnectivity_getTopLevel(connectivity);
+	stEulerTour *et_0 = getTopLevel(connectivity);
 	void *compNode = stEulerTour_getConnectedComponent(et_0, node);
 	stConnectedComponent *comp = stConnectedComponent_construct(connectivity, compNode);
 	stList_append(connectivity->connectedComponentList, comp);
@@ -457,7 +432,7 @@ stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnect
 	// component. You can safely assume that the graph won't be
 	// modified while this iterator is active.
 	stConnectedComponentNodeIterator *it = st_malloc(sizeof(stConnectedComponentNodeIterator));
-	stEulerTour *et = stConnectivity_getTopLevel(component->connectivity);
+	stEulerTour *et = getTopLevel(component->connectivity);
 	it->seen = stSet_construct();
 	it->tourIterator = stEulerTour_getIterator(et, component->nodeInComponent);
 	return(it);
@@ -490,7 +465,7 @@ stConnectedComponentIterator *stConnectivity_getConnectedComponentIterator(stCon
 	stConnectedComponentIterator *it = st_malloc(sizeof(stConnectedComponentIterator));
 	it->componentList = stList_construct3(0, (void(*)(void*))stConnectedComponent_destruct);
 
-	stEulerTour *et_0 = stConnectivity_getTopLevel(connectivity);
+	stEulerTour *et_0 = getTopLevel(connectivity);
 	it->compIt = stEulerTour_getComponentIterator(et_0);
 	it->connectivity = connectivity;
 	return(it);

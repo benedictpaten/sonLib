@@ -30,7 +30,7 @@ static void dynamicConnectivity_basicPerformance() {
 		void *node2 = stList_get(nodes, rand() % nNodes);
 		//printf("adding edge from %d to %d\n", node1, node2);
 		if(node1 == node2) continue;
-		if(stConnectivity_getEdge(connectivity, (void*)node1, (void*)node2)) continue;
+		if(stConnectivity_hasEdge(connectivity, (void*)node1, (void*)node2)) continue;
 		stConnectivity_addEdge(connectivity, (void*)node1, (void*)node2);
 		nEdges--;
 	}
@@ -57,7 +57,7 @@ static void dynamicConnectivity_basicPerformance() {
 		node1 = stList_get(nodes, rand() % nNodes);
 		node2 = stList_get(nodes, rand() % nNodes);
 		if(node1 == node2) continue;
-		if(!stConnectivity_getEdge(connectivity, node1, node2)) continue;
+		if(!stConnectivity_hasEdge(connectivity, node1, node2)) continue;
 		stConnectivity_removeEdge(connectivity, node1, node2);
 		nEdgesToRemove--;
 	}

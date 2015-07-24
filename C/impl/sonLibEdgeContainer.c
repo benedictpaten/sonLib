@@ -18,6 +18,13 @@ struct _stEdgeContainerIterator {
 	stEdgeContainer *container;
 };
 
+void *higher(void *a, void *b) {
+	return a <= b ? a : b;
+}
+void *lower(void *a, void *b) {
+	return a <= b ? b : a;
+}
+
 stEdgeContainer *stEdgeContainer_construct() {
 	stEdgeContainer *container = st_malloc(sizeof(stEdgeContainer));
 	container->edges = stHash_construct2(NULL, (void(*)(void*))stIncidentEdgeList_destruct);
@@ -68,16 +75,20 @@ bool stEdgeContainer_hasEdge(stEdgeContainer *container, void *u, void *v) {
 	return false;
 }
 void *stEdgeContainer_getEdge(stEdgeContainer *container, void *u, void *v) {
-	stIncidentEdgeList *incidentEdge = stHash_search(container->edges, u);
+	void *l = lower(u, v);
+	void *h = higher(u, v);
+
+	stIncidentEdgeList *incidentEdge = stHash_search(container->edges, l);
 	while (incidentEdge) {
-		if (incidentEdge->toNode == v) {
+		if (incidentEdge->toNode == h) {
 			return incidentEdge->edge;
 		}
 		incidentEdge = incidentEdge->next;
 	}
 	return NULL;
 }
-void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void *edge) {
+
+void addHalfEdge(stEdgeContainer *container, void *u, void *v, void *edge) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, u);
 	stIncidentEdgeList *newList = stIncidentEdgeList_construct(edge, container->destructEdge);
 	newList->toNode = v;
@@ -90,13 +101,20 @@ void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void 
 	}
 	while(incident->next) {
 		incident = incident->next;
-	;}
+	}
 	incident->next = newList;
 	newList->prev = incident;
 }
 
+void stEdgeContainer_addEdge(stEdgeContainer *container, void *u, void *v, void *edge) {
+	void *l = lower(u, v);
+	void *h = higher(u, v);
+	addHalfEdge(container, l, h, edge);
+	addHalfEdge(container, h, l, NULL);
+}
+
 //delete an edge from the list and return it, so it can be destructed
-void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
+void deleteHalfEdge(stEdgeContainer *container, void *u, void *v) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, u);
 
 	while(incident != NULL) {
@@ -113,18 +131,20 @@ void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 	if(incident->prev != NULL) {
 		incident->prev->next = incident->next;
 	}
-	if (incident->prev == NULL) {
+	else {
 		stHash_remove(container->edges, u);
-	}
-	if(incident->next != NULL) {
 		stHash_insert(container->edges, u, incident->next);
 	}
-
-	if(incident->destructEdge) {
-		incident->destructEdge(incident->edge);
-	}
+	
 	free(incident);
 }
+void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
+	void *edgeObject = stEdgeContainer_getEdge(container, u, v);
+	container->destructEdge(edgeObject);
+	deleteHalfEdge(container, u, v);
+	deleteHalfEdge(container, v, u);
+}
+
 stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v) {
 	stIncidentEdgeList *incident = stHash_search(container->edges, v);
 	stList *incidentList = stList_construct();
@@ -135,30 +155,6 @@ stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v)
 		incident = incident->next;
 	}
 	return incidentList;
-}
-void stEdgeContainer_setIncidentEdgeList(stEdgeContainer *container, void *u, stList *incidentEdges) {
-	stHash_remove(container->edges, u);
-	if(stList_length(incidentEdges) == 0) return;
-
-	stIncidentEdgeList *u_incident_new = NULL;
-	stListIterator *it = stList_getIterator(incidentEdges);
-	void *v;
-	while((v = stList_getNext(it))) {
-		stIncidentEdgeList *vlist = stIncidentEdgeList_construct(NULL, NULL);
-		vlist->toNode = v;
-		vlist->prev = NULL;
-		vlist->next = NULL;
-		if(u_incident_new) {
-			u_incident_new->next = vlist;
-			vlist->prev = u_incident_new;
-		}
-		u_incident_new = vlist;
-	}
-	stList_destructIterator(it);
-	while(u_incident_new->prev) {
-		u_incident_new = u_incident_new->prev;
-	}
-	stHash_insert(container->edges, u, u_incident_new);
 }
 
 stEdgeContainerIterator *stEdgeContainer_getIterator(stEdgeContainer *container) {
