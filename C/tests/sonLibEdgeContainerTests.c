@@ -74,8 +74,8 @@ static void test_stEdgeContainer_deleteEdge(CuTest *testCase) {
 
 CuSuite *sonLib_stEdgeContainerTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
-	SUITE_ADD_TEST(suite, test_stEdgeContainer_deletionOfThirdEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_getEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_deleteEdge);
+	SUITE_ADD_TEST(suite, test_stEdgeContainer_deletionOfThirdEdge);
     return suite;
 }
