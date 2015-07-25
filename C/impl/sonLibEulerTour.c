@@ -165,12 +165,18 @@ stEulerTour *stEulerTour_construct() {
 	stEulerTour *et = st_malloc(sizeof(stEulerTour));
 
 	et->vertices = stHash_construct2(NULL, (void(*)(void*))stEulerVertex_destruct);
-	//et->edges = stEdgeContainer_construct2((void(*)(void*))stEulerHalfEdge_destruct);
-	et->edges = stNaiveEdgeContainer_construct();
+	et->edges = stNaiveEdgeContainer_construct((void(*)(void*))stEulerHalfEdge_destruct);
+	//et->edges = stNaiveEdgeContainer_construct();
 	et->connectedComponents = stSet_construct();
 
 	et->nComponents = 0;
 	return(et);
+}
+bool stEulerTour_hasEdge(stEulerTour *et, void *u, void *v) {
+	return stNaiveEdgeContainer_hasEdge(et->edges, u, v);
+}
+stNaiveEdgeContainer *stEulerTour_getEdges(stEulerTour *et) {
+	return et->edges;
 }
 bool stEulerTour_isSingleton(stEulerTour *et, void *v) {
 	stEulerVertex *vertex = stEulerTour_getVertex(et, v);
@@ -357,7 +363,7 @@ void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	assert(u != v);
 	assert(!stEulerTour_connected(et, u, v));
-	assert(!stNaiveEdgeContainer_getEdge(et->edges, u, v));
+	assert(!stNaiveEdgeContainer_hasEdge(et->edges, u, v));
 	stEulerVertex *vertex = stHash_search(et->vertices, u);
 	stEulerVertex *other = stHash_search(et->vertices, v);
 	et->nComponents--;
@@ -433,6 +439,8 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	assert(stTreap_findRoot(newForwardEdge->node) == stTreap_findRoot(newBackwardEdge->node));
 	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, vertex->vertexID));
 	assert(stEulerVertex_connected(vertex, other));
+	assert(stEulerTour_hasEdge(et, u, v));
+	assert(stEulerTour_hasEdge(et, v, u));
 }
 
 
@@ -475,10 +483,11 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 
 	//get the two halves of this edge
 	assert(stEulerTour_connected(et, u, v));
+	assert(stEulerTour_hasEdge(et, u, v));
+	assert(stEulerTour_hasEdge(et, v, u));
 	stEulerHalfEdge *f = stNaiveEdgeContainer_getEdge(et->edges, u, v);
+	assert(f);
 	stEulerHalfEdge *b = f->inverse;
-	assert(f != NULL);
-	assert(b != NULL);
 	assert(b->inverse == f);
 	assert(b->inverse->inverse == b);
 	stEulerVertex *from = f->from;

@@ -109,7 +109,23 @@ void resizeIncidentEdgeList(stList *incident, int newsize) {
 int getNLevels(int nNodes) {
 	return (int) ((int)(log(nNodes)/log(2)) + 1);
 }
+/*
+void checkContainer(stConnectivity *connectivity) {
+	stEulerTour *tour = getTopLevel(connectivity);
+	stNaiveEdgeContainer *tourEdges = stEulerTour_getEdges(tour);
+	stNaiveEdgeContainerIterator *it = stEdgeContainer_getIterator(connectivity->edges);
+	void *node1, *node2;
+	while(stEdgeContainer_getNext(it, &node1, &node2)) {
+		struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, node1, node2);
+		if(edge->in_forest && !stEdgeContainer_hasEdge(tourEdges, node1, node2)) {
+			printf("%p, %p is missing\n", node1, node2);
+		}
 
+		assert(!edge->in_forest || stEdgeContainer_hasEdge(tourEdges, node1, node2));
+	}
+	stEdgeContainer_destructIterator(it);
+}
+*/
 
 // Exported methods ----------------------------------------------------------------------
 
@@ -129,8 +145,7 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nLevels = 0;
 	connectivity->nNodes = 0;
 	connectivity->nEdges = 0;
-	//connectivity->edges = stEdgeContainer_construct2((void(*)(void*))DynamicEdge_destruct);
-	connectivity->edges = stNaiveEdgeContainer_construct();
+	connectivity->edges = stNaiveEdgeContainer_construct((void(*)(void*))DynamicEdge_destruct);
 
 	return(connectivity);
 
@@ -177,7 +192,7 @@ bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *nod
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	assert(node1 != node2);
-	assert(!stNaiveEdgeContainer_getEdge(connectivity->edges, node1, node2));
+	assert(!stNaiveEdgeContainer_hasEdge(connectivity->edges, node1, node2));
 	connectivity->nEdges++;
 	struct DynamicEdge *newEdge = DynamicEdge_construct();
 
@@ -197,13 +212,15 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 		//link the level N - 1 Euler Tours together, which corresponds to 
 		//adding a tree edge on level N - 1.
+		printf("linking new edge %p, %p on level 0\n", node1, node2);
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
-		return;
+		printf("adding %p, %p as tree edge\n", node1, node2);
 	}
 	else {
 		//the nodes were already connected, so the Euler tour doesn't need 
 		//to be updated, and the edge is not part of the spanning forest.
+		printf("adding %p, %p as non-tree edge\n", node1, node2);
 		newEdge->in_forest = false;
 	}
 	return;
@@ -226,6 +243,7 @@ void print_list(stList *list) {
 	stList_destructIterator(it);
 	printf("\n");
 }
+
 
 //Attempts to find a replacement edge connecting two nodes, after a tree edge has been deleted.
 //Searches the edges incident to node w for such a replacement edge.
@@ -302,7 +320,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			node1, node2);
 	assert(edge);
 	if(!edge->in_forest) {
-		printf("removing %p, %p from connectivity\n", node1, node2);
+		printf("removing non-tree edge %p, %p from connectivity\n", node1, node2);
 		stNaiveEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 
 		return;
@@ -322,6 +340,8 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		assert(stEulerTour_connected(et_i, node1, node2));
 
 		printf("removing %p, %p on level %d\n", node1, node2, i);
+		assert(stEulerTour_hasEdge(et_i, node1, node2) == stEulerTour_hasEdge(et_i, node2, node1));
+		assert(stEulerTour_hasEdge(et_i, node1, node2));
 		stEulerTour_cut(et_i, node1, node2);
 
 		//set node1 equal to id of the vertex in the smaller of the two components that have just
@@ -331,6 +351,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			node1 = node2; 
 			node2 = temp;
 		}
+		//void *smallerComponent = stEulerTour_size(et_i, node2) > stEulerTour_size(et_i, node1) ? node1 : node2;
 		edge->in_forest = false;
 		replacementEdge = visit(connectivity, node2, node1, edge, i, seen);
 
@@ -340,11 +361,13 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		void *to = NULL;
 		while(stEulerTourEdgeIterator_getNext(edgeIt, &from, &to)) {
 			struct DynamicEdge *treeEdge = stNaiveEdgeContainer_getEdge(connectivity->edges, from, to);
+			assert(treeEdge->in_forest);
 			if(treeEdge->level == i) {
 				treeEdge->level++;
 				assert(treeEdge->level <= connectivity->nLevels - 1);
 				stEulerTour *et_te = stList_get(connectivity->et, treeEdge->level);
 				assert(!stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
+				printf("linking %p, %p on level %d\n", treeEdge->from, treeEdge->to, treeEdge->level);
 				stEulerTour_link(et_te, treeEdge->from, treeEdge->to);
 				assert(stEulerTour_connected(et_te, treeEdge->from, treeEdge->to));
 			}
@@ -356,20 +379,26 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 		stEulerTourEdgeIterator_destruct(edgeIt);
 
 		if(replacementEdge) {
+			assert(replacementEdge != edge);
 			assert(replacementEdge->level == i);
-			stEulerTour_link(et_i, replacementEdge->from, replacementEdge->to);
+			printf("adding %p, %p to forest\n", replacementEdge->from, replacementEdge->to);
 			replacementEdge->in_forest = true;
+
+			printf("linking new replacement edge %p, %p on level %d\n", replacementEdge->from, replacementEdge->to, i);
+			stEulerTour_link(et_i, replacementEdge->from, replacementEdge->to);
 			for(int h = replacementEdge->level - 1; h >= 0; h--) {
 				stEulerTour *et_h = stList_get(connectivity->et, h);
 				printf("removing %p, %p on level %d\n", node1, node2, h);
+				assert(stEulerTour_hasEdge(et_h, node1, node2));
 				stEulerTour_cut(et_h, node1, node2);
 				assert(!stEulerTour_connected(et_h, node1, node2));
+				printf("linking new replacement edge %p, %p on level %d\n", replacementEdge->from, replacementEdge->to, h);
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
 			}
 		}
 		stSet_destruct(seen);
 	}
-	printf("removing %p, %p from connectivity\n", node1, node2);
+	printf("removing tree edge %p, %p from connectivity\n", node1, node2);
 	stNaiveEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	return;
 

@@ -1,7 +1,5 @@
 #ifndef EULER_H
 #define EULER_H
-
-
 stEulerVertex *stEulerVertex_construct(void *vertexID);
 void stEulerVertex_destruct(stEulerVertex *vertex);
 stTreap *stEulerVertex_incidentEdgeA(stEulerVertex *vertex);
@@ -16,6 +14,8 @@ void *stEulerHalfEdge_getFrom(stEulerHalfEdge *edge);
 void *stEulerHalfEdge_getTo(stEulerHalfEdge *edge);
 //--------------------------------------------------
 stEulerTour *stEulerTour_construct();
+bool stEulerTour_hasEdge(stEulerTour *et, void *u, void *v);
+stNaiveEdgeContainer *stEulerTour_getEdges(stEulerTour *et);
 bool stEulerTour_isSingleton(stEulerTour *et, void *v);
 void *stEulerTour_getConnectedComponent(stEulerTour *et, void *v);
 void stEulerTour_printTour(stEulerTour *et, void *v);

@@ -51,7 +51,7 @@ static void dynamicConnectivity_basicPerformance() {
 	void *node1 = NULL;
 	void *node2 = NULL;
 	//stEdgeContainerIterator *it = 
-		stEdgeContainer_getIterator(stConnectivity_getEdges(connectivity));
+	//	stEdgeContainer_getIterator(stConnectivity_getEdges(connectivity));
 	while(nEdgesToRemove > 0) {
 		//stEdgeContainer_getNext(it, &node1, &node2);
 		node1 = stList_get(nodes, rand() % nNodes);
