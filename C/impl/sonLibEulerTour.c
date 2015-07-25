@@ -67,7 +67,7 @@ struct _stEulerHalfEdge {
 
 struct _stEulerTour {
 	stHash *vertices;
-	stNaiveEdgeContainer *edges;
+	stEdgeContainer *edges;
 	stSet *connectedComponents;
 
 	int nComponents;
@@ -165,17 +165,17 @@ stEulerTour *stEulerTour_construct() {
 	stEulerTour *et = st_malloc(sizeof(stEulerTour));
 
 	et->vertices = stHash_construct2(NULL, (void(*)(void*))stEulerVertex_destruct);
-	et->edges = stNaiveEdgeContainer_construct((void(*)(void*))stEulerHalfEdge_destruct);
-	//et->edges = stNaiveEdgeContainer_construct();
+	et->edges = stEdgeContainer_construct((void(*)(void*))stEulerHalfEdge_destruct);
+	//et->edges = stEdgeContainer_construct();
 	et->connectedComponents = stSet_construct();
 
 	et->nComponents = 0;
 	return(et);
 }
 bool stEulerTour_hasEdge(stEulerTour *et, void *u, void *v) {
-	return stNaiveEdgeContainer_hasEdge(et->edges, u, v);
+	return stEdgeContainer_hasEdge(et->edges, u, v);
 }
-stNaiveEdgeContainer *stEulerTour_getEdges(stEulerTour *et) {
+stEdgeContainer *stEulerTour_getEdges(stEulerTour *et) {
 	return et->edges;
 }
 bool stEulerTour_isSingleton(stEulerTour *et, void *v) {
@@ -205,7 +205,7 @@ void stEulerTour_printEdgeTour(stEulerTour *et, void *v) {
 void stEulerTour_destruct(stEulerTour *et) {
 	if(et != NULL) {
 		stHash_destruct(et->vertices);
-		stNaiveEdgeContainer_destruct(et->edges);
+		stEdgeContainer_destruct(et->edges);
 		stSet_destruct(et->connectedComponents);
 		free(et);
 	}
@@ -363,7 +363,7 @@ void stEulerTour_makeRoot(stEulerTour *et, stEulerVertex *vertex) {
 void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 	assert(u != v);
 	assert(!stEulerTour_connected(et, u, v));
-	assert(!stNaiveEdgeContainer_hasEdge(et->edges, u, v));
+	assert(!stEdgeContainer_hasEdge(et->edges, u, v));
 	stEulerVertex *vertex = stHash_search(et->vertices, u);
 	stEulerVertex *other = stHash_search(et->vertices, v);
 	et->nComponents--;
@@ -371,7 +371,7 @@ void stEulerTour_link(stEulerTour *et, void *u, void *v) {
 
 	stEulerHalfEdge *newForwardEdge = stEulerHalfEdge_construct();
 	stEulerHalfEdge *newBackwardEdge = stEulerHalfEdge_construct();
-	stNaiveEdgeContainer_addEdge(et->edges, u, v, newForwardEdge);
+	stEdgeContainer_addEdge(et->edges, u, v, newForwardEdge);
 
 	newForwardEdge->isForwardEdge = true;
 	newBackwardEdge->isForwardEdge = false;
@@ -485,7 +485,7 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	assert(stEulerTour_connected(et, u, v));
 	assert(stEulerTour_hasEdge(et, u, v));
 	assert(stEulerTour_hasEdge(et, v, u));
-	stEulerHalfEdge *f = stNaiveEdgeContainer_getEdge(et->edges, u, v);
+	stEulerHalfEdge *f = stEdgeContainer_getEdge(et->edges, u, v);
 	assert(f);
 	stEulerHalfEdge *b = f->inverse;
 	assert(b->inverse == f);
@@ -661,7 +661,7 @@ void stEulerTour_cut(stEulerTour *et, void *u, void *v) {
 	assert(stTreap_prev(f->node) == NULL);
 	assert(stTreap_next(b->node) == NULL);
 	assert(stTreap_prev(b->node) == NULL);
-	stNaiveEdgeContainer_deleteEdge(et->edges, u, v);
+	stEdgeContainer_deleteEdge(et->edges, u, v);
 
 	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, u));
 	stSet_insert(et->connectedComponents, stEulerTour_getConnectedComponent(et, v));

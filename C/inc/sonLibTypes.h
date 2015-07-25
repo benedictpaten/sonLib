@@ -70,7 +70,6 @@ typedef struct _stConnectedComponentNodeIterator stConnectedComponentNodeIterato
 typedef struct _stEdgeContainer stEdgeContainer;
 typedef struct _stEdgeContainerIterator stEdgeContainerIterator;
 typedef struct _stIncidentEdgeList stIncidentEdgeList;
-typedef struct _stNaiveEdgeContainer stNaiveEdgeContainer;
 typedef struct _stNaiveConnectivity stNaiveConnectivity;
 typedef struct _stNaiveConnectedComponent stNaiveConnectedComponent;
 typedef struct _stNaiveConnectedComponentIterator stNaiveConnectedComponentIterator;
