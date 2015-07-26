@@ -35,7 +35,6 @@
 #include "sonLibTreap.h"
 #include "sonLibEulerTour.h"
 #include "sonLibConnectivity.h"
-#include "sonLibEdgeContainer.h"
 #include "sonLibNaiveConnectivity.h"
 
 #endif /* SONLIB_H_ */
