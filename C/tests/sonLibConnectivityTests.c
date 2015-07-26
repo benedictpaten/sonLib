@@ -191,23 +191,24 @@ static void test_stConnectivity_connected(CuTest *testCase) {
 }
 static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 	setup();
-	/*
-	   stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)4);
-	   stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
-	   void *node;
-	   while(1) {
-	   node = stConnectedComponentNodeIterator_getNext(it);
-	   if(!node) break;
-	   printf("%p", node);
-	   }
+	stConnectedComponent *comp = stConnectivity_getConnectedComponent(connectivity, (void*)4);
+	stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(comp);
+	void *node;
+	stSet *nodesInComponent = stSet_construct();
+	stSet *truth = stSet_construct();
+	stSet_insert(truth, (void*)1);
+	stSet_insert(truth, (void*)2);
+	stSet_insert(truth, (void*)3);
+	stSet_insert(truth, (void*)4);
+	while((node = stConnectedComponentNodeIterator_getNext(it))) {
+		stSet_insert(nodesInComponent, node);
+	}
+	CuAssertTrue(testCase, setsEqual(nodesInComponent, truth));
 
-*/
 	teardown();
 }
 static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	srand(time(NULL));
-	//srand(6789);
-	//srand(4);
 	int nNodes = 500;
 	int nEdgesToAdd = 800;
 	int nEdgesToRemove = 500;

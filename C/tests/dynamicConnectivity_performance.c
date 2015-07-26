@@ -5,12 +5,11 @@
 #include <stdio.h>
 
 static void dynamicConnectivity_basicPerformance() {
-	//srand(time(NULL));
 	clock_t start = clock();
-	int nNodes = 500;
-	int nEdges = 500;
-	int nQueries = 500;
-	int nEdgesToRemove =450;
+	int nNodes = 1000000;
+	int nEdges = 50000;
+	int nQueries = 50000;
+	int nEdgesToRemove =5000;
 	stList *nodes = stList_construct();
 
 	stConnectivity *connectivity = stConnectivity_construct();
@@ -50,17 +49,17 @@ static void dynamicConnectivity_basicPerformance() {
 
 	void *node1 = NULL;
 	void *node2 = NULL;
-	//stEdgeContainerIterator *it = 
-	//	stEdgeContainer_getIterator(stConnectivity_getEdges(connectivity));
+	stEdgeContainerIterator *it = stEdgeContainer_getIterator(stConnectivity_getEdges(connectivity));
 	while(nEdgesToRemove > 0) {
-		//stEdgeContainer_getNext(it, &node1, &node2);
-		node1 = stList_get(nodes, rand() % nNodes);
-		node2 = stList_get(nodes, rand() % nNodes);
+		//node1 = stList_get(nodes, rand() % nNodes);
+		//node2 = stList_get(nodes, rand() % nNodes);
+		stEdgeContainer_getNext(it, &node1, &node2);
 		if(node1 == node2) continue;
 		if(!stConnectivity_hasEdge(connectivity, node1, node2)) continue;
 		stConnectivity_removeEdge(connectivity, node1, node2);
 		nEdgesToRemove--;
 	}
+	stEdgeContainer_destructIterator(it);
 	clock_t afterRemove = clock();
 	double t4 = (double)(afterRemove - afterQueries)/CLOCKS_PER_SEC;
 	printf("removing edges took %f seconds\n", t4); 
@@ -81,7 +80,7 @@ double getMemoryUsage() {
 
 static void addNodesAndPlot(char *filename, int nNodes) {
 	FILE *f = fopen(filename, "w");
-    clock_t time;
+    clock_t time = NULL;
     int window = 100;
 	stConnectivity *connectivity = stConnectivity_construct();
 	stList *nodes = stList_construct();
@@ -110,7 +109,7 @@ static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
     FILE *f = fopen(filename, "w");
     stList *nodes = stList_construct();
     int window = 100;
-    clock_t time;
+    clock_t time = NULL;
     for (int i = 0; i < nNodes; i++) {
         void *node = st_malloc(1);
         stList_append(nodes, node);
@@ -135,7 +134,7 @@ static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
 
 int main(int argc, char **argv) {
 	dynamicConnectivity_basicPerformance();
-	addNodesAndPlot("../dynamicConnectivity/addNodesPerformance.txt", 100);
-    addEdgesAndPlot("../dynamicConnectivity/addEdgesPerformance.txt", 1000, 1);
+	addNodesAndPlot("addNodesPerformance.txt", 1000000);
+    addEdgesAndPlot("addEdgesPerformance.txt", 1000000, 10000);
 }
 

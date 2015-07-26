@@ -141,4 +141,31 @@ stList *stEdgeContainer_getIncidentEdgeList(stEdgeContainer *container, void *v)
 	return linkedList_toList(vincident);
 }
 
-
+struct _stEdgeContainerIterator {
+	stHashIterator *nodeIterator;
+	struct linkedListNode *node;
+	stEdgeContainer *container;
+};
+stEdgeContainerIterator *stEdgeContainer_getIterator(stEdgeContainer *container) {
+	stEdgeContainerIterator *it = st_malloc(sizeof(stEdgeContainerIterator));
+	it->nodeIterator = stHash_getIterator(container->edges);
+	it->container = container;
+	it->node = NULL;
+	return it;
+}
+bool stEdgeContainer_getNext(stEdgeContainerIterator *it, void **node1, void **node2) {
+	if(!it->node) {
+		*node1 = stHash_getNext(it->nodeIterator);
+		struct linkedList *nextList = stHash_search(it->container->edges, *node1);
+		if(!nextList) return false;
+		it->node = nextList->head;
+	}
+	if(!it->node) return false;
+	*node2 = it->node->key;
+	it->node = it->node->next;
+	return true;
+}
+void stEdgeContainer_destructIterator(stEdgeContainerIterator *it) {
+	stHash_destructIterator(it->nodeIterator);
+	free(it);
+}

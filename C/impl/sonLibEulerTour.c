@@ -47,11 +47,9 @@ struct _stEulerVertex {
 	stEulerTour *owner;
 
 	void *vertexID; //index into the Euler Tree's hashtable of vertices
-	int visited;
 };
 
 struct _stEulerHalfEdge {
-	void *edgeID; //index into the Euler Tree's list of edges
 	int isForwardEdge;
 
 	stEulerVertex *from;
@@ -61,8 +59,6 @@ struct _stEulerHalfEdge {
 	//node in treap for this half-edge.
 	stTreap *node;
 
-	//edge position in Euler Tour
-	int rank;
 };
 
 struct _stEulerTour {
@@ -90,7 +86,6 @@ struct _stEulerTourComponentIterator {
 stEulerVertex *stEulerVertex_construct(void *vertexID) {
 	stEulerVertex *v = st_malloc(sizeof(stEulerVertex));
 	v->vertexID = vertexID;
-	v->visited = false;
 	v->leftOut = NULL;
 	v->rightIn = NULL;
 	return(v);
@@ -218,7 +213,6 @@ stTreap *stEulerTour_findRoot(stEulerTour *et, void *v) {
 	}
 	stTreap *treapNode = stEulerVertex_incidentEdgeA(vertex);
 	if(!treapNode) {
-		//printf("%d is singleton\n", v);
 		return(NULL);
 	}
 	return(stTreap_findMin(stTreap_findRoot(treapNode)));

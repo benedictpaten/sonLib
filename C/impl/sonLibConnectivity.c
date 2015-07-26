@@ -213,6 +213,9 @@ int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *no
 	stEulerTour *et_lowest = getTopLevel(connectivity);
 	return(stEulerTour_connected(et_lowest, node1, node2));
 }
+stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity) {
+	return connectivity->edges;
+}
 
 void print_list(stList *list) {
 	stListIterator *it = stList_getIterator(list);
@@ -306,8 +309,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	}
 	assert(edge->level < connectivity->nLevels - 1);
 	for (int i = edge->level + 1; i < connectivity->nLevels; i++) {
-		stEulerTour *et_i = stList_get(connectivity->et, i);
-		assert(!stEulerTour_connected(et_i, node1, node2));
+		assert(!stEulerTour_connected(stList_get(connectivity->et, i), node1, node2));
 	}
 	//stEulerTour *et_top = stConnectivity_getTopLevel(connectivity);
 	//assert(stEulerTour_connected(et_top, node1, node2));

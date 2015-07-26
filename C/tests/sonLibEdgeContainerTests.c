@@ -11,15 +11,10 @@ static void setup(void) {
 	strcpy(b, "b");
 	void *c = st_malloc(2);
 	strcpy(c, "c");
-	//void *d = st_malloc(2);
-	//strcpy(d, "d");
-
+	
 	stEdgeContainer_addEdge(container, (void*)1, (void*)2, a);
-	//stEdgeContainer_addEdge(container, (void*)2, (void*)1, a);
 	stEdgeContainer_addEdge(container, (void*)1, (void*)3, b);
-	//stEdgeContainer_addEdge(container, (void*)3, (void*)1, b);
 	stEdgeContainer_addEdge(container, (void*)3, (void*)4, c);
-	//stEdgeContainer_addEdge(container, (void*)4, (void*)3, c);
 }
 static void teardown(void) {
 	stEdgeContainer_destruct(container);
@@ -52,7 +47,7 @@ static void test_stEdgeContainer_deletionOfThirdEdge(CuTest *testCase) {
 	stEdgeContainer_addEdge(container, (void*)1, (void*)4, c);
 	stEdgeContainer_deleteEdge(container, (void*)1, (void*)3);
 	stEdgeContainer_deleteEdge(container, (void*)1, (void*)4);
-	//CuAssertTrue(testCase, stEdgeContainer_getEdge(container, (void*)1, (void*)2) != NULL);
+	CuAssertTrue(testCase, stEdgeContainer_getEdge(container, (void*)1, (void*)2) != NULL);
 	teardown();
 }
 
@@ -71,11 +66,20 @@ static void test_stEdgeContainer_deleteEdge(CuTest *testCase) {
 	CuAssertStrEquals(testCase, a, "a");
 	teardown();
 }
+static void test_stEdgeContainer_iterator(CuTest *testCase) {
+	setup();
+	stEdgeContainerIterator *it = stEdgeContainer_getIterator(container);
+	void *node1, *node2;
+	while(stEdgeContainer_getNext(it, &node1, &node2)) {
+	}
+	teardown();
+}
 
 CuSuite *sonLib_stEdgeContainerTestSuite(void) {
     CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_getEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_deleteEdge);
 	SUITE_ADD_TEST(suite, test_stEdgeContainer_deletionOfThirdEdge);
+	SUITE_ADD_TEST(suite, test_stEdgeContainer_iterator);
     return suite;
 }

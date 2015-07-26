@@ -8,7 +8,6 @@ stConnectivity *stConnectivity_construct(void);
 void stConnectivity_destruct(stConnectivity *connectivity);
 
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2);
-
 stEdgeContainer *stConnectivity_getEdges(stConnectivity *connectivity);
 
 void stConnectivity_addNode(stConnectivity *connectivity, void *node);
