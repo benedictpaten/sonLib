@@ -32,5 +32,9 @@
 #include "sonLibCache.h"
 #include "stGraph.h"
 #include "stPosetAlignment.h"
+#include "sonLibTreap.h"
+#include "sonLibEulerTour.h"
+#include "sonLibConnectivity.h"
+#include "sonLibNaiveConnectivity.h"
 
 #endif /* SONLIB_H_ */

@@ -56,10 +56,24 @@ typedef struct stKVDatabaseBulkResult stKVDatabaseBulkResult;
 typedef struct _stEdge stEdge;
 typedef struct _stGraph stGraph;
 typedef struct _stPosetAlignment stPosetAlignment;
+typedef struct _stTreap stTreap;
+typedef struct _stEulerVertex stEulerVertex;
+typedef struct _stEulerHalfEdge stEulerHalfEdge;
+typedef struct _stEulerTour stEulerTour;
+typedef struct _stEulerTourIterator stEulerTourIterator;
+typedef struct _stEulerTourEdgeIterator stEulerTourEdgeIterator;
+typedef struct _stEulerTourComponentIterator stEulerTourComponentIterator;
 typedef struct _stConnectivity stConnectivity;
 typedef struct _stConnectedComponent stConnectedComponent;
 typedef struct _stConnectedComponentIterator stConnectedComponentIterator;
 typedef struct _stConnectedComponentNodeIterator stConnectedComponentNodeIterator;
+typedef struct _stEdgeContainer stEdgeContainer;
+typedef struct _stEdgeContainerIterator stEdgeContainerIterator;
+typedef struct _stIncidentEdgeList stIncidentEdgeList;
+typedef struct _stNaiveConnectivity stNaiveConnectivity;
+typedef struct _stNaiveConnectedComponent stNaiveConnectedComponent;
+typedef struct _stNaiveConnectedComponentIterator stNaiveConnectedComponentIterator;
+typedef struct _stNaiveConnectedComponentNodeIterator stNaiveConnectedComponentNodeIterator;
 
 #ifdef __cplusplus
 }
