@@ -111,6 +111,8 @@ static void test_stEulerTour_multipleIncidentEdges(CuTest *testCase) {
 	stEulerTour_cut(et, (void*)1, (void*)4);
 
 	CuAssertTrue(testCase, stEulerTour_connected(et, (void*)1, (void*)3));
+	stSet_destruct(nodes);
+	stSet_destruct(trueNodes);
 	teardown();
 }
 static void test_stEulerTour_cut(CuTest *testCase) {

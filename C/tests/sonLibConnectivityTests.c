@@ -204,6 +204,9 @@ static void test_stConnectivity_nodeIterator(CuTest *testCase) {
 		stSet_insert(nodesInComponent, node);
 	}
 	CuAssertTrue(testCase, setsEqual(nodesInComponent, truth));
+	stSet_destruct(nodesInComponent);
+	stSet_destruct(truth);
+	stConnectedComponentNodeIterator_destruct(it);
 
 	teardown();
 }
@@ -218,7 +221,7 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	connectivity = stConnectivity_construct();
 	//add nodes
 	for (int i = 1; i <= nNodes; i++) {
-		int *node = malloc(1);
+		int *node = malloc(sizeof(int));
 		*node = i;
 		stNaiveConnectivity_addNode(naive, node);
 		stConnectivity_addNode(connectivity, node);
@@ -299,8 +302,11 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 
 		CuAssertTrue(testCase, setsEqual(nodesInComponent, trueNodesInComponent));
 		stSet_destruct(nodesInComponent);
+		stSet_destruct(trueNodesInComponent);
 	}
 	stList_destruct(nodes);
+	stList_destruct(trueComponents);
+	stList_destruct(components);
 	//stNaiveConnectivity_destruct(naive);
 
 	teardown();
