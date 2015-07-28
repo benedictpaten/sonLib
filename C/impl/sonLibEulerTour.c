@@ -134,7 +134,7 @@ int stEulerVertex_isSingleton(stEulerVertex *vertex) {
 stEulerHalfEdge *stEulerHalfEdge_construct() {
 	stEulerHalfEdge *newEdge = st_malloc(sizeof(stEulerHalfEdge));
 	newEdge->node = stTreap_construct(newEdge);
-	return(newEdge);
+	return newEdge;
 }
 
 
@@ -145,6 +145,10 @@ void stEulerHalfEdge_destruct(stEulerHalfEdge *edge) {
 	if(edge != NULL) {
 		stTreap_nodeDestruct(edge->node);
 	}
+	if(edge->inverse != NULL) {
+		stTreap_nodeDestruct(edge->inverse->node);
+	}
+	free(edge->inverse);
 	free(edge);
 }
 void *stEulerHalfEdge_getFrom(stEulerHalfEdge *edge) {
@@ -161,7 +165,6 @@ stEulerTour *stEulerTour_construct() {
 
 	et->vertices = stHash_construct2(NULL, (void(*)(void*))stEulerVertex_destruct);
 	et->edges = stEdgeContainer_construct((void(*)(void*))stEulerHalfEdge_destruct);
-	//et->edges = stEdgeContainer_construct();
 	et->connectedComponents = stSet_construct();
 
 	et->nComponents = 0;
@@ -251,7 +254,8 @@ stEulerVertex *stEulerTour_createVertex(stEulerTour *et, void *vertexID) {
 }
 void stEulerTour_removeVertex(stEulerTour *et, void *vertexID) {
 	assert(stEulerTour_isSingleton(et, vertexID)); //remove all edges before removing the vertex
-	stHash_remove(et->vertices, vertexID);
+	stEulerVertex *removedVertex = stHash_remove(et->vertices, vertexID);
+	stEulerVertex_destruct(removedVertex);
 	stSet_remove(et->connectedComponents, vertexID);
 	et->nComponents--;
 }

@@ -40,8 +40,6 @@ static void test_stEdgeContainer_deletionOfThirdEdge(CuTest *testCase) {
 	strcpy(b, "b");
 	void *c = st_malloc(2);
 	strcpy(c, "c");
-	void *d = st_malloc(2);
-	strcpy(d, "d");
 	stEdgeContainer_addEdge(container, (void*)1, (void*)2, a);
 	stEdgeContainer_addEdge(container, (void*)1, (void*)3, b);
 	stEdgeContainer_addEdge(container, (void*)1, (void*)4, c);
@@ -72,6 +70,7 @@ static void test_stEdgeContainer_iterator(CuTest *testCase) {
 	void *node1, *node2;
 	while(stEdgeContainer_getNext(it, &node1, &node2)) {
 	}
+	stEdgeContainer_destructIterator(it);
 	teardown();
 }
 

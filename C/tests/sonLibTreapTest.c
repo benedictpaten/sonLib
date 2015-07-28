@@ -111,6 +111,7 @@ static void test_stTreap_split(CuTest *testCase) {
 	char *afterSplitStr = stTreap_print(after);
 	CuAssertStrEquals(testCase, afterSplitStr, "bcdef");
 	free(afterSplitStr);
+	stTreap_destruct(after);
 
 
 	teardown();

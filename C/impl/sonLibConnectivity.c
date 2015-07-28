@@ -99,7 +99,8 @@ void addLevel(stConnectivity *connectivity) {
 	stSet_destructIterator(it);
 }
 void removeLevel(stConnectivity *connectivity) {
-	stList_pop(connectivity->et);
+	stEulerTour *top = stList_pop(connectivity->et);
+	stEulerTour_destruct(top);
 }
 void resizeIncidentEdgeList(stList *incident, int newsize) {
 	for(int i = newsize; i < stList_length(incident); i++) {
@@ -494,6 +495,8 @@ void stConnectedComponent_destruct(stConnectedComponent *comp) {
 struct _stEdgeContainer {
 	stHash *edges;
 	stSet *edgeObjects;
+	void(*destructEdge)(void *);
+
 };
 struct linkedListNode {
 	struct linkedListNode *next;
@@ -583,6 +586,7 @@ stEdgeContainer *stEdgeContainer_construct(void(*destructEdge)(void *)) {
 	container->edges = stHash_construct2(NULL, (void(*)(void*))linkedList_destruct);
 
 	container->edgeObjects = stSet_construct2(destructEdge);
+	container->destructEdge = destructEdge;
 	return container;
 }
 void stEdgeContainer_destruct(stEdgeContainer *container) {
@@ -601,7 +605,8 @@ void stEdgeContainer_deleteEdge(stEdgeContainer *container, void *u, void *v) {
 	linkedList_delete(u_incident, v);
 	struct linkedList *v_incident = stHash_search(container->edges, v);
 	linkedList_delete(v_incident, u);
-	stSet_remove(container->edgeObjects, edge);
+	void *edgeObject = stSet_remove(container->edgeObjects, edge);
+	container->destructEdge(edgeObject);
 }
 bool stEdgeContainer_hasEdge(stEdgeContainer *container, void *u, void *v) {
 	struct linkedList *u_incident = stHash_search(container->edges, u);
