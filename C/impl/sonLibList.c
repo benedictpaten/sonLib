@@ -226,7 +226,7 @@ void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const vo
 
 void stList_shuffle(stList *list) {
     for(int64_t i=0; i<stList_length(list); i++) {
-        int64_t j = st_randomInt(0, stList_length(list));
+        int64_t j = st_randomInt(i, stList_length(list));
         void *o = stList_get(list, i);
         stList_set(list, i, stList_get(list, j));
         stList_set(list, j, o);
