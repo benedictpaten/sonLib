@@ -423,10 +423,14 @@ void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	
 	//delete a level if necessary to preserve log(n) levels
 	connectivity->nNodes--;
-	connectivity->nLevels = getNLevels(connectivity->nNodes);
-	if(connectivity->nLevels < stList_length(connectivity->et)) {
-		removeLevel(connectivity);
-	}
+	// Temporarily disabled since with the removal of enough
+	// nodes, there can be cases where some edges still have a
+	// higher level than the graph has.
+
+	// connectivity->nLevels = getNLevels(connectivity->nNodes);
+	// if(connectivity->nLevels < stList_length(connectivity->et)) {
+	//	removeLevel(connectivity);
+	// }
 
 	for(int i = 0; i < connectivity->nLevels; i++) {
 		stEulerTour *et_i = stList_get(connectivity->et, i);
