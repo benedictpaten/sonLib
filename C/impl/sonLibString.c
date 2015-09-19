@@ -169,7 +169,6 @@ stList *stString_splitByString(const char *string, const char *delim) {
     assert(tokenLength > 0);
     stList *ret = stList_construct3(0, free);
     while ((curTokenEnd = strstr(curTokenStart, delim)) != NULL) {
-        assert(curTokenEnd > curTokenStart);
         stList_append(ret, stString_getSubString(curTokenStart, 0, curTokenEnd - curTokenStart));
         curTokenStart = curTokenEnd + tokenLength;
     }

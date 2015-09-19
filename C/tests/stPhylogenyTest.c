@@ -431,7 +431,7 @@ static void testRandomNeighborJoin(CuTest *testCase) {
     int64_t testNum;
     for (testNum = 0; testNum < 50; testNum++) {
         // Run neighbor-joining
-        int64_t numLeaves = st_randomInt64(3, 600);
+        int64_t numLeaves = st_randomInt64(3, 300);
         stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
         bool rootOnOutgroup = st_random() > 0.5;
         stList *outgroups = NULL;
