@@ -28,9 +28,16 @@ extern "C" {
 char *stString_copy(const char *string);
 
 /*
- * Like printf, but into a new string.
+ * Like printf, but into a new string. Use stString_print_r instead
+ * unless you absolutely need to avoid the overhead of (sometimes)
+ * making an extra vsnprintf call.
  */
 char *stString_print(const char *string, ...);
+
+/*
+ * Like stString_print, but reentrant.
+ */
+char *stString_print_r(const char *string, ...);
 
 /*
  * Compare two strings for equality.  NULL is considered a valid value and
@@ -88,6 +95,14 @@ char *stString_join2(const char *pad, stList *strings);
  * Splits a string using stString_getNextWord into a bunch of tokens and returns them as a list.
  */
 stList *stString_split(const char *string);
+
+/*
+ * Splits a string by a delimiter string (length > 0). Note that
+ * delimiters on either end of the string are still used to split into
+ * 0-length substrings, as in python's split method. E.g.:
+ * stString_splitByString("aba", "a") yields ["", "b", ""]
+ */
+stList *stString_splitByString(const char *string, const char *delim);
 
 /*
  * Gets a substring of a given string.

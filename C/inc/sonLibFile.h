@@ -14,6 +14,8 @@
 #ifndef SONLIBFILE_H_
 #define SONLIBFILE_H_
 
+#include "sonLibTypes.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

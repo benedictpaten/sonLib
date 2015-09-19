@@ -6,12 +6,14 @@ libSources = impl/*.c
 cppSources = impl/*.cpp
 libHeaders = $(wildcard inc/*.h)
 libInternalHeaders = impl/*.h
-libTests = tests/sonLib*.c
+libTests = tests/sonLib*.c tests/st*
+quickTreeObjects = ../externalTools/quicktree_1.1/obj/buildtree.o ../externalTools/quicktree_1.1/obj/cluster.o ../externalTools/quicktree_1.1/obj/distancemat.o ../externalTools/quicktree_1.1/obj/options.o ../externalTools/quicktree_1.1/obj/sequence.o ../externalTools/quicktree_1.1/obj/tree.o ../externalTools/quicktree_1.1/obj/util.o
+quickTreeLibPath = ../externalTools/quicktree_1.1/include/
 
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest ${binPath}/sonLib_dynamicConnectivity_performance
 
-cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl}
-cppflags += ${kyotoTycoonIncl} 
+cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl} -I${quickTreeLibPath}
+cppflags += ${kyotoTycoonIncl}
 
 all : ${libPath}/sonLib.a ${testProgs}
 
@@ -20,7 +22,7 @@ clean :
 
 ${binPath}/sonLibTests : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm
+	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm -lstdc++ -lpthread
 	mv $@.tmp $@
 
 ${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
@@ -56,9 +58,9 @@ ${libPath}/%.h: inc/%.h
 
 ${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${libPath}/$(notdir $l)) ${libInternalHeaders}
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath}/ -c ${libSources}
+	${cxx} ${cflags} -I inc -I ${libPath}/  -c ${libSources}
 	${cpp} ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
-	ar rc sonLib.a *.o
+	ar rc sonLib.a *.o ${quickTreeObjects}
 	ranlib sonLib.a 
 	rm *.o
 	mv sonLib.a ${libPath}/

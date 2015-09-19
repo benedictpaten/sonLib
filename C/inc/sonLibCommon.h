@@ -111,6 +111,21 @@ void st_errAbort(char *format, ...);
  */
 void st_errnoAbort(char *format, ...);
 
+/*
+ * Endianness-changing functions
+ *
+ * Since htonl is 32-bit only. NOTE: detects endianness at runtime to
+ * be painlessly portable, so these are moderately slower than htonl
+ * and friends.
+ */
+int64_t st_nativeInt64FromLittleEndian(int64_t in);
+
+int64_t st_nativeInt64ToLittleEndian(int64_t in);
+
+int64_t st_nativeInt64FromBigEndian(int64_t in);
+
+int64_t st_nativeInt64ToBigEndian(int64_t in);
+
 #ifdef __cplusplus
 }
 #endif

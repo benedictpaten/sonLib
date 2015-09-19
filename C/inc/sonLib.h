@@ -36,5 +36,7 @@
 #include "sonLibEulerTour.h"
 #include "sonLibConnectivity.h"
 #include "sonLibNaiveConnectivity.h"
-
+#include "stMatrix.h"
+#include "stPhylogeny.h"
+#include "stThreadPool.h"
 #endif /* SONLIB_H_ */
