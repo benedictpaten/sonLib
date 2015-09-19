@@ -67,6 +67,9 @@ struct DynamicEdge {
 	//lower level edges are checked first when searching for a replacement edge.
 	//Changing the levels of edges appropriately saves time when removing future edges.
 	int level;
+
+	// The number of copies of this edge that exist in the graph.
+	int multiplicity;
 };
 //private methods-------------------------------------------
 struct DynamicEdge *DynamicEdge_construct() {
@@ -75,7 +78,17 @@ struct DynamicEdge *DynamicEdge_construct() {
 	edge->to = NULL;
 	edge->in_forest = false;
 	edge->level = 0;
+	edge->multiplicity = 1;
 	return(edge);
+}
+void DynamicEdge_increment(struct DynamicEdge *edge) {
+	edge->multiplicity++;
+}
+void DynamicEdge_decrement(struct DynamicEdge *edge) {
+	edge->multiplicity--;
+}
+int DynamicEdge_multiplicity(struct DynamicEdge *edge) {
+	return edge->multiplicity;
 }
 void DynamicEdge_destruct(struct DynamicEdge *edge) {
 	free(edge);
@@ -176,7 +189,12 @@ bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *nod
 
 void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *node2) {
 	assert(node1 != node2);
-	assert(!stEdgeContainer_hasEdge(connectivity->edges, node1, node2));
+	struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, node1, node2);
+	if (edge != NULL) {
+		// This edge is already present in the graph--just increment the multiplicity.
+		DynamicEdge_increment(edge);
+		return;
+	}
 	connectivity->nEdges++;
 	struct DynamicEdge *newEdge = DynamicEdge_construct();
 
@@ -303,6 +321,11 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 	struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, 
 			node1, node2);
 	assert(edge);
+	DynamicEdge_decrement(edge);
+	if(DynamicEdge_multiplicity(edge) > 0) {
+		// There's still a copy of this edge in the multigraph.
+		return;
+	}
 	if(!edge->in_forest) {
 		stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 
@@ -389,7 +412,10 @@ void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
 	while((node2 = stList_getNext(it))) {
-		stConnectivity_removeEdge(connectivity, node, node2);
+		// Work around the fact that edges can have multiple copies.
+		while (stConnectivity_hasEdge(connectivity, node, node2)) {
+			stConnectivity_removeEdge(connectivity, node, node2);
+		}
 	}
 	stList_destructIterator(it);
 	stList_destruct(nodeIncident);

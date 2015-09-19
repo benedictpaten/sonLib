@@ -312,6 +312,25 @@ static void test_stConnectivity_compareWithNaive(CuTest *testCase) {
 	teardown();
 }
 
+// Very simple test that multigraphs work properly.
+static void test_stConnectivity_multigraphs(CuTest *testCase) {
+	setup();
+	stConnectivity_addEdge(connectivity, (void*) 5, (void*) 6);
+
+	stConnectivity_removeEdge(connectivity, (void*) 5, (void*) 6);
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 5, (void*) 6));
+	stConnectivity_removeEdge(connectivity, (void*) 5, (void*) 6);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 5, (void*) 6));
+
+	stConnectivity_addEdge(connectivity, (void*) 5, (void*) 6);
+	stConnectivity_addEdge(connectivity, (void*) 5, (void*) 6);
+	CuAssertTrue(testCase, stConnectivity_connected(connectivity, (void*) 5, (void*) 7));
+	stConnectivity_removeNode(connectivity, (void*) 6);
+	CuAssertTrue(testCase, !stConnectivity_connected(connectivity, (void*) 5, (void*) 7));
+
+	teardown();
+}
+
 CuSuite *sonLib_stConnectivityTestSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
@@ -320,6 +339,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
 	SUITE_ADD_TEST(suite, test_stConnectivity_connected);
 	SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
 	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
+	SUITE_ADD_TEST(suite, test_stConnectivity_multigraphs);
 	return suite;
 }
 
