@@ -20,7 +20,7 @@ struct _stConnectivity {
 	int nEdges;
 	stList *et; //list of the Euler Tour Trees for each level in the graph
 	int nLevels;
-	stList *connectedComponentList;
+	stHash *connectedComponents; // Keyed by Euler tour root, and invalidated with every removal
 	
 	//stores every edge in the graph. Each edge object stores the level of the edge and
 	//whether or not it's in the spanning forest. For nodes a and b, the edge object is stored
@@ -135,7 +135,7 @@ stConnectivity *stConnectivity_construct(void) {
 
 	//add level zero Euler Tour
 	stList_append(connectivity->et, stEulerTour_construct());
-	connectivity->connectedComponentList = stList_construct3(0, 
+	connectivity->connectedComponents = stHash_construct2(NULL,
 			(void(*)(void*))stConnectedComponent_destruct);
 
 
@@ -153,7 +153,7 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	stList_destruct(connectivity->et);
 	stSet_destruct(connectivity->nodes);
 	stEdgeContainer_destruct(connectivity->edges);
-	stList_destruct(connectivity->connectedComponentList);
+	stHash_destruct(connectivity->connectedComponents);
 
 	free(connectivity);
 }
@@ -314,9 +314,11 @@ struct DynamicEdge *visit(stConnectivity *connectivity, void *w, void *otherTree
 //a tree edge, attempt to find a replacement edge to keep node1 and node2 connected. The
 //replacement edge should have the highest possible level.
 void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *node2) {
-	stList_destruct(connectivity->connectedComponentList);
-	connectivity->connectedComponentList = stList_construct3(0, 
-			(void(*)(void*))stConnectedComponent_destruct);
+	if (stHash_size(connectivity->connectedComponents) > 0) {
+		stHash_destruct(connectivity->connectedComponents);
+		connectivity->connectedComponents = stHash_construct2(NULL,
+				(void(*)(void*))stConnectedComponent_destruct);
+	}
 
 	struct DynamicEdge *edge = stEdgeContainer_getEdge(connectivity->edges, 
 			node1, node2);
@@ -408,6 +410,12 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 
 void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	// Remove a node (and all its edges) from the graph.
+	if (stHash_size(connectivity->connectedComponents) > 0) {
+		stHash_destruct(connectivity->connectedComponents);
+		connectivity->connectedComponents = stHash_construct2(NULL,
+				(void(*)(void*))stConnectedComponent_destruct);
+	}
+
 	stList *nodeIncident = stEdgeContainer_getIncidentEdgeList(connectivity->edges, node);
 	stListIterator *it = stList_getIterator(nodeIncident);
 	void *node2;
@@ -450,8 +458,11 @@ stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *conne
 	// the graph is modified, this pointer can be invalidated
 	stEulerTour *et_0 = getTopLevel(connectivity);
 	void *compNode = stEulerTour_getConnectedComponent(et_0, node);
-	stConnectedComponent *comp = stConnectedComponent_construct(connectivity, compNode);
-	stList_append(connectivity->connectedComponentList, comp);
+	stConnectedComponent *comp;
+	if ((comp = stHash_search(connectivity->connectedComponents, compNode)) == NULL) {
+		comp = stConnectedComponent_construct(connectivity, compNode);
+		stHash_insert(connectivity->connectedComponents, compNode, comp);
+	}
 	return comp;
 }
 void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component) {
