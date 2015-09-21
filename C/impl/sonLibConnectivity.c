@@ -166,7 +166,13 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	connectivity->nNodes++;
 
 	//maintain log(n) levels in the graph
-	connectivity->nLevels = getNLevels(connectivity->nNodes);
+	int nLevels = getNLevels(connectivity->nNodes);
+	if (nLevels > connectivity->nLevels) {
+		// We never shrink the number of levels in the graph,
+		// to avoid pathological cases where an entire level
+		// needs to be added/deleted several times in succession.
+		connectivity->nLevels = nLevels;
+	}
 	while(stList_length(connectivity->et) < connectivity->nLevels) {
 		addLevel(connectivity);
 	}
@@ -429,8 +435,8 @@ void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	stList_destruct(nodeIncident);
 	stSet_remove(connectivity->nodes, node);
 	
-	//delete a level if necessary to preserve log(n) levels
 	connectivity->nNodes--;
+	//delete a level if necessary to preserve log(n) levels
 	// Temporarily disabled since with the removal of enough
 	// nodes, there can be cases where some edges still have a
 	// higher level than the graph has.
