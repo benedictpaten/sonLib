@@ -80,7 +80,7 @@ double getMemoryUsage() {
 
 static void addNodesAndPlot(char *filename, int nNodes) {
 	FILE *f = fopen(filename, "w");
-    clock_t time = NULL;
+    clock_t time = clock();
     int window = 100;
 	stConnectivity *connectivity = stConnectivity_construct();
 	stList *nodes = stList_construct();
@@ -109,7 +109,7 @@ static void addEdgesAndPlot(char *filename, int nNodes, int nEdges) {
     FILE *f = fopen(filename, "w");
     stList *nodes = stList_construct();
     int window = 100;
-    clock_t time = NULL;
+    clock_t time = clock();
     for (int i = 0; i < nNodes; i++) {
         void *node = st_malloc(1);
         stList_append(nodes, node);
