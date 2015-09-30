@@ -331,6 +331,28 @@ static void test_stConnectivity_multigraphs(CuTest *testCase) {
 	teardown();
 }
 
+// Test that components always get the same pointer unless those specific
+// components have been modified. (Previously the API spec dictated that
+// the components must be invalidated after any edge insertion or
+// deletion).
+static void test_stConnectivity_constantComponentPointers(CuTest *testCase) {
+    setup();
+
+    stConnectedComponent *component1 = stConnectivity_getConnectedComponent(connectivity, (void *) 2);
+    stConnectedComponent *component2 = stConnectivity_getConnectedComponent(connectivity, (void *) 5);
+    stConnectivity_addEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
+
+    CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
+    CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
+
+    stConnectivity_removeEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
+
+    CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
+    CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
+
+    teardown();
+}
+
 CuSuite *sonLib_stConnectivityTestSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_stConnectivity_newNodeShouldGoInANewComponent);
@@ -340,6 +362,7 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
 	SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
 	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
 	SUITE_ADD_TEST(suite, test_stConnectivity_multigraphs);
+        SUITE_ADD_TEST(suite, test_stConnectivity_constantComponentPointers);
 	return suite;
 }
 
