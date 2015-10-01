@@ -336,21 +336,80 @@ static void test_stConnectivity_multigraphs(CuTest *testCase) {
 // the components must be invalidated after any edge insertion or
 // deletion).
 static void test_stConnectivity_constantComponentPointers(CuTest *testCase) {
-    setup();
+	setup();
 
-    stConnectedComponent *component1 = stConnectivity_getConnectedComponent(connectivity, (void *) 2);
-    stConnectedComponent *component2 = stConnectivity_getConnectedComponent(connectivity, (void *) 5);
-    stConnectivity_addEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
+	stConnectedComponent *component1 = stConnectivity_getConnectedComponent(connectivity, (void *) 2);
+	stConnectedComponent *component2 = stConnectivity_getConnectedComponent(connectivity, (void *) 5);
+	stConnectivity_addEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
 
-    CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
-    CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
+	CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
+	CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
 
-    stConnectivity_removeEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
+	stConnectivity_removeEdge(connectivity, (void *) 2, (void *) 3); // Doesn't affect components
 
-    CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
-    CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
+	CuAssertTrue(testCase, component1 == stConnectivity_getConnectedComponent(connectivity, (void *) 2));
+	CuAssertTrue(testCase, component2 == stConnectivity_getConnectedComponent(connectivity, (void *) 5));
 
-    teardown();
+	teardown();
+}
+
+typedef enum {
+	CREATION,
+	DELETION,
+	MERGE,
+	CLEAVE
+} componentCallback;
+
+componentCallback callbackResults[256];
+
+int64_t curCallbackResultsIdx = 0;
+
+static void createCallback(void *ignored, stConnectedComponent *adjComponent) {
+	callbackResults[curCallbackResultsIdx++] = CREATION;
+}
+
+static void deleteCallback(void *ignored, stConnectedComponent *adjComponent) {
+	callbackResults[curCallbackResultsIdx++] = DELETION;
+}
+
+static void mergeCallback(void *ignored, stConnectedComponent *adjComponent1, stConnectedComponent *adjComponent2) {
+	callbackResults[curCallbackResultsIdx++] = MERGE;
+}
+
+static void cleaveCallback(void *ignored, stConnectedComponent *adjComponent1, stConnectedComponent *adjComponent2, stSet *vertices) {
+	callbackResults[curCallbackResultsIdx++] = CLEAVE;
+}
+
+static void test_stConnectivity_callbacks(CuTest *testCase) {
+	connectivity = stConnectivity_construct();
+
+	stConnectivity_setCreationCallback(connectivity, createCallback, NULL);
+	stConnectivity_setDeletionCallback(connectivity, deleteCallback, NULL);
+	stConnectivity_setMergeCallback(connectivity, mergeCallback, NULL);
+	stConnectivity_setCleaveCallback(connectivity, cleaveCallback, NULL);
+
+	// Create 2 nodes
+	stConnectivity_addNode(connectivity, (void *) 1);
+	stConnectivity_addNode(connectivity, (void *) 2);
+
+	// Merge
+	stConnectivity_addEdge(connectivity, (void *) 1, (void *) 2);
+
+	// Cleave
+	stConnectivity_removeEdge(connectivity, (void *) 1, (void *) 2);
+
+	// Delete
+	stConnectivity_removeNode(connectivity, (void *) 1);
+
+	CuAssertIntEquals(testCase, 5, curCallbackResultsIdx);
+
+	CuAssertTrue(testCase, callbackResults[0] == CREATION);
+	CuAssertTrue(testCase, callbackResults[1] == CREATION);
+	CuAssertTrue(testCase, callbackResults[2] == MERGE);
+	CuAssertTrue(testCase, callbackResults[3] == CLEAVE);
+	CuAssertTrue(testCase, callbackResults[4] == DELETION);
+
+	teardown();
 }
 
 CuSuite *sonLib_stConnectivityTestSuite(void) {
@@ -362,7 +421,8 @@ CuSuite *sonLib_stConnectivityTestSuite(void) {
 	SUITE_ADD_TEST(suite, test_stConnectivity_nodeIterator);
 	SUITE_ADD_TEST(suite, test_stConnectivity_compareWithNaive);
 	SUITE_ADD_TEST(suite, test_stConnectivity_multigraphs);
-        SUITE_ADD_TEST(suite, test_stConnectivity_constantComponentPointers);
+	SUITE_ADD_TEST(suite, test_stConnectivity_constantComponentPointers);
+	SUITE_ADD_TEST(suite, test_stConnectivity_callbacks);
 	return suite;
 }
 

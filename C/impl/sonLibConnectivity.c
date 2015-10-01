@@ -28,6 +28,15 @@ struct _stConnectivity {
 	//edge.
 	stEdgeContainer *edges;
 
+	void (*creationCallback)(void *, stConnectedComponent *);
+	void *creationExtraData;
+	void (*mergeCallback)(void *, stConnectedComponent *, stConnectedComponent *);
+	void *mergeExtraData;
+	void (*cleaveCallback)(void *, stConnectedComponent *, stConnectedComponent *, stSet *);
+	void *cleaveExtraData;
+	void (*deletionCallback)(void *, stConnectedComponent *);
+	void *deletionExtraData;
+
 };
 
 struct _stConnectedComponent {
@@ -143,6 +152,11 @@ stConnectivity *stConnectivity_construct(void) {
 	connectivity->nEdges = 0;
 	connectivity->edges = stEdgeContainer_construct((void(*)(void*))DynamicEdge_destruct);
 
+	connectivity->creationCallback = NULL;
+	connectivity->mergeCallback = NULL;
+	connectivity->cleaveCallback = NULL;
+	connectivity->deletionCallback = NULL;
+
 	return(connectivity);
 
 }
@@ -186,6 +200,9 @@ void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 		stEulerTour_createVertex(et_i, node);
 	}
 
+	if (connectivity->creationCallback) {
+		connectivity->creationCallback(connectivity->creationExtraData, stConnectivity_getConnectedComponent(connectivity, node));
+	}
 }
 
 bool stConnectivity_hasEdge(stConnectivity *connectivity, void *node1, void *node2) {
@@ -216,12 +233,21 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 	if(!stEulerTour_connected(et_lowest, node1, node2)) {
 		//the two nodes are not already connected, so the new node will be pat of the spanning forest.
 		//find the two connected components and invalidate them.
-		stConnectedComponent_destruct(stHash_remove(connectivity->connectedComponents, stEulerTour_getConnectedComponent(et_lowest, node1)));
-		stConnectedComponent_destruct(stHash_remove(connectivity->connectedComponents, stEulerTour_getConnectedComponent(et_lowest, node2)));
+		stConnectedComponent *component1 = stHash_remove(connectivity->connectedComponents, stEulerTour_getConnectedComponent(et_lowest, node1));
+		stConnectedComponent *component2 = stHash_remove(connectivity->connectedComponents, stEulerTour_getConnectedComponent(et_lowest, node2));
+		stConnectedComponent_destruct(component1);
 		//link the level N - 1 Euler Tours together, which corresponds to 
 		//adding a tree edge on level N - 1.
 		stEulerTour_link(et_lowest, node1, node2);
 		newEdge->in_forest = true;
+
+		if (component2) {
+			component2->nodeInComponent = stEulerTour_getConnectedComponent(et_lowest, node1);
+			stHash_insert(connectivity->connectedComponents, component2->nodeInComponent, component2);
+			if (connectivity->mergeCallback) {
+				connectivity->mergeCallback(connectivity->mergeExtraData, component1, component2);
+			}
+		}
 	}
 	else {
 		//the nodes were already connected, so the Euler tour doesn't need 
@@ -400,18 +426,26 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 				assert(!stEulerTour_connected(et_h, node1, node2));
 				stEulerTour_link(et_h, replacementEdge->from, replacementEdge->to);
 			}
-		}		
+		}
 		stSet_destruct(seen);
 	}
-	if (replacementEdge && previousComponent) {
+	if (previousComponent) {
        		//update the component to use the new root
 		stHash_remove(connectivity->connectedComponents, previousComponent->nodeInComponent);
 	       	previousComponent->nodeInComponent = stEulerTour_getConnectedComponent(getTopLevel(connectivity), node1);
        		stHash_insert(connectivity->connectedComponents, previousComponent->nodeInComponent, previousComponent);
-	} else if(previousComponent) {
-		//invalidate the previous connected component pointer
-	       	stConnectedComponent_destruct(stHash_remove(connectivity->connectedComponents, previousComponent->nodeInComponent));
-       	}
+		if (!replacementEdge && connectivity->cleaveCallback) {
+			stConnectedComponent *newComponent = stConnectivity_getConnectedComponent(connectivity, node2);
+			stSet *newVertices = stSet_construct();
+			stConnectedComponentNodeIterator *it = stConnectedComponent_getNodeIterator(newComponent);
+			void *vertex;
+			while ((vertex = stConnectedComponentNodeIterator_getNext(it)) != NULL) {
+				stSet_insert(newVertices, vertex);
+			}
+			connectivity->cleaveCallback(connectivity->cleaveExtraData, previousComponent, newComponent, newVertices);
+			stSet_destruct(newVertices);
+		}
+	}
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
 	return;
 
@@ -447,13 +481,39 @@ void stConnectivity_removeNode(stConnectivity *connectivity, void *node) {
 	//	removeLevel(connectivity);
 	// }
 
+	if (connectivity->deletionCallback) {
+		connectivity->deletionCallback(connectivity->deletionExtraData, stConnectivity_getConnectedComponent(connectivity, node));
+	}
+
         stConnectedComponent_destruct(stHash_remove(connectivity->connectedComponents, node));
 
 	for(int i = 0; i < connectivity->nLevels; i++) {
 		stEulerTour *et_i = stList_get(connectivity->et, i);
 		stEulerTour_removeVertex(et_i, node);
 	}
+
 }
+
+void stConnectivity_setCreationCallback(stConnectivity *connectivity, void (*callback)(void *, stConnectedComponent *), void *extraData) {
+    connectivity->creationCallback = callback;
+    connectivity->creationExtraData = extraData;
+}
+
+void stConnectivity_setMergeCallback(stConnectivity *connectivity, void (*callback)(void *, stConnectedComponent *, stConnectedComponent *), void *extraData) {
+    connectivity->mergeCallback = callback;
+    connectivity->mergeExtraData = extraData;
+}
+
+void stConnectivity_setCleaveCallback(stConnectivity *connectivity, void (*callback)(void *, stConnectedComponent *, stConnectedComponent *, stSet *), void *extraData) {
+    connectivity->cleaveCallback = callback;
+    connectivity->cleaveExtraData = extraData;
+}
+
+void stConnectivity_setDeletionCallback(stConnectivity *connectivity, void (*callback)(void *, stConnectedComponent *), void *extraData) {
+    connectivity->deletionCallback = callback;
+    connectivity->deletionExtraData = extraData;
+}
+
 stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivity, void *node) {
 	stConnectedComponent *component = st_malloc(sizeof(stConnectedComponent));
 	component->nodeInComponent = node;
