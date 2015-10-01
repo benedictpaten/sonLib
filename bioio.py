@@ -724,7 +724,7 @@ def fastaRead(fileHandleOrFile):
             seq = array.array('c')
             while line != '' and line[0] != '>':
                 line = line.translate(None, chars_to_remove)
-                if line[0] != '#':
+                if len(line) > 0 and line[0] != '#':
                     seq.extend(line)
                 line = fileHandle.readline()
             try:
