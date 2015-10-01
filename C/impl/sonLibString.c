@@ -45,6 +45,23 @@ char *stString_print(const char *string, ...) {
     return stString_copy(cA);
 }
 
+char *stString_print_r(const char *string, ...) {
+    va_list ap;
+    va_start(ap, string);
+    int64_t i = vsnprintf(NULL, 0, string, ap);
+    va_end(ap);
+
+    assert(i >= 0);
+    int64_t arraySize = i + 1;
+    char *ret = st_malloc(sizeof(char) * arraySize);
+    va_start(ap, string);
+    i = vsnprintf(ret, arraySize, string, ap);
+    assert(i+1 == arraySize);
+    va_end(ap);
+
+    return ret;
+}
+
 char *stString_getNextWord(char **string) {
     while(**string != '\0' && isspace(**string)) {
         (*string)++;
@@ -143,6 +160,21 @@ stList *stString_split(const char *string) {
     }
     free(cA2);
     return tokens;
+}
+
+stList *stString_splitByString(const char *string, const char *delim) {
+    const char *curTokenStart = string;
+    const char *curTokenEnd;
+    size_t tokenLength = strlen(delim);
+    assert(tokenLength > 0);
+    stList *ret = stList_construct3(0, free);
+    while ((curTokenEnd = strstr(curTokenStart, delim)) != NULL) {
+        stList_append(ret, stString_getSubString(curTokenStart, 0, curTokenEnd - curTokenStart));
+        curTokenStart = curTokenEnd + tokenLength;
+    }
+    stList_append(ret, stString_copy(curTokenStart));
+
+    return ret;
 }
 
 char *stString_getSubString(const char *cA, int64_t start, int64_t length) {

@@ -1,8 +1,11 @@
-.PHONY: all clean cutestM cutestM.clean
+include ../include.mk
+.PHONY: all clean cutestM cutestM.clean quicktreeM.clean
 
-all : cutestM 
+libPath = ../lib
 
-clean : cutestM.clean
+all : cutestM quicktreeM
+
+clean : cutestM.clean quicktreeM.clean
 
 cutestM :
 	cd cutest && make all
@@ -10,3 +13,8 @@ cutestM :
 cutestM.clean :
 	cd cutest && make clean
 
+quicktreeM :
+	cd quicktree_1.1 && make all
+
+quicktreeM.clean :
+	cd quicktree_1.1 && make clean

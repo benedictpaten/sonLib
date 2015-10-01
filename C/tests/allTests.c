@@ -22,10 +22,24 @@ CuSuite* sonLibFileTestSuite(void);
 CuSuite* stCacheSuite(void);
 CuSuite* stPosetAlignmentTestSuite(void);
 CuSuite* sonLibGraphTestSuite(void);
+CuSuite* sonLib_stConnectivityTestSuite(void);
+CuSuite* sonLib_stTreapTestSuite(void);
+CuSuite* sonLib_stEulerTestSuite(void);
+CuSuite* sonLib_stEdgeContainerTestSuite(void);
+CuSuite* sonLib_stMatrixTestSuite(void);
+CuSuite* sonLib_stPhylogenyTestSuite(void);
+CuSuite* sonLib_stThreadPoolTestSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
+    CuSuiteAddSuite(suite, sonLib_stTreapTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stEdgeContainerTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stEulerTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stConnectivityTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stThreadPoolTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stPhylogenyTestSuite());
+    CuSuiteAddSuite(suite, sonLib_stMatrixTestSuite());
     CuSuiteAddSuite(suite, sonLibGraphTestSuite());
     CuSuiteAddSuite(suite, stPosetAlignmentTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCommonTestSuite());

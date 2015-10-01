@@ -49,3 +49,19 @@ void *st_randomChoice(stList *list) {
     return stList_get(list, st_randomInt(0, stList_length(list)));
 }
 
+char stRandom_getRandomNucleotide(bool includeNs, bool useLowerCase, bool useRandomCase) {
+    double d = st_random();
+    char c = includeNs ? (d >= 0.8 ? 'A' : (d >= 0.6 ? 'T' : (d >= 0.4 ? 'G' : (d >= 0.2 ? 'C' : 'N')))) :
+            d >= 0.75 ? 'A' : (d >= 0.5 ? 'T' : (d >= 0.25 ? 'G' : 'C'));
+    return useLowerCase || (useRandomCase && st_random() > 0.5) ? tolower(c) : c;
+}
+
+char *stRandom_getRandomDNAString(int64_t length, bool includeNs, bool useLowerCase, bool useRandomCase) {
+    char *string = st_malloc(sizeof(char) * (length + 1));
+    for (int64_t i = 0; i < length; i++) {
+        string[i] = stRandom_getRandomNucleotide(includeNs, useLowerCase, useRandomCase);
+    }
+    string[length] = '\0';
+    return string;
+}
+
