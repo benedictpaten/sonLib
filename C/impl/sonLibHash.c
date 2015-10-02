@@ -184,3 +184,44 @@ void (*stHash_getKeyDestructorFunction(stHash *hash))(void *) {
 void (*stHash_getValueDestructorFunction(stHash *hash))(void *) {
     return hash->hash->valueFree;
 }
+
+static int unsigned_cmp(const unsigned *x, const unsigned *y) {
+    if (*x < *y) {
+        return -1;
+    } else if (*x == *y) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+void stHash_printDiagnostics(stHash *hash) {
+    struct hashtable *h = hash->hash;
+    unsigned *bucketLoad = st_malloc(h->tablelength * sizeof(unsigned));
+    unsigned *occupiedBucketLoad = st_malloc(h->entrycount * sizeof(unsigned));
+    size_t occupiedBuckets = 0;
+    for (size_t i = 0; i < h->tablelength; i++) {
+        unsigned load = 0;
+        struct entry *e;
+        if ((e = h->table[i]) != NULL) {
+            while (e) {
+                load++;
+                e = e->next;
+            }
+            occupiedBucketLoad[occupiedBuckets++] = load;
+        }
+        bucketLoad[i] = load;
+    }
+    printf("Load: %zu / %zu (%lf%%)\n", h->entrycount, h->tablelength, ((double)h->entrycount)/h->tablelength * 100);
+    printf("# occupied buckets: %zu\n", occupiedBuckets);
+    qsort(bucketLoad, h->tablelength, sizeof(unsigned), (int (*)(const void *, const void *)) unsigned_cmp);
+    qsort(occupiedBucketLoad, occupiedBuckets, sizeof(unsigned), (int (*)(const void *, const void *)) unsigned_cmp);
+    printf("min load: %u, median load: %u, max load: %u\n", bucketLoad[0], bucketLoad[(h->tablelength - 1) / 2],
+           bucketLoad[h->tablelength - 1]);
+    printf("min occupied load: %u, avg occupied load: %lf, median occupied load: %u, max occupied load: %u\n",
+           occupiedBucketLoad[0], ((double)h->entrycount)/occupiedBuckets,
+           occupiedBucketLoad[(occupiedBuckets - 1) / 2],
+           occupiedBucketLoad[occupiedBuckets - 1]);
+    free(occupiedBucketLoad);
+    free(bucketLoad);
+}

@@ -130,6 +130,13 @@ int (*stHash_getEqualityFunction(stHash *hash))(const void *, const void *);
 void (*stHash_getKeyDestructorFunction(stHash *hash))(void *);
 void (*stHash_getValueDestructorFunction(stHash *hash))(void *);
 
+/*
+ * Print a set of statistics (load, occupied load, etc.) for the
+ * hash. Meant to be run from gdb to check if your hash function is
+ * distributing properly.
+ */
+void stHash_printDiagnostics(stHash *hash);
+
 #ifdef __cplusplus
 }
 #endif
