@@ -75,6 +75,8 @@ typedef struct _stNaiveConnectedComponent stNaiveConnectedComponent;
 typedef struct _stNaiveConnectedComponentIterator stNaiveConnectedComponentIterator;
 typedef struct _stNaiveConnectedComponentNodeIterator stNaiveConnectedComponentNodeIterator;
 typedef struct _stMatrix stMatrix;
+typedef struct _stStructuralForest stStructuralForest;
+typedef struct _stLocalSearchTree stLocalSearchTree;
 
 #ifdef __cplusplus
 }

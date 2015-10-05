@@ -29,10 +29,12 @@ CuSuite* sonLib_stEdgeContainerTestSuite(void);
 CuSuite* sonLib_stMatrixTestSuite(void);
 CuSuite* sonLib_stPhylogenyTestSuite(void);
 CuSuite* sonLib_stThreadPoolTestSuite(void);
+CuSuite* sonLib_stLocalSearchTreeTestSuite(void);
 
 int sonLibRunAllTests(void) {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
+    /*
     CuSuiteAddSuite(suite, sonLib_stTreapTestSuite());
     CuSuiteAddSuite(suite, sonLib_stEdgeContainerTestSuite());
     CuSuiteAddSuite(suite, sonLib_stEulerTestSuite());
@@ -55,7 +57,8 @@ int sonLibRunAllTests(void) {
     CuSuiteAddSuite(suite, sonLib_stRandomTestSuite());
     CuSuiteAddSuite(suite, sonLib_stCompressionTestSuite());
     CuSuiteAddSuite(suite, sonLibFileTestSuite());
-    CuSuiteAddSuite(suite, stCacheSuite());
+    CuSuiteAddSuite(suite, stCacheSuite()); */
+    CuSuiteAddSuite(suite, sonLib_stLocalSearchTreeTestSuite());
     CuSuiteRun(suite);
     CuSuiteSummary(suite, output);
     CuSuiteDetails(suite, output);
