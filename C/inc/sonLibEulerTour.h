@@ -13,7 +13,7 @@ int stEulerHalfEdge_contains(stEulerHalfEdge *edge, stEulerVertex *vertex);
 void *stEulerHalfEdge_getFrom(stEulerHalfEdge *edge);
 void *stEulerHalfEdge_getTo(stEulerHalfEdge *edge);
 //--------------------------------------------------
-stEulerTour *stEulerTour_construct();
+stEulerTour *stEulerTour_construct(void);
 bool stEulerTour_hasEdge(stEulerTour *et, void *u, void *v);
 stEdgeContainer *stEulerTour_getEdges(stEulerTour *et);
 bool stEulerTour_isSingleton(stEulerTour *et, void *v);
