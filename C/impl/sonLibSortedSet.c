@@ -142,9 +142,9 @@ void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object) {
     return avl_find_greaterThan(sortedSet->sortedSet, object);
 }
 
-void stSortedSet_remove(stSortedSet *sortedSet, void *object) {
+void *stSortedSet_remove(stSortedSet *sortedSet, void *object) {
     checkModifiable(sortedSet);
-    avl_delete(sortedSet->sortedSet, object);
+    return avl_delete(sortedSet->sortedSet, object);
 }
 
 int64_t stSortedSet_size(stSortedSet *sortedSet) {

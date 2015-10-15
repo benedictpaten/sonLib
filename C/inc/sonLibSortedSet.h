@@ -54,7 +54,7 @@ stSortedSet *stSortedSet_copyConstruct(stSortedSet *sortedSet, void (*destructEl
 void stSortedSet_setDestructor(stSortedSet *set, void (*destructElement)(void *));
 
 /*
- * Destructs the sorted set.
+ * Destructs the sorted set. Note: NOT THREAD-SAFE.
  */
 void stSortedSet_destruct(stSortedSet *sortedSet);
 
@@ -89,9 +89,10 @@ void *stSortedSet_searchGreaterThanOrEqual(stSortedSet *sortedSet, void *object)
 void *stSortedSet_searchGreaterThan(stSortedSet *sortedSet, void *object);
 
 /*
- * Deletes the object in the sorted set.
+ * Removes and returns the object from the sorted set. NOTE: Does
+ * *not* call the destruct function on the object.
  */
-void stSortedSet_remove(stSortedSet *sortedSet, void *object);
+void *stSortedSet_remove(stSortedSet *sortedSet, void *object);
 
 /*
  * Gets the number of elements in the sorted set.
