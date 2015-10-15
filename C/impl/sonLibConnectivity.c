@@ -444,6 +444,7 @@ void stConnectivity_removeEdge(stConnectivity *connectivity, void *node1, void *
 			}
 			connectivity->cleaveCallback(connectivity->cleaveExtraData, previousComponent, newComponent, newVertices);
 			stSet_destruct(newVertices);
+			stConnectedComponentNodeIterator_destruct(it);
 		}
 	}
 	stEdgeContainer_deleteEdge(connectivity->edges, node1, node2);
