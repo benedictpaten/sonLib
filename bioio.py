@@ -742,9 +742,16 @@ def fastaWrite(fileHandleOrFile, name, seq, mode="w"):
     """Writes out fasta file
     """
     fileHandle = _getFileHandle(fileHandleOrFile, mode)
-    assert seq.__class__ == "".__class__
-    for i in seq:
-        assert (i >= 'A' and i <= 'Z') or (i >= 'a' and i <= 'z') or i == '-' #For safety and sanity I only allows roman alphabet characters in fasta sequences.
+    valid_chars = {x for x in string.ascii_letters + "-"}
+    try:
+        assert any([isinstance(seq, unicode), isinstance(seq, str)])
+    except AssertionError:
+        raise RuntimeError("Sequence is not unicode or string")
+    try:
+        assert all(x in valid_chars for x in seq)
+    except AssertionError:
+        bad_chars = {x for x in seq if x not in valid_chars}
+        raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
     fileHandle.write(">%s\n" % name)
     chunkSize = 100
     for i in xrange(0, len(seq), chunkSize):
