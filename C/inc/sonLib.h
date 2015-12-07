@@ -40,4 +40,5 @@
 #include "stPhylogeny.h"
 #include "stThreadPool.h"
 #include "sonLibLocalSearchTree.h"
+#include "sonLibStructuralForest.h"
 #endif /* SONLIB_H_ */

@@ -45,10 +45,15 @@ static void test_stLocalSearchTree_merge(CuTest *testCase) {
     CuAssertPtrEquals(testCase, stLocalSearchTree_findRoot(a), stLocalSearchTree_findRoot(e));
     CuAssertPtrEquals(testCase, stLocalSearchTree_findRoot(b), stLocalSearchTree_findRoot(d));
     stLocalSearchTree_checkTree(a);
-    stLocalSearchTree *root = stLocalSearchTree_findRoot(a);
+    stLocalSearchTree_merge(d, g);
+    stLocalSearchTree_merge(e, h);
+    stLocalSearchTree_checkTree(c);
+    stLocalSearchTree *root = stLocalSearchTree_findRoot(b);
     stLocalSearchTree_print(root);
-
-    //stLocalSearchTree_delete(d);
+    stLocalSearchTree_delete(d);
+    stLocalSearchTree_checkTree(a);
+    root = stLocalSearchTree_findRoot(c);
+    stLocalSearchTree_print(root);
     
     teardown();
 }

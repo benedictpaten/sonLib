@@ -1,23 +1,19 @@
 #include "sonLibGlobalsInternal.h"
 
-#include <assert.h>
-
-struct _stStructuralForest {
-    stLocalSearchTree *tree;
-    stStructuralForest *parent;
-};
-
 stStructuralForest *stStructuralForest_construct() {
-    stStructuralForest *node = st_malloc(sizeof(stStructuralForest));
-    node->tree = stLocalSearchTree_construct();
-    return node;
+    stStructuralForest *forest = st_malloc(sizeof(stStructuralForest));
+    forest->nodes = stHash_construct();
+    return forest;
 }
 
-void stStructuralForest_addChild(stStructuralForest *parent, stStructuralForest *child) {
-    
-}
-void stStructuralForest_deleteChild(stStructuralForest *parent, stStructuralForest *child) {
+void stStructuralForest_merge(stStructuralForest *forest, void *parent, void *child) {
+    stLocalSearchTree *parentNode = stHash_search(forest->nodes, parent);
+    stLocalSearchTree *childNode = stHash_search(forest->nodes, child);
+    stLocalSearchTree_merge(parentNode, childNode);
+    stHash_insert(forest->nodes, parent, stLocalSearchTree_findRoot(parentNode));
+
 }
 
-void stStructuralForest_merge(stStructuralForest *x, stStructuralForest *y) {
+void stStructuralForest_deleteChild(stStructuralForest *forest, void *child) {
+    stLocalSearchTree_delete(stHash_search(forest->nodes, child));
 }

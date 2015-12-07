@@ -17,9 +17,6 @@ else
     cpp = g++ 
 endif
 
-cxx = clang -std=c99
-cpp = clang++
-
 # -Wno-unused-result
 
 # Compiler flags.

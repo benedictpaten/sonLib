@@ -171,8 +171,6 @@ void stConnectivity_destruct(stConnectivity *connectivity) {
 	free(connectivity);
 }
 
-
-
 void stConnectivity_addNode(stConnectivity *connectivity, void *node) {
 	// Add an isolated node to the graph. This should end up in a new
 	// connected component with only one member.

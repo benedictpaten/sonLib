@@ -6,19 +6,19 @@ typedef enum {
     RANK,
 } lstNodeType;
 
-struct BitMap {
-    stList *bits;
-};
-
 struct _stLocalSearchTree {
-    stLocalSearchTree  *left;
-    stLocalSearchTree *right;
-    stLocalSearchTree *parent;
+    stLocalSearchTree *right, *left, *parent;
     stLocalSearchTree *prevRankRoot;
     stLocalSearchTree *nextRankRoot;
-    void *value;
     lstNodeType type;
     int rank;
+    void *value;
+    
+    //Bitmaps that say whether or not each descending
+    //leaf has a tree edge and whether it has a non-tree 
+    //edge
+    int *tree;
+    int *non_tree;
 };
 
 void stLocalSearchTree_checkTree(stLocalSearchTree *node);
