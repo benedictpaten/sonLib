@@ -1,58 +1,34 @@
 #include "sonLibGlobalsTest.h"
 
-static stLocalSearchTree *a;
-static stLocalSearchTree *b;
-static stLocalSearchTree *c;
-static stLocalSearchTree *d;
-static stLocalSearchTree *e;
-static stLocalSearchTree *f;
-static stLocalSearchTree *g;
-static stLocalSearchTree *h;
-static stLocalSearchTree *i;
+static stStructuralForest *forest;
 
 static void setup(void) {
-    a = stLocalSearchTree_construct4(1, (void*)"a");
-    b = stLocalSearchTree_construct4(2, (void*)"b");
-    c = stLocalSearchTree_construct4(4, (void*)"c");
-    d = stLocalSearchTree_construct4(5, (void*)"d");
-    e = stLocalSearchTree_construct4(5, (void*)"e");
-    f = stLocalSearchTree_construct4(8, (void*)"f");
-    g = stLocalSearchTree_construct4(9, (void*)"g");
-    h = stLocalSearchTree_construct4(9, (void*)"h");
-    i = stLocalSearchTree_construct4(10, (void*)"i");
+    forest = stStructuralForest_construct();
+    stStructuralForest_addVertex(forest, (void*)"a");
+    stStructuralForest_addVertex(forest, (void*)"b");
+    stStructuralForest_addVertex(forest, (void*)"c");
+    stStructuralForest_addVertex(forest, (void*)"d");
+    stStructuralForest_addVertex(forest, (void*)"e");
+    stStructuralForest_addVertex(forest, (void*)"f");
+
 
 }
 
 static void teardown(void) {
-    stLocalSearchTree_destruct(a);
-    stLocalSearchTree_destruct(b);
-    stLocalSearchTree_destruct(c);
-    stLocalSearchTree_destruct(d);
-    stLocalSearchTree_destruct(e);
-    stLocalSearchTree_destruct(f);
-    stLocalSearchTree_destruct(g);
-    stLocalSearchTree_destruct(h);
-    stLocalSearchTree_destruct(i);
+    stStructuralForest_destruct(forest);
 
 }
 
-static void test_stLocalSearchTree_merge(CuTest *testCase) {
+static void test_stStructuralForest_link(CuTest *testCase) {
     setup();
-    stLocalSearchTree_merge(a, b);
-    stLocalSearchTree_merge(a, c);
-    stLocalSearchTree_merge(a, e);
-    stLocalSearchTree_merge(a, d);
-    CuAssertPtrEquals(testCase, stLocalSearchTree_findRoot(a), stLocalSearchTree_findRoot(e));
-    CuAssertPtrEquals(testCase, stLocalSearchTree_findRoot(b), stLocalSearchTree_findRoot(d));
-    stLocalSearchTree_checkTree(a);
-    stLocalSearchTree_merge(d, g);
-    stLocalSearchTree_merge(e, h);
-    stLocalSearchTree_checkTree(c);
-    stLocalSearchTree *root = stLocalSearchTree_findRoot(b);
-    stLocalSearchTree_print(root);
-    stLocalSearchTree_delete(d);
-    stLocalSearchTree_checkTree(a);
-    root = stLocalSearchTree_findRoot(c);
+    stStructuralForest_link(forest, (void*)"a", (void*)"b", 0);
+    stStructuralForest_link(forest, (void*)"c", (void*)"a", 0);
+    stStructuralForest_link(forest, (void*)"d", (void*)"a", 0);
+    stStructuralForest_link(forest, (void*)"e", (void*)"a", 0);
+    stStructuralForest_link(forest, (void*)"a", (void*)"f", 1);
+
+    stLocalSearchTree *a = stStructuralForest_getNode(forest, (void*)"a");
+    stLocalSearchTree *root = stLocalSearchTree_findRoot(a);
     stLocalSearchTree_print(root);
     
     teardown();
@@ -61,6 +37,6 @@ static void test_stLocalSearchTree_merge(CuTest *testCase) {
 CuSuite *sonLib_stLocalSearchTreeTestSuite(void) {
     st_setLogLevelFromString("debug");
     CuSuite *suite = CuSuiteNew();
-    SUITE_ADD_TEST(suite, test_stLocalSearchTree_merge);
+    SUITE_ADD_TEST(suite, test_stStructuralForest_link);
     return suite;
 }
