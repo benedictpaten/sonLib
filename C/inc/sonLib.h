@@ -39,4 +39,5 @@
 #include "stMatrix.h"
 #include "stPhylogeny.h"
 #include "stThreadPool.h"
+#include "stUnionFind.h"
 #endif /* SONLIB_H_ */
