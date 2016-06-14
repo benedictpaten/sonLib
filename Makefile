@@ -23,6 +23,6 @@ externalToolsP.clean :
 test : all
 	PYTHONPATH=.. PATH=../../bin:$$PATH python allTests.py --testLength=SHORT --logLevel=CRITICAL
 
-${binPath}/sonLib_daemonize.py : sonLib_daemonize.py
+${binPath}/sonLib_daemonize.py : sonLib_daemonize.py cP
 	cp sonLib_daemonize.py ${binPath}/sonLib_daemonize.py
 	chmod +x ${binPath}/sonLib_daemonize.py
