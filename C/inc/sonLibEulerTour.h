@@ -22,6 +22,7 @@ void stEulerTour_printTour(stEulerTour *et, void *v);
 void stEulerTour_printEdgeTour(stEulerTour *et, void *v);
 int stEulerTour_connected(stEulerTour *et, void *u, void *v);
 int stEulerTour_size(stEulerTour *et, void *v);
+int stEulerTour_getNComponents(stEulerTour *et);
 stTreap *stEulerTour_findRoot(stEulerTour *et, void *v);
 void *stEulerTour_findRootNode(stEulerTour *et, void *v);
 stEulerVertex *stEulerTour_getVertex(stEulerTour *et, void *v);

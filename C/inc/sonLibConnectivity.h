@@ -79,6 +79,8 @@ stConnectedComponent *stConnectedComponent_construct(stConnectivity *connectivit
 
 stConnectedComponent *stConnectivity_getConnectedComponent(stConnectivity *connectivity, void *node);
 
+int stConnectivity_getNComponents(stConnectivity *connectivity);
+
 void *stConnectedComponent_getNodeInComponent(stConnectedComponent *component);
 
 stConnectedComponentNodeIterator *stConnectedComponent_getNodeIterator(stConnectedComponent *component);

@@ -258,6 +258,11 @@ void stConnectivity_addEdge(stConnectivity *connectivity, void *node1, void *nod
 
 }
 
+int stConnectivity_getNComponents(stConnectivity *connectivity) {
+    stEulerTour *topLevel = getTopLevel(connectivity);
+    return stEulerTour_getNComponents(topLevel);
+}
+
 int stConnectivity_connected(stConnectivity *connectivity, void *node1, void *node2) {
 	//check whether node1 and node2 have the same root in the spanning forest
 	//on level N - 1.
