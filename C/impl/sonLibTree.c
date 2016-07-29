@@ -409,3 +409,47 @@ stTree *stTree_getMRCA(stTree *node1, stTree *node2) {
     stSet_destruct(parents);
     return ret;
 }
+
+stTree *stTree_getRoot(stTree *node) {
+    while (stTree_getParent(node) != NULL) {
+        node = stTree_getParent(node);
+    }
+    return node;
+}
+
+stTree *stTree_cloneEntireTreeButReturnThisNode(stTree *node) {
+    // Get the path to the root by leaving a trail of breadcrumbs.
+    int64_t distToRoot = 0;
+    stTree *root = node;
+    while (stTree_getParent(root) != NULL) {
+        root = stTree_getParent(root);
+        distToRoot++;
+    }
+
+    int64_t pathFromRoot[distToRoot];
+    int64_t i = distToRoot - 1;
+    root = node;
+    stTree *prev;
+    while (stTree_getParent(root) != NULL) {
+        prev = root;
+        root = stTree_getParent(root);
+        int64_t j;
+        for (j = 0; j < stTree_getChildNumber(root); j++) {
+            if (prev == stTree_getChild(root, j)) {
+                pathFromRoot[i--] = j;
+                break;
+            }
+        }
+        assert(j != stTree_getChildNumber(root));
+    }
+
+    stTree *tree = stTree_clone(root);
+
+    // Traverse down to the right node in the cloned tree.
+    stTree *nodeToReturn = tree;
+    for (i = 0; i < distToRoot; i++) {
+        nodeToReturn = stTree_getChild(nodeToReturn, pathFromRoot[i]);
+    }
+
+    return nodeToReturn;
+}

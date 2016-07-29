@@ -133,6 +133,17 @@ void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
  */
 stTree *stTree_getMRCA(stTree *node1, stTree *node2);
 
+/*
+ * Get the root of this tree starting from an arbitrary node.
+ */
+stTree *stTree_getRoot(stTree *node);
+
+/*
+ * Clone a tree (not just the tree below this node), but return the
+ * corresponding node in the cloned tree rather than the root.
+ */
+stTree *stTree_cloneEntireTreeButReturnThisNode(stTree *node);
+
 #ifdef __cplusplus
 }
 #endif

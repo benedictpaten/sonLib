@@ -233,6 +233,25 @@ static void test_stTree_getMRCA(CuTest *testCase) {
     teardown();
 }
 
+static void test_stTree_getRoot(CuTest *testCase) {
+    setup();
+    CuAssertTrue(testCase, stTree_getRoot(internal) == root);
+    CuAssertTrue(testCase, stTree_getRoot(root) == root);
+    CuAssertTrue(testCase, stTree_getRoot(child1) == root);
+    CuAssertTrue(testCase, stTree_getRoot(child2) == root);
+    teardown();
+}
+
+static void test_stTree_cloneEntireTreeButReturnThisNode(CuTest *testCase) {
+    setup();
+    stTree *internalClone = stTree_cloneEntireTreeButReturnThisNode(internal);
+    CuAssertIntEquals(testCase, 2, stTree_getChildNumber(internalClone));
+    CuAssertTrue(testCase, stTree_getParent(internalClone) != NULL);
+    CuAssertTrue(testCase, stTree_getParent(internalClone) != root);
+    stTree_destruct(stTree_getRoot(internalClone));
+    teardown();
+}
+
 CuSuite* sonLib_ETreeTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stTree_construct);
@@ -248,5 +267,7 @@ CuSuite* sonLib_ETreeTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stTree_clone);
     SUITE_ADD_TEST(suite, test_stTree_reRoot);
     SUITE_ADD_TEST(suite, test_stTree_getMRCA);
+    SUITE_ADD_TEST(suite, test_stTree_getRoot);
+    SUITE_ADD_TEST(suite, test_stTree_cloneEntireTreeButReturnThisNode);
     return suite;
 }

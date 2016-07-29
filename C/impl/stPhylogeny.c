@@ -1398,51 +1398,10 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
         return;
     }
 
-    // Get the root of this tree, and a trail of breadcrumbs back to
-    // the position of this node (child of the branch to be NNI'd).
-    int64_t distToRoot = 0;
-    stTree *root = anc;
-    while (stTree_getParent(root) != NULL) {
-        root = stTree_getParent(root);
-        distToRoot++;
-    }
-
-    bool pathFromRoot[distToRoot];
-    int64_t i = distToRoot - 1;
-    root = anc;
-    stTree *prev;
-    while (stTree_getParent(root) != NULL) {
-        prev = root;
-        root = stTree_getParent(root);
-        if (prev == stTree_getChild(root, 0)) {
-            pathFromRoot[i--] = 0;
-        } else {
-            assert(prev == stTree_getChild(root, 1));
-            pathFromRoot[i--] = 1;
-        }
-    }    
-
-    *tree1 = stTree_clone(root);
-    *tree2 = stTree_clone(root);
-
-    // Traverse down to the right node in tree1 and tree2.
-    stTree *anc1 = *tree1;
-    for (i = 0; i < distToRoot; i++) {
-        if (pathFromRoot[i]) {
-            anc1 = stTree_getChild(anc1, 1);
-        } else {
-            anc1 = stTree_getChild(anc1, 0);
-        }
-    }
-
-    stTree *anc2 = *tree2;
-    for (i = 0; i < distToRoot; i++) {
-        if (pathFromRoot[i]) {
-            anc2 = stTree_getChild(anc2, 1);
-        } else {
-            anc2 = stTree_getChild(anc2, 0);
-        }
-    }
+    stTree *anc1 = stTree_cloneEntireTreeButReturnThisNode(anc);
+    stTree *anc2 = stTree_cloneEntireTreeButReturnThisNode(anc);
+    *tree1 = stTree_getRoot(anc1);
+    *tree2 = stTree_getRoot(anc2);
 
     if (stTree_getParent(stTree_getParent(anc)) != NULL) {
         /*
@@ -1510,6 +1469,7 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
          *   /\    /\
          *  1  3  2  4
          */
+        stTree *root = stTree_getRoot(anc);
         stTree *two = stTree_getChild(anc1, 1);
         stTree *three, *four;
         if (stTree_getChild(root, 0) == anc) {
@@ -1528,4 +1488,10 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
         stTree_setParent(two, stTree_getParent(three));
         stTree_setParent(three, anc2);
     }
+}
+
+stTree *stPhylogeny_rsec(stTree *node) {
+    // R-SEC algorithm from "Algorithms for Rapid Error Correction for
+    // the Gene Duplication Problem", Chaudhary et al., 2011.
+    return NULL;
 }
