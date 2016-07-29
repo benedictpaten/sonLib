@@ -133,10 +133,6 @@ void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
  */
 stTree *stTree_getMRCA(stTree *node1, stTree *node2);
 
-/*
- * Replace the child at the given index.
- */
-void stTree_setChild(stTree *tree, int64_t childIndex, stTree *newChild);
 #ifdef __cplusplus
 }
 #endif

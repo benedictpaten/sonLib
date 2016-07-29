@@ -189,6 +189,11 @@ stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
 void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies,
                                     bool relabelAncestors);
 
+// Nearest-neighbor interchange (for strictly binary trees). Returns
+// two new neighboring trees in the parameters tree1 and tree2. Does
+// not modify the original tree.
+void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2);
+
 #ifdef __cplusplus
 }
 #endif

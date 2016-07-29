@@ -1388,3 +1388,144 @@ void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies, boo
     stPhylogeny_reconcileNonBinary_R(geneTree, leafToSpecies, N, relabelAncestors);
     stHash_destruct(N);
 }
+
+void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
+    if (stTree_getChildNumber(anc) == 0 || stTree_getParent(anc) == NULL) {
+        // The branch we will be NNI'ing (the branch above anc) isn't
+        // an internal branch.
+        *tree1 = NULL;
+        *tree2 = NULL;
+        return;
+    }
+
+    // Get the root of this tree, and a trail of breadcrumbs back to
+    // the position of this node (child of the branch to be NNI'd).
+    int64_t distToRoot = 0;
+    stTree *root = anc;
+    while (stTree_getParent(root) != NULL) {
+        root = stTree_getParent(root);
+        distToRoot++;
+    }
+
+    bool pathFromRoot[distToRoot];
+    int64_t i = distToRoot - 1;
+    root = anc;
+    stTree *prev;
+    while (stTree_getParent(root) != NULL) {
+        prev = root;
+        root = stTree_getParent(root);
+        if (prev == stTree_getChild(root, 0)) {
+            pathFromRoot[i--] = 0;
+        } else {
+            assert(prev == stTree_getChild(root, 1));
+            pathFromRoot[i--] = 1;
+        }
+    }    
+
+    *tree1 = stTree_clone(root);
+    *tree2 = stTree_clone(root);
+
+    // Traverse down to the right node in tree1 and tree2.
+    stTree *anc1 = *tree1;
+    for (i = 0; i < distToRoot; i++) {
+        if (pathFromRoot[i]) {
+            anc1 = stTree_getChild(anc1, 1);
+        } else {
+            anc1 = stTree_getChild(anc1, 0);
+        }
+    }
+
+    stTree *anc2 = *tree2;
+    for (i = 0; i < distToRoot; i++) {
+        if (pathFromRoot[i]) {
+            anc2 = stTree_getChild(anc2, 1);
+        } else {
+            anc2 = stTree_getChild(anc2, 0);
+        }
+    }
+
+    if (stTree_getParent(stTree_getParent(anc)) != NULL) {
+        /*
+         * Not a branch off the root node.
+         * Original tree:
+         *     \
+         *     /\
+         *    4 /\
+         *     3 /\
+         *      1  2
+         * Tree 1:
+         *     \
+         *     /\
+         *    2 /\
+         *     3 /\
+         *      1  4
+         * Tree 2:
+         *     \
+         *     /\
+         *    4 /\
+         *     2 /\
+         *      1  3
+         */
+        // Swap 2 and 4 in tree 1.
+        stTree *two = stTree_getChild(anc1, 1);
+        stTree *four;
+        if (stTree_getChild(stTree_getParent(stTree_getParent(anc1)), 0) == stTree_getParent(anc1)) {
+            four = stTree_getChild(stTree_getParent(stTree_getParent(anc1)), 1);
+        } else {
+            assert(stTree_getChild(stTree_getParent(stTree_getParent(anc1)), 1) == stTree_getParent(anc1));
+            four = stTree_getChild(stTree_getParent(stTree_getParent(anc1)), 0);
+        }
+        stTree_setParent(two, stTree_getParent(four));
+        stTree_setParent(four, anc1);
+        // Swap 2 and 3 in tree 2.
+        two = stTree_getChild(anc2, 1);
+        stTree *three;
+        if (stTree_getChild(stTree_getParent(anc2), 0) == anc2) {
+            three = stTree_getChild(stTree_getParent(anc2), 1);
+        } else {
+            assert(stTree_getChild(stTree_getParent(anc2), 1) == anc2);
+            three = stTree_getChild(stTree_getParent(anc2), 0);
+        }
+        stTree_setParent(two, stTree_getParent(three));
+        stTree_setParent(three, anc2);
+    } else {
+        /*
+         * A branch off the root node.
+         * Original tree:
+         *      /\
+         *     /  \
+         *    /    \
+         *   /\    /\
+         *  1  2  3  4
+         * Tree 1:
+         *      /\
+         *     /  \
+         *    /    \
+         *   /\    /\
+         *  1  4  3  2
+         * Tree 2:
+         *      /\
+         *     /  \
+         *    /    \
+         *   /\    /\
+         *  1  3  2  4
+         */
+        stTree *two = stTree_getChild(anc1, 1);
+        stTree *three, *four;
+        if (stTree_getChild(root, 0) == anc) {
+            three = stTree_getChild(stTree_getChild(*tree2, 1), 0);
+            four = stTree_getChild(stTree_getChild(*tree1, 1), 1);
+        } else {
+            assert(stTree_getChild(root, 1) == anc);
+            three = stTree_getChild(stTree_getChild(*tree2, 0), 0);
+            four = stTree_getChild(stTree_getChild(*tree1, 0), 1);
+        }
+        // Swap 2 and 4 in tree 1.
+        stTree_setParent(two, stTree_getParent(four));
+        stTree_setParent(four, anc1);
+        // Swap 2 and 3 in tree 2.
+        two = stTree_getChild(anc2, 1);
+        stTree_setParent(two, stTree_getParent(three));
+        stTree_setParent(three, anc2);
+    }
+}

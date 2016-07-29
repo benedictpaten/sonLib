@@ -1207,8 +1207,32 @@ static void testStPhylogeny_reconcileNonBinary(CuTest *testCase) {
     stHash_destruct(leafToSpecies);
 }
 
+static void testStPhylogeny_nni(CuTest *testCase) {
+    stTree *geneTree = stTree_parseNewickString("(NZOHlLtJ.chr9_87081620_87115187|0|16656-16694.30:0.000120563,((C57B6J.9_87174839_87208406|16656-16694.30:0.0001,C57B6NJ.chr9_90403979_90439438|16656-16694.27:0.0001)27:0.00132877,(C57B6NJ.chr9_90403979_90439438|18548-18586.29:0.00113208,(C57B6NJ.chr1_3987551_4018377|20930-20968.30:0.0001,C57B6NJ.chr1_3987551_4018377|15210-15248.30:0.0001)branch:0.0554717)27:0.00291265)30:0.000120563)30;");
+    stTree *tree1, *tree2;
+    stPhylogeny_nni(stTree_findChild(geneTree, "branch"), &tree1, &tree2);
+    CuAssertTrue(testCase, !stTree_equals(geneTree, tree1));
+    CuAssertTrue(testCase, !stTree_equals(geneTree, tree2));
+    // Truth set. OK, these are rooted and have branch lengths, so
+    // it's concievable this test could fail without the method being
+    // wrong. But right now we have no way to test if the unrooted
+    // topology is equal.
+    stTree *neighbor1 = stTree_parseNewickString("(NZOHlLtJ.chr9_87081620_87115187|0|16656-16694.30:0.000120563,((C57B6NJ.chr9_90403979_90439438|18548-18586.29:0.00113208,(C57B6NJ.chr1_3987551_4018377|20930-20968.30:0.0001,(C57B6J.9_87174839_87208406|16656-16694.30:0.0001,C57B6NJ.chr9_90403979_90439438|16656-16694.27:0.0001)27:0.00132877)branch:0.0554717)27:0.00291265,C57B6NJ.chr1_3987551_4018377|15210-15248.30:0.0001)30:0.000120563)30;");
+    stTree *neighbor2 = stTree_parseNewickString("(NZOHlLtJ.chr9_87081620_87115187|0|16656-16694.30:0.000120563,((C57B6J.9_87174839_87208406|16656-16694.30:0.0001,C57B6NJ.chr9_90403979_90439438|16656-16694.27:0.0001)27:0.00132877,((C57B6NJ.chr1_3987551_4018377|20930-20968.30:0.0001,C57B6NJ.chr9_90403979_90439438|18548-18586.29:0.00113208)branch:0.0554717,C57B6NJ.chr1_3987551_4018377|15210-15248.30:0.0001)27:0.00291265)30:0.000120563)30;");
+    CuAssertTrue(testCase, stTree_equals(tree1, neighbor1) || stTree_equals(tree1, neighbor2));
+    CuAssertTrue(testCase, stTree_equals(tree2, neighbor1) || stTree_equals(tree2, neighbor2));
+    CuAssertTrue(testCase, !stTree_equals(tree1, tree2));
+
+    stTree_destruct(geneTree);
+    stTree_destruct(tree1);
+    stTree_destruct(tree2);
+    stTree_destruct(neighbor1);
+    stTree_destruct(neighbor2);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testStPhylogeny_nni);
     SUITE_ADD_TEST(suite, testJoinCosts_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
