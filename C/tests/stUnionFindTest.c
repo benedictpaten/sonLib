@@ -60,7 +60,13 @@ static void stUnionFind_randomTest(CuTest *testCase) {
             CuAssertIntEquals(testCase, connectedInConnectivity, connectedInUnionFind);
 
             stUnionFind_union(unionFind, (void *) i, (void *) j);
-            stConnectivity_addEdge(connectivity, (void *) i, (void *) j);
+            if (i != j) {
+                // stConnectivity requires i != j. Not adding the
+                // self-loop to stConnectivity is OK when i == j,
+                // because obviously self-loops cannot change the
+                // connected components.
+                stConnectivity_addEdge(connectivity, (void *) i, (void *) j);
+            }
 
             CuAssertTrue(testCase, stUnionFind_find(unionFind, (void *) i) == stUnionFind_find(unionFind, (void *) j));
             numTests--;
