@@ -694,6 +694,7 @@ static void testJoinCosts_random(CuTest *testCase) {
         stHash_destruct(indexToSpecies);
         stHash_destruct(speciesToIndex);
         stTree_destruct(speciesTree);
+        stMatrix_destruct(joinCosts);
     }
 }
 
@@ -986,7 +987,9 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
     stHash_insert(leafToSpecies, stTree_findChild(foo, "2"), stTree_findChild(speciesTree, "human"));
     stHash_insert(leafToSpecies, stTree_findChild(foo, "3"), stTree_findChild(speciesTree, "human"));
     rooted = stPhylogeny_rootByReconciliationAtMostBinary(foo, leafToSpecies);
-    CuAssertStrEquals(testCase, "((0:1,1:1):0.5,(2:1,3:2):0.5);", stTree_getNewickTreeString(rooted));
+    char *testString = stTree_getNewickTreeString(rooted);
+    CuAssertStrEquals(testCase, "((0:1,1:1):0.5,(2:1,3:2):0.5);", testString);
+    free(testString);
     stPhylogenyInfo_destructOnTree(foo);
     stTree_destruct(foo);
     stTree_destruct(speciesTree);
@@ -1230,9 +1233,28 @@ static void testStPhylogeny_nni(CuTest *testCase) {
     stTree_destruct(neighbor2);
 }
 
+static void testStPhylogeny_spr(CuTest *testCase) {
+    stTree *tree = stTree_parseNewickString("((tasmanian_devil,opossum,bandicoot,kangaroo)Metatheria,((mouse,human)Euarchontoglires,cow)Boreoeutheria)Theria;");
+    // Graft opossum to the root.
+    stPhylogeny_spr(stTree_findChild(tree, "opossum"), tree);
+    // There's a new root node since opossum was grafted to the root.
+    tree = stTree_getRoot(tree);
+    char *testString = stTree_getNewickTreeString(tree);
+    CuAssertStrEquals(testCase, "(((tasmanian_devil,bandicoot,kangaroo)Metatheria,((mouse,human)Euarchontoglires,cow)Boreoeutheria)Theria,opossum);", testString);
+    free(testString);
+
+    // Graft Metatheria to the branch above cow.
+    stPhylogeny_spr(stTree_findChild(tree, "Metatheria"), stTree_findChild(tree, "cow"));
+    testString = stTree_getNewickTreeString(tree);
+    CuAssertStrEquals(testCase, "(opossum,((mouse,human)Euarchontoglires,(cow,(tasmanian_devil,bandicoot,kangaroo)Metatheria))Boreoeutheria);", testString);
+    free(testString);
+    stTree_destruct(tree);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testStPhylogeny_nni);
+    SUITE_ADD_TEST(suite, testStPhylogeny_spr);
     SUITE_ADD_TEST(suite, testJoinCosts_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
     SUITE_ADD_TEST(suite, testSimpleNeighborJoin);

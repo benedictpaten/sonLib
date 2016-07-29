@@ -194,6 +194,10 @@ void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies,
 // not modify the original tree.
 void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2);
 
+// Does a subtree-prune-regraft operation, grafting "subtree" onto the
+// branch above "destBranch". Modifies the original tree.
+void stPhylogeny_spr(stTree *subtree, stTree *destBranch);
+
 #ifdef __cplusplus
 }
 #endif

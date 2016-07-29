@@ -1490,6 +1490,35 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
     }
 }
 
+void stPhylogeny_spr(stTree *node, stTree *destBranch) {
+    stTree *parent = stTree_getParent(node);
+    if (parent == NULL || stTree_getMRCA(node, destBranch) == node) {
+        st_errAbort("Cannot graft a subtree to a point within itself");
+    }
+    stTree_setParent(node, NULL);
+
+    if (stTree_getParent(destBranch) == NULL) {
+        // Grafting onto the root branch.
+        stTree *newRoot = stTree_construct();
+        stTree_setParent(destBranch, newRoot);
+        stTree_setParent(node, newRoot);
+    } else {
+        // Grafting onto an internal branch.
+        stTree *destParent = stTree_getParent(destBranch);
+        stTree *newInternalNode = stTree_construct();
+        stTree_setParent(destBranch, newInternalNode);
+        stTree_setParent(newInternalNode, destParent);
+        stTree_setParent(node, newInternalNode);
+    }
+
+    if (stTree_getChildNumber(parent) == 1 && stTree_getParent(parent) != NULL) {
+        // The parent has become a useless node, get rid of it.
+        stTree_setParent(stTree_getChild(parent, 0), stTree_getParent(parent));
+        stTree_setParent(parent, NULL);
+        stTree_destruct(parent);
+    }
+}
+
 stTree *stPhylogeny_rsec(stTree *node) {
     // R-SEC algorithm from "Algorithms for Rapid Error Correction for
     // the Gene Duplication Problem", Chaudhary et al., 2011.
