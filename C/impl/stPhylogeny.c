@@ -1519,8 +1519,101 @@ void stPhylogeny_spr(stTree *node, stTree *destBranch) {
     }
 }
 
-stTree *stPhylogeny_rsec(stTree *node) {
+// Version of the NNI operation that the R-SEC paper uses.
+static void stPhylogeny_rsec_nni(stTree *node) {
+    assert(stTree_getParent(node) != NULL);
+    stTree *grandparent = stTree_getParent(stTree_getParent(node));
+    assert(grandparent != NULL);
+    stPhylogeny_spr(node, grandparent);
+}
+
+static void getMappingFromTreeToClone_R(stHash *hash, stTree *node, stTree *clonedNode) {
+    stHash_insert(hash, node, clonedNode);
+    assert(stTree_getChildNumber(node) == stTree_getChildNumber(clonedNode));
+    for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+        getMappingFromTreeToClone_R(hash, stTree_getChild(node, i), stTree_getChild(clonedNode, i));
+    }
+}
+
+static stHash *getMappingFromTreeToClone(stTree *tree, stTree *clone) {
+    stHash *ret = stHash_construct();
+    getMappingFromTreeToClone_R(ret, tree, clone);
+    return ret;
+}
+
+static stTree *getSibling(stTree *child) {
+    stTree *parent = stTree_getParent(child);
+    assert(parent != NULL);
+    assert(stTree_getChildNumber(parent) == 2);
+    if (stTree_getChild(parent, 0) == child) {
+        return stTree_getChild(parent, 1);
+    } else {
+        assert(stTree_getChild(parent, 1) == child);
+        return stTree_getChild(parent, 0);
+    }
+}
+
+stTree *stPhylogeny_rsec(stTree *node, stHash *leafToSpecies,
+                         bool (*isBestSoFar)(stTree *, void *), void *extraData) {
     // R-SEC algorithm from "Algorithms for Rapid Error Correction for
     // the Gene Duplication Problem", Chaudhary et al., 2011.
-    return NULL;
+    stTree *gBar = stTree_clone(node);
+    stPhylogeny_spr(gBar, stTree_getRoot(gBar));
+    stTree *vBar = gBar;
+    gBar = stTree_getRoot(gBar);
+    stPhylogeny_reconcileAtMostBinary(gBar, leafToSpecies, false);
+
+    stTree *gPrime = stTree_clone(gBar);
+    stPhylogeny_reconcileAtMostBinary(gPrime, leafToSpecies, false);
+
+    stHash *gBarToGPrime = getMappingFromTreeToClone(gBar, gPrime);
+    stTree *vPrime = stHash_search(gBarToGPrime, vBar);
+    assert(vPrime != NULL);
+
+    stTree *k = getSibling(vBar);
+    stList *stack = stList_construct();
+    stList_append(stack, stTree_getChild(k, 0));
+    stList_append(stack, stTree_getChild(k, 1));
+    stTree *prev = k;
+    stTree *bestTree = NULL;
+    while (stList_length(stack) != 0) {
+        k = stList_pop(stack);
+        if (stTree_getParent(k) == prev) {
+            // not backtracking
+            stTree *x = stTree_getParent(stHash_search(gBarToGPrime, vBar));
+            stTree *y = getSibling(stHash_search(gBarToGPrime, vBar));
+            for (int64_t i = 0; i < stTree_getChildNumber(k); i++) {
+                stList_append(stack, stTree_getChild(k, i));
+            }
+            stTree *kPrime = stHash_search(gBarToGPrime, k);
+            stPhylogeny_rsec_nni(kPrime);
+            stPhylogenyInfo *yInfo = stTree_getClientData(y);
+            stPhylogenyInfo *xInfo = stTree_getClientData(x);
+            yInfo->recon->species = xInfo->recon->species;
+            stPhylogenyInfo *kPrimeInfo = stTree_getClientData(kPrime);
+            stPhylogenyInfo *vPrimeInfo = stTree_getClientData(vPrime);
+            xInfo->recon->species = stTree_getMRCA(kPrimeInfo->recon->species, vPrimeInfo->recon->species);
+        } else {
+            // backtracking
+            stTree *x = stTree_getParent(vPrime);
+            stTree *y = stTree_getParent(x);
+            stTree *kPrime = stHash_search(gBarToGPrime, k);
+            stTree *sibPrime = getSibling(vPrime);
+            stPhylogeny_rsec_nni(vPrime);
+
+            stPhylogenyInfo *yInfo = stTree_getClientData(y);
+            stPhylogenyInfo *xInfo = stTree_getClientData(x);
+            xInfo->recon->species = yInfo->recon->species;
+            stPhylogenyInfo *sibPrimeInfo = stTree_getClientData(sibPrime);
+            stPhylogenyInfo *kPrimeInfo = stTree_getClientData(kPrime);
+            yInfo->recon->species = stTree_getMRCA(sibPrimeInfo->recon->species, kPrimeInfo->recon->species);
+        }
+        if (isBestSoFar(stTree_getRoot(gPrime), extraData)) {
+            if (bestTree != NULL) {
+                stTree_destruct(stTree_getRoot(gPrime));
+            }
+            bestTree = stTree_clone(stTree_getRoot(gPrime));
+        }
+    }
+    return bestTree;
 }
