@@ -174,7 +174,7 @@ bool stEulerTour_hasEdge(stEulerTour *et, void *u, void *v) {
 	return stEdgeContainer_hasEdge(et->edges, u, v);
 }
 int stEulerTour_getNComponents(stEulerTour *et) {
-    return et->nComponents;
+    return stSet_size(et->connectedComponents);
 }
 stEdgeContainer *stEulerTour_getEdges(stEulerTour *et) {
 	return et->edges;

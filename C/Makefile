@@ -10,7 +10,7 @@ libTests = tests/sonLib*.c tests/st*
 quickTreeObjects = ../externalTools/quicktree_1.1/obj/buildtree.o ../externalTools/quicktree_1.1/obj/cluster.o ../externalTools/quicktree_1.1/obj/distancemat.o ../externalTools/quicktree_1.1/obj/options.o ../externalTools/quicktree_1.1/obj/sequence.o ../externalTools/quicktree_1.1/obj/tree.o ../externalTools/quicktree_1.1/obj/util.o
 quickTreeLibPath = ../externalTools/quicktree_1.1/include/
 
-testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest ${binPath}/sonLib_dynamicConnectivity_performance
+testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
 cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl} -I${quickTreeLibPath}
 cppflags += ${kyotoTycoonIncl}
@@ -44,12 +44,6 @@ ${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libInternal
 	@mkdir -p $(dir $@)
 	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@.tmp tests/kt_connect_test.cpp ${libPath}/sonLib.a ${dblibs} -lm
 	mv $@.tmp $@
-
-${binPath}/sonLib_dynamicConnectivity_performance : tests/dynamicConnectivity_performance.c ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
-	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/dynamicConnectivity_performance.c ${libPath}/sonLib.a -lm
-	mv $@.tmp $@
-
 
 ${libPath}/%.h: inc/%.h
 	@mkdir -p $(dir $@)
