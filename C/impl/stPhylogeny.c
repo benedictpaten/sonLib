@@ -97,10 +97,26 @@ void addStIndexedTreeInfoR(stTree *tree)
     }
 }
 
+int64_t stTree_getNumLeaves(stTree *tree) {
+    int64_t numLeaves = 0;
+    stList *stack = stList_construct();
+    stList_append(stack, tree);
+    while (stList_length(stack) != 0) {
+        tree = stList_pop(stack);
+        for (int64_t i = 0; i < stTree_getChildNumber(tree); i++) {
+            stList_append(stack, stTree_getChild(tree, i));
+        }
+        if (stTree_getChildNumber(tree) == 0) {
+            numLeaves++;
+        }
+    }
+    stList_destruct(stack);
+    return numLeaves;
+}
+
 void stPhylogeny_addStIndexedTreeInfo(stTree *tree) {
     addStIndexedTreeInfoR(tree);
-    // FIXME: assumes binary tree
-    stPhylogeny_setLeavesBelow(tree, (stTree_getNumNodes(tree)+1)/2);
+    stPhylogeny_setLeavesBelow(tree, stTree_getNumLeaves(tree));
 }
 
 
