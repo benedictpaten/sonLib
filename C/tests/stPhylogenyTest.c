@@ -1230,8 +1230,58 @@ static void testStPhylogeny_nni(CuTest *testCase) {
     stTree_destruct(neighbor2);
 }
 
+static void testStPhylogeny_getSplits(CuTest *testCase) {
+    // Check against the example given in Bandelt and Dress, 1992.
+    double distanceArray[7][7] = {
+        { 0,  4,  5,  7, 13,  8,  6},
+        { 4,  0,  1,  3,  9, 12, 10},
+        { 5,  1,  0,  2,  8, 13, 11},
+        { 7,  3,  2,  0,  6, 11, 13},
+        {13,  9,  8,  6,  0,  5,  7},
+        { 8, 12, 13, 11,  5,  0,  2},
+        { 6, 10, 11, 13,  7,  2,  0}
+    };
+    stMatrix *distanceMatrix = stMatrix_construct(7, 7);
+    for (int64_t i = 0; i < 7; i++) {
+        for (int64_t j = 0; j < 7; j++) {
+            *stMatrix_getCell(distanceMatrix, i, j) = distanceArray[i][j];
+        }
+    }
+    stList *splits = stPhylogeny_getSplits(distanceMatrix, true);
+    CuAssertIntEquals(testCase, 4, stList_length(splits));
+
+    // Check the individual splits. We don't check the actual indices
+    // within the splits, because that would be very long, and it
+    // would be very hard to be wrong about the content of the
+    // splits without the isolation index / split sizes being wrong as
+    // well.
+    stSplit *split1 = stList_get(splits, 0);
+    CuAssertDblEquals(testCase, 6.0, split1->isolationIndex, 0.01);
+    CuAssertTrue(testCase, stList_length(split1->leftSplit) == 3 || stList_length(split1->rightSplit) == 3);
+    CuAssertTrue(testCase, stList_length(split1->leftSplit) == 4 || stList_length(split1->rightSplit) == 4);
+
+    stSplit *split2 = stList_get(splits, 1);
+    CuAssertDblEquals(testCase, 4.0, split2->isolationIndex, 0.01);
+    CuAssertTrue(testCase, stList_length(split2->leftSplit) == 3 || stList_length(split2->rightSplit) == 3);
+    CuAssertTrue(testCase, stList_length(split2->leftSplit) == 4 || stList_length(split2->rightSplit) == 4);
+
+    stSplit *split3 = stList_get(splits, 2);
+    CuAssertDblEquals(testCase, 2.0, split3->isolationIndex, 0.01);
+    CuAssertTrue(testCase, stList_length(split3->leftSplit) == 3 || stList_length(split3->rightSplit) == 3);
+    CuAssertTrue(testCase, stList_length(split3->leftSplit) == 4 || stList_length(split3->rightSplit) == 4);
+
+    stSplit *split4 = stList_get(splits, 3);
+    CuAssertDblEquals(testCase, 1.0, split4->isolationIndex, 0.01);
+    CuAssertTrue(testCase, stList_length(split4->leftSplit) == 3 || stList_length(split4->rightSplit) == 3);
+    CuAssertTrue(testCase, stList_length(split4->leftSplit) == 4 || stList_length(split4->rightSplit) == 4);
+
+    stMatrix_destruct(distanceMatrix);
+    stList_destruct(splits);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testStPhylogeny_getSplits);
     SUITE_ADD_TEST(suite, testStPhylogeny_nni);
     SUITE_ADD_TEST(suite, testJoinCosts_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);

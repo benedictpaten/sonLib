@@ -56,6 +56,13 @@ typedef struct {
                                  // Can be NULL.
 } stPhylogenyInfo;
 
+// Represents a d-split as characterized by Bandelt and Dress, 1992.
+typedef struct {
+    stList *leftSplit;
+    stList *rightSplit;
+    double isolationIndex;
+} stSplit;
+
 // Free a stPhylogenyInfo struct.
 void stPhylogenyInfo_destruct(stPhylogenyInfo *info);
 
@@ -193,6 +200,14 @@ void stPhylogeny_reconcileNonBinary(stTree *geneTree, stHash *leafToSpecies,
 // two new neighboring trees in the parameters tree1 and tree2. Does
 // not modify the original tree.
 void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2);
+
+// Get the non-trivial d-splits as described in Bandelt and Dress,
+// 1992. The "relaxed" parameter, if true, uses the condition stated
+// in the paper (where the intra-split distance must not be larger
+// than *both* inter-split distances), but if false, uses a stricter
+// condition (that the intra-split distance must be smaller than
+// *both* inter-split distances).
+stList *stPhylogeny_getSplits(stMatrix *distanceMatrix, bool relaxed);
 
 #ifdef __cplusplus
 }

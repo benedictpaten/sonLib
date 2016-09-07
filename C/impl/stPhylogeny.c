@@ -1529,3 +1529,188 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2) {
         stTree_setParent(three, anc2);
     }
 }
+
+// Determines whether a split satisfies the four-point criterion of
+// Bandelt and Dress 1992. The "relaxed" parameter, if true, uses the
+// condition stated in the paper (where the intra-split distance must
+// not be larger than *both* inter-split distances), but if false,
+// uses a stricter condition (that the intra-split distance must be
+// smaller than *both* inter-split distances).
+static bool satisfiesFourPoint(stMatrix *distanceMatrix, stList *leftSplitIndices, stList *rightSplitIndices, bool relaxed) {
+    // This is a bit convoluted, but generates all possible
+    // unordered combinations of indices i, j in the left side of the split. i,j
+    // are distance matrix indices, not indices in the split list!
+    for (int64_t left_i = 0; left_i < stList_length(leftSplitIndices); left_i++) {
+        for (int64_t left_j = left_i + 1; left_j < stList_length(leftSplitIndices); left_j++) {
+            int64_t i = stIntTuple_get(stList_get(leftSplitIndices, left_i), 0);
+            int64_t j = stIntTuple_get(stList_get(leftSplitIndices, left_j), 0);
+            // Similarly, generate all possible unordered combinations
+            // k, l from the right side of the split.
+            for (int64_t right_i = 0; right_i < stList_length(rightSplitIndices); right_i++) {
+                for (int64_t right_j = right_i + 1; right_j < stList_length(rightSplitIndices); right_j++) {
+                    int64_t k = stIntTuple_get(stList_get(rightSplitIndices, right_i), 0);
+                    int64_t l = stIntTuple_get(stList_get(rightSplitIndices, right_j), 0);
+                    // Do the check.
+                    double intra = *stMatrix_getCell(distanceMatrix, i, j) + *stMatrix_getCell(distanceMatrix, k, l);
+                    double inter1 = *stMatrix_getCell(distanceMatrix, i, k) + *stMatrix_getCell(distanceMatrix, j, l);
+                    double inter2 = *stMatrix_getCell(distanceMatrix, i, l) + *stMatrix_getCell(distanceMatrix, j, k);
+                    if (relaxed) {
+                        if (intra >= inter1 && intra >= inter2) {
+                            return false;
+                        }
+                    } else {
+                        if (intra >= inter1 || intra >= inter2) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // If we're here, then we've checked all the possible quartets without failing.
+    return true;
+}
+
+static stSplit *stSplit_construct(stList *leftSplit, stList *rightSplit, double isolationIndex) {
+    stSplit *ret = st_malloc(sizeof(stSplit));
+    ret->leftSplit = leftSplit;
+    ret->rightSplit = rightSplit;
+    ret->isolationIndex = isolationIndex;
+    return ret;
+}
+
+static void stSplit_destruct(stSplit *split) {
+    stList_destruct(split->leftSplit);
+    stList_destruct(split->rightSplit);
+    free(split);
+}
+
+// Compare two d-splits by their isolation indexes.
+static int stSplit_cmp(stSplit *split1, stSplit *split2) {
+    if (split1->isolationIndex < split2->isolationIndex) {
+        return -1;
+    } else if (split1->isolationIndex > split2->isolationIndex) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void assignIsolationIndex(stMatrix *distanceMatrix, stSplit *split) {
+    // We want to find the minimum of (maximum of inter-split distances - intra-split distance) / 2
+    // from all cross-split quartets.
+    double min_isolation = DBL_MAX;
+    for (int64_t left_i = 0; left_i < stList_length(split->leftSplit); left_i++) {
+        for (int64_t left_j = left_i + 1; left_j < stList_length(split->leftSplit); left_j++) {
+            int64_t i = stIntTuple_get(stList_get(split->leftSplit, left_i), 0);
+            int64_t j = stIntTuple_get(stList_get(split->leftSplit, left_j), 0);
+
+            for (int64_t right_i = 0; right_i < stList_length(split->rightSplit); right_i++) {
+                for (int64_t right_j = right_i + 1; right_j < stList_length(split->rightSplit); right_j++) {
+                    int64_t k = stIntTuple_get(stList_get(split->rightSplit, right_i), 0);
+                    int64_t l = stIntTuple_get(stList_get(split->rightSplit, right_j), 0);
+                    double intra = *stMatrix_getCell(distanceMatrix, i, j) + *stMatrix_getCell(distanceMatrix, k, l);
+                    double inter1 = *stMatrix_getCell(distanceMatrix, i, k) + *stMatrix_getCell(distanceMatrix, j, l);
+                    double inter2 = *stMatrix_getCell(distanceMatrix, i, l) + *stMatrix_getCell(distanceMatrix, j, k);
+                    double max_dist = intra;
+                    if (inter1 > max_dist) {
+                        max_dist = inter1;
+                    }
+                    if (inter2 > max_dist) {
+                        max_dist = inter2;
+                    }
+                    max_dist -= intra;
+                    if (max_dist < min_isolation) {
+                        min_isolation = max_dist;
+                    }
+                }
+            }
+        }
+    }
+    split->isolationIndex = min_isolation / 2;
+}
+
+stList *stPhylogeny_getSplits(stMatrix *distanceMatrix, bool relaxed) {
+    assert(stMatrix_m(distanceMatrix) == stMatrix_n(distanceMatrix));
+    stList *splits = stList_construct3(0, (void (*)(void *)) stSplit_destruct);
+    for (int64_t i = 1; i < stMatrix_m(distanceMatrix); i++) {
+        stList *singletonSplitLeft = stList_construct3(0, free);
+        stList_append(singletonSplitLeft, stIntTuple_construct1(i));
+        stList *singletonSplitRight = stList_construct3(0, free);
+        for (int64_t j = 0; j < i; j++) {
+            stList_append(singletonSplitRight, stIntTuple_construct1(j));
+        }
+        stList *newSplits = stList_construct3(0, (void (*)(void *)) stSplit_destruct);
+        stList_append(newSplits, stSplit_construct(singletonSplitLeft, singletonSplitRight, 0.0));
+        while (stList_length(splits) > 0) {
+            stSplit *split = stList_pop(splits);
+            stIntTuple *iTuple = stIntTuple_construct1(i);
+            stList_append(split->leftSplit, iTuple);
+            bool addToLeft = satisfiesFourPoint(distanceMatrix, split->leftSplit, split->rightSplit, relaxed);
+            stList_pop(split->leftSplit);
+            stList_append(split->rightSplit, iTuple);
+            bool addToRight = satisfiesFourPoint(distanceMatrix, split->leftSplit, split->rightSplit, relaxed);
+            stList_pop(split->rightSplit);
+            if (addToRight && addToLeft) {
+                // We are making two new splits, so have to clone the
+                // lists and their elements. For no particular reason,
+                // the cloned one becomes the one with i added to the
+                // right.
+
+                // First we handle the split with i added to its right
+                // split, cloning the existing list, and add that to
+                // the new split list.
+                stList *addedToRight_rightSplit = stList_construct3(0, free);
+                for (int64_t j = 0; j < stList_length(split->rightSplit); j++) {
+                    stIntTuple *new = stIntTuple_construct1(stIntTuple_get(stList_get(split->rightSplit, j), 0));
+                    stList_append(addedToRight_rightSplit, new);
+                }
+                stList_append(addedToRight_rightSplit, stIntTuple_construct1(i));
+                stList *addedToRight_leftSplit = stList_construct3(0, free);
+                for (int64_t j = 0; j < stList_length(split->leftSplit); j++) {
+                    stIntTuple *new = stIntTuple_construct1(stIntTuple_get(stList_get(split->leftSplit, j), 0));
+                    stList_append(addedToRight_leftSplit, new);
+                }
+                stSplit *addedToRight = stSplit_construct(addedToRight_leftSplit, addedToRight_rightSplit, 0.0);
+                stList_append(newSplits, addedToRight);
+
+                // Now add i to the left split of the existing split
+                // and add that to the new split list.
+                stList_append(split->leftSplit, iTuple);
+                stList_append(newSplits, split);
+            } else if (addToRight) {
+                stList_append(split->rightSplit, iTuple);
+                stList_append(newSplits, split);
+            } else if (addToLeft) {
+                stList_append(split->leftSplit, iTuple);
+                stList_append(newSplits, split);
+            } else {
+                stSplit_destruct(split);
+            }
+        }
+        stList_destruct(splits);
+        splits = newSplits;
+    }
+
+    // Remove the remaining trivial splits and assign isolation indexes.
+    for (int64_t i = 0; i < stList_length(splits); i++) {
+        stSplit *split = stList_get(splits, i);
+        assignIsolationIndex(distanceMatrix, split);
+        if (stList_length(split->leftSplit) == 1 || stList_length(split->rightSplit) == 1) {
+            // inefficient
+            stList_remove(splits, i);
+            stSplit_destruct(split);
+            // adjusting index to account for removed item
+            i--;
+        }
+    }
+
+    // Sort by isolation index in descending order.
+    stList_sort(splits, (int (*)(const void *, const void *)) stSplit_cmp);
+    stList_reverse(splits);
+    return splits;
+}
+
+stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix) {
+    return NULL;
+}
