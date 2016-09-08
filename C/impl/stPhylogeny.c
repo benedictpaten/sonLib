@@ -1727,6 +1727,56 @@ stList *stPhylogeny_getSplits(stMatrix *distanceMatrix, bool relaxed) {
     return splits;
 }
 
-stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix) {
-    return NULL;
+static bool isCompatibleSplit(stList *splitIndices, stHash *indexToLeaf) {
+    stTree *parent = stTree_getParent(stHash_search(indexToLeaf, stList_get(splitIndices, 0)));
+    assert(parent != NULL);
+    for (int64_t i = 1; i < stList_length(splitIndices); i++) {
+        stTree *leaf = stHash_search(indexToLeaf, stList_get(splitIndices, i));
+        if (stTree_getParent(leaf) != parent) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void applyCompatibleSplit(stList *splitIndices, stHash *indexToLeaf) {
+    stTree *parent = stTree_getParent(stHash_search(indexToLeaf, stList_get(splitIndices, 0)));
+    stTree *newNode = stTree_construct();
+    stTree_setParent(newNode, parent);
+    for (int64_t i = 0; i < stList_length(splitIndices); i++) {
+        stTree *leaf = stHash_search(indexToLeaf, stList_get(splitIndices, i));
+        stTree_setParent(leaf, newNode);
+    }
+}
+
+stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool relaxed) {
+    assert(stMatrix_m(distanceMatrix) == stMatrix_n(distanceMatrix));
+    stHash *indexToLeaf = stHash_construct3((uint64_t (*)(const void *)) stIntTuple_hashKey, (int (*)(const void *, const void *)) stIntTuple_equalsFn, (void (*)(void *)) stIntTuple_destruct, NULL);
+    // We start out with a complete star phylogeny.
+    stTree *root = stTree_construct();
+    for (int64_t i = 0; i < stMatrix_m(distanceMatrix); i++) {
+        stTree *leaf = stTree_construct();
+        stHash_insert(indexToLeaf, stIntTuple_construct1(i), leaf);
+        char *label = stString_print_r("%" PRIi64, i);
+        stTree_setLabel(leaf, label);
+        free(label);
+        stTree_setParent(leaf, root);
+    }
+
+    stList *splits = stPhylogeny_getSplits(distanceMatrix, relaxed);
+    // Start adding compatible splits to the tree, creating a new
+    // internal node for each split which groups together one of its
+    // sides.
+    for (int64_t i = 0; i < stList_length(splits); i++) {
+        stSplit *split = stList_get(splits, i);
+        if (isCompatibleSplit(split->leftSplit, indexToLeaf)) {
+            applyCompatibleSplit(split->leftSplit, indexToLeaf);
+        } else if (isCompatibleSplit(split->rightSplit, indexToLeaf)) {
+            applyCompatibleSplit(split->rightSplit, indexToLeaf);
+        }
+    }
+    stList_destruct(splits);
+    stHash_destruct(indexToLeaf);
+    stPhylogeny_addStIndexedTreeInfo(root);
+    return root;
 }

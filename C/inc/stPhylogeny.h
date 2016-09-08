@@ -209,6 +209,9 @@ void stPhylogeny_nni(stTree *anc, stTree **tree1, stTree **tree2);
 // *both* inter-split distances).
 stList *stPhylogeny_getSplits(stMatrix *distanceMatrix, bool relaxed);
 
+// Build a tree greedily using the d-splits from stPhylogeny_getSplits.
+stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool relaxed);
+
 #ifdef __cplusplus
 }
 #endif
