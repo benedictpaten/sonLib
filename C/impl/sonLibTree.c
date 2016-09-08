@@ -87,7 +87,7 @@ static void stTree_clearClientData(stTree *tree, bool recursive) {
 static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
                                   stTree *nodeToAddTo,
                                   double branchLength) {
-    if(stTree_getParent(node) != NULL) {
+    if(stTree_getParent(node) != NULL || stTree_getChildNumber(node) > 2) {
         // This node isn't the root
         stTree *clonedNode = stTree_cloneNode(node);
         stTree_setParent(clonedNode, nodeToAddTo);
@@ -100,14 +100,16 @@ static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
                 stTree_setParent(clonedChild, clonedNode);
             }
         }
-        
-        // Recurse on the parent of this node.
-        tree_cloneFlippedTree(stTree_getParent(node), node,
-                              clonedNode, stTree_getBranchLength(node));
-    } else {
-        // We have to treat the root specially, because we're going to
-        // eliminate it. Just add all the other children of the root
-        // as children of nodeToAddTo.
+
+        if (stTree_getParent(node) != NULL) {
+            // Recurse on the parent of this node.
+            tree_cloneFlippedTree(stTree_getParent(node), node,
+                                  clonedNode, stTree_getBranchLength(node));
+        }
+    } else if (stTree_getParent(node) == NULL) {
+        // We have to treat the root specially in binary trees,
+        // because we're going to eliminate it. Just add all the other
+        // children of the root as children of nodeToAddTo.
         for(int64_t i = 0; i < stTree_getChildNumber(node); i++) {
             stTree *child = stTree_getChild(node, i);
             if(child != oldNode) {

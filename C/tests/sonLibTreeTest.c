@@ -173,6 +173,7 @@ static void test_stTree_clone(CuTest* testCase) {
     stTree *root2 = stTree_clone(root);
     CuAssertTrue(testCase, stTree_equals(root, root2));
     CuAssertTrue(testCase, (stTree_getClientData(stTree_findChild(root2, "CHILD1")) == &data));
+    stTree_destruct(root2);
     teardown();
 }
 
@@ -221,6 +222,14 @@ void test_stTree_reRoot(CuTest *testCase) {
     stTree_sortChildren(reRooted, cmpByLabel);
     CuAssertStrEquals(testCase, "(((C:1,D:1)B:8,F:3,(I:3,(K:4)J:5)H:5)E:1,G:2);", stTree_getNewickTreeString(reRooted));
     stTree_destruct(reRooted);
+    stTree_destruct(tree);
+
+    // Test a multifurcating example that was broken
+    tree = stTree_parseNewickString("(8,(10,(1,11),(2,4,7)),(6,(0,5)),(3,9));");
+    reRooted = stTree_reRoot(stTree_findChild(tree, "10"), 0.0);
+    CuAssertStrEquals(testCase, "(10:0,((1,11),(2,4,7),(8,(6,(0,5)),(3,9))));", stTree_getNewickTreeString(reRooted));
+    stTree_destruct(reRooted);
+    stTree_destruct(tree);
 }
 
 static void test_stTree_getMRCA(CuTest *testCase) {
