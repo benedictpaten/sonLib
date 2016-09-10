@@ -1339,8 +1339,24 @@ _|               |                 ________________ CAT.0
     stTree_destruct(tree);
 }
 
+static void testStPhylogeny_getLinkedSpeciesTree(CuTest *testCase) {
+    // Hackily including the definition here, so I don't have to
+    // create a whole stPhylogeny_private.h and worry about where it
+    // gets included. Bad practice.
+    stTree *getLinkedSpeciesTree(stTree *speciesTree, stTree *polytomy, stHash **speciesToNumGenes);
+    stTree *speciesTree = stTree_parseNewickString("(((a1,(a2.1,a2.2)a2)a,b)e,((c1, c2)c,(d1, d2)d)f)g;");
+    stTree *polytomy = stTree_parseNewickString("(a-1,a-2,a-3,a-4,b-1,b-2,c-1,e-1)G;");
+    stHash *leafToSpecies = buildLeafToSpeciesUsingDashSeparator(polytomy, speciesTree);
+    stPhylogeny_reconcileAtMostBinary(polytomy, leafToSpecies, false);
+    stHash *speciesToNumGenes = stHash_construct();
+    stTree *linkedSpeciesTree = getLinkedSpeciesTree(speciesTree, polytomy, &speciesToNumGenes);
+    char *newick = stTree_getNewickTreeString(linkedSpeciesTree);
+    CuAssertStrEquals(testCase, "((a,b)e,(c,d)f)g;", newick);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testStPhylogeny_getLinkedSpeciesTree);
     SUITE_ADD_TEST(suite, testStPhylogeny_greedySplitDecomposition);
     SUITE_ADD_TEST(suite, testStPhylogeny_getSplits);
     SUITE_ADD_TEST(suite, testStPhylogeny_nni);

@@ -1103,8 +1103,6 @@ static void fillInReconciliationInfo(stTree *gene, stTree *recon,
 static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
                                                    stHash *leafToSpecies,
                                                    bool relabelAncestors) {
-    assert(stTree_getChildNumber(gene) == 0 ||
-           stTree_getChildNumber(gene) == 2);
     stTree *recon;
     stReconciliationEvent event;
     if (stTree_getChildNumber(gene) == 0) {
@@ -1113,15 +1111,15 @@ static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
         assert(recon != NULL);
         event = LEAF;
     } else {
-        stTree *leftRecon = stPhylogeny_reconcileAtMostBinary_R(
+        event = SPECIATION;
+        stTree *mrca = stPhylogeny_reconcileAtMostBinary_R(
             stTree_getChild(gene, 0), leafToSpecies, relabelAncestors);
-        stTree *rightRecon = stPhylogeny_reconcileAtMostBinary_R(
-            stTree_getChild(gene, 1), leafToSpecies, relabelAncestors);
-        recon = stTree_getMRCA(leftRecon, rightRecon);
-        if (recon == leftRecon || recon == rightRecon) {
-            event = DUPLICATION;
-        } else {
-            event = SPECIATION;
+        for (int64_t i = 1; i < stTree_getChildNumber(gene); i++) {
+            stTree *childRecon = stPhylogeny_reconcileAtMostBinary_R(
+                stTree_getChild(gene, i), leafToSpecies, relabelAncestors);
+            if (childRecon == mrca) {
+                event = DUPLICATION;
+            }
         }
     }
     fillInReconciliationInfo(gene, recon, event, relabelAncestors);
@@ -1142,6 +1140,58 @@ void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
                                         relabelAncestors);
 }
 
+static bool getLinkedSpeciesTree_R(stTree *speciesNode, stTree *polytomy, stHash *speciesToNumGenes, stTree *linkedNode) {
+    bool hasGene = false;
+    for (int64_t i = 0; i < stTree_getChildNumber(polytomy); i++) {
+        stTree *child = stTree_getChild(polytomy, i);
+        stPhylogenyInfo *childInfo = stTree_getClientData(child);
+        stReconciliationInfo *childRecon = childInfo->recon;
+        stTree *childSpecies = childRecon->species;
+        if (childSpecies == speciesNode) {
+            hasGene = true;
+            int64_t *numGenes = stHash_search(speciesToNumGenes, linkedNode);
+            if (numGenes == NULL) {
+                numGenes = calloc(1, sizeof(int64_t));
+                stHash_insert(speciesToNumGenes, linkedNode, numGenes);
+            }
+            (*numGenes)++;
+        }
+    }
+    if (stTree_getChildNumber(speciesNode) == 0 && !hasGene) {
+        return false;
+    }
+    bool descendantHasGene = false;
+    for (int64_t i = 0; i < stTree_getChildNumber(speciesNode); i++) {
+        if (getLinkedSpeciesTree_R(stTree_getChild(speciesNode, i), polytomy,
+                                   speciesToNumGenes, stTree_getChild(linkedNode, i))) {
+            descendantHasGene = true;
+        }
+    }
+
+    if (!descendantHasGene) {
+        // have to be careful to always destruct the 0th child here:
+        // we can't iterate the list of children while destroying the
+        // children.
+        int64_t numChildren = stTree_getChildNumber(linkedNode);
+        for (int64_t i = 0; i < numChildren; i++) {
+            stTree *linkedChild = stTree_getChild(linkedNode, 0);
+            stTree_setParent(linkedChild, NULL);
+            stTree_destruct(linkedChild);
+        }
+    }
+    return descendantHasGene || hasGene;
+}
+
+stTree *getLinkedSpeciesTree(stTree *speciesTree, stTree *polytomy, stHash **speciesToNumGenes) {
+    *speciesToNumGenes = stHash_construct2(NULL, free);
+    stTree *linkedTree = stTree_clone(speciesTree);
+    getLinkedSpeciesTree_R(speciesTree, polytomy, *speciesToNumGenes, linkedTree);
+    return linkedTree;
+}
+
+static void dupLoss(stTree *speciesNode, int64_t k, stHash *speciesToNumGenes) {
+}
+
 // For a tree that has already been reconciled by
 // reconcileAtMostBinary, calculates the number of dups and losses
 // implied by the reconciliation. dups and losses must be set to 0
@@ -1149,24 +1199,22 @@ void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
 void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
                                                 int64_t *dups,
                                                 int64_t *losses) {
-    assert(stTree_getChildNumber(reconciledTree) == 0
-           || stTree_getChildNumber(reconciledTree) == 2);
     stPhylogenyInfo *info = stTree_getClientData(reconciledTree);
     assert(info != NULL);
     stReconciliationInfo *recon = info->recon;
     assert(recon != NULL);
     stTree *species = recon->species;
-    if (recon->event == DUPLICATION) {
-        (*dups)++;
-    }
-    // Count losses.
-    // Look at all this node's children. If the children's recons
-    // aren't direct children of this node's recon, then count N
-    // losses, where N is the number of nodes "skipped" on the way to
-    // this node's recon (plus one if this is a dup and the children's
-    // recons are not equal). Nodes that have only one child should
-    // not count as "skipped".
-    if (stTree_getChildNumber(reconciledTree) != 0) {
+    if (stTree_getChildNumber(reconciledTree) == 2) {
+        if (recon->event == DUPLICATION) {
+            (*dups)++;
+        }
+        // Count losses.
+        // Look at all this node's children. If the children's recons
+        // aren't direct children of this node's recon, then count N
+        // losses, where N is the number of nodes "skipped" on the way to
+        // this node's recon (plus one if this is a dup and the children's
+        // recons are not equal). Nodes that have only one child should
+        // not count as "skipped".
         stTree *leftChild = stTree_getChild(reconciledTree, 0);
         stPhylogenyInfo *leftInfo = stTree_getClientData(leftChild);
         assert(leftInfo != NULL);
@@ -1182,6 +1230,14 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
         stTree *rightSpecies = rightRecon->species;
 
         *losses += lossesInSubtree(species, leftSpecies, rightSpecies);
+    } else if (stTree_getChildNumber(reconciledTree) > 2) {
+        // We follow the algorithm for finding the minimum mutation
+        // cost in an apparent polytomy given by Lafond, Swenson,
+        // El-Mabrouk, 2012.
+        stHash *speciesToNumGenes;
+        stTree *linkedSpeciesTree = getLinkedSpeciesTree(species, reconciledTree, &speciesToNumGenes);
+
+        dupLoss(linkedSpeciesTree, 1, speciesToNumGenes);
     }
 
     for (int64_t i = 0; i < stTree_getChildNumber(reconciledTree); i++) {
@@ -1282,7 +1338,7 @@ void stPhylogeny_rootByReconciliationAtMostBinary_R(stTree *curRoot,
 // and this function will reconcile geneTree, resetting any
 // reconciliation information that potentially already exists.
 stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
-                                                 stHash *leafToSpecies) {
+                                                     stHash *leafToSpecies) {
     stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
 
     // Find the root which has the lowest reconciliation cost.
