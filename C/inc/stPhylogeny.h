@@ -169,16 +169,16 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
 // on all nodes, and optionally set the labels of the ancestors to the
 // labels of their reconciliation in the species tree.
 //
-// The gene tree must be binary, and the species tree must be
-// "at-most-binary", i.e. it must have no nodes with more than 3
-// children, but may have nodes with only one child.
+// The species tree must be "at-most-binary", i.e. it must have no
+// nodes with more than 3 children, but may have nodes with only one
+// child.
 void stPhylogeny_reconcileAtMostBinary(stTree *geneTree, stHash *leafToSpecies,
                                        bool relabelAncestors);
 
 // For a tree that has already been reconciled by
 // reconcileAtMostBinary, calculates the number of dups and losses
 // implied by the reconciliation. dups and losses must be set to 0
-// before calling.
+// before calling. The gene-tree may have polytomies.
 void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
                                                 int64_t *dups,
                                                 int64_t *losses);

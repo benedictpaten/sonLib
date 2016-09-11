@@ -1112,12 +1112,17 @@ static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
         event = LEAF;
     } else {
         event = SPECIATION;
-        stTree *mrca = stPhylogeny_reconcileAtMostBinary_R(
+        recon = stPhylogeny_reconcileAtMostBinary_R(
             stTree_getChild(gene, 0), leafToSpecies, relabelAncestors);
         for (int64_t i = 1; i < stTree_getChildNumber(gene); i++) {
             stTree *childRecon = stPhylogeny_reconcileAtMostBinary_R(
                 stTree_getChild(gene, i), leafToSpecies, relabelAncestors);
-            if (childRecon == mrca) {
+            recon = stTree_getMRCA(childRecon, recon);
+        }
+        for (int64_t i = 0; i < stTree_getChildNumber(gene); i++) {
+            stTree *childRecon = stPhylogeny_reconcileAtMostBinary_R(
+                stTree_getChild(gene, i), leafToSpecies, relabelAncestors);
+            if (childRecon == recon) {
                 event = DUPLICATION;
             }
         }
@@ -1182,6 +1187,8 @@ static bool getLinkedSpeciesTree_R(stTree *speciesNode, stTree *polytomy, stHash
     return descendantHasGene || hasGene;
 }
 
+// Get the "linked species tree" for a polytomy: i.e. the part of the
+// species tree corresponding to the polytomy.
 stTree *getLinkedSpeciesTree(stTree *speciesTree, stTree *polytomy, stHash **speciesToNumGenes) {
     *speciesToNumGenes = stHash_construct2(NULL, free);
     stTree *linkedTree = stTree_clone(speciesTree);
@@ -1189,7 +1196,156 @@ stTree *getLinkedSpeciesTree(stTree *speciesTree, stTree *polytomy, stHash **spe
     return linkedTree;
 }
 
-static void dupLoss(stTree *speciesNode, int64_t k, stHash *speciesToNumGenes) {
+// Calculate the minimum cost for an x-partial resolution of a
+// polytomy.
+static int64_t minCost(stTree *species, int64_t x, stHash *cupValues) {
+    stIntTuple *cupParameters = stHash_search(cupValues, species);
+    assert(cupParameters != NULL);
+    int64_t m1 = stIntTuple_get(cupParameters, 0);
+    int64_t m2 = stIntTuple_get(cupParameters, 1);
+    int64_t gamma = stIntTuple_get(cupParameters, 2);
+
+    if (x < m1) {
+        return gamma + m1 - x;
+    } else if (x >= m1 && x <= m2) {
+        return gamma;
+    } else {
+        assert (x > m2);
+        return gamma + x - m2;
+    }
+}
+
+static void getCupValues_R(stTree *species, stHash *speciesToNumGenes, stHash *cupValues) {
+    for (int64_t i = 0; i < stTree_getChildNumber(species); i++) {
+        getCupValues_R(stTree_getChild(species, i), speciesToNumGenes, cupValues);
+    }
+
+    int64_t *numGenesPtr = stHash_search(speciesToNumGenes, species);
+    int64_t numGenes = numGenesPtr ? *numGenesPtr : 0;
+    int64_t m1, m2, gamma;
+    if (stTree_getChildNumber(species) == 0) {
+        if (numGenes == 0) {
+            m1 = 1;
+            m2 = 1;
+            gamma = 1;
+        } else {
+            m1 = numGenes;
+            m2 = numGenes;
+            gamma = 0;
+        }
+    } else {
+        assert(stTree_getChildNumber(species) == 2);
+        stTree *child1 = stTree_getChild(species, 0);
+        stTree *child2 = stTree_getChild(species, 1);
+        stIntTuple *child1Tuple = stHash_search(cupValues, child1);
+        stIntTuple *child2Tuple = stHash_search(cupValues, child2);
+        int64_t child1m1 = stIntTuple_get(child1Tuple, 0);
+        int64_t child1m2 = stIntTuple_get(child1Tuple, 1);
+        int64_t child1gamma = stIntTuple_get(child1Tuple, 2);
+        int64_t child2m1 = stIntTuple_get(child2Tuple, 0);
+        int64_t child2m2 = stIntTuple_get(child2Tuple, 1);
+        int64_t child2gamma = stIntTuple_get(child2Tuple, 2);
+
+        if (child1m1 < child2m1 && child1m2 < child2m1) {
+            m1 = child1m2;
+            m2 = child2m1;
+            gamma = child1gamma + child2gamma + child2m1 - child1m2;
+        } else if (child1m1 < child2m1 && child1m2 >= child2m1 && child1m2 <= child2m2) {
+            m1 = child2m1;
+            m2 = child1m2;
+            gamma = child1gamma + child2gamma;
+        } else if (child1m1 < child2m1 && child1m2 > child2m2) {
+            m1 = child2m1;
+            m2 = child2m2;
+            gamma = child1gamma + child2gamma;
+        } else if (child2m1 <= child1m1 && child1m1 <= child2m2 && child2m1 <= child1m2 && child1m2 <= child2m2) {
+            // The first part of this if condition is duplicated in
+            // the paper, but it is clear that they mean the case
+            // where child1's breakpoints are totally enclosed within
+            // child2's breakpoints.
+            m1 = child1m1;
+            m2 = child1m2;
+            gamma = child1gamma + child2gamma;
+        } else if (child2m1 <= child1m1 && child1m1 <= child2m2 && child1m2 > child2m2) {
+            m1 = child1m2;
+            m2 = child2m2;
+            gamma = child1gamma + child2gamma;
+        } else {
+            m1 = child2m2;
+            m2 = child1m1;
+            gamma = child1gamma + child2gamma + child1m1 - child2m2;
+        }
+
+        m1 = m1 + numGenes;
+        m2 = m2 + numGenes;
+        if (m1 <= numGenes) {
+            m1 = numGenes + 1;
+        }
+        if (m2 <= numGenes) {
+            m2 = numGenes + 1;
+            gamma = minCost(child1, 1, cupValues) + minCost(child2, 1, cupValues);
+        }
+    }
+    stHash_insert(cupValues, species, stIntTuple_construct3(m1, m2, gamma));
+}
+
+// Get the "cup values" (i.e. parameters for the minCost function) for
+// a polytomy.
+static stHash *getCupValues(stTree *speciesTree, stHash *speciesToNumGenes) {
+    stHash *cupValues = stHash_construct2(NULL, (void (*)(void *)) stIntTuple_destruct);
+    getCupValues_R(speciesTree, speciesToNumGenes, cupValues);
+    return cupValues;
+}
+
+// Get the number of duplications and losses in a minimum-cost
+// resolution of a polytomy at each node in the species tree.
+static void dupLoss(stTree *species, int64_t k, stHash *speciesToNumGenes, stHash *cupValues, stHash *dups, stHash *losses) {
+    int64_t *numGenesPtr = stHash_search(speciesToNumGenes, species);
+    int64_t numGenes = numGenesPtr ? *numGenesPtr : 0;
+
+    stIntTuple *cupParameters = stHash_search(cupValues, species);
+    assert(cupParameters != NULL);
+    int64_t m1 = stIntTuple_get(cupParameters, 0);
+    int64_t m2 = stIntTuple_get(cupParameters, 1);
+
+    stTree *child1 = stTree_getChildNumber(species) > 0 ? stTree_getChild(species, 0) : NULL;
+    stTree *child2 = stTree_getChildNumber(species) > 1 ? stTree_getChild(species, 1) : NULL;
+
+    int64_t *numDups = stHash_search(dups, species);
+    if (numDups == NULL) {
+        numDups = st_calloc(1, sizeof(int64_t));
+        stHash_insert(dups, species, numDups);
+    }
+    int64_t *numLosses = stHash_search(losses, species);
+    if (numLosses == NULL) {
+        numLosses = st_calloc(1, sizeof(int64_t));
+        stHash_insert(losses, species, numLosses);
+    }
+
+    if (stTree_getChildNumber(species) == 0) {
+        if (k >= numGenes) {
+            *numDups = 0;
+            *numLosses = k - numGenes;
+        } else {
+            *numDups = numGenes - k;
+            *numLosses = 0;
+        }
+    } else if (k - numGenes > 0 && minCost(species, k, cupValues) == minCost(child1, k - numGenes, cupValues) + minCost(child2, k - numGenes, cupValues)) {
+        *numDups = 0;
+        *numLosses = 0;
+        dupLoss(child1, k - numGenes, speciesToNumGenes, cupValues, dups, losses);
+        dupLoss(child2, k - numGenes, speciesToNumGenes, cupValues, dups, losses);
+    } else if (k < m1) {
+        *numDups = m1 - k;
+        *numLosses = 0;
+        dupLoss(child1, m1 - numGenes, speciesToNumGenes, cupValues, dups, losses);
+        dupLoss(child2, m1 - numGenes, speciesToNumGenes, cupValues, dups, losses);
+    } else if (k > m2) {
+        *numDups = 0;
+        *numLosses = k - m2;
+        dupLoss(child1, m2 - numGenes, speciesToNumGenes, cupValues, dups, losses);
+        dupLoss(child2, m2 - numGenes, speciesToNumGenes, cupValues, dups, losses);
+    }
 }
 
 // For a tree that has already been reconciled by
@@ -1236,8 +1392,29 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
         // El-Mabrouk, 2012.
         stHash *speciesToNumGenes;
         stTree *linkedSpeciesTree = getLinkedSpeciesTree(species, reconciledTree, &speciesToNumGenes);
+        stHash *cupValues = getCupValues(linkedSpeciesTree, speciesToNumGenes);
+        stHash *dupsPerSpecies = stHash_construct2(NULL, free);
+        stHash *lossesPerSpecies = stHash_construct2(NULL, free);
+        dupLoss(linkedSpeciesTree, 1, speciesToNumGenes, cupValues, dupsPerSpecies, lossesPerSpecies);
+        stList *dupValues = stHash_getValues(dupsPerSpecies);
+        for (int64_t i = 0; i < stList_length(dupValues); i++) {
+            int64_t *dupsInSpecies = stList_get(dupValues, i);
+            *dups += *dupsInSpecies;
+        }
 
-        dupLoss(linkedSpeciesTree, 1, speciesToNumGenes);
+        stList *lossValues = stHash_getValues(lossesPerSpecies);
+        for (int64_t i = 0; i < stList_length(lossValues); i++) {
+            int64_t *lossesInSpecies = stList_get(lossValues, i);
+            *losses += *lossesInSpecies;
+        }
+
+        stList_destruct(dupValues);
+        stList_destruct(lossValues);
+        stHash_destruct(lossesPerSpecies);
+        stHash_destruct(dupsPerSpecies);
+        stHash_destruct(cupValues);
+        stTree_destruct(linkedSpeciesTree);
+        stHash_destruct(speciesToNumGenes);
     }
 
     for (int64_t i = 0; i < stTree_getChildNumber(reconciledTree); i++) {

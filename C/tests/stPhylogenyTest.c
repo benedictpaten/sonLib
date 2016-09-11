@@ -1000,10 +1000,10 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
 // tiebreaker.
 static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *testCase) {
     for(int64_t testNum = 0; testNum < 10; testNum++) {
-        int64_t numSpecies = st_randomInt64(3, 100);
+        int64_t numSpecies = st_randomInt64(3, 50);
         stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
         globalSpeciesTree = stPhylogeny_neighborJoin(matrix, NULL);
-        int64_t numGenes = st_randomInt64(3, 300);
+        int64_t numGenes = st_randomInt64(3, 100);
         stMatrix_destruct(matrix);
         matrix = getRandomDistanceMatrix(numGenes);
         stTree *geneTree = stPhylogeny_neighborJoin(matrix, NULL);
@@ -1348,31 +1348,59 @@ static void testStPhylogeny_getLinkedSpeciesTree(CuTest *testCase) {
     stTree *polytomy = stTree_parseNewickString("(a-1,a-2,a-3,a-4,b-1,b-2,c-1,e-1)G;");
     stHash *leafToSpecies = buildLeafToSpeciesUsingDashSeparator(polytomy, speciesTree);
     stPhylogeny_reconcileAtMostBinary(polytomy, leafToSpecies, false);
-    stHash *speciesToNumGenes = stHash_construct();
+    stHash *speciesToNumGenes;
     stTree *linkedSpeciesTree = getLinkedSpeciesTree(speciesTree, polytomy, &speciesToNumGenes);
     char *newick = stTree_getNewickTreeString(linkedSpeciesTree);
     CuAssertStrEquals(testCase, "((a,b)e,(c,d)f)g;", newick);
+    CuAssertIntEquals(testCase, 4, *((int64_t *) stHash_search(speciesToNumGenes, stTree_findChild(linkedSpeciesTree, "a"))));
+    CuAssertIntEquals(testCase, 2, *((int64_t *) stHash_search(speciesToNumGenes, stTree_findChild(linkedSpeciesTree, "b"))));
+    CuAssertIntEquals(testCase, 1, *((int64_t *) stHash_search(speciesToNumGenes, stTree_findChild(linkedSpeciesTree, "c"))));
+    CuAssertIntEquals(testCase, 1, *((int64_t *) stHash_search(speciesToNumGenes, stTree_findChild(linkedSpeciesTree, "e"))));
+    free(newick);
+    stTree_destruct(linkedSpeciesTree);
+    stHash_destruct(speciesToNumGenes);
+    stHash_destruct(leafToSpecies);
+    stPhylogenyInfo_destructOnTree(polytomy);
+    stTree_destruct(polytomy);
+    stTree_destruct(speciesTree);
+}
+
+static void testStPhylogeny_reconciliationCostAtMostBinary_polytomies(CuTest *testCase) {
+    stTree *speciesTree = stTree_parseNewickString("(((a1,(a2.1,a2.2)a2)a,b)e,((c1, c2)c,(d1, d2)d)f)g;");
+    stTree *polytomy = stTree_parseNewickString("(a-1,a-2,a-3,a-4,b-1,b-2,c-1,e-1)G;");
+    stHash *leafToSpecies = buildLeafToSpeciesUsingDashSeparator(polytomy, speciesTree);
+    stPhylogeny_reconcileAtMostBinary(polytomy, leafToSpecies, false);
+    int64_t dups = 0, losses = 0;
+    stPhylogeny_reconciliationCostAtMostBinary(polytomy, &dups, &losses);
+    CuAssertIntEquals(testCase, 1, losses);
+    CuAssertIntEquals(testCase, 4, dups);
+
+    stHash_destruct(leafToSpecies);
+    stPhylogenyInfo_destructOnTree(polytomy);
+    stTree_destruct(polytomy);
+    stTree_destruct(speciesTree);
 }
 
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconciliationCostAtMostBinary_polytomies);
     SUITE_ADD_TEST(suite, testStPhylogeny_getLinkedSpeciesTree);
     SUITE_ADD_TEST(suite, testStPhylogeny_greedySplitDecomposition);
     SUITE_ADD_TEST(suite, testStPhylogeny_getSplits);
     SUITE_ADD_TEST(suite, testStPhylogeny_nni);
-    /* SUITE_ADD_TEST(suite, testJoinCosts_random); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes); */
-    /* SUITE_ADD_TEST(suite, testSimpleNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring); */
-    /* SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring); */
-    /* SUITE_ADD_TEST(suite, testRandomNeighborJoin); */
-    /* SUITE_ADD_TEST(suite, testRandomBootstraps); */
-    /* SUITE_ADD_TEST(suite, testSimpleJoinCosts); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining); */
-    /* SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random); */
-    /* SUITE_ADD_TEST(suite, testStPhylogeny_reconcileNonBinary); */
+    SUITE_ADD_TEST(suite, testJoinCosts_random);
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileAtMostBinary_degree2Nodes);
+    SUITE_ADD_TEST(suite, testSimpleNeighborJoin);
+    SUITE_ADD_TEST(suite, testSimpleBootstrapPartitionScoring);
+    SUITE_ADD_TEST(suite, testSimpleBootstrapReconciliationScoring);
+    SUITE_ADD_TEST(suite, testRandomNeighborJoin);
+    SUITE_ADD_TEST(suite, testRandomBootstraps);
+    SUITE_ADD_TEST(suite, testSimpleJoinCosts);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningReducesToNeighborJoining);
+    SUITE_ADD_TEST(suite, testGuidedNeighborJoiningLowersReconCost);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests);
+    SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileNonBinary);
 
 
     (void) testStPhylogeny_getSplits;
