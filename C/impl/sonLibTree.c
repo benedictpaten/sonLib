@@ -122,11 +122,13 @@ static void tree_cloneFlippedTree(stTree *node, stTree *oldNode,
 }
 
 // Return a new tree rooted a given distance above the given node.
-stTree *stTree_reRoot(stTree *node, double distanceAbove) {
+static stTree *stTree_reRootP(stTree *node, double distanceAbove, bool clearClientData) {
     if(stTree_getParent(node) == NULL) {
         // This node is already the root.
         stTree *newRoot = stTree_clone(node);
-        stTree_clearClientData(newRoot, true);
+        if (clearClientData) {
+            stTree_clearClientData(newRoot, true);
+        }
         return newRoot;
     }
 
@@ -140,8 +142,18 @@ stTree *stTree_reRoot(stTree *node, double distanceAbove) {
     tree_cloneFlippedTree(stTree_getParent(node), node, newRoot,
                           stTree_getBranchLength(node) - distanceAbove);
     // Having the same client data can be a problem
-    stTree_clearClientData(newRoot, true);
+    if (clearClientData) {
+        stTree_clearClientData(newRoot, true);
+    }
     return newRoot;
+}
+
+stTree *stTree_reRoot(stTree *node, double distanceAbove) {
+    return stTree_reRootP(node, distanceAbove, true);
+}
+
+stTree *stTree_reRootAndKeepClientData(stTree *node, double distanceAbove) {
+    return stTree_reRootP(node, distanceAbove, false);
 }
 
 stTree *stTree_getParent(stTree *tree) {

@@ -1017,12 +1017,17 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *test
             stHash_insert(globalLeafToSpecies, gene, species);
         }
 
-        // Find the best rooting.
-        stTree *rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree, globalLeafToSpecies);
+        // Find the best rooting using either the naive or optimized version.
+        stTree *rooted;
+        if (st_random() > 0.5) {
+            rooted = stPhylogeny_rootByReconciliationAtMostBinary(geneTree, globalLeafToSpecies);
+        } else {
+            rooted = stPhylogeny_rootByReconciliationNaive(geneTree, globalLeafToSpecies);
+        }
         stPhylogeny_addStIndexedTreeInfo(rooted);
         // This is pretty stupid, but we have to map from the
         // leafToSpecies on the old gene tree to this rerooted
-        // one. TODO: Probably the leafToSpecies concept needs to be rethought.
+        // one.
         // Probably should use matrix index -> species node instead.
         stHash *myLeafToSpecies = stHash_construct();
         stHashIterator *hashIt = stHash_getIterator(globalLeafToSpecies);

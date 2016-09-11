@@ -1554,6 +1554,66 @@ stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
     }
 }
 
+static void getNewLeafToSpecies_R(stTree *node, stHash *leafToSpecies) {
+    if (stTree_getChildNumber(node) == 0) {
+        stPhylogenyInfo *info = stTree_getClientData(node);
+        assert(info != NULL);
+        stReconciliationInfo *recon = info->recon;
+        assert(recon != NULL);
+        stHash_insert(leafToSpecies, node, recon->species);
+    }
+    for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+        getNewLeafToSpecies_R(stTree_getChild(node, i), leafToSpecies);
+    }
+    stTree_setClientData(node, NULL);
+}
+
+static stHash *getNewLeafToSpecies(stTree *rerooted) {
+    stHash *leafToSpecies = stHash_construct();
+    getNewLeafToSpecies_R(rerooted, leafToSpecies);
+    return leafToSpecies;
+}
+
+stTree *stPhylogeny_rootByReconciliationNaive(stTree *tree, stHash *leafToSpecies) {
+    stPhylogeny_reconcileAtMostBinary(tree, leafToSpecies, false);
+    stList *stack = stList_construct();
+    stList_append(stack, tree);
+    stTree *bestTree = NULL;
+    int64_t bestDups = INT64_MAX;
+    int64_t bestLosses = INT64_MAX;
+    while (stList_length(stack) > 0) {
+        stTree *node = stList_pop(stack);
+        for (int64_t i = 0; i < stTree_getChildNumber(node); i++) {
+            stList_append(stack, stTree_getChild(node, i));
+        }
+
+        stTree *curTree;
+        if (node != tree) {
+            curTree = stTree_reRootAndKeepClientData(node, stTree_getBranchLength(node)/2);
+        } else {
+            curTree = stTree_clone(tree);
+        }
+        stHash *newLeafToSpecies = getNewLeafToSpecies(curTree);
+        stPhylogeny_reconcileAtMostBinary(curTree, newLeafToSpecies, false);
+        stHash_destruct(newLeafToSpecies);
+        int64_t dups = 0, losses = 0;
+        stPhylogeny_reconciliationCostAtMostBinary(curTree, &dups, &losses);
+        if (dups < bestDups || (dups == bestDups && losses < bestLosses)) {
+            if (bestTree != NULL) {
+                stPhylogenyInfo_destructOnTree(bestTree);
+                stTree_destruct(bestTree);
+            }
+            bestTree = curTree;
+            bestDups = dups;
+            bestLosses = losses;
+        } else {
+            stPhylogenyInfo_destructOnTree(curTree);
+            stTree_destruct(curTree);
+        }
+    }
+    return bestTree;
+}
+
 static stSet *climb(stTree *childGene, stTree *childLCARecon, stTree *parentGene,
                     stTree *parentLCARecon, stHash *N) {
     stSet *childN = stHash_search(N, childGene);

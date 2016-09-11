@@ -184,11 +184,17 @@ void stPhylogeny_reconciliationCostAtMostBinary(stTree *reconciledTree,
                                                 int64_t *losses);
 
 // Return a copy of geneTree that is rooted to minimize duplications.
+// The gene tree must not have any polytomies.
 // NOTE: the returned tree does *not* have reconciliation info set,
 // and this function will reconcile geneTree, resetting any
 // reconciliation information that potentially already exists.
 stTree *stPhylogeny_rootByReconciliationAtMostBinary(stTree *geneTree,
                                                      stHash *leafToSpecies);
+
+// Return a copy of geneTree that is rooted to minimize duplications.
+// This function is slower than rootByReconciliationAtMostBinary, but
+// supports gene trees with polytomies.
+stTree *stPhylogeny_rootByReconciliationNaive(stTree *geneTree, stHash *leafToSpecies);
 
 // Reconcile a binary gene tree to a species tree that may include
 // polytomies. Based on the method used by NOTUNG, described in

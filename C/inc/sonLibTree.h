@@ -119,8 +119,15 @@ char *stTree_getNewickTreeString(stTree *eTree);
 
 /*
  * Return a new tree rooted a given distance above the given node.
+ * Client data is set to NULL.
  */
 stTree *stTree_reRoot(stTree *node, double distanceAbove);
+
+/*
+ * Return a new tree rooted a given distance above the given node.
+ * Client data (if any) from the old tree is preserved.
+ */
+stTree *stTree_reRootAndKeepClientData(stTree *node, double distanceAbove);
 
 /*
  * Replace the child at the given index.
