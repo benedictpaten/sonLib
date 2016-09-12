@@ -2036,6 +2036,8 @@ static void applyCompatibleSplit(stList *splitIndices, stHash *indexToLeaf) {
     stTree *parent = stTree_getParent(stHash_search(indexToLeaf, stList_get(splitIndices, 0)));
     stTree *newNode = stTree_construct();
     stTree_setParent(newNode, parent);
+    // Branch lengths are arbitrarily set to 1.0.
+    stTree_setBranchLength(newNode, 1.0);
     for (int64_t i = 0; i < stList_length(splitIndices); i++) {
         stTree *leaf = stHash_search(indexToLeaf, stList_get(splitIndices, i));
         stTree_setParent(leaf, newNode);
@@ -2054,6 +2056,10 @@ stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool rela
         stTree_setLabel(leaf, label);
         free(label);
         stTree_setParent(leaf, root);
+        // The branch lengths are all arbitrarily set to 1.0 to avoid
+        // infinite branch lengths setting up a minefield for any
+        // arithmetic later on.
+        stTree_setBranchLength(leaf, 1.0);
     }
 
     stList *splits = stPhylogeny_getSplits(distanceMatrix, relaxed);
