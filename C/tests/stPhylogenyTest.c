@@ -1336,7 +1336,7 @@ _|               |                 ________________ CAT.0
     stTree *mouse2 = stTree_findChild(tree, "10");
     stTree *rooted = stTree_reRoot(mouse2, 0.0);
     char *newick = stTree_getNewickTreeString(rooted);
-    CuAssertStrEquals(testCase, "(10:0,((1,11),(2,4,7),(8,(6,(0,5)),(3,9))));", newick);
+    CuAssertStrEquals(testCase, "(10:0,((1:1,11:1):1,(2:1,4:1,7:1):1,(8:1,(6:1,(0:1,5:1):1):1,(3:1,9:1):1):1):1);", newick);
     free(newick);
     stMatrix_destruct(distanceMatrix);
     stTree_destruct(rooted);
