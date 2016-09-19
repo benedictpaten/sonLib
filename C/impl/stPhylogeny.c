@@ -2079,3 +2079,19 @@ stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool rela
     stPhylogeny_addStIndexedTreeInfo(root);
     return root;
 }
+
+void stPhylogeny_applyJukesCantorCorrection(stMatrix *distanceMatrix) {
+    for (int64_t i = 0; i < stMatrix_m(distanceMatrix); i++) {
+        for (int64_t j = 0; j < stMatrix_n(distanceMatrix); j++) {
+            if (*stMatrix_getCell(distanceMatrix, i, j) < 0.75) {
+                *stMatrix_getCell(distanceMatrix, i, j) = -0.75 * log(1 - 4 * (*stMatrix_getCell(distanceMatrix, i, j)) / 3);
+            } else {
+                // Having <25% identity isn't valid under the JC
+                // model, so we just set the distance to DBL_MAX (not
+                // infinity as that may break some arithmetic down
+                // the road).
+                *stMatrix_getCell(distanceMatrix, i, j) = DBL_MAX;
+            }
+        }
+    }
+}

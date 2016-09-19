@@ -218,6 +218,9 @@ stList *stPhylogeny_getSplits(stMatrix *distanceMatrix, bool relaxed);
 // Build a tree greedily using the d-splits from stPhylogeny_getSplits.
 stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool relaxed);
 
+// Apply the Jukes-Cantor distance correction to the input distance matrix.
+void stPhylogeny_applyJukesCantorCorrection(stMatrix *distanceMatrix);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <math.h>
 #include "CuTest.h"
 #include "sonLib.h"
 #include "stPhylogeny.h"
@@ -1386,6 +1387,31 @@ static void testStPhylogeny_reconciliationCostAtMostBinary_polytomies(CuTest *te
     stTree_destruct(speciesTree);
 }
 
+static void testStPhylogeny_applyJukesCantorCorrection(CuTest *testCase) {
+    double distanceArray[6][6] = {
+        { 0.0,    0.225,  0.22,   0.745,   0.76,  0.0 },
+        { 0.225,  0.0,    0.05,   0.22,   0.045,  0.225 },
+        { 0.22,   0.05,   0.0,    0.215,  0.015,  0.22 },
+        { 0.745,   0.22,   0.215,  0.0,    0.21,   0.06 },
+        { 0.76,  0.045,  0.015,  0.21,   0.0,    0.215 },
+        { 0.0,    0.225,  0.22,   0.06,   0.215,  0.0 },
+    };
+    stMatrix *distanceMatrix = stMatrix_construct(6, 6);
+    for (int64_t i = 0; i < 6; i++) {
+        for (int64_t j = 0; j < 6; j++) {
+            *stMatrix_getCell(distanceMatrix, i, j) = distanceArray[i][j];
+        }
+    }
+
+    stPhylogeny_applyJukesCantorCorrection(distanceMatrix);
+    CuAssertDblEquals(testCase, 3.7579, *stMatrix_getCell(distanceMatrix, 3, 0), 0.001);
+    CuAssertDblEquals(testCase, 0.0625, *stMatrix_getCell(distanceMatrix, 3, 5), 0.001);
+    // Check that values over 0.75 don't return NaN or infinity.
+    CuAssertTrue(testCase, isnormal(*stMatrix_getCell(distanceMatrix, 4, 0)));
+
+    stMatrix_destruct(distanceMatrix);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testStPhylogeny_reconciliationCostAtMostBinary_polytomies);
@@ -1406,8 +1432,11 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests);
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileNonBinary);
+    SUITE_ADD_TEST(suite, testStPhylogeny_applyJukesCantorCorrection);
 
-
+    (void) testStPhylogeny_reconciliationCostAtMostBinary_polytomies;
+    (void) testStPhylogeny_getLinkedSpeciesTree;
+    (void) testStPhylogeny_greedySplitDecomposition;
     (void) testStPhylogeny_getSplits;
     (void) testStPhylogeny_nni;
     (void) testJoinCosts_random;
