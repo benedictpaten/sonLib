@@ -813,13 +813,8 @@ int64_t **stPhylogeny_getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex)
     return ret;
 }
 
-// Neighbor joining guided by a species tree. Note that the matrix is
-// a similarity matrix (i > j is # differences between i and j, i < j
-// is # similarities between i and j) rather than a distance
-// matrix. Join costs should be precomputed by
-// stPhylogeny_computeJoinCosts. indexToSpecies is a map from matrix
-// index (of the similarity matrix) to species leaves.
-stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
+stTree *stPhylogeny_guidedNeighborJoining(stMatrix *distanceMatrix,
+                                          stMatrix *similarityMatrix,
                                           stMatrix *joinCosts,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,
@@ -844,7 +839,8 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
     }
     stHash_destructIterator(hashIt);
 
-    // Distance matrix. Note: only valid for i < j.
+    // Distance matrix. We clone the one fed to us since we need to
+    // modify it during the process. Note: only valid for i < j.
     double **distances = st_calloc(numLeaves, sizeof(double *));
     for (int64_t i = 0; i < numLeaves; i++) {
         distances[i] = st_calloc(numLeaves, sizeof(double));
@@ -857,14 +853,10 @@ stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
         confidences[i] = st_calloc(numLeaves, sizeof(double));
     }
 
-    // Initial distance matrix calculation using the similarities and join costs.
+    // Fill in our copy of the distance matrix.
     for (int64_t i = 0; i < numLeaves; i++) {
         for (int64_t j = i + 1; j < numLeaves; j++) {
-            double similarities = *stMatrix_getCell(similarityMatrix, i, j);
-            double differences = *stMatrix_getCell(similarityMatrix, j, i);
-            double count = similarities + differences;
-            confidences[i][j] = count;
-            distances[i][j] = (count != 0.0) ? differences / count : INT64_MAX;
+            distances[i][j] = *stMatrix_getCell(distanceMatrix, i, j);
         }
     }
 
@@ -2078,4 +2070,20 @@ stTree *stPhylogeny_greedySplitDecomposition(stMatrix *distanceMatrix, bool rela
     stHash_destruct(indexToLeaf);
     stPhylogeny_addStIndexedTreeInfo(root);
     return root;
+}
+
+void stPhylogeny_applyJukesCantorCorrection(stMatrix *distanceMatrix) {
+    for (int64_t i = 0; i < stMatrix_m(distanceMatrix); i++) {
+        for (int64_t j = 0; j < stMatrix_n(distanceMatrix); j++) {
+            if (*stMatrix_getCell(distanceMatrix, i, j) < 0.75) {
+                *stMatrix_getCell(distanceMatrix, i, j) = -0.75 * log(1 - 4 * (*stMatrix_getCell(distanceMatrix, i, j)) / 3);
+            } else {
+                // Having <25% identity isn't valid under the JC
+                // model, so we just set the distance to something
+                // higher than any realistic distance (not infinity as
+                // that may break some arithmetic down the road).
+                *stMatrix_getCell(distanceMatrix, i, j) = 10000.0;
+            }
+        }
+    }
 }
