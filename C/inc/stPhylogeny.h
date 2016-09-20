@@ -151,13 +151,14 @@ stMatrix *stPhylogeny_computeJoinCosts(stTree *speciesTree,
 // Precompute an MRCA matrix to pass to guided neighbor-joining.
 int64_t **stPhylogeny_getMRCAMatrix(stTree *speciesTree, stHash *speciesToIndex);
 
-// Neighbor joining guided by a species tree. Note that the matrix is
-// a similarity matrix (i > j is # differences between i and j, i < j
-// is # similarities between i and j) rather than a distance
-// matrix. Join costs should be precomputed by
+// Neighbor joining guided by a species tree. The similarity matrix
+// has entries for each i and j such that s_ij if i > j is #
+// differences between i and j, i < j is # similarities between i and
+// j. Join costs should be precomputed by
 // stPhylogeny_computeJoinCosts. indexToSpecies is a map from matrix
 // index (of the similarity matrix) to species leaves.
-stTree *stPhylogeny_guidedNeighborJoining(stMatrix *similarityMatrix,
+stTree *stPhylogeny_guidedNeighborJoining(stMatrix *distanceMatrix,
+                                          stMatrix *similarityMatrix,
                                           stMatrix *joinCosts,
                                           stHash *matrixIndexToJoinCostIndex,
                                           stHash *speciesToJoinCostIndex,

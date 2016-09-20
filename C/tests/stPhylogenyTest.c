@@ -788,7 +788,7 @@ static void testGuidedNeighborJoiningReducesToNeighborJoining(CuTest *testCase) 
         // Get the MRCA matrix
         int64_t **speciesMRCAMatrix = stPhylogeny_getMRCAMatrix(speciesTree, speciesToIndex);
 
-        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(distanceMatrix, similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
 
         for(int i = 0; i < stTree_getNumNodes(speciesTree); i++) {
           free(speciesMRCAMatrix[i]);
@@ -863,7 +863,10 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
         // get MRCA matrix
         int64_t **speciesMRCAMatrix = stPhylogeny_getMRCAMatrix(speciesTree, speciesToIndex);
 
-        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
+        // get distance matrix
+        stMatrix *distanceMatrix = getDistanceMatrixFromSimilarityMatrix(similarityMatrix);
+
+        stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(distanceMatrix, similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
 
         for(int i = 0; i < stTree_getNumNodes(speciesTree); i++) {
           free(speciesMRCAMatrix[i]);
