@@ -6,13 +6,14 @@
 
 #include "sonLibGlobalsTest.h"
 
-static stSet *set0;
+static stSet *set0, *set0Prime;
 static stSet *set1;
 static stIntTuple *one, *two, *three, *four, *five, *six;
 
 static void testSetup() {
     // compare by value of memory address
     set0 = stSet_construct();
+    set0Prime = stSet_construct();
     // compare by value of ints.
     set1 = stSet_construct3((uint64_t(*)(const void *)) stIntTuple_hashKey, 
                             (int(*)(const void *, const void *)) stIntTuple_equalsFn,
@@ -29,6 +30,12 @@ static void testSetup() {
     stSet_insert(set0, four);
     stSet_insert(set0, five);
     stSet_insert(set0, six);
+    stSet_insert(set0Prime, one);
+    stSet_insert(set0Prime, two);
+    stSet_insert(set0Prime, three);
+    stSet_insert(set0Prime, four);
+    stSet_insert(set0Prime, five);
+    stSet_insert(set0Prime, six);
     stSet_insert(set1, one);
     stSet_insert(set1, two);
     stSet_insert(set1, three);
@@ -353,6 +360,52 @@ static void test_stSet_getDifference(CuTest* testCase) {
     } stTryEnd
     testTeardown();
 }
+
+static void test_stSet_peek(CuTest *testCase) {
+    /*
+     * Tests the peek function of the set.
+     */
+    testSetup();
+    CuAssertTrue(testCase, stSet_size(set0) == 6);
+    CuAssertTrue(testCase, stSet_search(set0, stSet_peek(set0)) != NULL);
+    CuAssertTrue(testCase, stSet_size(set1) == 6);
+    CuAssertTrue(testCase, stSet_search(set1, stSet_peek(set1)) != NULL);
+    stSet *set2 = stSet_construct();
+    stTry {
+            stSet_peek(set2);
+    } stCatch(except) {
+        CuAssertTrue(testCase, stExcept_getId(except) == SET_EXCEPTION_ID);
+    } stTryEnd
+    stSet_destruct(set2);
+    testTeardown();
+}
+
+static void test_stSet_equals(CuTest *testCase) {
+    /*
+     * Tests the equals function of the set.
+     */
+    testSetup();
+    CuAssertTrue(testCase, stSet_equals(set0, set0));
+    CuAssertTrue(testCase, stSet_equals(set0, set0Prime));
+    stSet *set2 = stSet_construct();
+    CuAssertTrue(testCase, !stSet_equals(set0, set2));
+    CuAssertTrue(testCase, !stSet_equals(set0Prime, set2));
+    testTeardown();
+}
+
+static void test_stSet_isSubset(CuTest *testCase) {
+    /*
+     * Tests the subset function of the set.
+     */
+    testSetup();
+    CuAssertTrue(testCase, stSet_isSubset(set0, set0));
+    CuAssertTrue(testCase, stSet_isSubset(set0, set0Prime));
+    stSet *set2 = stSet_construct();
+    CuAssertTrue(testCase, stSet_isSubset(set0, set2));
+    CuAssertTrue(testCase, !stSet_isSubset(set2, set0));
+    testTeardown();
+}
+
 CuSuite* sonLib_stSetTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_stSet_search);
@@ -366,5 +419,8 @@ CuSuite* sonLib_stSetTestSuite(void) {
     SUITE_ADD_TEST(suite, test_stSet_getUnion);
     SUITE_ADD_TEST(suite, test_stSet_getIntersection);
     SUITE_ADD_TEST(suite, test_stSet_getDifference);
+    SUITE_ADD_TEST(suite, test_stSet_peek);
+    SUITE_ADD_TEST(suite, test_stSet_equals);
+    SUITE_ADD_TEST(suite, test_stSet_isSubset);
     return suite;
 }

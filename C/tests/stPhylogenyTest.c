@@ -429,7 +429,7 @@ static void checkDistanceFunctions(stTree *tree, CuTest *testCase) {
 // stPhylogeny functions on the resulting trees.
 static void testRandomNeighborJoin(CuTest *testCase) {
     int64_t testNum;
-    for (testNum = 0; testNum < 50; testNum++) {
+    for (testNum = 0; testNum < 20; testNum++) {
         // Run neighbor-joining
         int64_t numLeaves = st_randomInt64(3, 300);
         stMatrix *matrix = getRandomDistanceMatrix(numLeaves);
@@ -999,7 +999,7 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
 // is a tree with the lowest possible dup cost, with loss cost as
 // tiebreaker.
 static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *testCase) {
-    for(int64_t testNum = 0; testNum < 10; testNum++) {
+    for(int64_t testNum = 0; testNum < 1; testNum++) {
         int64_t numSpecies = st_randomInt64(3, 50);
         stMatrix *matrix = getRandomDistanceMatrix(numSpecies);
         globalSpeciesTree = stPhylogeny_neighborJoin(matrix, NULL);

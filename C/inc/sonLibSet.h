@@ -55,6 +55,11 @@ void stSet_destruct(stSet *set);
 void stSet_insert(stSet *set, void *key);
 
 /*
+ * Insert all elements in setToAdd to set.
+ */
+void stSet_insertAll(stSet *set, stSet *setToAdd);
+
+/*
  * Search for value, returns null if not present.
  */
 void *stSet_search(stSet *set, void *key);
@@ -73,6 +78,11 @@ void *stSet_removeAndFreeKey(stSet *set, void *key);
  * Returns the number of keys in the set.
  */
 int64_t stSet_size(stSet *set);
+
+/*
+ * Returns an arbitrary member of the set; if empty throws a set exception.
+ */
+void *stSet_peek(stSet *set);
 
 /*
  * Returns an iterator of the keys in the set.
@@ -104,6 +114,17 @@ stList *stSet_getList(stSet *set);
 stSet *stSet_getUnion(stSet *set1, stSet *set2);
 stSet *stSet_getIntersection(stSet *set1, stSet *set2);
 stSet *stSet_getDifference(stSet *set1, stSet *set2);
+
+// Comparison functions
+/*
+ * Returns non-zero iff set1 and set2 have equal contents.
+ */
+bool stSet_equals(stSet *set1, stSet *set2);
+
+/*
+ * Returns non-zero iff the putativeSubset is a subset of parentSet.
+ */
+bool stSet_isSubset(stSet *parentSet, stSet *putativeSubset);
 
 // Get access to the underlying functions
 uint64_t (*stSet_getHashFunction(stSet *set))(const void *);

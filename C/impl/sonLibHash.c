@@ -212,7 +212,7 @@ void stHash_printDiagnostics(stHash *hash) {
         }
         bucketLoad[i] = load;
     }
-    printf("Load: %zu / %zu (%lf%%)\n", h->entrycount, h->tablelength, ((double)h->entrycount)/h->tablelength * 100);
+    printf("Load: %" PRIi64 " / %" PRIi64 " (%lf%%)\n", h->entrycount, h->tablelength, ((double)h->entrycount)/h->tablelength * 100);
     printf("# occupied buckets: %zu\n", occupiedBuckets);
     qsort(bucketLoad, h->tablelength, sizeof(unsigned), (int (*)(const void *, const void *)) unsigned_cmp);
     qsort(occupiedBucketLoad, occupiedBuckets, sizeof(unsigned), (int (*)(const void *, const void *)) unsigned_cmp);
