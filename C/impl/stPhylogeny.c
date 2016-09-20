@@ -2087,10 +2087,10 @@ void stPhylogeny_applyJukesCantorCorrection(stMatrix *distanceMatrix) {
                 *stMatrix_getCell(distanceMatrix, i, j) = -0.75 * log(1 - 4 * (*stMatrix_getCell(distanceMatrix, i, j)) / 3);
             } else {
                 // Having <25% identity isn't valid under the JC
-                // model, so we just set the distance to DBL_MAX (not
-                // infinity as that may break some arithmetic down
-                // the road).
-                *stMatrix_getCell(distanceMatrix, i, j) = DBL_MAX;
+                // model, so we just set the distance to something
+                // higher than any realistic distance (not infinity as
+                // that may break some arithmetic down the road).
+                *stMatrix_getCell(distanceMatrix, i, j) = 10000.0;
             }
         }
     }
