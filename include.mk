@@ -105,16 +105,13 @@ else ifneq ($(wildcard /usr/local/include/ktcommon.h),)
    ttPrefix = /usr/local
    kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
    kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++
+else ifneq ($(wildcard /usr/include/ktcommon.h),)
+   # /usr install (Ubuntu)
+   ttPrefix = /usr
+   kyotoTycoonIncl = -I${ttPrefix}/include -DHAVE_KYOTO_TYCOON=1 
+   kyotoTycoonLib = -L${ttPrefix}/lib -Wl,-rpath,${ttPrefix}/lib -lkyototycoon -lkyotocabinet -lz -lbz2 -lpthread -lm -lstdc++
 endif
 endif
 
-# location of mysql
-#ifndef mysqlLibs
-#ifeq ($(shell mysql_config --version >/dev/null 2>&1 && echo ok),ok)
-#    mysqlIncl = $(shell mysql_config --include) -DHAVE_MYSQL=1
-#    mysqlLibs = $(shell mysql_config --libs)
-#endif
-#endif
-
-dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} ${mysqlLibs} -lz -lm
+dblibs = ${tokyoCabinetLib} ${kyotoTycoonLib} -lz -lm
 

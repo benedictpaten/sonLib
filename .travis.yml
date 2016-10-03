@@ -1,10 +1,10 @@
+sudo: required
+dist: trusty
 language: c++
-addons:
-  apt:
-    packages:
-      - libtokyocabinet-dev
-      - libkyototycoon-dev
-      - kyototycoon
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libtokyocabinet-dev libkyototycoon-dev kyototycoon libkyotocabinet-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install tokyo-cabinet kyoto-cabinet kyoto-tycoon; fi
 script:
   - CGL_DEBUG=1 make && PATH=$PATH:`pwd`/bin make test
 os:
