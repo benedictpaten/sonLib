@@ -1,0 +1,12 @@
+language: c++
+addons:
+  apt:
+    packages:
+      - libtokyocabinet-dev
+      - libkyototycoon-dev
+      - kyototycoon
+script:
+  - CGL_DEBUG=1 make && PATH=$PATH:`pwd`/bin make test
+os:
+  - linux
+  - osx

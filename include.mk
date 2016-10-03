@@ -3,18 +3,35 @@ HOSTNAME = $(shell hostname)
 MACH = $(shell uname -m)
 SYS =  $(shell uname -s)
 
-#C compiler
-ifeq (${SYS},FreeBSD)
+#C compiler. FIXME: for some reason the cxx variable is used, which
+#typically means C++ compiler.
+ifeq (${CC},cc)
+  ifeq (${SYS},FreeBSD)
     # default FreeBSD gcc (4.2.1) has warning bug
     #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
     cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
-    cpp = g++
-else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
+  else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
 	cxx = clang -std=c99 
-	cpp = clang++ 
-else
+  else
     cxx = gcc -std=c99
+  endif
+else
+  cxx = ${CC}
+endif
+
+# C++ compiler. FIXME: for some reason the cpp variable is used, which
+# typically refers to the C preprocessor.
+ifndef CXX
+  ifeq (${SYS},FreeBSD)
+    # default FreeBSD gcc (4.2.1) has warning bug
+    cpp = g++
+  else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
+    cpp = clang++
+  else
     cpp = g++ 
+  endif
+else
+  cpp = ${CXX}
 endif
 
 # -Wno-unused-result
@@ -29,7 +46,7 @@ cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG
 cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG
 
 #Debug flags (slow)
-cflags_dbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG -Wno-error=unused-result
+cflags_dbg = -Wall -O0 -Werror --pedantic -g -fno-inline -UNDEBUG -Wno-error=unused-result
 cppflags_dbg = -Wall -g -O0 -fno-inline -UNDEBUG
 
 #Ultra Debug flags (really slow)
@@ -38,12 +55,14 @@ cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -Wno-error=unused-result
 
-#for cpp code: don't use pedantic, or Werror
-cppflags = ${cppflags_opt} 
-
 #Flags to use
-cflags = ${cflags_opt} 
-
+ifndef CGL_DEBUG
+  cppflags = ${cppflags_opt}
+  cflags = ${cflags_opt}
+else
+  cppflags = ${cppflags_dbg}
+  cflags = ${cflags_dbg}
+endif
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib
 ifneq ($(wildcard /hive/groups/recon/local/include/tcbdb.h),)
