@@ -16,7 +16,7 @@ ifeq (${CC},cc)
     cxx = gcc -std=c99
   endif
 else
-  cxx = ${CC}
+  cxx = ${CC} -std=c99
 endif
 
 # C++ compiler. FIXME: for some reason the cpp variable is used, which
