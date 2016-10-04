@@ -13,3 +13,9 @@ os:
 env:
   - CGL_DEBUG=1
   - CGL_DEBUG=ultra
+matrix:
+  exclude:
+    # The default OSX env doesn't have a version that supports
+    # -fsanitize=address.
+    - env: CGL_DEBUG=ultra
+      os: osx
