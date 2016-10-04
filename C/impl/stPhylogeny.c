@@ -1603,6 +1603,7 @@ stTree *stPhylogeny_rootByReconciliationNaive(stTree *tree, stHash *leafToSpecie
             stTree_destruct(curTree);
         }
     }
+    stList_destruct(stack);
     return bestTree;
 }
 

@@ -695,6 +695,7 @@ static void testJoinCosts_random(CuTest *testCase) {
         stHash_destruct(indexToSpecies);
         stHash_destruct(speciesToIndex);
         stTree_destruct(speciesTree);
+        stMatrix_destruct(joinCosts);
     }
 }
 
@@ -868,6 +869,7 @@ static void testGuidedNeighborJoiningLowersReconCost(CuTest *testCase)
 
         stTree *guidedNeighborJoiningTree = stPhylogeny_guidedNeighborJoining(distanceMatrix, similarityMatrix, joinCosts, matrixIndexToJoinCostIndex, speciesToIndex, speciesMRCAMatrix, speciesTree);
 
+        stMatrix_destruct(distanceMatrix);
         for(int i = 0; i < stTree_getNumNodes(speciesTree); i++) {
           free(speciesMRCAMatrix[i]);
         }
@@ -990,7 +992,9 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_simpleTests(CuTest 
     stHash_insert(leafToSpecies, stTree_findChild(foo, "2"), stTree_findChild(speciesTree, "human"));
     stHash_insert(leafToSpecies, stTree_findChild(foo, "3"), stTree_findChild(speciesTree, "human"));
     rooted = stPhylogeny_rootByReconciliationAtMostBinary(foo, leafToSpecies);
-    CuAssertStrEquals(testCase, "((0:1,1:1):0.5,(2:1,3:2):0.5);", stTree_getNewickTreeString(rooted));
+    char *s = stTree_getNewickTreeString(rooted);
+    CuAssertStrEquals(testCase, "((0:1,1:1):0.5,(2:1,3:2):0.5);", s);
+    free(s);
     stPhylogenyInfo_destructOnTree(foo);
     stTree_destruct(foo);
     stTree_destruct(speciesTree);
@@ -1042,6 +1046,7 @@ static void testStPhylogeny_rootByReconciliationAtMostBinary_random(CuTest *test
             stTree *newGene = stPhylogeny_getLeafByIndex(rooted, index->matrixIndex);
             stHash_insert(myLeafToSpecies, newGene, species);
         }
+        stHash_destructIterator(hashIt);
         stPhylogeny_reconcileAtMostBinary(rooted, myLeafToSpecies, false);
         int64_t dups = 0, losses = 0;
         stPhylogeny_reconciliationCostAtMostBinary(rooted, &dups, &losses);

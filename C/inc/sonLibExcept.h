@@ -187,6 +187,7 @@ extern struct _stExceptContext *_cexceptTOS;
  * End of try/cache block
  */
 #define stTryEnd \
+        stExcept_free(_cexceptContext.except);\
     } else {\
         _cexceptTOS = _cexceptTOS->prev;\
     }}

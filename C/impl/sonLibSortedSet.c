@@ -175,6 +175,7 @@ stSortedSetIterator *stSortedSet_getIterator(stSortedSet *items) {
 stSortedSetIterator *stSortedSet_getIteratorFrom(stSortedSet *items, void *item) {
     stSortedSetIterator *iterator = stSortedSet_getIterator(items);
     if(avl_t_find(&iterator->traverser, items->sortedSet, item) == NULL) {
+        stSortedSet_destructIterator(iterator);
         stThrowNew(SORTED_SET_EXCEPTION_ID, "Tried to create an iterator with an item that is not in the list of items");
     }
     stSortedSet_getPrevious(iterator);

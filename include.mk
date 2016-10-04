@@ -31,7 +31,7 @@ ifndef CXX
     cpp = g++ 
   endif
 else
-  cpp = ${CXX}
+  cpp = ${CXX} -std=gnu++98
 endif
 
 # -Wno-unused-result
@@ -49,8 +49,9 @@ cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG
 cflags_dbg = -Wall -O0 -Werror --pedantic -g -fno-inline -UNDEBUG -Wno-error=unused-result
 cppflags_dbg = -Wall -g -O0 -fno-inline -UNDEBUG
 
-#Ultra Debug flags (really slow)
-cflags_ultraDbg = -Wall -Werror --pedantic -g -fno-inline -UNDEBUG
+#Ultra Debug flags (really slow, checks for memory issues)
+cflags_ultraDbg = -Wall -Werror --pedantic -g -O1 -fno-inline -fno-omit-frame-pointer -fsanitize=address
+cppflags_ultraDbg = -g -O1 -fno-inline -fno-omit-frame-pointer -fsanitize=address
 
 #Profile flags
 cflags_prof = -Wall -Werror --pedantic -pg -O3 -g -Wno-error=unused-result
@@ -60,8 +61,13 @@ ifndef CGL_DEBUG
   cppflags = ${cppflags_opt}
   cflags = ${cflags_opt}
 else
-  cppflags = ${cppflags_dbg}
-  cflags = ${cflags_dbg}
+  ifeq (${CGL_DEBUG},ultra)
+    cppflags = ${cppflags_ultraDbg}
+    cflags = ${cflags_ultraDbg}
+  else
+    cppflags = ${cppflags_dbg}
+    cflags = ${cflags_dbg}
+  endif
 endif
 # location of Tokyo cabinet
 ifndef tokyoCabinetLib
