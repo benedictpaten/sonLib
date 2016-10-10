@@ -1112,8 +1112,8 @@ static stTree *stPhylogeny_reconcileAtMostBinary_R(stTree *gene,
             recon = stTree_getMRCA(childRecon, recon);
         }
         for (int64_t i = 0; i < stTree_getChildNumber(gene); i++) {
-            stTree *childRecon = stPhylogeny_reconcileAtMostBinary_R(
-                stTree_getChild(gene, i), leafToSpecies, relabelAncestors);
+            stPhylogenyInfo *childInfo = stTree_getClientData(stTree_getChild(gene, i));
+            stTree *childRecon = childInfo->recon->species;
             if (childRecon == recon) {
                 event = DUPLICATION;
             }

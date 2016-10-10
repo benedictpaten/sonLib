@@ -1420,6 +1420,32 @@ static void testStPhylogeny_applyJukesCantorCorrection(CuTest *testCase) {
     stMatrix_destruct(distanceMatrix);
 }
 
+// Large tree that takes forever if the reconciliation algorithm isn't
+// linear time. This is sort of a hacky way to test that the
+// reconciliation algorithm stays linear. The test won't fail if it is
+// O(n^2) or exponential, but it will take 30+ mins.
+static void testStPhylogeny_reconcileLargeTree_shouldBeFast(CuTest *testCase) {
+    stTree *geneTree = stTree_parseNewickString("(((0:0.0338606,(24:0,(((((25:0,28:0.00688078):0,26:0):0,27:0):0,29:0):0.0103492,48:0.0131733):0):0.00135617):0,(49:0.00344003,51:0.0607045):0):0.0036751,((((((((((((((((((((((1:0,((15:0,(((((((((((((((((30:0,31:0):0,32:0):0,33:0):0,34:0):0,35:0):0,36:0):0,37:0):0,38:0):0,39:0):0,40:0):0,41:0):0,42:0):0,43:0):0,44:0):0,46:0):0,47:0):0.00485278,45:0.00495128):0.0185071):0.00778827,16:0):0):0,2:0):0,3:0):0,4:0):0,5:0):0,6:0):0,7:0):0,8:0):0,9:0):0,10:0):0,11:0):0,12:0):0,13:0):0,14:0):0,17:0):0,18:0):0,19:0):0,20:0):0,21:0):0,22:0):0,23:0):0.00330033,50:0):0.0036751);");
+    stPhylogeny_addStIndexedTreeInfo(geneTree);
+    int64_t numSpecies = 0;
+    stTree *speciesTree = getRandomBinaryTree(st_randomInt64(2, 7), &numSpecies);
+    stPhylogeny_addStIndexedTreeInfo(speciesTree);
+    // Assign genes to random species.
+    stHash *leafToSpecies = stHash_construct();
+    for(int64_t i = 0; i < 52; i++) {
+        stTree *gene = stPhylogeny_getLeafByIndex(geneTree, i);
+        stTree *species = stPhylogeny_getLeafByIndex(speciesTree, st_randomInt64(0, numSpecies));
+        stHash_insert(leafToSpecies, gene, species);
+    }
+
+    stPhylogeny_reconcileAtMostBinary(geneTree, leafToSpecies, false);
+    stPhylogenyInfo_destructOnTree(geneTree);
+    stTree_destruct(geneTree);
+    stPhylogenyInfo_destructOnTree(speciesTree);
+    stTree_destruct(speciesTree);
+    stHash_destruct(leafToSpecies);
+}
+
 CuSuite* sonLib_stPhylogenyTestSuite(void) {
     CuSuite* suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, testStPhylogeny_reconciliationCostAtMostBinary_polytomies);
@@ -1441,6 +1467,7 @@ CuSuite* sonLib_stPhylogenyTestSuite(void) {
     SUITE_ADD_TEST(suite, testStPhylogeny_rootByReconciliationAtMostBinary_random);
     SUITE_ADD_TEST(suite, testStPhylogeny_reconcileNonBinary);
     SUITE_ADD_TEST(suite, testStPhylogeny_applyJukesCantorCorrection);
+    SUITE_ADD_TEST(suite, testStPhylogeny_reconcileLargeTree_shouldBeFast);
 
     (void) testStPhylogeny_reconciliationCostAtMostBinary_polytomies;
     (void) testStPhylogeny_getLinkedSpeciesTree;
