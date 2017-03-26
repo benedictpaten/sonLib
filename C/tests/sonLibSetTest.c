@@ -46,6 +46,7 @@ static void testSetup() {
 static void testTeardown() {
     stSet_destruct(set0);
     stSet_destruct(set1);
+    stSet_destruct(set0Prime);
 }
 static void test_stSet_construct(CuTest* testCase) {
     assert(testCase != NULL);
@@ -196,12 +197,12 @@ static void test_stSet_getUnion(CuTest* testCase) {
     // Check union of two non-empty overlapping sets is correct
     set2 = stSet_construct();
     set3 = stSet_construct();
-    stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
+    stIntTuple *uniqs[4];
     uniqs[0] = stIntTuple_construct2(9, 0);
     uniqs[1] = stIntTuple_construct2(9, 1);
     uniqs[2] = stIntTuple_construct2(9, 2);
     uniqs[3] = stIntTuple_construct2(9, 3);
-    stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
+    stIntTuple *common[5];
     common[0] = stIntTuple_construct2(5, 0);
     common[1] = stIntTuple_construct2(5, 1);
     common[2] = stIntTuple_construct2(5, 2);
@@ -226,6 +227,15 @@ static void test_stSet_getUnion(CuTest* testCase) {
     stSet_destruct(set2);
     stSet_destruct(set3);
     stSet_destruct(set4);
+    stIntTuple_destruct(common[0]);
+    stIntTuple_destruct(common[1]);
+    stIntTuple_destruct(common[2]);
+    stIntTuple_destruct(common[3]);
+    stIntTuple_destruct(common[4]);
+    stIntTuple_destruct(uniqs[0]);
+    stIntTuple_destruct(uniqs[1]);
+    stIntTuple_destruct(uniqs[2]);
+    stIntTuple_destruct(uniqs[3]);
     // Check we get an exception with sets with different functions.
     stTry {
         stSet_getUnion(set0, set1);
@@ -253,12 +263,12 @@ static void test_stSet_getIntersection(CuTest* testCase) {
     // Check intersection of two non-empty overlapping sets is correct
     set2 = stSet_construct();
     set3 = stSet_construct();
-    stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
+    stIntTuple *uniqs[4];
     uniqs[0] = stIntTuple_construct2(9, 0);
     uniqs[1] = stIntTuple_construct2(9, 1);
     uniqs[2] = stIntTuple_construct2(9, 2);
     uniqs[3] = stIntTuple_construct2(9, 3);
-    stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
+    stIntTuple *common[5];
     common[0] = stIntTuple_construct2(5, 0);
     common[1] = stIntTuple_construct2(5, 1);
     common[2] = stIntTuple_construct2(5, 2);
@@ -287,6 +297,15 @@ static void test_stSet_getIntersection(CuTest* testCase) {
     stSet_destruct(set2);
     stSet_destruct(set3);
     stSet_destruct(set4);
+    stIntTuple_destruct(common[0]);
+    stIntTuple_destruct(common[1]);
+    stIntTuple_destruct(common[2]);
+    stIntTuple_destruct(common[3]);
+    stIntTuple_destruct(common[4]);
+    stIntTuple_destruct(uniqs[0]);
+    stIntTuple_destruct(uniqs[1]);
+    stIntTuple_destruct(uniqs[2]);
+    stIntTuple_destruct(uniqs[3]);
     // Check we get an exception with sets with different functions.
     stTry {
         stSet_getIntersection(set0, set1);
@@ -319,12 +338,12 @@ static void test_stSet_getDifference(CuTest* testCase) {
     // Check difference of two non-empty overlapping sets is correct
     set2 = stSet_construct();
     set3 = stSet_construct();
-    stIntTuple **uniqs = (stIntTuple **) st_malloc(sizeof(*uniqs) * 4);
+    stIntTuple *uniqs[4];
     uniqs[0] = stIntTuple_construct2(9, 0);
     uniqs[1] = stIntTuple_construct2(9, 1);
     uniqs[2] = stIntTuple_construct2(9, 2);
     uniqs[3] = stIntTuple_construct2(9, 3);
-    stIntTuple **common = (stIntTuple **) st_malloc(sizeof(*uniqs) * 5);
+    stIntTuple *common[5];
     common[0] = stIntTuple_construct2(5, 0);
     common[1] = stIntTuple_construct2(5, 1);
     common[2] = stIntTuple_construct2(5, 2);
@@ -352,6 +371,16 @@ static void test_stSet_getDifference(CuTest* testCase) {
     stSet_destruct(set2);
     stSet_destruct(set3);
     stSet_destruct(set4);
+    stIntTuple_destruct(common[0]);
+    stIntTuple_destruct(common[1]);
+    stIntTuple_destruct(common[2]);
+    stIntTuple_destruct(common[3]);
+    stIntTuple_destruct(common[4]);
+    stIntTuple_destruct(uniqs[0]);
+    stIntTuple_destruct(uniqs[1]);
+    stIntTuple_destruct(uniqs[2]);
+    stIntTuple_destruct(uniqs[3]);
+
     // Check we get an exception with sets with different functions.
     stTry {
         stSet_getDifference(set0, set1);
@@ -390,6 +419,7 @@ static void test_stSet_equals(CuTest *testCase) {
     stSet *set2 = stSet_construct();
     CuAssertTrue(testCase, !stSet_equals(set0, set2));
     CuAssertTrue(testCase, !stSet_equals(set0Prime, set2));
+    stSet_destruct(set2);
     testTeardown();
 }
 
@@ -403,6 +433,7 @@ static void test_stSet_isSubset(CuTest *testCase) {
     stSet *set2 = stSet_construct();
     CuAssertTrue(testCase, stSet_isSubset(set0, set2));
     CuAssertTrue(testCase, !stSet_isSubset(set2, set0));
+    stSet_destruct(set2);
     testTeardown();
 }
 

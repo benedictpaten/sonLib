@@ -187,6 +187,7 @@ void test_stList_iterator(CuTest *testCase) {
     CuAssertTrue(testCase, stList_getPrevious(it) == NULL);
     CuAssertTrue(testCase, stList_getPrevious(it2) == NULL);
     stList_destructIterator(it);
+    stList_destructIterator(it2);
     teardown();
 }
 
@@ -258,6 +259,10 @@ void test_stList_filter(CuTest *testCase) {
     CuAssertTrue(testCase,stList_get(list2, 2) == strings[3]);
     CuAssertTrue(testCase,stList_get(list3, 0) == strings[0]);
     CuAssertTrue(testCase,stList_get(list3, 1) == strings[4]);
+
+    stSortedSet_destruct(set);
+    stList_destruct(list2);
+    stList_destruct(list3);
     teardown();
 }
 

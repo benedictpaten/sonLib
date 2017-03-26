@@ -97,25 +97,29 @@ char *fastaNormaliseHeader(const char *fastaHeader) {
     return c2;
 }
 
+/*
+ * Decodes the fasta header
+ */
 stList *fastaDecodeHeader(const char *fastaHeader) {
-    /*
-     * Decodes the fasta header
-     */
     stList *attributes = stList_construct3(0, free);
     char *cA = stString_copy(fastaHeader);
-    char *cA2 = strtok(cA, "|");
-    while(cA2 != NULL) {
-        stList_append(attributes, stString_copy(cA2));
-        cA2 = strtok(NULL, "|");
+    char *prev = cA;
+    char *tok = strchr(cA, '|');
+    while (tok != NULL) {
+        *tok = '\0';
+        stList_append(attributes, stString_copy(prev));
+        prev = tok + 1;
+        tok = strchr(prev, '|');
     }
+    stList_append(attributes, stString_copy(prev));
     free(cA);
     return attributes;
 }
 
+/*
+ * Encodes the fasta header
+ */
 char *fastaEncodeHeader(stList *attributes) {
-    /*
-     * Encodes the fasta header
-     */
     return stString_join2("|", attributes);
 }
 

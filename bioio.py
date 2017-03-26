@@ -180,7 +180,7 @@ def setLoggingFromOptions(options):
 
 def system(command):
     logger.debug("Running the command: %s" % command)
-    sts = subprocess.call(command, shell=True, bufsize=-1, stdout=sys.stdout, stderr=sys.stderr)
+    sts = subprocess.call(command, shell=True, bufsize=-1)
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
     return sts
@@ -190,7 +190,7 @@ def popen(command, tempFile):
     """
     fileHandle = open(tempFile, 'w')
     logger.debug("Running the command: %s" % command)
-    sts = subprocess.call(command, shell=True, stdout=fileHandle, stderr=sys.stderr, bufsize=-1)
+    sts = subprocess.call(command, shell=True, stdout=fileHandle, bufsize=-1)
     fileHandle.close()
     if sts != 0:
         raise RuntimeError("Command: %s exited with non-zero status %i" % (command, sts))
@@ -202,7 +202,7 @@ def popenCatch(command, stdinString=None):
     logger.debug("Running the command: %s" % command)
     if stdinString != None:
         process = subprocess.Popen(command, shell=True,
-                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=-1)
         output, nothing = process.communicate(stdinString)
     else:
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
@@ -217,7 +217,7 @@ def popenPush(command, stdinString=None):
         system(command)
     else:
         process = subprocess.Popen(command, shell=True,
-                                   stdin=subprocess.PIPE, stderr=sys.stderr, bufsize=-1)
+                                   stdin=subprocess.PIPE, bufsize=-1)
         process.communicate(stdinString)
         sts = process.wait()
         if sts != 0:

@@ -37,7 +37,7 @@ struct adjacency {
 
 // Destroy an adjacency linked list.
 static void adjList_destruct(struct adjacency *adjList) {
-    assert(adjList->prev == NULL);
+    assert(adjList == NULL || adjList->prev == NULL);
     while (adjList != NULL) {
         struct adjacency *next = adjList->next;
         free(adjList);

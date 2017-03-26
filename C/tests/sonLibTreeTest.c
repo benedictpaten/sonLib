@@ -206,28 +206,36 @@ void test_stTree_reRoot(CuTest *testCase) {
     reRooted = stTree_reRoot(stTree_findChild(tree, "J"), 1);
     // Sort so that the newick string is consistent
     stTree_sortChildren(reRooted, cmpByLabel);
-    CuAssertStrEquals(testCase, "((((C:1,D:1)B:8,F:3,G:3)E:5,I:3)H:4,(K:4)J:1);", stTree_getNewickTreeString(reRooted));
+    char *s = stTree_getNewickTreeString(reRooted);
+    CuAssertStrEquals(testCase, "((((C:1,D:1)B:8,F:3,G:3)E:5,I:3)H:4,(K:4)J:1);", s);
+    free(s);
     stTree_destruct(reRooted);
 
     // Rerooting at a different place above E should just shuffle B and E's branch lengths
     reRooted = stTree_reRoot(stTree_findChild(tree, "E"), 2);
     // Sort so that the newick string is consistent
     stTree_sortChildren(reRooted, cmpByLabel);
-    CuAssertStrEquals(testCase, "((C:1,D:1)B:6,(F:3,G:3,(I:3,(K:4)J:5)H:5)E:2);", stTree_getNewickTreeString(reRooted));
+    s = stTree_getNewickTreeString(reRooted);
+    CuAssertStrEquals(testCase, "((C:1,D:1)B:6,(F:3,G:3,(I:3,(K:4)J:5)H:5)E:2);", s);
+    free(s);
     stTree_destruct(reRooted);
 
     // Test rerooting on a leaf of a 3-child node
     reRooted = stTree_reRoot(stTree_findChild(tree, "G"), 2);
     // Sort so that the newick string is consistent
     stTree_sortChildren(reRooted, cmpByLabel);
-    CuAssertStrEquals(testCase, "(((C:1,D:1)B:8,F:3,(I:3,(K:4)J:5)H:5)E:1,G:2);", stTree_getNewickTreeString(reRooted));
+    s = stTree_getNewickTreeString(reRooted);
+    CuAssertStrEquals(testCase, "(((C:1,D:1)B:8,F:3,(I:3,(K:4)J:5)H:5)E:1,G:2);", s);
+    free(s);
     stTree_destruct(reRooted);
     stTree_destruct(tree);
 
     // Test a multifurcating example that was broken
     tree = stTree_parseNewickString("(8,(10,(1,11),(2,4,7)),(6,(0,5)),(3,9));");
     reRooted = stTree_reRoot(stTree_findChild(tree, "10"), 0.0);
-    CuAssertStrEquals(testCase, "(10:0,((1,11),(2,4,7),(8,(6,(0,5)),(3,9))));", stTree_getNewickTreeString(reRooted));
+    s = stTree_getNewickTreeString(reRooted);
+    CuAssertStrEquals(testCase, "(10:0,((1,11),(2,4,7),(8,(6,(0,5)),(3,9))));", s);
+    free(s);
     stTree_destruct(reRooted);
     stTree_destruct(tree);
 }

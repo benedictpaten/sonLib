@@ -74,7 +74,7 @@ bool stFile_exists(const char *fileName) {
 
 bool stFile_isDir(const char *fileName) {
     if (!stFile_exists(fileName)) {
-        stExcept_new(ST_FILE_EXCEPTION, "File does not exist exist: %s\n",
+        stThrowNew(ST_FILE_EXCEPTION, "File does not exist exist: %s\n",
                 fileName);
     }
     struct stat info;

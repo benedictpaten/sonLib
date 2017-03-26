@@ -47,7 +47,6 @@ static void testThrow(CuTest *testCase) {
             CuAssertStrEquals(testCase, stExcept_getMsg(cause), "error in thrower2");
             CuAssertTrue(testCase, stExcept_getCause(cause) == NULL);
         }
-        stExcept_free(except);
         gotEx++;
     } stTryEnd;
     CuAssertTrue(testCase, pastThrow == 0);
