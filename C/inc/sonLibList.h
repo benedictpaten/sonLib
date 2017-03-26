@@ -166,6 +166,11 @@ stSortedSet *stList_getSortedSet(stList *list,
         int(*cmpFn)(const void *a, const void *b));
 
 /*
+ * Returns a set of the elements in a list.
+ */
+stSet *stList_getSet(stList *list);
+
+/*
  * Converts list to sorted set, destroying old list in process, but transferring the destructor to the set.
  */
 stSortedSet *stList_convertToSortedSet(stList *list);

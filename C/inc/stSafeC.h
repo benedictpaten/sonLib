@@ -24,7 +24,7 @@ extern "C" {
  * Exception id for numeric conversion errors.
  * @ingroup
  */
-const char *ST_SAFEC_NUM_CONVERT_EXCEPTION_ID;
+//const char *ST_SAFEC_NUM_CONVERT_EXCEPTION_ID;
 
 /**
  * Abort function that doesn't allocate any memory

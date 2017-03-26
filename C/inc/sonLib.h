@@ -29,6 +29,7 @@
 #include "sonLibKVDatabaseConf.h"
 #include "sonLibCompression.h"
 #include "sonLibFile.h"
+#include "sonLibMath.h"
 #include "sonLibCache.h"
 #include "stGraph.h"
 #include "stPosetAlignment.h"
@@ -40,4 +41,5 @@
 #include "stPhylogeny.h"
 #include "stThreadPool.h"
 #include "stUnionFind.h"
+#include "stSafeC.h"
 #endif /* SONLIB_H_ */

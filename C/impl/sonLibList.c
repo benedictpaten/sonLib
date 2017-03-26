@@ -242,6 +242,14 @@ stSortedSet *stList_getSortedSet(stList *list, int (*cmpFn)(const void *a, const
     return sortedSet;
 }
 
+stSet *stList_getSet(stList *list) {
+    stSet *set = stSet_construct();
+    for(int64_t i=0; i<stList_length(list); i++) {
+        stSet_insert(set, stList_get(list, i));
+    }
+    return set;
+}
+
 void stList_setDestructor(stList *list, void (*destructElement)(void *)) {
     list->destructElement = destructElement;
 }
