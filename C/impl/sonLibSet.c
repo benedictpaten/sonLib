@@ -67,6 +67,17 @@ void *stSet_remove(stSet *set, void *key) {
 void *stSet_removeAndFreeKey(stSet *set, void *key) {
     return stHash_removeAndFreeKey(set->hash, key);
 }
+
+void stSet_removeAll(stSet *set, stSet *subset) {
+    stSetIterator *it = stSet_getIterator(subset);
+
+    void *o;
+    while((o = stSet_getNext(it)) != NULL) {
+        stSet_remove(set, o);
+    }
+    stSet_destructIterator(it);
+}
+
 int64_t stSet_size(stSet *set) {
     return stHash_size(set->hash);
 }

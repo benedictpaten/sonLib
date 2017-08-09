@@ -70,6 +70,11 @@ void *stSet_search(stSet *set, void *key);
 void *stSet_remove(stSet *set, void *key);
 
 /*
+ * Removes the given subset from the given set.
+ */
+void stSet_removeAll(stSet *set, stSet *subset);
+
+/*
  * Removes element, returning removed element and freeing key (using supplied function).
  */
 void *stSet_removeAndFreeKey(stSet *set, void *key);
