@@ -14,7 +14,7 @@ cutestM.clean :
 	cd cutest && make clean
 
 quicktreeM :
-	cd quicktree_1.1 && make all
+	cd quicktree_1.1 && make all CC="${cxx}"
 
 quicktreeM.clean :
 	cd quicktree_1.1 && make clean

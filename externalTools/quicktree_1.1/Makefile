@@ -13,7 +13,6 @@ COMMON = $(OBJ)/align.o \
 
 QUICKTREEOBJ = $(COMMON) $(OBJ)/quicktree.o $(OBJ)/buildtree.o $(OBJ)/tree.o
 
-CC	= gcc
 CFLAGS  = -c -I$(INC) -O3 -Wall
 
 LFLAGS = -g 
