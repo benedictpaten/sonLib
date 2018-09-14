@@ -148,7 +148,7 @@ int64_t stAlignSegment_getLength(stAlignSegment *alignSegment);
 /*
  * Gets the alignment block of the alignment segment.
  */
-stAlignBlock stAlignSegment_getAlignBlock(stAlignSegment *alignSegment);
+stAlignBlock* stAlignSegment_getAlignBlock(stAlignSegment *alignSegment);
 
 ///////////////////////
 //I/O Functions
