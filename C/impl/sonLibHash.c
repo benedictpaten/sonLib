@@ -20,17 +20,14 @@ struct _stHash {
 };
 
 uint64_t stHash_pointer(const void *k) {
-    /*if (sizeof(const void *) > 4) {
-        int64_t key = (int64_t) (size_t) k;
-        key = (~key) + (key << 18); // key = (key << 18) - key - 1;
-        key = key ^ (key >> 31);
-        key = key * 21; // key = (key + (key << 2)) + (key << 4);
-        key = key ^ (key >> 11);
-        key = key + (key << 6);
-        key = key ^ (key >> 22);
-        return (uint64_t) key;
-    }*/
-    return (uint64_t) (size_t) k; //Just use the low order bits
+    // Size doesn't matter; just promote to 64 bits
+    uint64_t key = (uint64_t) k;
+    
+    // Use the hash from <https://stackoverflow.com/a/12996028>
+    // We can't just -ull these until C++11, if we're in C++
+    key = (key ^ (key >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    key = (key ^ (key >> 27)) * UINT64_C(0x94d049bb133111eb);
+    return key ^ (key >> 31);
 }
 
 static int stHash_equalKey(const void *key1, const void *key2) {
