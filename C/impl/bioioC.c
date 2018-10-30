@@ -222,6 +222,20 @@ void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, stru
     fastaReadToFunction(fastaFile, fastaRead_function);
 }
 
+static stHash *fastaRead_map;
+
+void fastaRead_readToMapFunction(const char *fastaHeader, const char *sequence, int64_t length) {
+    stHash_insert(fastaRead_map, stString_copy(fastaHeader), stString_copy(sequence));
+}
+
+stHash *fastaReadToMap(FILE *fastaFile) {
+	fastaRead_map = stHash_construct3(stHash_stringKey, stHash_stringEqualKey, free, free);
+
+	fastaReadToFunction(fastaFile, fastaRead_readToMapFunction);
+
+	return fastaRead_map;
+}
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
