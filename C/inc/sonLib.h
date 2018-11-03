@@ -42,4 +42,6 @@
 #include "stThreadPool.h"
 #include "stUnionFind.h"
 #include "stSafeC.h"
+#include "jsmn.h"
+#include "stJson.h"
 #endif /* SONLIB_H_ */
