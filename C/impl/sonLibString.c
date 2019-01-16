@@ -23,7 +23,7 @@ char *stString_copy(const char *string) {
 
 char *stString_print(const char *string, ...) {
     int64_t arraySize = 0;
-    static char *cA = NULL;
+    char *cA = NULL;
     //return;
     va_list ap;
     va_start(ap, string);
@@ -32,17 +32,15 @@ char *stString_print(const char *string, ...) {
     assert(i >= 0);
     if(i >= arraySize) {
         arraySize = i+1;
-        if(cA != NULL) {
-            free(cA);
-        }
         cA = st_malloc(sizeof(char) * arraySize);
         va_start(ap, string);
         i = vsnprintf(cA, arraySize, string, ap);
         assert(i+1 == arraySize);
         va_end(ap);
     }
-    //vfprintf(stdout, string, ap);
-    return stString_copy(cA);
+    char *printed = stString_copy(cA);
+    free(cA);
+    return printed;
 }
 
 char *stString_print_r(const char *string, ...) {
