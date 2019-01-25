@@ -202,6 +202,7 @@ stListIterator *stList_copyIterator(stListIterator *iterator) {
     return it;
 }
 
+//TODO tpesout: "not in the least bit threadsafe" -anovak
 static int (*st_list_sort_cmpFn)(const void *a, const void *b);
 static int st_list_sortP(const void *a, const void *b) {
     return st_list_sort_cmpFn(*((char **)a), *((char **)b));
@@ -212,6 +213,7 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
     qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
 }
 
+//TODO tpesout: also "not in the least bit threadsafe" -anovak
 static int (*st_list_sort2_cmpFn)(const void *a, const void *b, const void *extraArg);
 static const void *st_list_sort2_extraArg;
 static int st_list_sort2P(const void *a, const void *b) {

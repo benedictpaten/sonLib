@@ -134,11 +134,12 @@ char cigarReadFn(char type, int64_t *withProb) {
 
 struct PairwiseAlignment *cigarRead(FILE *fileHandle) {
     struct PairwiseAlignment *pA;
-    static char cA[BIG_STRING_ARRAY_SIZE+1]; //STRING_ARRAY_SIZE];
+    //TODO 'static' removed from cA, cA2, cA3 for threadsafety; maybe more should be done to properly handle them
+    char cA[BIG_STRING_ARRAY_SIZE+1]; //STRING_ARRAY_SIZE];
     int64_t type, length, withProb;
     float score;
-    static char cA2[STRING_ARRAY_SIZE];
-    static char cA3[STRING_ARRAY_SIZE];
+    char cA2[STRING_ARRAY_SIZE];
+    char cA3[STRING_ARRAY_SIZE];
     char *cA4;
     char strand1, strand2;
 

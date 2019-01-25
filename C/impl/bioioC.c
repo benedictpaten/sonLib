@@ -143,20 +143,21 @@ void fastaWrite(char *sequence, char *header, FILE *file) {
     }
 }
 
-char *addSeqToList(char *seq, int64_t *length, int64_t *maxLength, char *fastaName, void (*addSeq)(const char *, const char *, int64_t)) {
+char *addSeqToList(char *seq, int64_t *length, int64_t *maxLength, char *fastaName, void *destination,
+        void (*addSeq)(void *, const char *, const char *, int64_t)) {
     seq = arrayPrepareAppend(seq, maxLength, *length+1, sizeof(char));
     seq[*length] = '\0';
-    addSeq(fastaName, seq, *length);
+    addSeq(destination, fastaName, seq, *length);
     (*length)  = 0;
     return seq;
 }
 
-void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int64_t)) {
+void fastaReadToFunction(FILE *fastaFile, void *destination, void (*addSeq)(void *, const char *, const char *, int64_t)) {
     //reads in group of sequences INT_32o lists
     char j;
     int64_t k;
-    static char *seq;
-    static int64_t seqLength;
+    char *seq = NULL;
+    int64_t seqLength = 0;
     char cA[STRING_ARRAY_SIZE];
     int64_t l;
 
@@ -169,8 +170,8 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
             while(TRUE) {
                 j = getc(fastaFile);
                 if(j == EOF) {
-                    seq = addSeqToList(seq, &k, &seqLength, cA, addSeq); //lax qualification for a sequence
-                    return;
+                    seq = addSeqToList(seq, &k, &seqLength, cA, destination, addSeq); //lax qualification for a sequence
+                    goto cleanup;
                 }
                 if(j == '\n')  {
                     break;
@@ -182,13 +183,13 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
             while(TRUE) { //start of sequence
                 j = getc(fastaFile);
                 if(j == EOF) {
-                    seq = addSeqToList(seq, &k, &seqLength, cA, addSeq);
-                    return;
+                    seq = addSeqToList(seq, &k, &seqLength, cA, destination, addSeq);
+                    goto cleanup;
                 }
                 if(j != '\n' && j != ' ' && j != '\t') {
                     if(j == '>') {
                         //end of seq
-                        seq = addSeqToList(seq, &k, &seqLength, cA, addSeq);
+                        seq = addSeqToList(seq, &k, &seqLength, cA, destination, addSeq);
                         goto fastaStart;
                     }
                     else { //valid char
@@ -203,35 +204,37 @@ void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const cha
             }
         }
     }
+    cleanup:
+    if (seq != NULL) free(seq);
 }
 
-struct List *fastaRead_fastaNames;
-struct List *fastaRead_seqs;
-struct List *fastaRead_seqLengths;
+// for programmer clarity when using fastaRead(_functoin)
+#define FASTAREAD_FASTANAMES_IDX 0
+#define FASTAREAD_SEQS_IDX 1
+#define FASTAREAD_SEQLENGTHS_IDX 2
 
-void fastaRead_function(const char *fastaHeader, const char *sequence, int64_t length) {
-    listAppend(fastaRead_fastaNames, stString_copy(fastaHeader));
-    listAppend(fastaRead_seqs, stString_copy(sequence));
-    listAppend(fastaRead_seqLengths, constructInt(length));
+void fastaRead_function(void *destination, const char *fastaHeader, const char *sequence, int64_t length) {
+    listAppend(((struct List**) destination)[FASTAREAD_FASTANAMES_IDX], stString_copy(fastaHeader));
+    listAppend(((struct List**) destination)[FASTAREAD_SEQS_IDX], stString_copy(sequence));
+    listAppend(((struct List**) destination)[FASTAREAD_SEQLENGTHS_IDX], constructInt(length));
 }
 
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames) {
-    fastaRead_fastaNames = fastaNames;
-    fastaRead_seqs = seqs;
-    fastaRead_seqLengths = seqLengths;
-    fastaReadToFunction(fastaFile, fastaRead_function);
+    struct List* destination[3];
+    destination[FASTAREAD_FASTANAMES_IDX] = fastaNames;
+    destination[FASTAREAD_SEQS_IDX] = seqs;
+    destination[FASTAREAD_SEQLENGTHS_IDX] = seqLengths;
+    fastaReadToFunction(fastaFile, destination, fastaRead_function);
 }
 
-static stHash *fastaRead_map;
-
-void fastaRead_readToMapFunction(const char *fastaHeader, const char *sequence, int64_t length) {
-    stHash_insert(fastaRead_map, stString_copy(fastaHeader), stString_copy(sequence));
+void fastaRead_readToMapFunction(void *fastaRead_map, const char *fastaHeader, const char *sequence, int64_t length) {
+    stHash_insert((stHash *)fastaRead_map, stString_copy(fastaHeader), stString_copy(sequence));
 }
 
 stHash *fastaReadToMap(FILE *fastaFile) {
-	fastaRead_map = stHash_construct3(stHash_stringKey, stHash_stringEqualKey, free, free);
+    stHash *fastaRead_map = stHash_construct3(stHash_stringKey, stHash_stringEqualKey, free, free);
 
-	fastaReadToFunction(fastaFile, fastaRead_readToMapFunction);
+	fastaReadToFunction(fastaFile, fastaRead_map, fastaRead_readToMapFunction);
 
 	return fastaRead_map;
 }

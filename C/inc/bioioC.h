@@ -52,7 +52,7 @@ char *fastaEncodeHeader(stList *attributes);
 
 void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, struct List *fastaNames);
 
-void fastaReadToFunction(FILE *fastaFile, void (*addSeq)(const char *, const char *, int64_t));
+void fastaReadToFunction(FILE *fastaFile, void *destination, void (*addSeq)(void *, const char *, const char *, int64_t));
 
 stHash *fastaReadToMap(FILE *fastaFile);
 

@@ -116,7 +116,7 @@ void st_uglyf(const char *string, ...) {
 }
 
 int64_t st_system(const char *string, ...) {
-    static char cA[100000];
+    char cA[100000];
     int64_t i;
     va_list ap;
     va_start(ap, string);
