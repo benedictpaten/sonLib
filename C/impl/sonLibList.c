@@ -202,12 +202,12 @@ stListIterator *stList_copyIterator(stListIterator *iterator) {
     return it;
 }
 
-int st_list_sortP(void *fn, const void *a, const void *b) {
+int st_list_sortP(const void *a, const void *b, void *fn) {
     return ((int (*)(const void *, const void *))fn)(*((char **)a), *((char **)b));
 }
 
 void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
-    qsort_r(list->list, stList_length(list), sizeof(void *), (void *)cmpFn, st_list_sortP);
+    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, (void *)cmpFn);
 }
 
 int st_list_sort2P(void *extra, const void *a, const void *b) {
@@ -219,7 +219,7 @@ int st_list_sort2P(void *extra, const void *a, const void *b) {
 
 void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const void *extraArg), const void *extraArg) {
     void *extra[2] = { (void *)cmpFn, (void *)extraArg };
-    qsort_r(list->list, stList_length(list), sizeof(void *), extra, st_list_sortP);
+    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, extra);
 }
 
 void stList_shuffle(stList *list) {
