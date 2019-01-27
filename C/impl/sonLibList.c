@@ -202,28 +202,24 @@ stListIterator *stList_copyIterator(stListIterator *iterator) {
     return it;
 }
 
-//TODO tpesout: "not in the least bit threadsafe" -anovak
-static int (*st_list_sort_cmpFn)(const void *a, const void *b);
-static int st_list_sortP(const void *a, const void *b) {
-    return st_list_sort_cmpFn(*((char **)a), *((char **)b));
+int st_list_sortP(void *fn, const void *a, const void *b) {
+    return ((int (*)(const void *, const void *))fn)(*((char **)a), *((char **)b));
 }
 
 void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
-    st_list_sort_cmpFn = cmpFn;
-    qsort(list->list, stList_length(list), sizeof(void *), st_list_sortP);
+    qsort_r(list->list, stList_length(list), sizeof(void *), (void *)cmpFn, st_list_sortP);
 }
 
-//TODO tpesout: also "not in the least bit threadsafe" -anovak
-static int (*st_list_sort2_cmpFn)(const void *a, const void *b, const void *extraArg);
-static const void *st_list_sort2_extraArg;
-static int st_list_sort2P(const void *a, const void *b) {
-    return st_list_sort2_cmpFn(*((char **)a), *((char **)b), st_list_sort2_extraArg);
+int st_list_sort2P(void *extra, const void *a, const void *b) {
+	// I know the following cast looks gross..
+	int (*cmpFn)(const void *, const void *, void *) = (int (*)(const void *, const void *, void *))(((void **)extra)[0]);
+	void *extraArg = ((void **)extra)[1];
+    return cmpFn(*((char **)a), *((char **)b), extraArg);
 }
 
 void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const void *extraArg), const void *extraArg) {
-    st_list_sort2_extraArg = extraArg;
-    st_list_sort2_cmpFn = cmpFn;
-    qsort(list->list, stList_length(list), sizeof(void *), st_list_sort2P);
+    void *extra[2] = { (void *)cmpFn, (void *)extraArg };
+    qsort_r(list->list, stList_length(list), sizeof(void *), extra, st_list_sortP);
 }
 
 void stList_shuffle(stList *list) {
