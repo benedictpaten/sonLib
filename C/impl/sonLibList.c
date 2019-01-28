@@ -210,7 +210,7 @@ void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
     qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, (void *)cmpFn);
 }
 
-int st_list_sort2P(void *extra, const void *a, const void *b) {
+int st_list_sort2P(const void *a, const void *b, void *extra) {
 	// I know the following cast looks gross..
 	int (*cmpFn)(const void *, const void *, void *) = (int (*)(const void *, const void *, void *))(((void **)extra)[0]);
 	void *extraArg = ((void **)extra)[1];
@@ -219,7 +219,7 @@ int st_list_sort2P(void *extra, const void *a, const void *b) {
 
 void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const void *extraArg), const void *extraArg) {
     void *extra[2] = { (void *)cmpFn, (void *)extraArg };
-    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, extra);
+    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sort2P, extra);
 }
 
 void stList_shuffle(stList *list) {
