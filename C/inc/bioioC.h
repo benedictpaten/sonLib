@@ -54,6 +54,8 @@ void fastaRead(FILE *fastaFile, struct List *seqs, struct List *seqLengths, stru
 
 void fastaReadToFunction(FILE *fastaFile, void *destination, void (*addSeq)(void *, const char *, const char *, int64_t));
 
+void fastaRead_readToMapFunction(void *fastaRead_map, const char *fastaHeader, const char *sequence, int64_t length);
+
 stHash *fastaReadToMap(FILE *fastaFile);
 
 void fastaWrite(char *sequence, char *header, FILE *file);
