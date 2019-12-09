@@ -9,16 +9,16 @@ clean : cP.clean externalToolsP.clean
 	rm -f ${binPath}/sonLib_daemonize.py
 
 cP: externalToolsP
-	cd C && make all
+	cd C && $(MAKE) all
 
 externalToolsP:
-	cd externalTools && make all
+	cd externalTools && $(MAKE) all
 
 cP.clean :
-	cd C && make clean
+	cd C && $(MAKE) clean
 
 externalToolsP.clean :
-	cd externalTools && make clean
+	cd externalTools && $(MAKE) clean
 
 test : all
 	PYTHONPATH=.. PATH=../../bin:$$PATH python allTests.py --testLength=SHORT --logLevel=CRITICAL
