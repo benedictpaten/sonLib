@@ -13,43 +13,43 @@ COMMON = $(OBJ)/align.o \
 
 QUICKTREEOBJ = $(COMMON) $(OBJ)/quicktree.o $(OBJ)/buildtree.o $(OBJ)/tree.o
 
-CFLAGS  = -c -I$(INC) -O3 -Wall
+CFLAGS  += -c -I$(INC) -O3 -Wall
 
-LFLAGS = -g 
+LDFLAGS += -g 
 
 all: $(BIN)/quicktree
 
 quicktree : $(BIN)/quicktree
 
 $(BIN)/quicktree : $(QUICKTREEOBJ)
-	$(CC) $(LFLAGS) -o $@ $(QUICKTREEOBJ) -lm
+	$(CC) $(DLFLAGS) -o $@ $(QUICKTREEOBJ) -lm
 
 $(OBJ)/quicktree.o : $(SRC)/quicktree.c 
-	$(CC) $(CFLAGS) -o $(OBJ)/quicktree.o $(SRC)/quicktree.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/quicktree.o $(SRC)/quicktree.c
 
 $(OBJ)/align.o : $(SRC)/align.c $(INC)/align.h
-	$(CC) $(CFLAGS) -o $(OBJ)/align.o $(SRC)/align.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/align.o $(SRC)/align.c
 
 $(OBJ)/buildtree.o : $(SRC)/buildtree.c $(INC)/buildtree.h
-	$(CC) $(CFLAGS) -o $(OBJ)/buildtree.o $(SRC)/buildtree.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/buildtree.o $(SRC)/buildtree.c
 
 $(OBJ)/cluster.o : $(SRC)/cluster.c $(INC)/cluster.h
-	$(CC) $(CFLAGS) -o $(OBJ)/cluster.o $(SRC)/cluster.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/cluster.o $(SRC)/cluster.c
 
 $(OBJ)/distancemat.o : $(SRC)/distancemat.c $(INC)/distancemat.h
-	$(CC) $(CFLAGS) -o $(OBJ)/distancemat.o $(SRC)/distancemat.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/distancemat.o $(SRC)/distancemat.c
 
 $(OBJ)/sequence.o : $(SRC)/sequence.c $(INC)/sequence.h
-	$(CC) $(CFLAGS) -o $(OBJ)/sequence.o $(SRC)/sequence.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/sequence.o $(SRC)/sequence.c
 
 $(OBJ)/tree.o : $(SRC)/tree.c $(INC)/tree.h
-	$(CC) $(CFLAGS) -o $(OBJ)/tree.o $(SRC)/tree.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/tree.o $(SRC)/tree.c
 
 $(OBJ)/util.o : $(SRC)/util.c $(INC)/util.h
-	$(CC) $(CFLAGS) -o $(OBJ)/util.o $(SRC)/util.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/util.o $(SRC)/util.c
 
 $(OBJ)/options.o : $(SRC)/options.c $(INC)/options.h
-	$(CC) $(CFLAGS) -o $(OBJ)/options.o $(SRC)/options.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/options.o $(SRC)/options.c
 
 clean:
 	rm -rf $(OBJ)/*.o

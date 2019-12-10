@@ -12,7 +12,7 @@ quickTreeLibPath = ../externalTools/quicktree_1.1/include/
 
 testProgs = ${binPath}/sonLibTests ${binPath}/sonLib_kvDatabaseTest ${binPath}/sonLib_cigarTest ${binPath}/sonLib_fastaCTest
 
-cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl} -I${quickTreeLibPath}
+cflags += ${tokyoCabinetIncl} ${kyotoTycoonIncl} ${tokyoTyrantIncl} ${mysqlIncl} ${pgsqlIncl} -I${quickTreeLibPath} $(CFLAGS)
 cppflags += ${kyotoTycoonIncl}
 
 all : ${libPath}/sonLib.a ${testProgs}
@@ -22,27 +22,27 @@ clean :
 
 ${binPath}/sonLibTests : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/allTests.c
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm -lstdc++ -lpthread
+	${cxx} $(LDFLAGS) $(CPPFLAGS) ${cflags} -I inc -I ${libPath} -o $@.tmp tests/allTests.c ${libTests} ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm -lstdc++ -lpthread
 	mv $@.tmp $@
 
 ${binPath}/sonLib_kvDatabaseTest : ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a ${libPath}/cuTest.a tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -I tests -o $@.tmp tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm
+	${cxx} $(LDFLAGS) $(CPPFLAGS) ${cflags} -I inc -I ${libPath} -I tests -o $@.tmp tests/kvDatabaseTest.c tests/kvDatabaseTestCommon.c ${libPath}/sonLib.a ${libPath}/cuTest.a ${dblibs} ${mysqlLibs} -lm
 	mv $@.tmp $@
 
 ${binPath}/sonLib_cigarTest : tests/cigarsTest.c ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a 
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/cigarsTest.c ${libPath}/sonLib.a -lm
+	${cxx} $(LDFLAGS) $(CPPFLAGS) ${cflags} -I inc -I ${libPath} -o $@.tmp tests/cigarsTest.c ${libPath}/sonLib.a -lm
 	mv $@.tmp $@
 
 ${binPath}/sonLib_fastaCTest : tests/fastaCTest.c ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath} -o $@.tmp tests/fastaCTest.c ${libPath}/sonLib.a -lm
+	${cxx} $(LDFLAGS) $(CPPFLAGS) ${cflags} -I inc -I ${libPath} -o $@.tmp tests/fastaCTest.c ${libPath}/sonLib.a -lm
 	mv $@.tmp $@
 
 ${binPath}/kt_connect_test : tests/kt_connect_test.cpp ${libTests} ${libInternalHeaders} ${libPath}/sonLib.a
 	@mkdir -p $(dir $@)
-	${cpp} ${cppflags} -I inc -I ${libPath}/ -o $@.tmp tests/kt_connect_test.cpp ${libPath}/sonLib.a ${dblibs} -lm
+	${cpp} $(LDFLAGS) $(CPPFLAGS) ${cppflags} -I inc -I ${libPath}/ -o $@.tmp tests/kt_connect_test.cpp ${libPath}/sonLib.a ${dblibs} -lm
 	mv $@.tmp $@
 
 ${libPath}/%.h: inc/%.h
@@ -52,8 +52,8 @@ ${libPath}/%.h: inc/%.h
 
 ${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${libPath}/$(notdir $l)) ${libInternalHeaders}
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -I inc -I ${libPath}/  -c ${libSources}
-	${cpp} ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
+	${cxx} $(CPPFLAGS) ${cflags} -I inc -I ${libPath}/  -c ${libSources}
+	${cpp} $(CPPFLAGS) ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
 	ar rc sonLib.a *.o ${quickTreeObjects}
 	ranlib sonLib.a 
 	rm *.o
