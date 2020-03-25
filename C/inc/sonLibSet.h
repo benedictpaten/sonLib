@@ -119,6 +119,7 @@ stList *stSet_getList(stSet *set);
 stSet *stSet_getUnion(stSet *set1, stSet *set2);
 stSet *stSet_getIntersection(stSet *set1, stSet *set2);
 stSet *stSet_getDifference(stSet *set1, stSet *set2);
+int64_t stSet_sizeOfIntersection(stSet *set1, stSet *set2);
 
 // Comparison functions
 /*

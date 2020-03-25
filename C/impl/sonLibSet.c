@@ -164,6 +164,14 @@ stSet *stSet_getUnion(stSet *set1, stSet *set2) {
     stSet_destructIterator(sit);
     return set3;
 }
+
+int64_t stSet_sizeOfIntersection(stSet *set1, stSet *set2) {
+    stSet *s = stSet_getIntersection(set1, set2);
+    int64_t i = stSet_size(s);
+    stSet_destruct(s);
+    return i;
+}
+
 stSet *stSet_getIntersection(stSet *set1, stSet *set2) {
     stSet_verifySetsHaveSameFunctions(set1, set2);
     stSet *set3 = stSet_construct3(stSet_getHashFunction(set1), 
