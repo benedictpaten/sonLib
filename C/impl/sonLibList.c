@@ -130,6 +130,18 @@ void *stList_remove(stList *list, int64_t index) {
     return o;
 }
 
+void stList_removeInterval(stList *list, int64_t start, int64_t length) {
+    assert(start >= 0);
+    assert(start + length <= stList_length(list));
+    if(length > 0) {
+        int64_t i = start;
+        for (int64_t j = start+length; j < stList_length(list); j++) {
+            stList_set(list, i++, stList_get(list, j));
+        }
+        list->length -= length;
+    }
+}
+
 void stList_removeItem(stList *list, void *item)  {
     int64_t i;
     for(i=0; i<stList_length(list); i++) {

@@ -100,6 +100,11 @@ void stList_removeItem(stList *list, void *item);
 void *stList_removeFirst(stList *list);
 
 /*
+ * Removes the elements in the given interval.
+ */
+void stList_removeInterval(stList *list, int64_t start, int64_t length);
+
+/*
  * Returns non-zero iff the stList contain one or more copies of references to the given item.
  */
 int64_t stList_contains(stList *list, void *item);
