@@ -31,6 +31,11 @@ extern const char *ST_FILE_EXCEPTION;
 char *stFile_getLineFromFile(FILE *fileHandle);
 
 /*
+ * Reads the line from the give file, returning lines in a list in order. Newlines/EOF characters are removed from the lines.
+ */
+stList *stFile_getLinesFromFile(char *fileName);
+
+/*
  * Joins together two strings.
  */
 char *stFile_pathJoin(const char *pathPrefix, const char *pathSuffix);

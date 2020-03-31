@@ -156,14 +156,18 @@ void *stList_removeFirst(stList *list) {
     return stList_remove(list, 0);
 }
 
-int64_t stList_contains(stList *list, void *item) {
+int64_t stList_find(stList *list, void *item) {
     int64_t i;
-    for(i=0; i<stList_length(list); i++) {
-        if(stList_get(list, i) == item) {
-            return 1;
+    for (i = 0; i < stList_length(list); i++) {
+        if (stList_get(list, i) == item) {
+            return i;
         }
     }
-    return 0;
+    return -1;
+}
+
+int64_t stList_contains(stList *list, void *item) {
+    return stList_find(list, item) != -1;
 }
 
 stList *stList_copy(stList *list, void (*destructItem)(void *)) {

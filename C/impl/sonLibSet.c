@@ -44,11 +44,16 @@ void stSet_destruct(stSet *set) {
     stHash_destruct(set->hash);
     free(set);
 }
+
+void stSet_setDestructor(stSet *set, void(*destructor)(void *)) {
+    stHash_setDestructKeys(set->hash, destructor);
+}
+
 void stSet_insert(stSet *set, void *key) {
     if (stSet_search(set, key) != NULL) { // This will ensure we don't end up with duplicate keys..
         stSet_remove(set, key);
     }
-    stHash_insert(set->hash, key, key); 
+    stHash_insert(set->hash, key, key);
 }
 void stSet_insertAll(stSet *set, stSet *setToAdd) {
     stSetIterator *setIt = stSet_getIterator(setToAdd);

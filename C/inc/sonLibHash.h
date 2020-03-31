@@ -41,12 +41,22 @@ stHash *stHash_construct2(void (*destructKeys)(void *), void (*destructValues)(v
  * Constructs a hash using the given comparison functions.
  */
 stHash *stHash_construct3(uint64_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
-        void (*destructKeys)(void *), void (*destructValues)(void *));
+                          void (*destructKeys)(void *), void (*destructValues)(void *));
 
 /*
  * Destructs a hash.
  */
 void stHash_destruct(stHash *hash);
+
+/*
+ * Set destructor for the keys
+ */
+void stHash_setDestructKeys(stHash *hash, void(*destructor)(void *));
+
+/*
+ * Set destructor for the values
+ */
+void stHash_setDestructValues(stHash *hash, void(*destructor)(void *));
 
 /*
  * Insert element, overiding if already present.

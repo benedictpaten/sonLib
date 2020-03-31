@@ -55,6 +55,16 @@ void stHash_destruct(stHash *hash) {
     free(hash);
 }
 
+void stHash_setDestructKeys(stHash *hash, void(*destructor)(void *)) {
+    hash->destructKeys = destructor != NULL;
+    hash->hash->keyFree = destructor;
+}
+
+void stHash_setDestructValues(stHash *hash, void(*destructor)(void *)) {
+    hash->destructValues = destructor != NULL;
+    hash->hash->valueFree = destructor;
+}
+
 void stHash_insert(stHash *hash, void *key, void *value) {
     if (stHash_search(hash, key) != NULL) { //This will ensure we don't end up with duplicate keys..
         stHash_remove(hash, key);

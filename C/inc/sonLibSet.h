@@ -42,12 +42,17 @@ stSet *stSet_construct2(void (*destructKeys)(void *));
  * Constructs a set using the given comparison functions.
  */
 stSet *stSet_construct3(uint64_t (*hashKey)(const void *), int (*hashEqualsKey)(const void *, const void *),
-        void (*destructKeys)(void *));
+                        void (*destructKeys)(void *));
 
 /*
  * Destructs a set.
  */
 void stSet_destruct(stSet *set);
+
+/*
+ * Set the destructor.
+ */
+void stSet_setDestructor(stSet *set, void(*destructor)(void *));
 
 /*
  * Insert element, overiding if already present.

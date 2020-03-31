@@ -61,10 +61,22 @@ char *stFile_getLineFromFile(FILE *fileHandle) {
     return cA2;
 }
 
+stList *stFile_getLinesFromFile(char *fileName) {
+    FILE *fh = fopen(fileName, "r");
+    stList *lines = stList_construct3(0, free);
+    char *line;
+    while ((line = stFile_getLineFromFile(fh)) != NULL) {
+        stList_append(lines, line);
+    }
+    fclose(fh);
+    return lines;
+}
+
 char *stFile_pathJoin(const char *pathPrefix, const char *pathSuffix) {
     return strlen(pathPrefix) == 0 || pathPrefix[strlen(pathPrefix) - 1] == '/' ? stString_print(
             "%s%s", pathPrefix, pathSuffix)
-            : stString_print("%s/%s", pathPrefix, pathSuffix);
+                                                                                : stString_print("%s/%s", pathPrefix,
+                                                                                                 pathSuffix);
 }
 
 bool stFile_exists(const char *fileName) {
