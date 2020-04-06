@@ -10,7 +10,7 @@ clean :
 
 ${libPath}/cuTest.a : CuTest.c CuTest.h
 	@mkdir -p $(dir $@)
-	${cxx} ${cflags} -c CuTest.c
+	${cxx} $(CPPFLAGS) $(CFLAGS) ${cflags} -c CuTest.c
 	ar rc cuTest.a *.o
 	ranlib cuTest.a
 	rm -f *.o
