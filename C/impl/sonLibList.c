@@ -135,13 +135,30 @@ void stList_removeInterval(stList *list, int64_t start, int64_t length) {
     assert(start + length <= stList_length(list));
     if(length > 0) {
         int64_t i = start;
-        for (int64_t j = start+length; j < stList_length(list); j++) {
+        int64_t j = start + length;
+        while (i < start + length || j < stList_length(list)) {
+            // free removed elements
             if (list->destructElement != NULL && i < start+length) {
-                void* element = stList_get(list, i);
-                list->destructElement(element);
+                list->destructElement(stList_get(list, i));
             }
-            stList_set(list, i++, stList_get(list, j));
+            // either move j to i (interval removed from start or middle of list), or clear i (interval at end of list)
+            if (j < stList_length(list)) {
+                stList_set(list, i, stList_get(list, j));
+            } else {
+                stList_set(list, i, NULL);
+            }
+            ++i; ++j;
         }
+
+
+//        int64_t i = start;
+//        for (int64_t j = start+length; j < stList_length(list); j++) {
+//            if (list->destructElement != NULL && i < start+length) {
+//                void* element = stList_get(list, i);
+//                list->destructElement(element);
+//            }
+//            stList_set(list, i++, stList_get(list, j));
+//        }
         list->length -= length;
     }
 }
