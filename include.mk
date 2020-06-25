@@ -3,6 +3,7 @@ HOSTNAME = $(shell hostname)
 MACH = $(shell uname -m)
 SYS =  $(shell uname -s)
 
+CC ?=gcc
 #C compiler. FIXME: for some reason the cxx variable is used, which
 #typically means C++ compiler.
 ifeq (${CC},cc)
@@ -13,7 +14,7 @@ ifeq (${CC},cc)
   else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
 	cxx = clang -std=c99 
   else
-    cxx = gcc -std=c99
+    cxx = ${CC} -std=c99
   endif
 else
   cxx = ${CC} -std=c99
