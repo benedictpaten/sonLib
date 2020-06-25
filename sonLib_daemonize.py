@@ -66,7 +66,7 @@ else:
    
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        raise Exception, "%s: Wrong number of arguments" % sys.argv[0]
+        raise Exception("%s: Wrong number of arguments" % sys.argv[0])
     
     pid = os.fork()
     if pid > 0:

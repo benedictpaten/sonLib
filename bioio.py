@@ -16,8 +16,8 @@ import math
 import shutil
 from argparse import ArgumentParser
 from optparse import OptionParser, OptionContainer, OptionGroup
-from tree import BinaryTree
-from misc import close
+from .tree import BinaryTree
+from .misc import close
 import subprocess
 import array
 import string
@@ -421,14 +421,14 @@ def nameValue(name, value, valueType=str, quotes=False):
 def getRandomAlphaNumericString(length=10):
     """Returns a random alpha numeric string of the given length.
     """
-    return "".join([ random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') for i in xrange(0, length) ])
+    return "".join([ random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') for i in range(0, length) ])
 
 def makeSubDir(dirName):
     """Makes a given subdirectory if it doesn't already exist, making sure it us public.
     """
     if not os.path.exists(dirName):
         os.mkdir(dirName)
-        os.chmod(dirName, 0777)
+        os.chmod(dirName, 0o777)
     return dirName
 
 def getTempFile(suffix="", rootDir=None):
@@ -441,7 +441,7 @@ def getTempFile(suffix="", rootDir=None):
     else:
         tmpFile = os.path.join(rootDir, "tmp_" + getRandomAlphaNumericString() + suffix)
         open(tmpFile, 'w').close()
-        os.chmod(tmpFile, 0777) #Ensure everyone has access to the file.
+        os.chmod(tmpFile, 0o777) #Ensure everyone has access to the file.
         return tmpFile
 
 def getTempDirectory(rootDir=None):
@@ -468,7 +468,7 @@ def getTempDirectory(rootDir=None):
                 break
                 
         os.mkdir(tmpDir)
-        os.chmod(tmpDir, 0777) #Ensure everyone has access to the file.
+        os.chmod(tmpDir, 0o777) #Ensure everyone has access to the file.
         return tmpDir
 
 class TempFileTree:
@@ -744,7 +744,7 @@ def fastaWrite(fileHandleOrFile, name, seq, mode="w"):
     fileHandle = _getFileHandle(fileHandleOrFile, mode)
     valid_chars = {x for x in string.ascii_letters + "-"}
     try:
-        assert any([isinstance(seq, unicode), isinstance(seq, str)])
+        assert any([isinstance(seq, str), isinstance(seq, str)])
     except AssertionError:
         raise RuntimeError("Sequence is not unicode or string")
     try:
@@ -754,7 +754,7 @@ def fastaWrite(fileHandleOrFile, name, seq, mode="w"):
         raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
     fileHandle.write(">%s\n" % name)
     chunkSize = 100
-    for i in xrange(0, len(seq), chunkSize):
+    for i in range(0, len(seq), chunkSize):
         fileHandle.write("%s\n" % seq[i:i+chunkSize])
     if isinstance(fileHandleOrFile, "".__class__):
         fileHandle.close()
@@ -849,23 +849,23 @@ def fastaAlignmentRead(fasta, mapFn=(lambda x : x), l=None):
     else:
         l = l[:]
     seqNo = len(l)
-    for i in xrange(0, seqNo):
+    for i in range(0, seqNo):
         j = open(fasta, 'r')
         j.seek(l[i])
         l[i] = j
-    column = [sys.maxint]*seqNo
+    column = [sys.maxsize]*seqNo
     if seqNo != 0:
         while True:
-            for j in xrange(0, seqNo):
+            for j in range(0, seqNo):
                 i = l[j].read(1)
                 while i == '\n':
                     i = l[j].read(1)
                 column[j] = i
             if column[0] == '>' or column[0] == '':
-                for j in xrange(1, seqNo):
+                for j in range(1, seqNo):
                     assert column[j] == '>' or column[j] == ''
                 break
-            for j in xrange(1, seqNo):
+            for j in range(1, seqNo):
                  assert column[j] != '>' and column[j] != ''
                  column[j] = mapFn(column[j])
             yield column[:]
@@ -878,8 +878,8 @@ def fastaAlignmentWrite(columnAlignment, names, seqNo, fastaFile,
     Writes out column alignment to given file multi-fasta format
     """
     fastaFile = open(fastaFile, 'w')
-    columnAlignment = [ i for i in columnAlignment if filter(i) ]
-    for seq in xrange(0, seqNo):
+    columnAlignment = [ i for i in columnAlignment if list(filter(i)) ]
+    for seq in range(0, seqNo):
         fastaFile.write(">%s\n" % names[seq])
         for column in columnAlignment:
             fastaFile.write(column[seq])
@@ -890,10 +890,10 @@ def getRandomSequence(length=500):
     """Generates a random name and sequence.
     """
     fastaHeader = ""
-    for i in xrange(int(random.random()*100)):
+    for i in range(int(random.random()*100)):
         fastaHeader = fastaHeader + random.choice([ 'A', 'C', '0', '9', ' ', '\t' ])
     return (fastaHeader, \
-            "".join([ random.choice([ 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'N' ]) for i in xrange((int)(random.random() * length))]))
+            "".join([ random.choice([ 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'A', 'C', 'T', 'G', 'N' ]) for i in range((int)(random.random() * length))]))
 
 def _expLength(i=0, prob=0.95):
     if random.random() >= prob:
@@ -1043,9 +1043,9 @@ def pWMRead(fileHandle, alphabetSize=4):
     for line in lines[1:]:
         l2 = [ float(i) for i in line.split() ]
         assert len(l) == len(l2)
-        for i in xrange(0, len(l)):
+        for i in range(0, len(l)):
             l[i].append(l2[i])
-    for i in xrange(0, len(l)):
+    for i in range(0, len(l)):
         j = sum(l[i]) + 0.0
         l[i] = [ k/j for k in l[i] ]
     return l
@@ -1053,8 +1053,8 @@ def pWMRead(fileHandle, alphabetSize=4):
 def pWMWrite(fileHandle, pWM, alphabetSize=4):
     """Writes file in standard PWM format, is reverse of pWMParser
     """
-    for i in xrange(0, alphabetSize):
-        fileHandle.write("%s\n" % ' '.join([ str(pWM[j][i]) for j in xrange(0, len(pWM)) ]))
+    for i in range(0, alphabetSize):
+        fileHandle.write("%s\n" % ' '.join([ str(pWM[j][i]) for j in range(0, len(pWM)) ]))
 
 #########################################################
 #########################################################
@@ -1229,8 +1229,8 @@ def cigarWrite(fileHandle, pairwiseAlignment, withProbs=True):
 
 def _getRandomSegment():
     contig = random.choice([ "one", "two", "three", "four" ])
-    start = random.choice(xrange(0, 10000))
-    end = start + random.choice(xrange(0, 1000))
+    start = random.choice(range(0, 10000))
+    end = start + random.choice(range(0, 1000))
     strand = random.choice([ True, False ])
     if not strand:
         start, end = end, start
@@ -1244,7 +1244,7 @@ def getRandomOperationList(xLength, yLength, operationMaxLength=100):
         if operationMaxLength == 1:
             length = 1
         else:
-            length = random.choice(xrange(1, operationMaxLength))
+            length = random.choice(range(1, operationMaxLength))
         if opType != PairwiseAlignment.PAIRWISE_INDEL_Y and xLength - length < 0:
             continue
         if opType != PairwiseAlignment.PAIRWISE_INDEL_X and yLength - length < 0:
@@ -1262,7 +1262,7 @@ def getRandomPairwiseAlignment():
     """
     i, j, k, l = _getRandomSegment()
     m, n, o, p = _getRandomSegment()
-    score = random.choice(xrange(-1000, 1000))
+    score = random.choice(range(-1000, 1000))
     return PairwiseAlignment(i, j, k, l, m, n, o, p, score, getRandomOperationList(abs(k - j), abs(o - n)))
 
 #########################################################

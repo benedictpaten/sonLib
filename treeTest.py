@@ -7,16 +7,16 @@
 import unittest
 import random
 
-from tree import remodelTreeRemovingRoot
-from tree import binaryTree_depthFirstNumbers
-from tree import mapTraversalIDsBetweenTrees
-from tree import BinaryTree
-from bioio import printBinaryTree
-from bioio import newickTreeParser
-from misc import close
-from tree import moveRoot
-from tree import calculateDupsAndLossesByReconcilingTrees
-from tree import calculateProbableRootOfGeneTree
+from .tree import remodelTreeRemovingRoot
+from .tree import binaryTree_depthFirstNumbers
+from .tree import mapTraversalIDsBetweenTrees
+from .tree import BinaryTree
+from .bioio import printBinaryTree
+from .bioio import newickTreeParser
+from .misc import close
+from .tree import moveRoot
+from .tree import calculateDupsAndLossesByReconcilingTrees
+from .tree import calculateProbableRootOfGeneTree
 from sonLib.bioio import TestStatus
 
 class TestCase(unittest.TestCase):
@@ -29,29 +29,29 @@ class TestCase(unittest.TestCase):
         unittest.TestCase.tearDown(self)
         
     def testRemodelTreeRemovingRoot(self):
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             binaryTree = getRandomTree()
             binaryTree_depthFirstNumbers(binaryTree) 
             node = getRandomLeafNode(binaryTree)
             remodTree = remodelTreeRemovingRoot(binaryTree, node.traversalID.mid)
-            print "test", test, printBinaryTree(binaryTree, True), printBinaryTree(node, True), printBinaryTree(remodTree, True)
+            print("test", test, printBinaryTree(binaryTree, True), printBinaryTree(node, True), printBinaryTree(remodTree, True))
             binaryTree_depthFirstNumbers(remodTree)
             distances = mapTraversalIDsBetweenTrees(binaryTree, remodTree)
             d = getDistancesBetweenLeaves(binaryTree)
             d2 = getDistancesBetweenLeaves(remodTree)
-            print d
-            print d2
+            print(d)
+            print(d2)
             for key in d2:
                 assert close(d2[key], d[key], 0.0001)
                 
     def testMoveRoot(self):
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             binaryTree = getRandomTree()
             binaryTree_depthFirstNumbers(binaryTree)
             node = getRandomNode(binaryTree)
-            print "before", printBinaryTree(binaryTree, True), printBinaryTree(node, True)
+            print("before", printBinaryTree(binaryTree, True), printBinaryTree(node, True))
             remodTree = moveRoot(binaryTree, node.traversalID.mid)
-            print "test", test, printBinaryTree(binaryTree, True), printBinaryTree(node, True), printBinaryTree(remodTree, True)
+            print("test", test, printBinaryTree(binaryTree, True), printBinaryTree(node, True), printBinaryTree(remodTree, True))
             binaryTree_depthFirstNumbers(remodTree)
             #distances = mapTraversalIDsBetweenTrees(binaryTree, remodTree)
             #d = getDistancesBetweenLeaves(binaryTree)
@@ -62,7 +62,7 @@ class TestCase(unittest.TestCase):
             #    assert close(d2[key], d[key], 0.0001)
     
     def testCalculateDupsAndLossesByReconcilingTrees(self):
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             speciesTree = getRandomTree()
             binaryTree_depthFirstNumbers(speciesTree)
             geneTree = getRandomTree()
@@ -102,13 +102,13 @@ class TestCase(unittest.TestCase):
         geneStrings = [ geneString1, geneString2, geneString3, geneString4, \
                         geneString5, geneString6, geneString7, geneString8,
                         geneString9, geneString10, geneString11 ]
-        print ""
+        print("")
         for geneString, dupCount, lossCount in geneStrings:
             geneTree = newickTreeParser(geneString)
             binaryTree_depthFirstNumbers(geneTree)
-            print printBinaryTree(geneTree, True), printBinaryTree(speciesTree, True)
+            print(printBinaryTree(geneTree, True), printBinaryTree(speciesTree, True))
             dupCount2, lossCount2 = calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID=lambda x : x)
-            print geneString, "dups", dupCount, dupCount2, "losses", lossCount, lossCount2
+            print(geneString, "dups", dupCount, dupCount2, "losses", lossCount, lossCount2)
             assert dupCount == dupCount2
             assert lossCount == lossCount2
             
@@ -144,11 +144,11 @@ class TestCase(unittest.TestCase):
             rootedGeneTree = newickTreeParser(geneString)
             binaryTree_depthFirstNumbers(geneTree)
             rootedGeneTree2, dupCount, lossCount = calculateProbableRootOfGeneTree(speciesTree, geneTree)
-            print "rootedGeneTree", rootedGeneString, dupCount, lossCount, printBinaryTree(rootedGeneTree2, False)
+            print("rootedGeneTree", rootedGeneString, dupCount, lossCount, printBinaryTree(rootedGeneTree2, False))
             #assert printBinaryTree(rootedGeneTree, False) == printBinaryTree(rootedGeneTree2, False)
     
     def testCalculateProbableRootOfGeneTree(self):
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             speciesTree = getRandomTree()
             binaryTree_depthFirstNumbers(speciesTree)
             geneTree = getRandomTree()

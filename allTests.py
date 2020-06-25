@@ -1,20 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 #Copyright (C) 2006-2012 by Benedict Paten (benedictpaten@gmail.com)
 #
 #Released under the MIT license, see LICENSE.txt
 import unittest
 
-import bioioTest
-import cigarsTest
-import treeTest
-import kvdbTest
+from . import bioioTest
+from . import cigarsTest
+from . import treeTest
+from . import kvdbTest
 import socket
 try:
     import networkx as NX
     networkx_installed = True
-    import nxtreeTest
-    import nxnewickTest
+    from . import nxtreeTest
+    from . import nxnewickTest
 except ImportError:
     networkx_installed = False
 
