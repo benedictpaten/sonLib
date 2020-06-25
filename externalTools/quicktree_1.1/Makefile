@@ -22,7 +22,7 @@ all: $(BIN)/quicktree
 quicktree : $(BIN)/quicktree
 
 $(BIN)/quicktree : $(QUICKTREEOBJ)
-	$(CC) $(DLFLAGS) -o $@ $(QUICKTREEOBJ) -lm
+	$(CC) $(LDFLAGS) -o $@ $(QUICKTREEOBJ) -lm
 
 $(OBJ)/quicktree.o : $(SRC)/quicktree.c 
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(OBJ)/quicktree.o $(SRC)/quicktree.c
