@@ -52,8 +52,8 @@ ${libPath}/%.h: inc/%.h
 
 ${libPath}/sonLib.a : ${libSources} ${cppSources} $(foreach l, ${libHeaders}, ${libPath}/$(notdir $l)) ${libInternalHeaders}
 	@mkdir -p $(dir $@)
-	${cxx} $(CPPFLAGS) ${cflags} -I inc -I ${libPath}/  -c ${libSources}
-	${cpp} $(CPPFLAGS) ${cppflags} -I inc -I ${libPath}/ -c ${cppSources}
+	${cxx} $(CPPFLAGS) ${cflags} $(CXXFLAGS) -I inc -I ${libPath}/  -c ${libSources}
+	${cpp} $(CPPFLAGS) ${cppflags} $(CXXFLAGS) $(LDFLAGS) -I inc -I ${libPath}/ -c ${cppSources}
 	ar rc sonLib.a *.o ${quickTreeObjects}
 	ranlib sonLib.a 
 	rm *.o
