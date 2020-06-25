@@ -8,13 +8,13 @@ all : cutestM quicktreeM
 clean : cutestM.clean quicktreeM.clean
 
 cutestM :
-	cd cutest && make all
+	+cd cutest && $(MAKE) all
 
 cutestM.clean :
-	cd cutest && make clean
+	+cd cutest && $(MAKE) clean
 
 quicktreeM :
-	cd quicktree_1.1 && make all CC="${cxx}"
+	+cd quicktree_1.1 && $(MAKE) all CC="${cxx}"
 
 quicktreeM.clean :
-	cd quicktree_1.1 && make clean
+	+cd quicktree_1.1 && $(MAKE) clean
