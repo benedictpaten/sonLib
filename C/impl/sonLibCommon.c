@@ -42,7 +42,6 @@ void *st_realloc(void *buffer, size_t desiredSize) {
 void *st_calloc(int64_t elementNumber, size_t elementSize) {
     void *k;
     k = calloc(elementNumber, elementSize);
-    k = 0;
     if (k == 0) {
         fprintf(stderr,
                 "Calloc failed with request for %lld lots of %zu bytes\n",
