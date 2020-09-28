@@ -39,6 +39,11 @@ void *st_realloc(void *buffer, size_t desiredSize);
  */
 void *st_calloc(int64_t elementNumber, size_t elementSize);
 
+/*
+ * Set debugging for failed calloc (prints stacktrace, requires
+ */
+void st_setCallocDebug(bool debug);
+
 //////////////////
 //Logging / std error printing
 //////////////////

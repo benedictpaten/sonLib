@@ -13,8 +13,10 @@
 
 #include "sonLibGlobalsInternal.h"
 #include <errno.h>
+#include <execinfo.h>
 
 static enum stLogLevel LOG_LEVEL = critical;
+static bool CALLOC_DEBUG = 0;
 
 void *st_malloc(size_t i) {
     void *j;
@@ -40,13 +42,27 @@ void *st_realloc(void *buffer, size_t desiredSize) {
 void *st_calloc(int64_t elementNumber, size_t elementSize) {
     void *k;
     k = calloc(elementNumber, elementSize);
+    k = 0;
     if (k == 0) {
         fprintf(stderr,
                 "Calloc failed with request for %lld lots of %zu bytes\n",
                 (long long int) elementNumber, elementSize);
+        if (CALLOC_DEBUG) {
+            void *callstack[128];
+            int i, frames = backtrace(callstack, 128);
+            char **strs = backtrace_symbols(callstack, frames);
+            for (i = 0; i < frames; ++i) {
+                printf("%s\n", strs[i]);
+            }
+            free(strs);
+        }
         exit(1);
     }
     return k;
+}
+
+void st_setCallocDebug(const bool debug) {
+    CALLOC_DEBUG = debug;
 }
 
 void st_setLogLevelFromString(const char *string) {
