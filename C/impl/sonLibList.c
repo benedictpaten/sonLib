@@ -12,6 +12,7 @@
  */
 
 #include "sonLibGlobalsInternal.h"
+#include "sort_r.h"
 
 #define MINIMUM_ARRAY_EXPAND_SIZE 5 //The minimum amount to expand the array backing a list by when it is rescaled.
 
@@ -252,13 +253,13 @@ stListIterator *stList_copyIterator(stListIterator *iterator) {
      \\|           |//
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
  */
-#ifdef _OPENMP
+//#ifdef _OPENMP
 int st_list_sortP(const void *a, const void *b, void *fn) {
     return ((int (*)(const void *, const void *))fn)(*((char **)a), *((char **)b));
 }
 
 void stList_sort(stList *list, int cmpFn(const void *a, const void *b)) {
-    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, (void *)cmpFn);
+    sort_r(list->list, stList_length(list), sizeof(void *), st_list_sortP, (void *)cmpFn);
 }
 
 int st_list_sort2P(const void *a, const void *b, void *extra) {
@@ -270,9 +271,9 @@ int st_list_sort2P(const void *a, const void *b, void *extra) {
 
 void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const void *extraArg), const void *extraArg) {
     void *extra[2] = { (void *)cmpFn, (void *)extraArg };
-    qsort_r(list->list, stList_length(list), sizeof(void *), st_list_sort2P, extra);
+    sort_r(list->list, stList_length(list), sizeof(void *), st_list_sort2P, extra);
 }
-#else
+/*#else
 // for reference: https://stackoverflow.com/questions/39560773/different-declarations-of-qsort-r-on-mac-and-linux
 static int (*st_list_sort_cmpFn)(const void *a, const void *b);
 static int st_list_sortP(const void *a, const void *b) {
@@ -295,7 +296,7 @@ void stList_sort2(stList *list, int cmpFn(const void *a, const void *b, const vo
     st_list_sort2_cmpFn = cmpFn;
     qsort(list->list, stList_length(list), sizeof(void *), st_list_sort2P);
 }
-#endif
+//#endif*/
 
 void stList_shuffle(stList *list) {
     for(int64_t i=0; i<stList_length(list); i++) {
