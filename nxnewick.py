@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+#!/usr/bin/env python3
 #Copyright (C) 2006-2012 by Glenn Hickey
 #
 #Released under the MIT license, see LICENSE.txt
