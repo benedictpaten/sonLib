@@ -102,7 +102,7 @@ class TestCase(unittest.TestCase):
         geneStrings = [ geneString1, geneString2, geneString3, geneString4, \
                         geneString5, geneString6, geneString7, geneString8,
                         geneString9, geneString10, geneString11 ]
-        print("")
+        print()
         for geneString, dupCount, lossCount in geneStrings:
             geneTree = newickTreeParser(geneString)
             binaryTree_depthFirstNumbers(geneTree)
