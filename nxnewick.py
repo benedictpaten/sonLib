@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+#!/usr/bin/env python3
 #Copyright (C) 2006-2012 by Glenn Hickey
 #
 #Released under the MIT license, see LICENSE.txt
-#!/usr/bin/env python
 
 """read and write newick trees to and from networkx graphs (as wrapped by nxtree). 
 """
@@ -14,7 +14,7 @@ import math
 import random
 from string import whitespace as ws
 from sonLib.misc import close
-import bioio
+from . import bioio
 import networkx as NX
 from optparse import OptionParser
 from sonLib.nxtree import NXTree
@@ -187,15 +187,15 @@ def main():
     parser.parseFile(args[0])
     NX.drawing.nx_agraph.write_dot(parser.nxTree.nxDg, args[1])
     parser.writeFile(args[2])
-    print "PRE"
+    print("PRE")
     for i in parser.nxTree.preOrderTraversal():
-        print ("%d %s" % (i, parser.nxTree.getName(i)))
-    print "POST"
+        print(("%d %s" % (i, parser.nxTree.getName(i))))
+    print("POST")
     for i in parser.nxTree.postOrderTraversal():
-        print ("%d %s" % (i, parser.nxTree.getName(i)))
-    print "BFS"
+        print(("%d %s" % (i, parser.nxTree.getName(i))))
+    print("BFS")
     for i in parser.nxTree.breadthFirstTraversal():
-        print ("%d %s" % (i, parser.nxTree.getName(i)))
+        print(("%d %s" % (i, parser.nxTree.getName(i))))
     return 0
 
 if __name__ == '__main__':    

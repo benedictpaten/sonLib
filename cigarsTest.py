@@ -10,12 +10,12 @@ import os
 import sys
 import random
 
-from bioio import getTempFile
+from .bioio import getTempFile
 
-from bioio import cigarRead
-from bioio import cigarWrite
-from bioio import getRandomPairwiseAlignment
-from bioio import system
+from .bioio import cigarRead
+from .bioio import cigarWrite
+from .bioio import getRandomPairwiseAlignment
+from .bioio import system
 from sonLib.bioio import TestStatus
 from sonLib.bioio import logger
 
@@ -36,9 +36,9 @@ class TestCase(unittest.TestCase):
         """
         tempFile = getTempFile()
         self.tempFiles.append(tempFile)
-        for test in xrange(0, self.testNo):
-            pairwiseAlignmentNumber = random.choice(xrange(10))
-            l = [ getRandomPairwiseAlignment() for i in xrange(pairwiseAlignmentNumber) ]
+        for test in range(0, self.testNo):
+            pairwiseAlignmentNumber = random.choice(range(10))
+            l = [ getRandomPairwiseAlignment() for i in range(pairwiseAlignmentNumber) ]
             fileHandle = open(tempFile, 'w')
             
             keepProbs = random.random() > 0.5

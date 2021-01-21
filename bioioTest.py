@@ -11,32 +11,32 @@ import sys
 import random
 import math
 
-from bioio import getTempFile
-from bioio import getTempDirectory
-from bioio import TempFileTree
-from bioio import getRandomAlphaNumericString
+from .bioio import getTempFile
+from .bioio import getTempDirectory
+from .bioio import TempFileTree
+from .bioio import getRandomAlphaNumericString
 
-from bioio import fastaRead
-from bioio import fastaWrite 
-from bioio import fastqRead
-from bioio import fastqWrite 
-from bioio import getRandomSequence
+from .bioio import fastaRead
+from .bioio import fastaWrite 
+from .bioio import fastqRead
+from .bioio import fastqWrite 
+from .bioio import getRandomSequence
 
-from bioio import pWMRead
-from bioio import pWMWrite
+from .bioio import pWMRead
+from .bioio import pWMWrite
 
-from bioio import newickTreeParser
-from bioio import printBinaryTree
+from .bioio import newickTreeParser
+from .bioio import printBinaryTree
 
-from bioio import cigarRead
-from bioio import cigarWrite
-from bioio import PairwiseAlignment
-from bioio import getRandomPairwiseAlignment
+from .bioio import cigarRead
+from .bioio import cigarWrite
+from .bioio import PairwiseAlignment
+from .bioio import getRandomPairwiseAlignment
 
 from sonLib.bioio import TestStatus
 
-from bioio import system
-from bioio import logger
+from .bioio import system
+from .bioio import logger
 
 class TestCase(unittest.TestCase):
     
@@ -61,12 +61,12 @@ class TestCase(unittest.TestCase):
     #########################################################
     
     def testTempFileTree(self):
-        for test in xrange(100): #self.testNo):
-            levels = random.choice(xrange(1, 4))
-            fileNo = random.choice(xrange(1, 6))
+        for test in range(100): #self.testNo):
+            levels = random.choice(range(1, 4))
+            fileNo = random.choice(range(1, 6))
             maxTempFiles = int(math.pow(fileNo, levels))
             
-            print "Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles)
+            print("Got %s levels, %s fileNo and %s maxTempFiles" % (levels, fileNo, maxTempFiles))
             
             tempFileTreeRootDir = os.path.join(self.tempDir, getRandomAlphaNumericString())
             tempFileTree = TempFileTree(tempFileTreeRootDir, fileNo, levels)
@@ -74,7 +74,7 @@ class TestCase(unittest.TestCase):
             tempFiles = []
             tempDirs = []
             #Check we can mac number of temp files.
-            for i in xrange(maxTempFiles):
+            for i in range(maxTempFiles):
                 if random.random() > 0.5:
                     tempFile = tempFileTree.getTempFile()
                     assert os.path.isfile(tempFile)
@@ -132,9 +132,9 @@ class TestCase(unittest.TestCase):
     def testFastaReadWrite(self):
         tempFile = getTempFile()
         self.tempFiles.append(tempFile)
-        for test in xrange(0, self.testNo):
-            fastaNumber = random.choice(xrange(10))
-            l = [ getRandomSequence() for i in xrange(fastaNumber) ]
+        for test in range(0, self.testNo):
+            fastaNumber = random.choice(range(10))
+            l = [ getRandomSequence() for i in range(fastaNumber) ]
             fileHandle = open(tempFile, 'w')
             for name, seq in l:
                 fastaWrite(fileHandle, name, seq)
@@ -150,9 +150,9 @@ class TestCase(unittest.TestCase):
     def testFastqReadWrite(self):
         tempFile = getTempFile()
         self.tempFiles.append(tempFile)
-        for test in xrange(0, self.testNo):
-            fastaNumber = random.choice(xrange(10))
-            fastqs = [ (name, seq, [ random.randint(33, 126) for i in range(len(seq)) ]) for name, seq in [ getRandomSequence() for i in xrange(fastaNumber) ]]
+        for test in range(0, self.testNo):
+            fastaNumber = random.choice(range(10))
+            fastqs = [ (name, seq, [ random.randint(33, 126) for i in range(len(seq)) ]) for name, seq in [ getRandomSequence() for i in range(fastaNumber) ]]
             fH = open(tempFile, 'w')
             for name, seq, quals in fastqs:
                 fastqWrite(fH, name, seq, quals)
@@ -170,9 +170,9 @@ class TestCase(unittest.TestCase):
         self.tempFiles.append(tempFile)
         tempFile2 = getTempFile()
         self.tempFiles.append(tempFile2)
-        for test in xrange(0, self.testNo):
-            fastaNumber = random.choice(xrange(10))
-            l = [ getRandomSequence() for i in xrange(fastaNumber) ]
+        for test in range(0, self.testNo):
+            fastaNumber = random.choice(range(10))
+            l = [ getRandomSequence() for i in range(fastaNumber) ]
             fileHandle = open(tempFile, 'w')
             for name, seq in l:
                 fastaWrite(fileHandle, name, seq)
@@ -180,7 +180,7 @@ class TestCase(unittest.TestCase):
             
             command = "sonLib_fastaCTest %s %s" % (tempFile, tempFile2)
             
-            print command
+            print(command)
             
             system(command)
             
@@ -205,12 +205,12 @@ class TestCase(unittest.TestCase):
             d = '((human,baboon),chimp);'
             e = newickTreeParser(d)
             f = printBinaryTree(e, False)
-            print d, f
+            print(d, f)
             assert d == f
     
     def testNewickTreeParser_UnaryNodes(self):
         #tests with unary nodes 
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             tree = getRandomTreeString()
             logger.debug("tree to try\t", tree)
             tree2 = newickTreeParser(tree, reportUnaryNodes=True)
@@ -229,7 +229,7 @@ class TestCase(unittest.TestCase):
     def testPWMParser(self):
         tempFile = getTempFile()
         self.tempFiles.append(tempFile)
-        for test in xrange(0, self.testNo):
+        for test in range(0, self.testNo):
             pWM = getRandomPWM()
             
             fileHandle = open(tempFile, 'w')
@@ -240,7 +240,7 @@ class TestCase(unittest.TestCase):
             pWM2 = pWMRead(fileHandle)
             fileHandle.close()
             
-            for i in xrange(0, len(pWM)):  
+            for i in range(0, len(pWM)):  
                 pWM[i] == pWM2[i]
     
     #########################################################
@@ -254,9 +254,9 @@ class TestCase(unittest.TestCase):
     def testCigarReadWrite(self):
         tempFile = getTempFile()
         self.tempFiles.append(tempFile)
-        for test in xrange(0, self.testNo):
-            cigarNumber = random.choice(xrange(10))
-            l = [ getRandomPairwiseAlignment() for i in xrange(cigarNumber) ]
+        for test in range(0, self.testNo):
+            cigarNumber = random.choice(range(10))
+            l = [ getRandomPairwiseAlignment() for i in range(cigarNumber) ]
             fileHandle = open(tempFile, 'w')
             for cigar in l:
                 cigarWrite(fileHandle, cigar)
@@ -292,10 +292,10 @@ def getRandomPWM(length=-1):
     if length == -1:
         length = 1 + int(random.random()*10)
     def fn():
-        l = [ random.random()*100 for i in xrange(0, 4) ]
+        l = [ random.random()*100 for i in range(0, 4) ]
         i = sum(l)
         return [ j/i for j in l ]
-    return [ fn() for i in xrange(0, length) ]
+    return [ fn() for i in range(0, length) ]
         
 if __name__ == '__main__':
     unittest.main()
