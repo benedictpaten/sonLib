@@ -744,7 +744,7 @@ def fastaWrite(fileHandleOrFile, name, seq, mode="w"):
     fileHandle = _getFileHandle(fileHandleOrFile, mode)
     valid_chars = {x for x in string.ascii_letters + "-"}
     try:
-        assert any([isinstance(seq, str), isinstance(seq, str)])
+        assert isinstance(seq, str)
     except AssertionError:
         raise RuntimeError("Sequence is not unicode or string")
     try:
