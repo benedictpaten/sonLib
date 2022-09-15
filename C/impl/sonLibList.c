@@ -388,3 +388,7 @@ void stList_mapReplace(stList *l, void *(*mapFn)(void *, void *), void *extraArg
         stList_set(l, i, mapFn(stList_get(l, i), extraArg));
     }
 }
+
+void *stList_getBackingArray(stList *list) {
+    return list->list;
+}

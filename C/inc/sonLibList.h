@@ -220,6 +220,11 @@ stList *stList_join(stList *listOfLists);
  */
 void stList_mapReplace(stList *l, void *(*mapFn)(void *, void *), void *extraArg);
 
+/*
+ * Returns the underlying array.
+ */
+void *stList_getBackingArray(stList *list);
+
 #ifdef __cplusplus
 }
 #endif
