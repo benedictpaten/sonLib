@@ -69,7 +69,7 @@ def binaryTree_depthFirstNumbers(binaryTree, labelTree=True, dontStopAtID=True):
         return mid+1, leafNo+1
     traverse(binaryTree)
     if labelTree:
-        for binaryTree in traversalIDs.keys():
+        for binaryTree in list(traversalIDs.keys()):
             binaryTree.traversalID = traversalIDs[binaryTree]
     return traversalIDs
 
@@ -164,18 +164,18 @@ def transformByDistance(wV, subModel, alphabetSize=4):
     transform wV by given substitution matrix
     """
     nc = [0.0]*alphabetSize
-    for i in xrange(0, alphabetSize):
+    for i in range(0, alphabetSize):
         j = wV[i]
         k = subModel[i]
-        for l in xrange(0, alphabetSize):
+        for l in range(0, alphabetSize):
             nc[l] += j * k[l]
     return nc
 
 def multiplyWV(wVX, wVY, alphabetSize=4):
-    return [ wVX[i] * wVY[i] for i in xrange(0, alphabetSize) ]
+    return [ wVX[i] * wVY[i] for i in range(0, alphabetSize) ]
 
 def sumWV(wVX, wVY, alphabetSize=4):
-    return [ wVX[i] + wVY[i] for i in xrange(0, alphabetSize) ]
+    return [ wVX[i] + wVY[i] for i in range(0, alphabetSize) ]
     
 def normaliseWV(wV, normFac=1.0):
     """
@@ -187,7 +187,7 @@ def normaliseWV(wV, normFac=1.0):
 def sumWVA(wVA, alphabetSize=4):
     totals = [0.0]*alphabetSize
     for wV in wVA:
-        for i in xrange(0, alphabetSize):
+        for i in range(0, alphabetSize):
             totals[i] += wV[i]
     return totals
 
@@ -222,7 +222,7 @@ def felsensteins(binaryTree, subMatrices, ancestorProbs, leaves, alphabetSize):
 def calculateCharacterFrequencies(seq, map, alphabetSize):
     counts = [0.0]*alphabetSize
     for i in seq:
-        counts[map(i)] += 1
+        counts[list(map(i))] += 1
     return counts
     
 #########################################################
@@ -261,9 +261,9 @@ def calculateDNADistanceMatrix(seqNo, fastaIter, transitionTransversionRatio=2.0
     transversions = [0.1]*seqNo*seqNo
     counts = [1.0]*seqNo*seqNo
     for column in fastaIter:
-        for i in xrange(0, seqNo):
+        for i in range(0, seqNo):
             if column[i] in [ 'A', 'C', 'T', 'G' ]:
-                for j in xrange(i+1, seqNo):
+                for j in range(i+1, seqNo):
                     if column[j] in [ 'A', 'C', 'T', 'G' ]:
                         counts[i*seqNo + j] += 1
                         if column[i] != column[j]:
@@ -277,9 +277,9 @@ def calculateDNADistanceMatrix(seqNo, fastaIter, transitionTransversionRatio=2.0
                                     transversions[i*seqNo + j] += 1
                                 else:
                                     transitions[i*seqNo + j] += 1
-    distanceMatrix = [ [None]*seqNo for i in xrange(0, seqNo) ]
-    for i in xrange(0, seqNo*seqNo):
-        for j in xrange(i+1, seqNo):
+    distanceMatrix = [ [None]*seqNo for i in range(0, seqNo) ]
+    for i in range(0, seqNo*seqNo):
+        for j in range(i+1, seqNo):
             k = i * seqNo + j
             distanceMatrix[i][j] = -0.75*math.log(1 - (4/3)*((transitions[k]+transversions[k])/counts[k])) #jukes cantor correction
             distanceMatrix[j][i] = distanceMatrix[i][j]
@@ -288,10 +288,10 @@ def calculateDNADistanceMatrix(seqNo, fastaIter, transitionTransversionRatio=2.0
     return distanceMatrix
 
 def makeDistancePairs(distanceMatrix, iDs, seqNo):
-    binaryTrees = [ BinaryTree(0.0, False, None, None, iDs[i]) for i in xrange(0, seqNo) ]
+    binaryTrees = [ BinaryTree(0.0, False, None, None, iDs[i]) for i in range(0, seqNo) ]
     distancePairs = []
-    for i in xrange(0, seqNo):
-        for j in xrange(i+1, seqNo): 
+    for i in range(0, seqNo):
+        for j in range(i+1, seqNo): 
             distancePairs.append(DistancePair(distanceMatrix[i][j], binaryTrees[i], 1, binaryTrees[j], 1))
             distancePairs.append(DistancePair(distanceMatrix[i][j], binaryTrees[j], 1, binaryTrees[i], 1))
     return distancePairs
@@ -327,10 +327,10 @@ def upgmaI(distancePairs, leafNo):
             holder1[i.leaf2] = i
         if i.leaf1 == distancePair.leaf2 and i.leaf2 != distancePair.leaf1:
             holder2[i.leaf2] = i
-    assert len(holder1.keys()) == leafNo-2
-    assert len(holder2.keys()) == leafNo-2
+    assert len(list(holder1.keys())) == leafNo-2
+    assert len(list(holder2.keys())) == leafNo-2
     assert set(holder1.keys()) == set(holder2.keys())
-    for i in holder1.keys():
+    for i in list(holder1.keys()):
         j = holder1[i]
         k = holder2[i]
         newDistance = (j.distance*j.leafNo1 + k.distance*k.leafNo1)/(j.leafNo1 + k.leafNo1)
@@ -346,7 +346,7 @@ def nj(distanceMatrix, iDs, leafNo):
 
 def getMinPair(distancePairs, rValues, leafNo):
     j = None
-    k = sys.maxint
+    k = sys.maxsize
     for i in distancePairs:
         adjustD = i.distance - (rValues[i.leaf1] + rValues[i.leaf2])/(leafNo-2)
         #print "the adjusted value ", adjustD, i.distance, rValues[i.leaf1]/(leafNo-2), rValues[i.leaf2]/(leafNo-2)
@@ -359,11 +359,11 @@ def getMinPair(distancePairs, rValues, leafNo):
 def calculateRValues(distancePairs, leafNo):
     j = {}
     for i in distancePairs:
-        if j.has_key(i.leaf1):
+        if i.leaf1 in j:
             j[i.leaf1] += i.distance
         else:
             j[i.leaf1] = i.distance
-    assert len(j.keys()) == leafNo
+    assert len(list(j.keys())) == leafNo
     return j
 
 def njI(distancePairs, leafNo):
@@ -391,10 +391,10 @@ def njI(distancePairs, leafNo):
             holder1[i.leaf2] = i
         if i.leaf1 == distancePair.leaf2 and i.leaf2 != distancePair.leaf1:
             holder2[i.leaf2] = i
-    assert len(holder1.keys()) == leafNo-2
-    assert len(holder2.keys()) == leafNo-2
+    assert len(list(holder1.keys())) == leafNo-2
+    assert len(list(holder2.keys())) == leafNo-2
     assert set(holder1.keys()) == set(holder2.keys())
-    for i in holder1.keys():
+    for i in list(holder1.keys()):
         j = holder1[i]
         k = holder2[i]
         assert j.leaf2 == k.leaf2
@@ -416,13 +416,13 @@ def njI(distancePairs, leafNo):
 
 def checkMatrix(m, fV, AS=4, reversible=True):
     #print m
-    for i in xrange(0, AS):
+    for i in range(0, AS):
         j = sum(m[i])
         #print "AAAAA", j
         assert j <= 1.0001
         assert j >= 0.9999
         if reversible:
-            for k in xrange(0, AS):
+            for k in range(0, AS):
                 #print "comp2", (fV[i] * m[i][k]), (fV[k] * m[k][i] )
                 assert close(fV[i] * m[i][k], fV[k] * m[k][i], 0.00001)
     
@@ -436,9 +436,9 @@ def checkMatrix(m, fV, AS=4, reversible=True):
     assert close(i, j, 0.00001)
     
 def reverseSubMatrix(m, AS=4):
-    k = [ [None]*AS for i in xrange(0, AS) ]
-    for i in xrange(0, AS):
-        for j in xrange(0, AS):
+    k = [ [None]*AS for i in range(0, AS) ]
+    for i in range(0, AS):
+        for j in range(0, AS):
             k[j][i] = m[i][j]
     return k
     
@@ -476,7 +476,7 @@ def subMatrix_TamuraNei(d, fA, fC, fG, fT, alphaPur, alphaPyr, beta):
     AS = 4
     freq = ( fA, fC, fG, fT )
     alpha = ( alphaPur, alphaPyr, alphaPur, alphaPyr )
-    matrix = [ [ 0.0 ]*AS for i in xrange(0, AS) ]
+    matrix = [ [ 0.0 ]*AS for i in range(0, AS) ]
     #see page 203 of Felsenstein's Inferring Phylogenies for explanation of calculations
     def watKro(j, k):
         if (j % 2) == (k % 2):
@@ -486,10 +486,10 @@ def subMatrix_TamuraNei(d, fA, fC, fG, fT, alphaPur, alphaPyr, beta):
         if i == j:
             return 1.0
         return 0.0
-    for i in xrange(0, AS): #long winded, totally unoptimised method for calculating matrix
-        for j in xrange(0, AS):
+    for i in range(0, AS): #long winded, totally unoptimised method for calculating matrix
+        for j in range(0, AS):
             l = 0.0
-            for k in xrange(0, AS):
+            for k in range(0, AS):
                 l += watKro(j, k) * freq[k]
             matrix[i][j] =\
             math.exp(-(alpha[i] + beta) * d) * kroenickerDelta(i, j) + \
@@ -516,9 +516,9 @@ def subMatrix_HKY(d, fA, fC, fG, fT, transitionTransversionR):
 def subMatrix_HalpernBruno(d, freqColumn, subMatrix, AS=4):
     #return subMatrix_HKY(d, freqColumn[0], freqColumn[1], freqColumn[2], freqColumn[3], 2.0)
     #return subMatrix
-    matrix = [ [ 0.0 ]*AS for i in xrange(0, AS) ]
-    for i in xrange(0, AS):
-        for j in xrange(0, AS):
+    matrix = [ [ 0.0 ]*AS for i in range(0, AS) ]
+    for i in range(0, AS):
+        for j in range(0, AS):
             a = freqColumn[i] * subMatrix[i][j]
             b = freqColumn[j] * subMatrix[j][i]
             if not close(a, b, 0.0001):
@@ -580,8 +580,8 @@ def mapTraversalIDsBetweenTrees(oldTree, newTree):
             internalMap[(fn(oldTree), fn(oldTree.left))] = fn(oldTree.right)
             internalMap[(fn(oldTree.left), fn(oldTree))] = fn(oldTree.right)
     fn3(oldTree)
-    print leafMap
-    print internalMap
+    print(leafMap)
+    print(internalMap)
     def fn4(newTree):
         if newTree.internal:
             fn4(newTree.left)
@@ -596,7 +596,7 @@ def remodelTreeRemovingRoot(root, node):
     """
     Node is mid order number
     """
-    import bioio
+    from . import bioio
     assert root.traversalID.mid != node
     hash = {}
     def fn(bT):
@@ -632,7 +632,7 @@ def moveRoot(root, branch):
     """
     Removes the old root and places the new root at the mid point along the given branch
     """
-    import bioio
+    from . import bioio
     if root.traversalID.mid == branch:
         return bioio.newickTreeParser(bioio.printBinaryTree(root, True))
     def fn2(tree, seq):
@@ -703,7 +703,7 @@ def calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID):
             if nodes.issubset(a[speciesTree.right.traversalID.mid]):
                 return fn2(nodes, speciesTree.right)
         return speciesTree.traversalID.mid
-    for iD in b.keys():
+    for iD in list(b.keys()):
         nodes = b[iD]
         b[iD] = fn2(nodes, speciesTree)
     dups = []
@@ -725,7 +725,7 @@ def calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID):
                 nodes.append((node, losses+1))
         return nodes
     for node, losses in fn4(speciesTree):
-        lossMap[(sys.maxint, node)] = losses+1
+        lossMap[(sys.maxsize, node)] = losses+1
     losses = [0]
     def fn5(geneTree, ancestor):
         if geneTree.internal:
@@ -745,7 +745,7 @@ def calculateDupsAndLossesByReconcilingTrees(speciesTree, geneTree, processID):
         if speciesTree.internal:
             fn6(speciesTree.left, speciesTree.traversalID.mid, node)
             fn6(speciesTree.right, speciesTree.traversalID.mid, node)
-    ancestor = fn6(speciesTree, sys.maxint, b[geneTree.traversalID.mid])
+    ancestor = fn6(speciesTree, sys.maxsize, b[geneTree.traversalID.mid])
     assert ancestorHolder[0] is not None
     fn5(geneTree, ancestorHolder[0])
     return len(dups), losses[0]
